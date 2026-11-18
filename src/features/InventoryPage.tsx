@@ -12,6 +12,12 @@ const eggs = [
   { id: 20, slug: 'gold', name: 'Белое', source: 'Золотая карточка', details: 'Пул похож на яйцо в зелёной карточке, но в нём другой жетон скина.' },
 ] as const;
 
+// Mirrors the base 80/15/5 draw counts and Z6() in the game's public client.
+function openingChance(chance: number) {
+  const miss = 1 - chance / 100;
+  return 100 * (0.8 * (1 - miss) + 0.15 * (1 - miss ** 2) + 0.05 * (1 - miss ** 3));
+}
+
 export function OwlPage() {
   const { pathname } = useLocation();
   const egg = eggs.find(item => pathname === '/owl/' + item.slug);
@@ -37,20 +43,23 @@ export function OwlPage() {
         <div><h2>{egg.name} яйцо</h2><p>{egg.source}</p></div>
       </div>
       <p>{egg.details}</p>
-      <h3>Шанс за один бросок</h3>
-      <p className="caption">За открытие выпадает 1 предмет в 80% случаев, 2 — в 15%, 3 — в 5%. Редкие шансы округлены.</p>
+      <h3>Шанс за открытие</h3>
+      <p className="caption">Шанс получить награду хотя бы раз. За открытие выпадает 1 предмет в 80% случаев, 2 — в 15%, 3 — в 5%.</p>
       <ul className="compactList lootList">
         {drops.filter(([id]) => itemNames[id]).map(([id, chance]) => {
           const [name, file] = itemNames[id];
           return <li className="mediaRow" key={id}>
-            <GameArt path={itemPath(file)} size={36}/><span>{name}</span><strong>{chanceLabel(chance)}</strong>
+            <GameArt path={itemPath(file)} size={36}/><span>{name}</span><strong>{chanceLabel(openingChance(chance))}</strong>
           </li>;
         })}
         {unknownChance > 0 && <li className="mediaRow">
-          <span>Награды без подтверждённых названий</span><strong>{chanceLabel(unknownChance)}</strong>
+          <span>Хотя бы одна награда без подтверждённого названия</span><strong>{chanceLabel(openingChance(unknownChance))}</strong>
         </li>}
       </ul>
-      <p className="caption">Пул из клиента игры. Текущие цены и награды смотри при выборе яйца в игре.</p>
+      <details><summary>Почему шанс не гарантирует награду?</summary>
+        <p>Каждое открытие независимо. «1 из 100» — средняя частота выпадения за много попыток. Награда может выпасть дважды подряд или долго не выпадать.</p>
+      </details>
+      <p className="caption">Базовые шансы из клиента. Текущую цену показывает карточка яйца в игре.</p>
     </section>}
     {care && <section className="card">
       <div className="mediaHeading"><GameArt path={itemPath('croissant.webp')} size={52}/>

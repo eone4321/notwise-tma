@@ -38,3 +38,13 @@ referral list shown to the inviter contains names and first-visit dates.
 Game-side referrals and the old bot's records are separate data sources.
 The new visitor log starts when the endpoint is configured. Regular guide
 content remains available if the profile service is unavailable.
+
+## Game data
+
+The live public game client at `https://prod.notwise.co/` provides the sticker
+catalog, mode unlock levels, owl progression, skill effects, capsule and egg
+fallback odds. Egg drop odds in the guide use the same at-least-one calculation
+as the game. The `quarks/nw-new.json` resource is a scene asset for visual effects.
+The game API serves shop prices, item traits, sticker odds and account-specific
+referrals to authenticated game sessions. The guide uses verified names, art
+and client values, plus live Getgems prices for NFT collections.
