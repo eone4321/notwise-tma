@@ -1,0 +1,43 @@
+[
+  {
+    "id": "scroll-enchant-ring",
+    "name_ru": "Заточка кольца",
+    "category": "scroll",
+    "currency": "squad_silver",
+    "price": 500,
+    "bg_color": "red"
+  },
+  {
+    "id": "lighter",
+    "name_ru": "Зажигалка",
+    "category": "squad_ritual",
+    "currency": "squad_silver",
+    "price": 1000,
+    "bg_color": "dark_red"
+  },
+  {
+    "id": "scroll-enchant-skin",
+    "name_ru": "Заточка скина",
+    "category": "scroll",
+    "currency": "squad_silver",
+    "price": 5000,
+    "bg_color": "blue"
+  },
+  {
+    "id": "morpher",
+    "name_ru": "Морфер",
+    "category": "transformation",
+    "currency": "squad_silver",
+    "price": 5000,
+    "bg_color": "yellow"
+  },
+  {
+    "id": "chiller",
+    "name_ru": "Чиллер",
+    "category": "artifact",
+    "currency": "squad_silver",
+    "price": 25000,
+    "bg_color": "purple",
+    "effect": "freezes_xp_gain"
+  }
+]

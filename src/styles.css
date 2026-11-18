@@ -189,8 +189,8 @@ details > p { margin: 4px 0 8px; }
 .itemNumber { width: 40px; height: 40px; color: var(--muted); background: var(--raised); font-size: 12px; }
 
 :root {
-  --glass-fill: #0f152ae0;
-  --glass-sheen: linear-gradient(135deg, #ffffff29, #ffffff0a 55%, #ffffff1a);
+  --glass-fill: #111a30df;
+  --glass-sheen: linear-gradient(180deg, #c2d2ff1e, #a6b7ff09 42%, transparent 100%);
   --glass-edge: inset 0 1px #ffffff20, inset 0 -1px #ffffff08;
   --glass-border: rgb(255 255 255 / 10%);
   --glass-shadow: 0 24px 48px -18px #02050ab8, 0 8px 20px -10px #03050b99;
@@ -393,7 +393,7 @@ details > p { margin: 4px 0 8px; }
 }
 
 .gameHero::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, #0a0e1a 8%, #0a0e1ae6 33%, #0a0e1a15 100%), linear-gradient(0deg, #0a0e1a 5%, transparent 70%); }
-.heroImage { position: absolute; z-index: -2; inset: 0 0 0 auto; width: 72%; height: 100%; object-fit: cover; object-position: center 28%; transform: none; }
+.heroImage { position: absolute; z-index: -2; inset: 10px 0 0 auto; width: 72%; height: calc(100% - 10px); object-fit: cover; object-position: center top; transform: none; }
 .heroCopy { width: min(66%, 290px); min-height: 100px; }
 .heroCopy h1 { text-wrap: initial; }
 .heroShare { justify-self: start; min-height: 44px; margin-top: 0; }
@@ -446,8 +446,11 @@ details > p { margin: 4px 0 8px; }
 :is(.primary,.secondary,.catalogTile,.guideTile,.logoBtn):active { filter: brightness(1.25); scale: .98; }
 .copyFeedback { min-height: 1.4em; margin-top: 6px; color: var(--lavender); }
 .inventorySection > summary { display: flex; align-items: center; gap: 10px; min-height: 44px; }
-.inventorySection > summary::after { content: '+'; margin-inline-start: auto; }
-.inventorySection[open] > summary::after { content: '−'; }
+.inventorySection > summary::after {
+  content: ''; width: 7px; height: 7px; margin-inline: auto 3px;
+  border: solid var(--muted); border-width: 0 1.5px 1.5px 0; transform: rotate(45deg);
+}
+.inventorySection[open] > summary::after { transform: rotate(225deg); }
 .inventoryRow { align-items: flex-start; }
 .inventoryRow p { margin: 3px 0; font-size: 13px; }
 .inventoryRow small { color: var(--gold); }
@@ -459,12 +462,6 @@ details > p { margin: 4px 0 8px; }
 .jokeToast > div { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .squadIntro > img { width: 100%; max-height: 150px; object-fit: contain; margin-bottom: 10px; }
 .guideLoading progress { width: min(220px, 68vw); height: 8px; accent-color: #b694ff; }
-/* Keep surfaces on a fixed color while their content changes height. */
-:is(.card,.gameHero,.guideTile,.albumGrid > a) {
-  background: var(--glass-sheen), #10162b;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
 details > summary { -webkit-tap-highlight-color: transparent; }
 details > summary:active { color: var(--lavender); }
 .secretRow { display: grid; grid-template-columns: 42px minmax(0,1fr) 32px; gap: 8px; padding: 8px 4px; }
@@ -484,7 +481,7 @@ details > summary:active { color: var(--lavender); }
 .silverCoin { display: inline-flex; filter: grayscale(1) brightness(1.16); }
 .skillUnlock { border-left: 2px solid var(--lavender); padding: 4px 10px; margin: 8px 0 12px; }
 :is(.card,.gameHero,.guideTile,.albumGrid > a) {
-  background-size: 100% 180px, auto;
+  background-size: 100% 96px, auto;
   background-repeat: no-repeat;
 }
 html { scrollbar-gutter: stable; }
@@ -492,3 +489,73 @@ html { scrollbar-gutter: stable; }
 .tokenRatesList strong small { font-size: 10px; color: var(--muted); font-weight: 500; }
 .secretRow { grid-template-columns: 34px minmax(0,1fr) 44px; }
 .secretRow > .gameArt { max-width: 34px; max-height: 34px; }
+
+/* Keep the edge highlight anchored when a disclosure grows. */
+:is(.card,.gameHero,.guideTile,.albumGrid > a) {
+  border-top-color: #b6c4f42b;
+  box-shadow: inset 0 1px #eef3ff16, inset 0 -1px #aabdff0b, 0 14px 34px -21px #000c;
+}
+.tokenTicker { width: max-content; max-width: 52%; grid-template-columns: max-content max-content; gap: 8px; padding-inline: 9px; }
+.tokenTickerTrack { width: max-content; grid-template-columns: max-content; }
+.tokenTickerValue { grid-template-columns: 18px max-content; justify-content: end; }
+.tickerPrice { justify-self: end; }
+.tokenRatesDialog { max-width: min(350px, calc(100% - 28px)); }
+.marketHeading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.marketAll { flex: none; color: var(--lavender); font-size: 12px; font-weight: 650; min-height: 40px; display: inline-flex; align-items: center; }
+.marketHeading h2 { font-size: 18px; }
+.marketHeading + p { font-size: 12px; }
+.plainGuideShare { width: 100%; margin: 6px 0; }
+.inventorySection.card { padding: 0 12px; margin: 7px 0; }
+.inventorySection > summary { gap: 8px; min-height: 46px; padding: 5px 0; list-style: none; }
+.inventorySection > summary::-webkit-details-marker { display: none; }
+.inventorySection > summary strong { font-size: 14px; }
+.inventorySection[open] > summary { margin-bottom: 2px; }
+.inventorySection[open] { padding-bottom: 6px; }
+.inventoryRow { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; align-items: start; gap: 8px; padding: 7px 0; border-top: 1px solid var(--line); }
+.inventoryRow h3 { font-size: 13px; }
+.inventoryRow p { font-size: 12px; line-height: 1.35; margin: 3px 0 0; color: var(--muted); }
+.inventoryRow small { font-size: 11px; color: var(--muted); }
+.priceBadge { display: inline-flex; align-items: center; gap: 4px; color: var(--gold); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.inventoryRow .priceBadge { padding-top: 1px; }
+.eggShopRow .priceBadge { margin-inline-start: auto; }
+.leanList .mediaRow { min-height: 50px; padding: 7px 0; gap: 9px; }
+.leanList .mediaRow small { display: block; }
+.leanList h2 { margin-bottom: 6px; }
+.capsuleChoice > b { margin-inline-start: auto; font-size: 14px; color: var(--gold); }
+.capsuleHeading { margin-bottom: 8px; }
+.capsuleTabs > * { flex: 1; min-width: 0; padding-inline: 4px; }
+.capsulePricing { padding: 13px; }
+.capsulePricing h2 { font-size: 18px; }
+.capsulePricing > :is(h2,p):not(:last-child) { margin-bottom: 5px; }
+.capsuleTimeInputs .field { margin: 7px 0; }
+.capsuleTimeInputs input { min-height: 44px; }
+.capsulePresets { display: flex; gap: 6px; margin: 2px 0 9px; }
+.capsulePresets button { flex: 1; min-height: 36px; border: 1px solid var(--glass-border); border-radius: 10px; background: #a9b6ed10; font-size: 12px; }
+.capsulePresets button[aria-pressed=true] { border-color: #aa90f7; background: #8c6dd432; color: #e4d8ff; }
+.capsuleResult { display: flex; min-height: 58px; align-items: center; gap: 9px; margin-bottom: 9px; }
+.capsuleResult > div { flex: 1; display: grid; gap: 2px; border: 1px solid var(--glass-border); padding: 7px 9px; border-radius: 10px; background: #c6ccff0f; }
+.capsuleResult strong { display: flex; align-items: center; gap: 5px; font-size: 16px; color: var(--gold); white-space: nowrap; }
+.capsuleOptions > summary { min-height: 39px; padding-block: 8px; }
+.secretCheck input { appearance: none; width: 19px; height: 19px; display: grid; place-items: center; border: 1px solid #b4a3dc95; border-radius: 50%; background: #a89acc18; cursor: pointer; }
+.secretCheck input:checked { background: var(--lavender); border-color: var(--lavender); color: #1c1038; }
+.secretCheck input:checked::after { content: ''; width: 8px; height: 4px; border: solid currentColor; border-width: 0 0 2px 2px; transform: translateY(-1px) rotate(-45deg); }
+.skinGuide { padding-block: 8px; }
+.skinGuide h2 { font-size: 16px; }
+.skinGuide > p,.skinRules { margin: 8px 0; font-size: 13px; }
+.skinGallery { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.skinGallery figure { margin: 0; background: #a9bcf912; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; }
+.skinGallery img { width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; }
+.skinGallery figcaption { display: grid; padding: 6px 7px; font-size: 12px; }
+.skinGallery b { color: var(--gold); font-size: 12px; }
+.skinGallery small { font-size: 11px; }
+.skinRules div { display: grid; grid-template-columns: 75px 1fr; gap: 7px; padding-block: 3px; }
+.skinRules dt { font-weight: 700; }
+.skinRules dd { margin: 0; color: var(--muted); }
+.squadMap { display: block; width: min(100%, 270px); margin-inline: auto; }
+.squadMap g { cursor: pointer; }
+.squadMap polygon { fill: #6aa28842; stroke: #9ce5bb86; stroke-width: 1; }
+.squadMap circle { fill: #d2f3e3; }
+.squadMap g[aria-pressed=true] polygon { fill: #ffd38080; stroke: #ffdc98; }
+.squadMap g[aria-pressed=true] circle { fill: #ffefbe; }
+.squadMapLabel { display: grid; text-align: center; border-top: 1px solid var(--line); padding-top: 8px; }
+.shopUse { display: block; font-size: 12px; }

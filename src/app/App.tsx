@@ -186,7 +186,7 @@ function Home({ profile, profileFailed, retryProfile }: {
       <a className="secondary" href="https://t.me/notgames_bot/squads?startapp=575801">
         <span className="squadMark" aria-hidden="true"/>Наш сквад
       </a>
-    <button className="heroShare secondary" onClick={() => shareGuide(guideShareUrl(profile?.referralCode))}>Поделиться гайдом</button>
+    <button className="heroShare secondary" onClick={() => shareGuide(guideShareUrl())}>Поделиться гайдом</button>
     </div>
   </section>
   <OwlPrices/>

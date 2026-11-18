@@ -3,7 +3,8 @@ import { GameArt } from '../ui/GameArt';
 import { chanceLabel } from '../domain/mechanics';
 import { dropsFor, itemNames } from './inventory';
 import { OwlPrices } from './OwlPrices';
-import { shopPrice } from './shop';
+import { Price } from './Price';
+import { SkinExamples } from './SkinExamples';
 import shopItems from './shop-data.json';
 import skinParts from './skin-parts.json';
 
@@ -28,37 +29,52 @@ export function OwlPage() {
   const drops = egg ? dropsFor(egg.id) : [];
   const unknownChance = drops.reduce((sum, [id, chance]) => sum + (itemNames[id] ? 0 : chance), 0);
   return <>
-    {!egg && !care && <>
-      <p className="intro">В Лавке три предложения: одно за монеты и два за Stars. Каталог дропа включает также яйца, которые дают за сезон и другие игровые источники.</p>
-      <section className="card">
-        <h2>3 предложения в Лавке</h2>
-        <div className="mediaRow"><GameArt path={itemPath('egg.webp')} size={35}/><span>Загадочное яйцо</span><strong>{shopPrice('egg')}</strong></div>
-        <div className="mediaRow"><GameArt path={itemPath('egg-stars.webp')} size={35}/><span>Загадочное яйцо за Stars</span><strong>{shopPrice('egg-stars')}</strong></div>
-        <div className="mediaRow"><GameArt path={itemPath('golden-egg.webp')} size={35}/><span>Золотое яйцо за Stars</span><strong>{shopPrice('golden-egg')}</strong></div>
-      </section>
-      <h2 className="subTitle">Что выпадает из яиц</h2>
-      <div className="eggPicker" aria-label="Виды яиц">
-        {eggs.map(item => <Link to={'/owl/' + item.slug} className="catalogTile" key={item.id}>
-          <GameArt path={itemPath(item.id === 56 ? 'egg.webp' : item.id + '.png')} size={56}/>
-          <strong>{item.name} яйцо</strong><small>{item.source}</small>
-        </Link>)}
-      </div>
-      <OwlPrices only="eggs"/>
-      <section className="card">
-        <div className="mediaHeading"><GameArt path={itemPath('referral-egg.webp')} size={44}/>
-          <div><h2>Реферальное яйцо</h2><p>Вместе с яйцом игра даёт 5 000 монет за вход по игровой ссылке друга.</p></div>
-        </div>
-      </section>
-      <Link className="card sectionLink" to="/owl/care">
-        <GameArt path={itemPath('croissant.webp')} size={44}/><span><strong>Кормление совы</strong><small>Сытость, любимая еда и штраф за голод</small></span>
+    {pathname === '/owl' && <section className="card leanList">
+      <Link to="/owl/loot" className="mediaRow"><GameArt path={itemPath('egg.webp')} size={40}/>
+        <span><strong>Награды из яиц</strong><small>Шансы на жетоны, предметы и еду</small></span>
       </Link>
+      <Link to="/owl/shop" className="mediaRow"><GameArt path={itemPath('golden-egg.webp')} size={40}/>
+        <span><strong>Где взять яйца</strong><small>Лавка, капсулы, сезон и NFT</small></span>
+      </Link>
+      <Link to="/owl/care" className="mediaRow"><GameArt path={itemPath('croissant.webp')} size={40}/>
+        <span><strong>Кормление совы</strong><small>Сытость, любимая еда и голод</small></span>
+      </Link>
+    </section>}
+    {pathname === '/owl/loot' && <section className="card leanList">
+      <h2>Выбери яйцо по виду карточки</h2>
+      {eggs.map(item => <Link to={'/owl/' + item.slug} className="mediaRow" key={item.id}>
+        <GameArt path={itemPath(item.id === 56 ? 'egg.webp' : item.id + '.png')} size={36}/>
+        <span><strong>{item.name} яйцо</strong><small>{item.source}</small></span>
+      </Link>)}
+    </section>}
+    {pathname === '/owl/shop' && <>
+      <section className="card">
+        <h2>Три предложения в Лавке</h2>
+        <ul className="compactList">{([
+          ['egg', 'Загадочное яйцо', 'egg.webp'],
+          ['egg-stars', 'Загадочное яйцо', 'egg-stars.webp'],
+          ['golden-egg', 'Золотое яйцо', 'golden-egg.webp'],
+        ] as const).map(([id, label, file]) => {
+          const offer = shopItems.find(item => item.id === id);
+          return offer && <li className="mediaRow eggShopRow" key={id}>
+            <GameArt path={itemPath(file)} size={36}/><span>{label}</span>
+            <Price value={offer.price} currency={offer.currency === 'stars' ? 'stars' : 'coins'}/>
+          </li>;
+        })}</ul>
+        <Link to="/owl/loot" className="textLink">Посмотреть награды</Link>
+      </section>
+      <section className="card">
+        <h2>Бесплатные яйца</h2>
+        <p>Загадочное яйцо выпадает из капсул. Сезонные яйца получают за места в топ-100. За вход по игровой ссылке друга можно получить реферальное яйцо и 5 000 монет.</p>
+      </section>
+      <OwlPrices only="eggs"/>
     </>}
     {egg && <section className="card">
       <div className="mediaHeading"><GameArt path={itemPath(egg.id === 56 ? 'egg.webp' : egg.id + '.png')} size={64}/>
         <div><h2>{egg.name} яйцо</h2><p>{egg.source}</p></div>
       </div>
       <p>{egg.details}</p>
-      {egg.id === 17 && <p><strong>Лавка: {shopPrice('egg')} или {shopPrice('egg-stars')}</strong></p>}
+      {egg.id === 17 && <Link className="textLink" to="/owl/shop">Покупка в Лавке</Link>}
       <h3>Шанс за открытие</h3>
       <p className="caption">Шанс получить награду хотя бы раз. За открытие выпадает 1 предмет в 80% случаев, 2 — в 15%, 3 — в 5%.</p>
       <ul className="compactList lootList">
@@ -75,7 +91,7 @@ export function OwlPage() {
       <details><summary>Почему шанс не гарантирует награду?</summary>
         <p>Каждое открытие независимо. «1 из 100» — средняя частота выпадения за много попыток. Награда может выпасть дважды подряд или долго не выпадать.</p>
       </details>
-      <p className="caption">Базовые шансы из клиента. Текущую цену показывает карточка яйца в игре.</p>
+
     </section>}
     {care && <section className="card">
       <div className="mediaHeading"><GameArt path={itemPath('croissant.webp')} size={52}/>
@@ -187,20 +203,22 @@ export function InventoryPage() {
     {entry.items.flatMap(item => item.file === 'ring-wit-3.webp' ? shopItems
       .filter(offer => offer.category === 'ring').map(offer => ({
         name: offer.name_ru, file: offer.id + '.webp', effect: 'Повышает характеристику кольца. Можно заточить.', source: 'Лавка',
-      })) : [item]).map(item => <li className="mediaRow inventoryRow" key={item.file}>
-        <GameArt path={itemPath(item.file)} size={42}/>
-        <div><h3>{item.name}</h3><p>{item.effect}</p>
-          <small className="inventoryPrice">
-            {shopPrice(shopKey(item.file)).includes('монет') && <GameArt path="/game/items/wise-coin.webp" size={16}/>}
-            {shopPrice(shopKey(item.file)) || item.source}
-          </small></div>
-      </li>)}
+      })) : [item]).map(item => {
+        const offer = shopItems.find(offer => offer.id === shopKey(item.file));
+        return <li className="inventoryRow" key={item.file}>
+          <GameArt path={itemPath(item.file)} size={36}/>
+          <div><h3>{item.name}</h3><p>{item.effect}</p>
+            {offer?.required_level ? <small>Доступно с {offer.required_level}-го уровня</small> : !offer && <small>{item.source}</small>}
+          </div>
+          {offer && <Price value={offer.price} currency={offer.currency === 'stars' ? 'stars' : 'coins'}/>}
+        </li>;
+      })}
   </ul>;
   return <>
     {(category ? [[slug, category] as const] : Object.entries(categories)).map(([id, entry]) =>
       <details className="card inventorySection" key={id} open={category !== undefined || undefined}>
         <summary><GameArt path={itemPath(entry.icon)} size={34}/><strong>{entry.title}</strong></summary>
-        {id === 'skins' && <p>Жетоны выпадают из яиц. Открыв жетон, ты получаешь скин. Экипированные детали скина повышают шанс получить $NOT из капсул.</p>}
+        {id === 'skins' && <SkinExamples/>}
         {renderCategory(entry)}
         {id === 'skins' && <details><summary>Детали скинов</summary>
           {([
@@ -214,7 +232,7 @@ export function InventoryPage() {
       <EnchantGuide/>
       <OwlPrices only="items"/>
     </>}
-    <p className="caption">Цены приведены по данным Лавки из файла игры. В игре они могут измениться.</p>
+
     {slug === 'gear' && <section className="card">
       <details><summary>Как предмет становится NFT</summary>
         <p>При выпуске NFT предмет уходит из инвентаря и появляется в кошельке. Его можно продать или вернуть в игру. Покупка за Stars может закрыть выпуск на 21 день.</p>

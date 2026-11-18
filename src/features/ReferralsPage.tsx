@@ -113,6 +113,9 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
       </div>
       <p role="status" className="copyFeedback">{copyStatus}</p>
       <label className="field">Ссылка на гайд<input ref={linkInput} type="url" readOnly value={url} onFocus={event => event.currentTarget.select()}/></label></>}
+      <button type="button" className="secondary plainGuideShare" onClick={() => shareGuide(guideShareUrl())}>
+        Поделиться гайдом без рефки
+      </button>
       {!authData() && <p className="caption">Открой гайд в Telegram, чтобы получить персональную ссылку.</p>}
       {authData() && !profile && <p className="caption">{failed ? <>Профиль недоступен. <button className="inlineAction" onClick={onRetry}>Повторить</button></> : 'Загружаем персональную ссылку…'}</p>}
     </section>

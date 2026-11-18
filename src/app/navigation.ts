@@ -37,7 +37,8 @@ export function useGuideNavigation() {
   const sections = pathname.split('/').filter(Boolean);
   const skipGrouping = (sections[0] === 'collections' && sections[1] === 'albums') ||
     (sections[0] === 'combat' && sections[1] === 'skills' && sections.length === 3);
-  const parent = hash ? pathname : sections.length > 1
+  const isEgg = sections[0] === 'owl' && ['mystery','red','season','green','gold'].includes(sections[1]);
+  const parent = hash ? pathname : isEgg ? '/owl/loot' : sections.length > 1
     ? '/' + sections.slice(0, skipGrouping ? 1 : -1).join('/')
     : '/';
 

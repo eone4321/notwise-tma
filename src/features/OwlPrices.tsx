@@ -49,7 +49,8 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
   }, []);
 
   return <section className="card" aria-labelledby="owl-market">
-    <h2 id="owl-market">{only === 'eggs' ? 'Цена NFT-яйца' : only === 'items' ? 'Цена NFT-предметов' : 'Цены на NFT в Not Wise'}</h2>
+    <div className="marketHeading"><h2 id="owl-market">{only === 'eggs' ? 'Цена NFT-яйца' : only === 'items' ? 'Цена NFT-предметов' : 'Цены на NFT в Not Wise'}</h2>
+    {!only && <Link className="marketAll" to="/collections/market">См. все<span className="sr-only"> коллекции</span></Link>}</div>
     <p className="caption">От минимальной цены на Getgems. USDT — эквивалент.</p>
     <div className="owlMarketList" aria-busy={market === null}>
       {featured.filter(item => only ? item.id === only : item.id !== 'items').map(item => {
@@ -75,6 +76,6 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
         </a>;
       })}
     </div>
-    {!only && <Link className="textLink" to="/collections/market">Все коллекции</Link>}
+
   </section>;
 }

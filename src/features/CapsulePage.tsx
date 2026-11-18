@@ -14,12 +14,13 @@ export function CapsulePage() {
   const currentTier = tiers.find(tier => pathname === '/capsules/' + tier || hash === '#' + tier);
   if (!currentTier) return <>
     <p className="intro">Победа в рейтинговом бою может дать капсулу, если есть свободный слот.</p>
-    <div className="catalogGrid">{tiers.map((tier, index) =>
-      <Link className="catalogTile" key={tier} to={'/capsules/' + tier}>
-        <GameArt path={`/game/capsules/${tier}.webp`} size={50}/>
-        <strong>{tierNames[tier]}</strong><small>{duration[tier] / 3_600_000} ч · яйцо {eggChances[index]}</small>
-      </Link>
-    )}</div>
+    <section className="card leanList capsuleList">
+      {tiers.map((tier, index) => <Link className="mediaRow capsuleChoice" key={tier} to={'/capsules/' + tier}>
+        <GameArt path={`/game/capsules/${tier}.webp`} size={46}/>
+        <span><strong>{tierNames[tier]}</strong><small>Шанс яйца · {eggChances[index]}</small></span>
+        <b>{duration[tier] / 3_600_000} ч</b>
+      </Link>)}
+    </section>
     <SlotGuide/>
   </>;
   return <CapsuleDetail tier={currentTier}/>;
@@ -32,7 +33,10 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
   const [farm, setFarm] = useState('');
   const capsuleLevel = Math.min(xp.length - 1, Math.max(1, Number(level) || 1));
   return <>
-    <div className="card mediaHeading"><GameArt path={`/game/capsules/${currentTier}.webp`} size={56}/><div>
+    <nav className="choiceBar capsuleTabs" aria-label="Тип капсулы">
+      {tiers.map(tier => <Link key={tier} aria-current={tier === currentTier ? 'page' : undefined} to={'/capsules/' + tier}>{tierNames[tier]}</Link>)}
+    </nav>
+    <div className="card mediaHeading capsuleHeading"><GameArt path={`/game/capsules/${currentTier}.webp`} size={56}/><div>
       <h2>{tierNames[currentTier]} капсула</h2><p>{capsuleNames[index]} · бесплатно через {hours} ч</p>
     </div></div>
     <CapsulePrices key={currentTier} tier={currentTier}/>
@@ -50,7 +54,7 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
         <Link className="textLink spacedLink" to="/combat/modes#leagues">Бонус боевой лиги</Link>
         {notOdds(currentTier, Math.max(0, Number(farm) || 0)).map(row => <div className="mediaRow" key={row.amount}><span>{row.amount.toLocaleString('ru-RU')} $NOT</span><strong>{row.chance === 0 ? '0%' : chanceLabel(row.chance)}</strong></div>)}
       </details>
-      <p className="caption">Расчёт по базовым параметрам клиента. Сервер игры может менять условия. При заморозке опыта XP не начисляется.</p>
+      <p className="caption">Если открыт чиллер, XP не начисляется.</p>
     </section>
   </>;
 }
