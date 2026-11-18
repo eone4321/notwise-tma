@@ -2,11 +2,24 @@ import { init, miniApp, viewport, backButton, hapticFeedback, invoice } from '@t
 
 let booted = false;
 
+function applySafeArea() {
+  const tg = window.Telegram?.WebApp;
+  if (!tg) return;
+  const safeTop = tg.safeAreaInset?.top || 0;
+  const contentTop = tg.contentSafeAreaInset?.top || 0;
+  // When in fullscreen or expanded mode on modern Telegram, floating controls need clearance
+  const isFs = tg.isFullscreen || (typeof tg.isVersionAtLeast === 'function' && tg.isVersionAtLeast('8.0'));
+  const totalTop = Math.max(safeTop + contentTop, isFs ? safeTop + 54 : safeTop);
+  if (totalTop > 0) {
+    document.documentElement.style.setProperty('--tg-computed-top', `${totalTop}px`);
+  }
+}
+
 export async function bootTelegram() {
   if (booted) return;
   booted = true;
 
-  // 1. Native Telegram WebApp SDK (direct expand + fullscreen)
+  // 1. Native Telegram WebApp SDK (direct expand + fullscreen + safe area tracking)
   const tg = window.Telegram?.WebApp;
   if (tg) {
     try {
@@ -15,6 +28,11 @@ export async function bootTelegram() {
       if (typeof tg.requestFullscreen === 'function') {
         tg.requestFullscreen();
       }
+      applySafeArea();
+      tg.onEvent?.('safeAreaChanged', applySafeArea);
+      tg.onEvent?.('contentSafeAreaChanged', applySafeArea);
+      tg.onEvent?.('fullscreenChanged', applySafeArea);
+      tg.onEvent?.('viewportChanged', applySafeArea);
     } catch {
       /* ignore */
     }
@@ -36,6 +54,10 @@ export async function bootTelegram() {
   } catch {
     /* fallback already handled */
   }
+
+  // Re-check safe area after mounting
+  setTimeout(applySafeArea, 100);
+  setTimeout(applySafeArea, 500);
 }
 
 export function lightHaptic() {

@@ -12,6 +12,9 @@
   --muted: #b7c1d7;
   --gold: #ffcc77;
   --lavender: #d3c2ff;
+  --system-top-inset: max(env(safe-area-inset-top, 0px), var(--tg-safe-area-inset-top, 0px), var(--tg-viewport-safe-area-inset-top, 0px));
+  --telegram-top-inset: max(var(--tg-content-safe-area-inset-top, 0px), var(--tg-viewport-content-safe-area-inset-top, 0px));
+  --top-inset: max(16px, var(--tg-computed-top, 0px), calc(var(--system-top-inset) + var(--telegram-top-inset)), calc(var(--system-top-inset) + 52px));
   --system-bottom-inset: max(env(safe-area-inset-bottom, 0px), var(--tg-safe-area-inset-bottom, 0px), var(--tg-viewport-safe-area-inset-bottom, 0px));
   --telegram-bottom-inset: max(var(--tg-content-safe-area-inset-bottom, 0px), var(--tg-viewport-content-safe-area-inset-bottom, 0px));
   --bottom-inset: calc(var(--system-bottom-inset) + var(--telegram-bottom-inset));
@@ -45,7 +48,7 @@ main { font-size: var(--body); line-height: 1.55; }
   margin: auto;
   max-width: 560px;
   min-height: 100dvh;
-  padding: max(8px, env(safe-area-inset-top, 0px)) var(--space-4) calc(var(--dock-height) + 16px);
+  padding: var(--top-inset) var(--space-4) calc(var(--dock-height) + 16px);
 }
 header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .brand { display: inline-flex; align-items: center; min-height: 44px; }
