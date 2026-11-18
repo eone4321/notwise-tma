@@ -2,11 +2,7 @@ export const config = {
   runtime: 'edge',
 };
 
-const BOT_TOKEN =
-  process.env.BOT_TOKEN ||
-  (typeof atob === 'function'
-    ? atob('OTI0MTE1Njk0ODpBQUU2Sk9qMC1QR05SSGpVOGUyNGdRQmQ3c2UtZktybllicw==')
-    : '');
+const BOT_TOKEN = process.env.BOT_TOKEN || '';
 const TMA_URL = 'https://notwise-tma.vercel.app';
 const BANNER_URL = `${TMA_URL}/banner.png`;
 
