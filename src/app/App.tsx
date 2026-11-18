@@ -13,7 +13,7 @@ import {useEffect,useRef,useState}from'react';
 import{Link,useLocation,useNavigate}from'react-router';
 import{AnimatePresence,motion}from'motion/react';
 import all from'../../public/data/all_100_stickers.json';import quests from'../../public/data/secret_quests.json';import{impactHaptic,lightHaptic,telegramPopup}from'../telegram/client';
-import { useGuideNavigation } from './navigation';
+import { useGuideNavigation, useGuideScroll } from './navigation';
 import { DockCoach } from './DockCoach';
 import { AdminPage } from '../features/AdminPage';
 import { authData, defaultGameLink, guideShareUrl, profileRequest, shareGuide, type GuideProfile } from '../features/guideProfile';
@@ -47,11 +47,7 @@ function App() {
     localStorage.setItem('notwise.guide.dock.v1', '1');
     setCoach(false);
   };
-  useEffect(() => {
-    if (!loc.hash) { window.scrollTo(0, 0); return; }
-    const frame = requestAnimationFrame(() => document.getElementById(loc.hash.slice(1))?.scrollIntoView());
-    return () => cancelAnimationFrame(frame);
-  }, [loc.hash, loc.pathname]);
+  useGuideScroll();
   useEffect(() => {
   if (!hamster) return;
   const unlock = window.setTimeout(() => setHamsterLocked(false), 1000);

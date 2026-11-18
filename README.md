@@ -48,3 +48,8 @@ as the game. The `quarks/nw-new.json` resource is a scene asset for visual effec
 The game API serves shop prices, item traits, sticker odds and account-specific
 referrals to authenticated game sessions. The guide uses verified names, art
 and client values, plus live Getgems prices for NFT collections.
+
+Saving an in-game referral link requires membership in `@cryptoeone`.
+Give the Mini App bot administrator access in that channel so Telegram's
+`getChatMember` can verify membership. Previously saved links become active
+after their owners save them again with a verified subscription.

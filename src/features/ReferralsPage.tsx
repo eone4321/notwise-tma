@@ -15,26 +15,51 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
   const [input, setInput] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [subscribed, setSubscribed] = useState<boolean | null>(null);
+  const [linkMessage, setLinkMessage] = useState('');
   const [more, setMore] = useState<GuideProfile['invited']>([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const url = guideShareUrl(profile?.referralCode);
   const value = input ?? profile?.gameLink ?? '';
   const invited = [...(profile?.invited ?? []), ...more];
+  const canEnterLink = subscribed ?? profile?.gameLinkVerified ?? false;
+
+  async function checkSubscription() {
+    setChecking(true);
+    setLinkMessage('');
+    try {
+      const result = await profileRequest<{ subscribed: boolean }>({ action: 'check_subscription' });
+      setSubscribed(result.subscribed);
+      if (!result.subscribed) setLinkMessage('Подпишись на канал и проверь подписку ещё раз.');
+    } catch {
+      setLinkMessage('Telegram не подтвердил подписку. Попробуй ещё раз.');
+    } finally {
+      setChecking(false);
+    }
+  }
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
-    setMessage('');
+    setLinkMessage('');
     try {
       const next = await profileRequest<GuideProfile>({ action: value.trim() ? 'save' : 'remove', gameLink: value.trim() });
       onSave(next);
       setMore([]);
       setInput(null);
-      setMessage(next.gameLink ? 'Игровая ссылка сохранена.' : 'Игровая ссылка удалена.');
+      if (next.gameLinkVerified) setSubscribed(true);
+      setLinkMessage(next.gameLink ? 'Игровая ссылка сохранена.' : 'Игровая ссылка удалена.');
     } catch (error) {
-      setMessage(error instanceof Error && error.message === 'invalid_game_link'
-        ? 'Вставь полную ссылку из раздела «Друзья» в игре.'
-        : 'Сохранение не удалось. Попробуй ещё раз.');
+      const reason = error instanceof Error ? error.message : '';
+      if (reason === 'subscription_required') {
+        setSubscribed(false);
+        setLinkMessage('Подпишись на канал и подтверди подписку.');
+      } else if (reason === 'invalid_game_link') {
+        setLinkMessage('Вставь полную ссылку из раздела «Друзья» в игре.');
+      } else {
+        setLinkMessage('Сохранение недоступно. Попробуй ещё раз.');
+      }
     } finally {
       setSaving(false);
     }
@@ -86,11 +111,18 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
       <section className="card">
         <h2>Твоя ссылка из игры</h2>
         <p>В игре открой «Друзья» → «Копировать ссылку» и вставь её сюда. Тогда у приглашённых кнопка «Открыть игру» будет вести по твоей ссылке.</p>
-        <form onSubmit={save}>
+        {!canEnterLink && <div className="actionPair referralGate">
+          <a className="secondary" href="https://t.me/cryptoeone">Подписаться на канал</a>
+          <button className="secondary" disabled={checking} onClick={checkSubscription}>
+            {checking ? 'Проверяем…' : 'Проверить подписку'}
+          </button>
+        </div>}
+        {canEnterLink && <form onSubmit={save}>
           <label className="field">Игровая ссылка<input type="url" inputMode="url" value={value}
             maxLength={512} onChange={event => setInput(event.target.value)} placeholder="https://t.me/notwise_bot/thegame?startapp=…" /></label>
-          <button className="secondary" disabled={saving || input === null}>{saving ? 'Сохраняем…' : 'Сохранить'}</button>
-        </form>
+          <button className="secondary" disabled={saving || (input === null && (!profile.gameLink || profile.gameLinkVerified))}>{saving ? 'Сохраняем…' : 'Сохранить'}</button>
+        </form>}
+        {linkMessage && <p className="referralStatus" role="status">{linkMessage}</p>}
         <a className="textLink" href="https://t.me/notwise_bot/thegame">Друзья и награды в игре</a>
       </section>
     </>}

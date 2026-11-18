@@ -431,3 +431,10 @@ details > p { margin: 4px 0 8px; }
 .ringVariants { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
 .ringVariants > div { display: grid; gap: 4px; }
 .ringVariants > div > div { display: flex; flex-wrap: wrap; gap: 4px; }
+.referralGate { margin-block: 12px; }
+.referralGate > a { display: inline-grid; place-items: center; }
+.inventoryGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.inventoryGrid .catalogTile { min-height: 106px; justify-items: center; text-align: center; padding: 8px 4px; }
+.inventoryGrid .catalogTile strong { font-size: 12px; overflow-wrap: anywhere; }
+.quoteInputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.priceResult strong { text-align: end; }

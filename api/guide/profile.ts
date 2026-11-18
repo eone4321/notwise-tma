@@ -1,7 +1,7 @@
 export const config = { runtime: 'edge' };
 
 type Member = { id: string; name: string; joinedAt: number; seenAt: number };
-type Account = Member & { gameLink?: string; inviter?: string; referralCode: string };
+type Account = Member & { gameLink?: string; gameLinkVerified?: boolean; inviter?: string; referralCode: string };
 
 const namespace = 'notwise:guide:v1:';
 const encoder = new TextEncoder();
@@ -48,6 +48,19 @@ function gameLink(input: unknown) {
   }
 }
 
+async function channelMember(id: string, token: string) {
+  const response = await fetch(`https://api.telegram.org/bot${token}/getChatMember`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: '@cryptoeone', user_id: Number(id) }),
+    signal: AbortSignal.timeout(3500),
+  });
+  const data = await response.json();
+  if (!response.ok || !data.ok || !data.result?.status) throw new Error('Channel check unavailable');
+  const { status, is_member: isMember } = data.result;
+  return ['creator', 'administrator', 'member'].includes(status) || (status === 'restricted' && isMember === true);
+}
+
 async function redis<T>(command: (string | number)[]): Promise<T> {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const secret = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -85,8 +98,14 @@ else
 end
 account.name = ARGV[2]
 account.seenAt = now
-if ARGV[7] == 'save' then account.gameLink = ARGV[8] end
-if ARGV[7] == 'remove' then account.gameLink = nil end
+if ARGV[7] == 'save' then
+  account.gameLink = ARGV[8]
+  account.gameLinkVerified = true
+end
+if ARGV[7] == 'remove' then
+  account.gameLink = nil
+  account.gameLinkVerified = nil
+end
 local encoded = cjson.encode(account)
 redis.call('HSET', KEYS[1], ARGV[1], encoded)
 return encoded
@@ -137,6 +156,10 @@ export default async function handler(request: Request) {
   if (action === 'admin' && !isAdmin) return json({ error: 'forbidden' }, 403);
 
   try {
+    if (action === 'check_subscription') {
+      const subscribed = await channelMember(id, token).catch(() => null);
+      return subscribed === null ? json({ error: 'subscription_unavailable' }, 503) : json({ subscribed });
+    }
     if (action === 'admin') return json(await members(membersKey, offset));
     if (action === 'invited') {
       const { items, total } = await members(invitedPrefix + id, offset);
@@ -145,6 +168,11 @@ export default async function handler(request: Request) {
     if (!['profile', 'save', 'remove'].includes(action)) return json({ error: 'invalid_request' }, 400);
     const link = action === 'save' ? gameLink(input.gameLink) : null;
     if (action === 'save' && !link) return json({ error: 'invalid_game_link' }, 400);
+    if (link) {
+      const subscribed = await channelMember(id, token).catch(() => null);
+      if (subscribed === null) return json({ error: 'subscription_unavailable' }, 503);
+      if (!subscribed) return json({ error: 'subscription_required' }, 403);
+    }
     const inviterCode = /^g_[a-f0-9]{32}$/.test(start) ? start : '';
     const referralCode = 'g_' + crypto.randomUUID().replaceAll('-', '');
     const raw = await redis<string>([
@@ -159,7 +187,8 @@ export default async function handler(request: Request) {
     const source = referrer ? JSON.parse(referrer) as Account : null;
     return json({
       gameLink: account.gameLink ?? null,
-      gameEntry: source?.gameLink ?? null,
+      gameEntry: source?.gameLinkVerified ? source.gameLink ?? null : null,
+      gameLinkVerified: account.gameLinkVerified === true,
       invited: items.map(({ name, joinedAt }) => ({ name, joinedAt })),
       invitedCount: total,
       referralCode: account.referralCode,

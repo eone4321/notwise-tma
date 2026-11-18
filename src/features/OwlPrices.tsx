@@ -6,6 +6,7 @@ const featured = [
   { id: 'eggs', name: 'Яйца', description: 'Случайные награды' },
   { id: 'genesis', name: 'Совы Genesis', description: 'Первая коллекция NOT Wise' },
   { id: 'skins', name: 'Скины', description: 'Облик и бонус к фарму' },
+  { id: 'items', name: 'NFT-предметы', description: 'Рынок Getgems' },
 ];
 const gram = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
 const usdt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
@@ -18,7 +19,7 @@ type Quote = {
 };
 type MarketPrices = { items: Quote[]; gramToUsdt: number | null };
 
-export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' } = {}) {
+export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}) {
   const [market, setMarket] = useState<MarketPrices | null>(null);
 
   useEffect(() => {
@@ -47,10 +48,10 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' } = {}) {
   }, []);
 
   return <section className="card" aria-labelledby="owl-market">
-    <h2 id="owl-market">{only === 'eggs' ? 'Цена NFT-яйца' : 'Цены на NFT в Not Wise'}</h2>
+    <h2 id="owl-market">{only === 'eggs' ? 'Цена NFT-яйца' : only === 'items' ? 'Цена NFT-предметов' : 'Цены на NFT в Not Wise'}</h2>
     <p className="caption">От минимальной цены на Getgems. USDT — эквивалент.</p>
     <div className="owlMarketList" aria-busy={market === null}>
-      {featured.filter(item => !only || item.id === only).map(item => {
+      {featured.filter(item => only ? item.id === only : item.id !== 'items').map(item => {
         const collection = collections.find(({ id }) => id === item.id);
         if (!collection) return null;
         const quote = market?.items.find(({ id }) => id === item.id);
@@ -59,7 +60,7 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' } = {}) {
         const rate = market?.gramToUsdt;
         return <a className="marketPriceRow" key={item.id}
           href={`https://getgems.io/collection/${collection.address}`} target="_blank" rel="noreferrer">
-          <img className="marketRowArt" src={`/brand/collections/${item.id}.png`} alt="" width="96" height="96"/>
+          <img className="marketRowArt" src={item.id === 'items' ? '/game/items/ring-wit-3.webp' : `/brand/collections/${item.id}.png`} alt="" width="96" height="96"/>
           <span><b>{item.name}</b><small>{item.description}</small></span>
           <span className="marketPriceValues">
             {hasPrice ? <>

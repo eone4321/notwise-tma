@@ -3,6 +3,7 @@ export const config = { runtime: 'edge' };
 const COLLECTIONS = [
   { id: 'genesis', address: 'EQA5HalN4asamSjufbmXF_Wr3jyapCEYcYN0igfBDe5Nmbm7' },
   { id: 'eggs', address: 'EQBFELwdddZzNFXhiZxE1i_4700KG7XmiDTLYzO7UJI-YuRk' },
+  { id: 'items', address: 'EQBfQA3gHs5It6jeb6Wo82q_Djei1w1SWb02Vlne-Kc5MSn6' },
   { id: 'skins', address: 'EQC_CN9MU1igRcqmuWeUxxyB6_Uvr4JrnyUCaLe609qQNrRA' },
 ];
 

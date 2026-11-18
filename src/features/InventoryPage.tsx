@@ -1,7 +1,6 @@
 import { Link, useLocation } from 'react-router';
 import { GameArt } from '../ui/GameArt';
 import { chanceLabel } from '../domain/mechanics';
-import market from './market-collections.json';
 import { dropsFor, itemNames } from './inventory';
 import { OwlPrices } from './OwlPrices';
 
@@ -81,6 +80,11 @@ const itemPath = (file: string) => '/game/items/' + file;
 type CatalogItem = { name: string; file: string; effect: string; source: string };
 type Category = { title: string; icon: string; summary: string; items: CatalogItem[] };
 
+const floppySpecs = [
+  ['100k', '100 000', '200 000'], ['1m', '1 млн', '2 млн'],
+  ['10m', '10 млн', '20 млн'], ['100m', '100 млн', '200 млн'], ['1b', '1 млрд', '2 млрд'],
+] as const;
+
 const categories: Record<string, Category> = {
   care: {
     title: 'Еда и лекарства', icon: 'croissant.webp', summary: 'Сытость, здоровье и снятие штрафа',
@@ -91,7 +95,8 @@ const categories: Record<string, Category> = {
       })),
       { name: 'Груша', file: 'pear.webp', effect: 'Восстанавливает сытость. Может быть любимой едой совы.', source: 'Еда' },
       { name: 'Круассан', file: 'croissant.webp', effect: 'Восстанавливает сытость. Может быть любимой едой совы.', source: 'Обычная Лавка · монеты' },
-      { name: 'Пластырь и аптечка', file: 'first-aid-kit.webp', effect: 'Восстанавливают здоровье. Сколько HP даёт предмет, указано в его карточке.', source: 'Добыча из яиц' },
+      { name: 'Пластырь', file: 'patch.webp', effect: 'Восстанавливает здоровье.', source: 'Лечение · яйцо' },
+      { name: 'Аптечка', file: 'first-aid-kit.webp', effect: 'Восстанавливает здоровье.', source: 'Лечение · яйцо' },
       { name: 'Таблетка восстановления', file: 'recovery-pill.webp', effect: 'Снимает штраф голода. Повторное применение через 7 дней.', source: 'Расходник' },
     ],
   },
@@ -99,26 +104,44 @@ const categories: Record<string, Category> = {
     title: 'Кольца и артефакты', icon: 'ring-wit-3.webp', summary: 'Атрибуты и бонус к $NOT',
     items: [
       { name: 'Кольца', file: 'ring-wit-3.webp', effect: 'Три слота. Есть кольца силы, ловкости и мудрости. У каждого вида три ступени. Точный бонус виден в карточке кольца.', source: 'Инвентарь и рынок NFT' },
-      { name: 'Артефакты', file: 'book.webp', effect: 'Один слот. Книга, кристалл и другие артефакты могут давать очки фарма. Каждое очко прибавляет 5 п. п. к бонусу выпадения $NOT.', source: 'Редкая добыча из яиц' },
+      ...([
+        ['Книга', 'book.webp'], ['Монтмориллонит', 'montmorillonite.webp'],
+        ['Чёрные часы', 'big-black-clock.webp'], ['Рогач', 'rogach.webp'],
+      ] as const).map(([name, file]) => ({
+        name, file, effect: 'Занимает слот артефакта. Бонусы указаны на карточке предмета в игре.', source: 'Артефакт',
+      })),
       { name: 'Заточка', file: 'enchanter.webp', effect: 'Есть свитки для скинов и для колец, а также универсальная заточка. Каждый +1 даёт 5 п. п. к бонусу фарма.', source: 'Премиальная Лавка и крафт' },
-      { name: 'Жетоны скинов', file: '26.png', effect: 'Открой жетон, чтобы получить скин. Обычная деталь даёт +5 п. п. к бонусу фарма, золотое тело +15, цепь NOT +10.', source: 'Редкая добыча из яиц' },
+      ...([
+        ['Обычный жетон', 'skin-jetton.webp'], ['Эпический жетон', 'skin-jetton-epic.webp'],
+        ['Золотой жетон', 'skin-jetton-golden.webp'],
+      ] as const).map(([name, file]) => ({
+        name, file, effect: 'Открой жетон, чтобы получить скин. Обычная деталь даёт +5 п. п. к бонусу фарма, золотое тело +15, цепь NOT +10.', source: 'Жетон скина',
+      })),
     ],
   },
   craft: {
     title: 'Крафт и хранение XP', icon: 'eggshell-shards-icon.webp', summary: 'Скорлупа, дискеты опыта и колбы SP',
     items: [
       { name: 'Осколки скорлупы', file: 'eggshell-shards-icon.webp', effect: 'Из осколков можно собрать яйца и другие награды. Цена в осколках зависит от рецепта.', source: 'Яйца и капсулы · рецепты в инвентаре' },
-      { name: 'Дискеты опыта', file: 'floppy-empty.webp', effect: 'Вместимость: 100 тыс., 1 млн, 10 млн, 100 млн и 1 млрд XP. Для записи нужно вдвое больше XP, чем вмещает дискета.', source: 'Хранение и перенос опыта' },
+      ...floppySpecs.map(([id, contents, cost]) => ({
+        name: 'Дискета ' + contents + ' XP', file: 'floppy-' + id + '.webp',
+        effect: `Для записи нужно ${cost} XP. При чтении дискета даёт ${contents} XP.`, source: 'Перенос опыта',
+      })),
       { name: 'Зажигалка сквада', file: 'lighter.webp', effect: 'Один заряд позволяет благословить сквад в ежедневном ритуале. Когда ритуалы выполнят 50% сквада, участники получают бонус на 24 часа.', source: 'Добыча из яиц' },
-      { name: 'Колбы SP', file: 'flask-full.webp', effect: 'Хранят очки навыков. Ёмкость и уровень для покупки указаны в Лавке.', source: 'Обычная Лавка · монеты' },
+      { name: 'Пустая колба SP', file: 'flask-empty.webp', effect: 'Наполни колбу очками навыков. Ёмкость и уровень для покупки указаны в Лавке.', source: 'Обычная Лавка · монеты' },
+      { name: 'Колба SP наполовину', file: 'flask-half.webp', effect: 'Содержит часть очков от полной ёмкости. Точное количество смотри на карточке.', source: 'Хранение очков навыков' },
+      { name: 'Полная колба SP', file: 'flask-full.webp', effect: 'Используй, чтобы получить записанные очки навыков.', source: 'Хранение очков навыков' },
+      { name: 'Ваучер 10 000 $NOT', file: 'voucher-10k.webp', effect: 'Номинал — 10 000 $NOT.', source: 'Ваучер' },
+      { name: 'Ваучер 100 000 $NOT', file: 'voucher-100k.webp', effect: 'Номинал — 100 000 $NOT.', source: 'Ваучер' },
     ],
   },
   decor: {
     title: 'Оформление', icon: 'birch.webp', summary: 'Гирлянды, деревья и фон совы',
     items: [
-      { name: 'Гирлянды', file: '12.png', effect: 'Цветная и белая версии. Украшают дерево совы.', source: 'Добыча из яиц' },
+      { name: 'Цветная гирлянда', file: 'string-light-color.webp', effect: 'Включает разноцветные огни на дереве совы.', source: 'Добыча из яиц' },
+      { name: 'Белая гирлянда', file: 'string-lights.webp', effect: 'Включает белые огни на дереве совы.', source: 'Добыча из яиц' },
       { name: 'Берёзовая кора', file: 'birch.webp', effect: 'Заменяет внешний вид дерева на домашнем экране.', source: 'Добыча из яиц' },
-      { name: 'Фоны', file: 'new-york.webp', effect: 'Меняют пейзаж вокруг совы, например на Нью-Йорк.', source: 'Инвентарь' },
+      { name: 'Нью-Йорк', file: 'new-york.webp', effect: 'Городской фон с дневным и ночным освещением. В клиенте также предусмотрены стандартный лес и фон Дубая.', source: 'Фон для совы' },
     ],
   },
 };
@@ -127,24 +150,30 @@ export function InventoryPage() {
   const { pathname } = useLocation();
   const slug = pathname.split('/')[2];
   const category = Object.hasOwn(categories, slug) ? categories[slug] : undefined;
+  const selectedFile = pathname.split('/')[3];
+  const selected = category?.items.find(item => item.file.split('.')[0] === selectedFile);
+  if (selected) return <section className="card">
+    <div className="mediaHeading"><GameArt path={itemPath(selected.file)} size={64}/>
+      <div><h2>{selected.name}</h2><p>{selected.source}</p></div>
+    </div>
+    <p>{selected.effect}</p>
+    {selected.file === 'ring-wit-3.webp' && <div className="ringVariants">
+      {[['str', 'Сила'], ['ag', 'Ловкость'], ['wit', 'Мудрость']].map(([key, name]) => <div key={key}>
+        <small>{name}</small>
+        <div>{[1, 2, 3].map(tier => <GameArt key={tier} path={itemPath(`ring-${key}-${tier}.webp`)} size={38}/>)}</div>
+      </div>)}
+    </div>}
+  </section>;
   return category ? <>
     <h2 className="subTitle">{category.title}</h2>
-    <section className="card">
-      {category.items.map(item => <details className="mediaDetails" key={item.name}>
-        <summary><GameArt path={itemPath(item.file)} size={40}/><span><strong>{item.name}</strong><small>{item.source}</small></span></summary>
-        <p>{item.effect}</p>
-        {item.name === 'Кольца' && <div className="ringVariants">
-          {[['str', 'Сила'], ['ag', 'Ловкость'], ['wit', 'Мудрость']].map(([key, name]) => <div key={key}>
-            <small>{name}</small>
-            <div>{[1, 2, 3].map(tier => <GameArt key={tier} path={itemPath(`ring-${key}-${tier}.webp`)} size={38}/>)}</div>
-          </div>)}
-        </div>}
-      </details>)}
-    </section>
+    <div className="catalogGrid inventoryGrid">
+      {category.items.map(item => <Link className="catalogTile" to={`/assets/${slug}/${item.file.split('.')[0]}`} key={item.file}>
+        <GameArt path={itemPath(item.file)} size={56}/><strong>{item.name}</strong>
+      </Link>)}
+    </div>
     {slug === 'gear' && <>
       <EnchantGuide/>
-      <a className="textLink" href={'https://getgems.io/collection/' + market.find(item => item.id === 'items')?.address}
-        target="_blank" rel="noreferrer">Цены на NFT-предметы в Getgems</a>
+      <OwlPrices only="items"/>
     </>}
     <p className="caption">Ассортимент, цены и часть параметров приходят с сервера игры.</p>
   </> : <>

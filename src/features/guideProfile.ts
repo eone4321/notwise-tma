@@ -3,6 +3,7 @@ import { telegramPopup } from '../telegram/client';
 export type GuideMember = { id: string; name: string; joinedAt: number; seenAt: number };
 export type GuideProfile = {
   gameLink: string | null;
+  gameLinkVerified: boolean;
   gameEntry: string | null;
   invited: Pick<GuideMember, 'name' | 'joinedAt'>[];
   invitedCount: number;

@@ -7,15 +7,34 @@ function timeLabel(minutes: number) {
   return [hours && `${hours} ч`, rest && `${rest} мин`].filter(Boolean).join(' ') || '0 мин';
 }
 
+const decimal = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
+
+// The game rounds the GRAM quote up to hundredths. A displayed price gives
+// a range of conversion rates, not a single exact rate.
+function gramRange(stars: number, sampleStars: number, sampleCents: number) {
+  const minimum = Math.floor(stars * (sampleCents - 1) / sampleStars) + 1;
+  const maximum = Math.ceil(stars * sampleCents / sampleStars);
+  return (minimum === maximum ? decimal.format(minimum / 100) :
+    decimal.format(minimum / 100) + '–' + decimal.format(maximum / 100)) + ' GRAM';
+}
+
 export function CapsulePrices({ tier }: { tier: Tier }) {
   const totalMinutes = duration[tier] / 60_000;
   const hours = totalMinutes / 60;
   const [hour, setHour] = useState(0);
   const [remaining, setRemaining] = useState('');
+  const [quoteStars, setQuoteStars] = useState('');
+  const [quoteGram, setQuoteGram] = useState('');
+  const sampleStars = Number(quoteStars);
+  const sampleCents = /^\d{1,5}(?:[,.]\d{1,2})?$/.test(quoteGram)
+    ? Math.round(Number(quoteGram.replace(',', '.')) * 100) : 0;
+  const hasSample = Number.isInteger(sampleStars) && sampleStars > 0 && sampleStars <= 2500 && sampleCents > 0;
   const exactMinutes = Number(remaining);
   const valid = remaining !== '' && Number.isInteger(exactMinutes) && exactMinutes >= 0 && exactMinutes <= totalMinutes;
-  const priceAt = (minutes: number) => minutes === 0 ? 'Бесплатно' :
-    speedupPrice(tier, duration[tier] - minutes * 60_000).toLocaleString('ru-RU') + ' ⭐';
+  const starsAt = (minutes: number) => minutes === 0 ? 0 :
+    speedupPrice(tier, duration[tier] - minutes * 60_000);
+  const priceAt = (minutes: number) => minutes === 0 ? 'Бесплатно' : starsAt(minutes).toLocaleString('ru-RU') + ' ⭐';
+  const estimateAt = (minutes: number) => minutes === 0 ? 'Бесплатно' : gramRange(starsAt(minutes), sampleStars, sampleCents);
   const amounts = Array.from({ length: 13 }, (_, index) => hour * 60 + index * 5);
 
   return <section className="card capsulePricing">
@@ -25,23 +44,34 @@ export function CapsulePrices({ tier }: { tier: Tier }) {
         <input type="number" min="0" max={totalMinutes} step="1" inputMode="numeric" placeholder="Например, 17" value={remaining}
           onChange={event => setRemaining(event.target.value)}/>
       </label>
-      {valid && <p role="status" className="priceResult">{timeLabel(exactMinutes)} осталось <strong>{priceAt(exactMinutes)}</strong></p>}
+      {valid && <p role="status" className="priceResult">{timeLabel(exactMinutes)} осталось <strong>{priceAt(exactMinutes)}{hasSample && exactMinutes > 0 && <> · {estimateAt(exactMinutes)}</>}</strong></p>}
       {remaining && !valid && <p role="status" className="caption">Введи целое число от 0 до {totalMinutes}.</p>}
       <div className="capsuleGram">
         <h3><img src="/brand/tokens/gram.png" width="18" height="18" alt=""/>Оплата в GRAM</h3>
-        <p>{tier === 'dark' && <>При полных 4 ч зафиксирована цена <strong>1,4 GRAM</strong>. </>}Текущую сумму в GRAM показывает окно ускорения в игре.</p>
+        <p>Текущую цену показывает игра. Введи обе цены из окна ускорения, чтобы оценить стоимость для других значений таймера.</p>
+        <details>
+          <summary>Рассчитать по цене из игры</summary>
+          <div className="quoteInputs">
+            <label className="field">Stars<input inputMode="numeric" value={quoteStars}
+              maxLength={4} placeholder="100" onChange={event => setQuoteStars(event.target.value)}/></label>
+            <label className="field">GRAM<input inputMode="decimal" value={quoteGram}
+              maxLength={8} placeholder="1,40" onChange={event => setQuoteGram(event.target.value)}/></label>
+          </div>
+          {hasSample ? <p className="caption">Оценка учитывает округление до сотых. При изменении игрового курса введи новые цены.</p> :
+            <p className="caption">Скопируй цены из одного окна при одном и том же таймере.</p>}
+        </details>
       </div>
       <details>
-        <summary>Цены в Stars с шагом 5 минут</summary>
+        <summary>Цены с шагом 5 минут</summary>
         <label className="field">Оставшееся время
           <select value={hour} onChange={event => setHour(Number(event.target.value))}>
             {Array.from({ length: hours }, (_, value) => <option value={value} key={value}>{timeLabel(value * 60)} – {timeLabel((value + 1) * 60)}</option>)}
           </select>
         </label>
         <table className="priceTable">
-          <thead><tr><th scope="col">Осталось</th><th scope="col">Цена</th></tr></thead>
+          <thead><tr><th scope="col">Осталось</th><th scope="col">Stars</th>{hasSample && <th scope="col">GRAM · оценка</th>}</tr></thead>
           <tbody>{amounts.map(minutes => <tr key={minutes}>
-            <th scope="row">{timeLabel(minutes)}</th><td>{priceAt(minutes)}</td>
+            <th scope="row">{timeLabel(minutes)}</th><td>{priceAt(minutes)}</td>{hasSample && <td>{estimateAt(minutes)}</td>}
           </tr>)}</tbody>
         </table>
       </details>
