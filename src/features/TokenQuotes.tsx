@@ -97,7 +97,14 @@ function QuoteList({ quotes }: { quotes: ReturnType<typeof useQuotes> }) {
         <li key={symbol}>
           <img src={artSrc(tokenIcon(symbol))} alt="" width="30" height="30"/>
           <div className="tokenRateName"><b>{symbol}</b><small>{name}</small></div>
-          <strong>{usable.find(row => row.symbol === symbol)?.displayPrice ?? '—'}</strong>
+          <strong>{(() => {
+            const quote = usable.find(row => row.symbol === symbol);
+            if (!quote) return '—';
+            const price = Number(quote.priceUsd);
+            return price < 0.001
+              ? <span title={quote.displayPrice}>{(price * 1000).toLocaleString('ru-RU', { maximumSignificantDigits: 3 })} <small>$ / 1 000</small></span>
+              : quote.displayPrice;
+          })()}</strong>
         </li>
       ))}
     </ul>

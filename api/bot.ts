@@ -2,11 +2,15 @@ export const config = {
   runtime: 'edge',
 };
 
-const BOT_TOKEN = '9241156948:AAHDZUWr0tzimNPMOOYOoqJ0YOdE0cLPJCQ';
+const BOT_TOKEN = process.env.BOT_TOKEN || '';
 const TMA_URL = 'https://notwise-tma.vercel.app';
 const BANNER_URL = `${TMA_URL}/banner.png`;
 
 async function callTelegram(method: string, body: Record<string, unknown>) {
+  if (!BOT_TOKEN) {
+    console.error('BOT_TOKEN environment variable is not configured');
+    return null;
+  }
   try {
     const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
       method: 'POST',

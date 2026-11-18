@@ -18,8 +18,8 @@ export function guideShareUrl(referralCode?: string) {
   return referralCode ? guideUrl.split('?')[0] + '?startapp=' + referralCode : guideUrl;
 }
 
-export function shareGuide(url: string) {
-  const shareUrl = 'https://t.me/share/url?' + new URLSearchParams({ url, text: 'Гайд по NOT Wise' });
+export function shareGuide(url: string, text = 'Гайд по NOT Wise') {
+  const shareUrl = 'https://t.me/share/url?' + new URLSearchParams({ url, text });
   const telegram = telegramPopup();
   if (telegram?.initData && telegram.openTelegramLink) telegram.openTelegramLink(shareUrl);
   else window.open(shareUrl, '_blank', 'noopener,noreferrer');

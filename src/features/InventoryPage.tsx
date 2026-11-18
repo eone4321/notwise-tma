@@ -30,17 +30,19 @@ export function OwlPage() {
   return <>
     {!egg && !care && <>
       <p className="intro">В Лавке три предложения: одно за монеты и два за Stars. Каталог дропа включает также яйца, которые дают за сезон и другие игровые источники.</p>
+      <section className="card">
+        <h2>3 предложения в Лавке</h2>
+        <div className="mediaRow"><GameArt path={itemPath('egg.webp')} size={35}/><span>Загадочное яйцо</span><strong>{shopPrice('egg')}</strong></div>
+        <div className="mediaRow"><GameArt path={itemPath('egg-stars.webp')} size={35}/><span>Загадочное яйцо за Stars</span><strong>{shopPrice('egg-stars')}</strong></div>
+        <div className="mediaRow"><GameArt path={itemPath('golden-egg.webp')} size={35}/><span>Золотое яйцо за Stars</span><strong>{shopPrice('golden-egg')}</strong></div>
+      </section>
+      <h2 className="subTitle">Что выпадает из яиц</h2>
       <div className="eggPicker" aria-label="Виды яиц">
         {eggs.map(item => <Link to={'/owl/' + item.slug} className="catalogTile" key={item.id}>
           <GameArt path={itemPath(item.id === 56 ? 'egg.webp' : item.id + '.png')} size={56}/>
           <strong>{item.name} яйцо</strong><small>{item.source}</small>
         </Link>)}
       </div>
-      <section className="card">
-        <h2>Яйца в Лавке</h2>
-        <div className="mediaRow"><GameArt path={itemPath('egg.webp')} size={36}/><span>Загадочное</span><strong>{shopPrice('egg')} / {shopPrice('egg-stars')}</strong></div>
-        <div className="mediaRow"><GameArt path={itemPath('golden-egg.webp')} size={36}/><span>Золотое яйцо</span><strong>{shopPrice('golden-egg')}</strong></div>
-      </section>
       <OwlPrices only="eggs"/>
       <section className="card">
         <div className="mediaHeading"><GameArt path={itemPath('referral-egg.webp')} size={44}/>

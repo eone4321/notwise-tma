@@ -5,6 +5,17 @@ import { shopPrice } from './shop';
 
 export function SquadPage() {
   const { pathname } = useLocation();
+  if (pathname === '/squads/war') return <section className="card squadIntro">
+    <img width="400" height="150" src={artSrc('/game/war/siege-header.webp')} alt=""/>
+    <h2>Как участвовать в осаде</h2>
+    <ol className="referralSteps">
+      <li>Вступи в сквад. С 4-го уровня откроется карта осады.</li>
+      <li>Выбери территорию и атакуй в текущем раунде. В сутки три раунда по 8 часов.</li>
+      <li>После раунда награду получает сквад, который удержал территорию.</li>
+      <li>В день празднования забери свою долю за раунды, в которых ты атаковал. Усиление действует 24 часа после получения.</li>
+    </ol>
+    <Link to="/squads/shop" className="textLink">Магазин за серебро сквада</Link>
+  </section>;
   if (pathname === '/squads/shop') return <section className="card">
     <div className="mediaHeading"><span className="silverCoin"><GameArt path="/game/items/wise-coin.webp" size={40}/></span>
       <div><h2>Магазин сквада</h2><p>С 3-го уровня совы. Оплата серебром сквада.</p></div>
@@ -19,6 +30,7 @@ export function SquadPage() {
       <img src={artSrc('/game/war/siege-header.webp')} alt="" />
       <h2>Осада и территории</h2>
       <p>Сквады доступны с 3-го уровня, война — с 4-го. Один раунд длится 8 часов. В конце раунда награду получает сквад, который удерживает территорию.</p>
+      <Link className="textLink" to="/squads/war">Как участвовать и забрать награду</Link>
     </section>
     <section className="card">
       <Link className="sectionLink textLink" to="/squads/shop"><span className="silverCoin"><GameArt path="/game/items/wise-coin.webp" size={26}/></span>Магазин сквада</Link>

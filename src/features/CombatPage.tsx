@@ -28,7 +28,7 @@ const branchName = (branch: string) => branches.find(([id]) => id === branch)?.[
 function unlockCondition(skill: Skill) {
   const previous = skills.find(item => item.branch === skill.branch && item.tier === skill.tier - 1);
   return previous
-    ? `После «${skillCopy[previous.id - 1][0]}» и ещё 1 очко в «${branchName(skill.branch)}»`
+    ? `После «${skillCopy[previous.id - 1][0]}» · ещё 1 очко ветки «${branchName(skill.branch)}»`
     : `Со 2-го уровня совы: вложи 1 очко в «${branchName(skill.branch)}»`;
 }
 const skillArt = (id: number) => '/game/skills/' + id + '.png';
@@ -50,7 +50,7 @@ export function CombatPage() {
       branch ? <>
         <h2 className="subTitle">{branch[1]}</h2>
         <section className="card">
-          <p className="caption">Ветка доступна со 2-го уровня совы. Изучение каждого навыка стоит 1 очко этой ветки.</p>
+          <p className="caption">С уровня 2 открой дерево навыков. В характеристиках вложи свободное очко атрибута в эту ветку, затем изучи навык за полученное очко ветки. SP из Додзе нужны для улучшений.</p>
           {skills.filter(item => item.branch === branch[0]).sort((a, b) => a.tier - b.tier).map(item =>
             <Link to={'/combat/skills/' + branch[0] + '/' + item.id} className="mediaRow skillRow" key={item.id}>
               <GameArt path={skillArt(item.id)} size={42}/>

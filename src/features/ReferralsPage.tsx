@@ -105,11 +105,11 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
         <h2>Приглашай друзей в Not Wise</h2>
         <p>{profile?.gameLinkVerified
           ? 'Поделись персональной ссылкой. У приглашённого кнопка «Открыть игру» поведёт по твоей игровой рефке.'
-          : 'Сначала привяжи рефку из Not Wise. Тогда друзья, которым ты отправишь гайд, попадут в игру по твоему приглашению.'}</p>
+          : 'Пригласи друга в игру: он получит яйцо и 5 000 монет, а ты сможешь получать игровые награды за его прогресс.'}</p>
       </div></div>
       {profile?.gameLinkVerified && <><div className="actionPair">
         <button className="secondary" onClick={copy}>{copyStatus === 'Ссылка скопирована' ? '✓ Скопировано' : 'Копировать'}</button>
-        <button className="primary" onClick={() => shareGuide(url)}>Пригласить друга</button>
+        <button className="primary" onClick={() => shareGuide(url, 'Приглашаю в NOT Wise! Открой гайд и нажми «Открыть игру», чтобы вступить по моему приглашению.')}>Пригласить друга</button>
       </div>
       <p role="status" className="copyFeedback">{copyStatus}</p>
       <label className="field">Ссылка на гайд<input ref={linkInput} type="url" readOnly value={url} onFocus={event => event.currentTarget.select()}/></label></>}
@@ -119,7 +119,7 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
     {profile && <>
       <section className="card">
         <h2>{profile.gameLinkVerified ? 'Твоя рефка Not Wise' : 'Привяжи рефку Not Wise'}</h2>
-        <p>В игре открой «Друзья» → «Копировать ссылку» и вставь её сюда. Тогда у приглашённых кнопка «Открыть игру» будет вести по твоей ссылке.</p>
+        <p>Открой «Друзья» в Not Wise, скопируй игровую ссылку и сохрани её здесь. После этого гайд соберёт персональное приглашение для отправки.</p>
         {!canEnterLink && <div className="actionPair referralGate">
           <a className="secondary" href="https://t.me/cryptoeone">Подписаться на канал</a>
           <button className="secondary" disabled={checking} onClick={checkSubscription}>
@@ -132,10 +132,10 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
           <button className="secondary" disabled={saving || (input === null && (!profile.gameLink || profile.gameLinkVerified))}>{saving ? 'Сохраняем…' : 'Сохранить'}</button>
         </form>}
         {linkMessage && <p className="referralStatus" role="status">{linkMessage}</p>}
-        <a className="textLink" href="https://t.me/notwise_bot/thegame">Друзья и награды в игре</a>
+        <a className="textLink" href="https://t.me/notwise_bot/thegame">Открыть Not Wise и взять рефку</a>
       </section>
       <section className="card">
-        <h2>Перешли по приглашению · {profile.invitedCount}</h2>
+        <h2>Открыли гайд по ссылке · {profile.invitedCount}</h2>
         {invited.length ? <ul className="compactList">{invited.map((friend, index) =>
           <li className="mediaRow" key={index}><strong>{friend.name}</strong><small>{date.format(friend.joinedAt)}</small></li>)}</ul>
           : <p>Здесь появятся друзья, которые впервые открыли гайд по твоей ссылке.</p>}

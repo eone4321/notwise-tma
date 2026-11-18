@@ -487,3 +487,8 @@ details > summary:active { color: var(--lavender); }
   background-size: 100% 180px, auto;
   background-repeat: no-repeat;
 }
+html { scrollbar-gutter: stable; }
+.tokenRatesList strong { min-width: 96px; }
+.tokenRatesList strong small { font-size: 10px; color: var(--muted); font-weight: 500; }
+.secretRow { grid-template-columns: 34px minmax(0,1fr) 44px; }
+.secretRow > .gameArt { max-width: 34px; max-height: 34px; }

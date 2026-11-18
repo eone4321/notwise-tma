@@ -27,11 +27,6 @@ export async function warmArt(onProgress: (loaded: number, total: number) => voi
       }
     }
   };
-  let timeout = 0;
   const font = document.fonts.load('34px "Not Wise Frens"', '\ue905').catch(() => []);
-  await Promise.race([
-    Promise.all([font, ...Array.from({ length: 12 }, load)]),
-    new Promise<void>(resolve => { timeout = window.setTimeout(resolve, 12000); }),
-  ]);
-  window.clearTimeout(timeout);
+  await Promise.all([font, ...Array.from({ length: 12 }, load)]);
 }
