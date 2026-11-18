@@ -29,11 +29,42 @@ function useQuotes() {
     const controller = new AbortController();
     async function load() {
       try {
-        const response = await fetch('/api/market/tokens', { signal: controller.signal });
-        if (!response.ok) throw new Error('Quotes unavailable');
-        const data = await response.json();
-        if (!Array.isArray(data.items)) throw new Error('Invalid quotes');
-        setRows(data.items);
+        let items: Quote[] = [];
+        try {
+          const response = await fetch('/api/market/tokens', { signal: controller.signal });
+          if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data.items)) items = data.items;
+          }
+        } catch {
+          /* fallback to TonAPI directly */
+        }
+
+        if (items.length === 0) {
+          const addressList = 'ton,EQAvlWFDxGF2lXm67y4yzC17wYKD9A0guwPkMs1gOsM__NOT,EQAu7qxfVgMg0tpnosBpARYOG--W1EUuX_5H_vOQtTVuHnrn,EQB2Vubu0fyGCvhUM88kxfMVFJ8Nr9QuqH40mG4sKbhg_TNT,EQA-uwAf8ED_aJGX2BJve4_EaquHgFiQyUKopQjucLyY_PEW';
+          const r = await fetch(`https://tonapi.io/v2/rates?tokens=${addressList}&currencies=usd`, { signal: controller.signal });
+          if (r.ok) {
+            const d = await r.json();
+            const rates = d?.rates || {};
+            const map: Record<string, string> = {
+              GRAM: 'TON',
+              NOT: 'EQAvlWFDxGF2lXm67y4yzC17wYKD9A0guwPkMs1gOsM__NOT',
+              GRC: 'EQAu7qxfVgMg0tpnosBpARYOG--W1EUuX_5H_vOQtTVuHnrn',
+              TNT: 'EQB2Vubu0fyGCvhUM88kxfMVFJ8Nr9QuqH40mG4sKbhg_TNT',
+              PEW: 'EQA-uwAf8ED_aJGX2BJve4_EaquHgFiQyUKopQjucLyY_PEW',
+            };
+            items = Object.entries(map).map(([symbol, addr]) => {
+              const price = rates[addr]?.prices?.USD;
+              return {
+                symbol,
+                priceUsd: typeof price === 'number' && price > 0 ? String(price) : null,
+                fetchedAt: new Date().toISOString(),
+                status: price ? 'fresh' : 'unavailable',
+              };
+            });
+          }
+        }
+        setRows(items);
       } catch {
         if (!controller.signal.aborted) setRows([]);
       } finally {
