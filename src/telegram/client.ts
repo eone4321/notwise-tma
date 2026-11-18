@@ -1,4 +1,4 @@
-import { init, miniApp, viewport, backButton, hapticFeedback, invoice } from '@telegram-apps/sdk';
+import { init, miniApp, viewport, backButton, hapticFeedback, invoice, swipeBehavior } from '@telegram-apps/sdk';
 
 let booted = false;
 
@@ -19,7 +19,7 @@ export async function bootTelegram() {
   if (booted) return;
   booted = true;
 
-  // 1. Native Telegram WebApp SDK (direct expand + fullscreen + safe area tracking)
+  // 1. Native Telegram WebApp SDK (direct expand + fullscreen + safe area tracking + disable pull-to-close)
   const tg = window.Telegram?.WebApp;
   if (tg) {
     try {
@@ -27,6 +27,9 @@ export async function bootTelegram() {
       tg.expand();
       if (typeof tg.requestFullscreen === 'function') {
         tg.requestFullscreen();
+      }
+      if (typeof tg.disableVerticalSwipes === 'function') {
+        tg.disableVerticalSwipes();
       }
       applySafeArea();
       tg.onEvent?.('safeAreaChanged', applySafeArea);
@@ -47,6 +50,14 @@ export async function bootTelegram() {
       viewport.expand();
       if (viewport.requestFullscreen.isAvailable()) {
         await viewport.requestFullscreen();
+      }
+    }
+    if (swipeBehavior.isSupported()) {
+      if (swipeBehavior.mount.isAvailable()) {
+        swipeBehavior.mount();
+      }
+      if (swipeBehavior.disableVertical.isAvailable()) {
+        swipeBehavior.disableVertical();
       }
     }
     if (backButton.isSupported()) backButton.mount();

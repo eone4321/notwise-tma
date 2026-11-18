@@ -31,7 +31,13 @@
   color: var(--text);
   background: var(--background);
 }
-body { margin: 0; background: var(--background); }
+html, body {
+  margin: 0;
+  background: var(--background);
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
+}
 html { scroll-padding-bottom: calc(var(--dock-height) + 16px); }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
