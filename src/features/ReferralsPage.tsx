@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useRef, type FormEvent } from 'react';
 import { GameArt } from '../ui/GameArt';
 import { authData, guideShareUrl, profileRequest, shareGuide, type GuideProfile } from './guideProfile';
 
@@ -65,12 +65,25 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
     }
   }
 
+  const linkInput = useRef<HTMLInputElement>(null);
+  const [copyStatus, setCopyStatus] = useState('');
   async function copy() {
+    setCopyStatus('Копируем…');
     try {
       await navigator.clipboard.writeText(url);
-      setMessage('Ссылка на гайд скопирована.');
+      setCopyStatus('Ссылка скопирована');
+      return;
     } catch {
-      setMessage('Выдели и скопируй ссылку из поля ниже.');
+      linkInput.current?.focus();
+      linkInput.current?.select();
+      linkInput.current?.setSelectionRange(0, url.length);
+      try {
+        if (document.execCommand('copy')) {
+          setCopyStatus('Ссылка скопирована');
+          return;
+        }
+      } catch { /* The selected input remains available for manual copying. */ }
+      setCopyStatus('Ссылка выделена. Нажми «Копировать» в меню выделения.');
     }
   }
 
@@ -93,10 +106,11 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
         <p>Отправь её другу. После первого входа в гайд через Telegram он появится в списке.</p>
       </div></div>
       <div className="actionPair">
-        <button className="secondary" onClick={copy}>Копировать</button>
+        <button className="secondary" onClick={copy}>{copyStatus === 'Ссылка скопирована' ? '✓ Скопировано' : 'Копировать'}</button>
         <button className="primary" onClick={() => shareGuide(url)}>Поделиться</button>
       </div>
-      <label className="field">Ссылка на гайд<input type="url" readOnly value={url} onFocus={event => event.currentTarget.select()}/></label>
+      <p role="status" className="copyFeedback">{copyStatus}</p>
+      <label className="field">Ссылка на гайд<input ref={linkInput} type="url" readOnly value={url} onFocus={event => event.currentTarget.select()}/></label>
       {!authData() && <p className="caption">Открой гайд в Telegram, чтобы получить персональную ссылку.</p>}
       {authData() && !profile && <p className="caption">{failed ? <>Профиль недоступен. <button className="inlineAction" onClick={onRetry}>Повторить</button></> : 'Загружаем персональную ссылку…'}</p>}
     </section>

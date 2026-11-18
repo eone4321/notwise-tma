@@ -34,21 +34,23 @@ export function CapsulePrices({ tier }: { tier: Tier }) {
   const starsAt = (minutes: number) => minutes === 0 ? 0 :
     speedupPrice(tier, duration[tier] - minutes * 60_000);
   const priceAt = (minutes: number) => minutes === 0 ? 'Бесплатно' : starsAt(minutes).toLocaleString('ru-RU') + ' ⭐';
-  const estimateAt = (minutes: number) => minutes === 0 ? 'Бесплатно' : gramRange(starsAt(minutes), sampleStars, sampleCents);
+  const baseGram = { dark: 1.4, silver: 7, gold: 35 }[tier];
+  const estimateAt = (minutes: number) => minutes === 0 ? 'Бесплатно' : hasSample
+    ? gramRange(starsAt(minutes), sampleStars, sampleCents)
+    : '≈ ' + decimal.format(Math.ceil(starsAt(minutes) * baseGram * 100 / starsAt(totalMinutes) - 1e-9) / 100) + ' GRAM';
   const amounts = Array.from({ length: 13 }, (_, index) => hour * 60 + index * 5);
 
   return <section className="card capsulePricing">
-    <details className="capsulePricingDetails">
-      <summary><strong>Сколько стоит открыть сейчас?</strong><small>Расчёт по времени, оставшемуся на таймере</small></summary>
+    <h2>Цена ускорения</h2>
       <label className="field">Минут осталось
         <input type="number" min="0" max={totalMinutes} step="1" inputMode="numeric" placeholder="Например, 17" value={remaining}
           onChange={event => setRemaining(event.target.value)}/>
       </label>
-      {valid && <p role="status" className="priceResult">{timeLabel(exactMinutes)} осталось <strong>{priceAt(exactMinutes)}{hasSample && exactMinutes > 0 && <> · {estimateAt(exactMinutes)}</>}</strong></p>}
+      {valid && <p role="status" className="priceResult">{timeLabel(exactMinutes)} осталось <strong>{priceAt(exactMinutes)}{exactMinutes > 0 && <> · {estimateAt(exactMinutes)}</>}</strong></p>}
       {remaining && !valid && <p role="status" className="caption">Введи целое число от 0 до {totalMinutes}.</p>}
       <div className="capsuleGram">
         <h3><img src="/brand/tokens/gram.png" width="18" height="18" alt=""/>Оплата в GRAM</h3>
-        <p>Текущую цену показывает игра. Введи обе цены из окна ускорения, чтобы оценить стоимость для других значений таймера.</p>
+        <p>GRAM — ориентир по данным игры. Точная цена зависит от текущего курса.</p>
         <details>
           <summary>Рассчитать по цене из игры</summary>
           <div className="quoteInputs">
@@ -69,12 +71,11 @@ export function CapsulePrices({ tier }: { tier: Tier }) {
           </select>
         </label>
         <table className="priceTable">
-          <thead><tr><th scope="col">Осталось</th><th scope="col">Stars</th>{hasSample && <th scope="col">GRAM · оценка</th>}</tr></thead>
+          <thead><tr><th scope="col">Осталось</th><th scope="col">Stars</th><th scope="col">GRAM · оценка</th></tr></thead>
           <tbody>{amounts.map(minutes => <tr key={minutes}>
-            <th scope="row">{timeLabel(minutes)}</th><td>{priceAt(minutes)}</td>{hasSample && <td>{estimateAt(minutes)}</td>}
+            <th scope="row">{timeLabel(minutes)}</th><td>{priceAt(minutes)}</td><td>{estimateAt(minutes)}</td>
           </tr>)}</tbody>
         </table>
       </details>
-    </details>
   </section>;
 }

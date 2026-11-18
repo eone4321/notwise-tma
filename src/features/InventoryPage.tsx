@@ -3,6 +3,8 @@ import { GameArt } from '../ui/GameArt';
 import { chanceLabel } from '../domain/mechanics';
 import { dropsFor, itemNames } from './inventory';
 import { OwlPrices } from './OwlPrices';
+import { shopPrice } from './shop';
+import shopItems from './shop-data.json';
 import skinParts from './skin-parts.json';
 
 const eggs = [
@@ -34,6 +36,11 @@ export function OwlPage() {
           <strong>{item.name} яйцо</strong><small>{item.source}</small>
         </Link>)}
       </div>
+      <section className="card">
+        <h2>Яйца в Лавке</h2>
+        <div className="mediaRow"><GameArt path={itemPath('egg.webp')} size={36}/><span>Загадочное</span><strong>{shopPrice('egg')} / {shopPrice('egg-stars')}</strong></div>
+        <div className="mediaRow"><GameArt path={itemPath('golden-egg.webp')} size={36}/><span>Золотое яйцо</span><strong>{shopPrice('golden-egg')}</strong></div>
+      </section>
       <OwlPrices only="eggs"/>
       <section className="card">
         <div className="mediaHeading"><GameArt path={itemPath('referral-egg.webp')} size={44}/>
@@ -49,6 +56,7 @@ export function OwlPage() {
         <div><h2>{egg.name} яйцо</h2><p>{egg.source}</p></div>
       </div>
       <p>{egg.details}</p>
+      {egg.id === 17 && <p><strong>Лавка: {shopPrice('egg')} или {shopPrice('egg-stars')}</strong></p>}
       <h3>Шанс за открытие</h3>
       <p className="caption">Шанс получить награду хотя бы раз. За открытие выпадает 1 предмет в 80% случаев, 2 — в 15%, 3 — в 5%.</p>
       <ul className="compactList lootList">
@@ -136,6 +144,7 @@ const categories: Record<string, Category> = {
     items: [
       { name: 'Холодильник XP', file: 'chiller.webp', effect: 'Открытая дверца замораживает опыт: капсулы продолжают давать монеты и лут, но XP не начисляется.', source: 'Управление опытом' },
       { name: 'Осколки скорлупы', file: 'eggshell-shards-icon.webp', effect: 'Из осколков можно собрать яйца и другие награды. Цена в осколках зависит от рецепта.', source: 'Яйца и капсулы · рецепты в инвентаре' },
+      { name: 'Пустая дискета XP', file: 'floppy-empty.webp', effect: 'Заготовка для записи опыта.', source: 'Лавка' },
       ...floppySpecs.map(([id, contents, cost]) => ({
         name: 'Дискета ' + contents + ' XP', file: 'floppy-' + id + '.webp',
         effect: `Для записи нужно ${cost} XP. Запись сбрасывает весь текущий опыт, SP и навыки, сова снова становится яйцом. При чтении дискета даёт ${contents} XP.`, source: 'Перенос опыта',
@@ -163,30 +172,27 @@ export function InventoryPage() {
   const { pathname } = useLocation();
   const slug = pathname.split('/')[2];
   const category = Object.hasOwn(categories, slug) ? categories[slug] : undefined;
-  const selectedFile = pathname.split('/')[3];
-  const selected = category?.items.find(item => item.file.split('.')[0] === selectedFile);
-  if (selected) return <section className="card">
-    <div className="mediaHeading"><GameArt path={itemPath(selected.file)} size={64}/>
-      <div><h2>{selected.name}</h2><p>{selected.source}</p></div>
-    </div>
-    <p>{selected.effect}</p>
-    {selected.file === 'chiller.webp' && <div className="mediaRow"><GameArt path={itemPath('chiller-open.webp')} size={48}/><span>Открытая дверца · опыт заморожен</span></div>}
-    {selected.file === 'ring-wit-3.webp' && <div className="ringVariants">
-      {[['str', 'Сила'], ['ag', 'Ловкость'], ['wit', 'Мудрость']].map(([key, name]) => <div key={key}>
-        <small>{name}</small>
-        <div>{['Дерево', 'Обсидиан', 'Золото'].map((material, index) => <span className="ringVariant" key={material}>
-          <GameArt path={itemPath(`ring-${key}-${index + 1}.webp`)} size={38}/><small>{material}</small>
-        </span>)}</div>
-      </div>)}
-    </div>}
-  </section>;
-  return category ? <>
-    <h2 className="subTitle">{category.title}</h2>
-    <div className="catalogGrid inventoryGrid">
-      {category.items.map(item => <Link className="catalogTile" to={`/assets/${slug}/${item.file.split('.')[0]}`} key={item.file}>
-        <GameArt path={itemPath(item.file)} size={56}/><strong>{item.name}</strong>
-      </Link>)}
-    </div>
+  const shopKey = (file: string) => ({
+    'rogach.webp': 'beetle', 'big-black-clock.webp': 'clock', 'flask-empty.webp': 'flask-sp',
+    'floppy-empty.webp': 'floppy-xp',
+  }[file] ?? file.split('.')[0]);
+  const renderCategory = (entry: Category) => <ul className="compactList">
+    {entry.items.flatMap(item => item.file === 'ring-wit-3.webp' ? shopItems
+      .filter(offer => offer.category === 'ring').map(offer => ({
+        name: offer.name_ru, file: offer.id + '.webp', effect: 'Повышает характеристику кольца. Можно заточить.', source: 'Лавка',
+      })) : [item]).map(item => <li className="mediaRow inventoryRow" key={item.file}>
+        <GameArt path={itemPath(item.file)} size={42}/>
+        <div><h3>{item.name}</h3><p>{item.effect}</p>
+          <small>{shopPrice(shopKey(item.file)) || item.source}</small></div>
+      </li>)}
+  </ul>;
+  return <>
+    {(category ? [[slug, category] as const] : Object.entries(categories)).map(([id, entry]) =>
+      <details className="card inventorySection" key={id} open={category !== undefined || undefined}>
+        <summary><GameArt path={itemPath(entry.icon)} size={34}/><strong>{entry.title}</strong></summary>
+        {renderCategory(entry)}
+        {id === 'gear' && !category && <Link className="textLink" to="/assets/gear">Заточка, скины и NFT</Link>}
+      </details>)}
     {slug === 'gear' && <>
       <EnchantGuide/>
       <section className="card">
@@ -203,18 +209,13 @@ export function InventoryPage() {
       </section>
       <OwlPrices only="items"/>
     </>}
-    <p className="caption">Ассортимент, цены и часть параметров приходят с сервера игры.</p>
+    <p className="caption">Цены приведены по данным Лавки из файла игры. В игре они могут измениться.</p>
     {slug === 'gear' && <section className="card">
       <details><summary>Как предмет становится NFT</summary>
         <p>При выпуске NFT предмет уходит из инвентаря и появляется в кошельке. Его можно продать или вернуть в игру. Покупка за Stars может закрыть выпуск на 21 день.</p>
       </details>
     </section>}
-  </> : <>
-    <p className="intro">Выбери категорию, чтобы узнать, что даёт предмет и где его взять.</p>
-    <div className="catalogGrid">{Object.entries(categories).map(([id, entry]) =>
-      <Link className="catalogTile" key={id} to={'/assets/' + id}>
-        <GameArt path={itemPath(entry.icon)} size={46}/><strong>{entry.title}</strong><small>{entry.summary}</small>
-      </Link>)}</div>
+
   </>;
 }
 

@@ -2,7 +2,9 @@ import paths from 'virtual:guide-art';
 
 const images = new Map<string, HTMLImageElement>();
 
-export async function warmArt() {
+export async function warmArt(onProgress: (loaded: number, total: number) => void) {
+  let loaded = 0;
+  onProgress(loaded, paths.length);
   let next = 0;
   const load = async () => {
     while (next < paths.length) {
@@ -11,10 +13,11 @@ export async function warmArt() {
       image.src = path;
       try {
         await image.decode();
-        // Keep frequently revisited assets decoded for the lifetime of the app.
-        if (/^\/(brand|game\/(items|skills|capsules))\//.test(path)) images.set(path, image);
+        images.set(path, image);
       } catch {
-        // An isolated asset failure should never block reading the guide.
+        // Continue if an individual asset is unavailable.
+      } finally {
+        onProgress(++loaded, paths.length);
       }
     }
   };
@@ -22,7 +25,7 @@ export async function warmArt() {
   const font = document.fonts.load('34px "Not Wise Frens"', '\ue905').catch(() => []);
   await Promise.race([
     Promise.all([font, ...Array.from({ length: 12 }, load)]),
-    new Promise<void>(resolve => { timeout = window.setTimeout(resolve, 4500); }),
+    new Promise<void>(resolve => { timeout = window.setTimeout(resolve, 12000); }),
   ]);
   window.clearTimeout(timeout);
 }

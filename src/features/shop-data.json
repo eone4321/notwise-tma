@@ -1,0 +1,248 @@
+[
+  {
+    "id": "plantain",
+    "name_ru": "Подорожник",
+    "category": "food",
+    "currency": "coins",
+    "price": 10
+  },
+  {
+    "id": "bee",
+    "name_ru": "Оса",
+    "category": "food",
+    "currency": "coins",
+    "price": 100
+  },
+  {
+    "id": "beetle",
+    "name_ru": "Жук-олень",
+    "category": "food",
+    "currency": "coins",
+    "price": 100
+  },
+  {
+    "id": "grasshopper",
+    "name_ru": "Кузнечик",
+    "category": "food",
+    "currency": "coins",
+    "price": 100
+  },
+  {
+    "id": "patch",
+    "name_ru": "Пластырь",
+    "category": "medicine",
+    "currency": "coins",
+    "price": 150
+  },
+  {
+    "id": "caterpillar",
+    "name_ru": "Гусеница",
+    "category": "food",
+    "currency": "coins",
+    "price": 200
+  },
+  {
+    "id": "mouse",
+    "name_ru": "Мышь",
+    "category": "food",
+    "currency": "coins",
+    "price": 200
+  },
+  {
+    "id": "croissant",
+    "name_ru": "Круассан",
+    "category": "food",
+    "currency": "coins",
+    "price": 400
+  },
+  {
+    "id": "pear",
+    "name_ru": "Груша",
+    "category": "food",
+    "currency": "coins",
+    "price": 400
+  },
+  {
+    "id": "first-aid-kit",
+    "name_ru": "Аптечка",
+    "category": "medicine",
+    "currency": "coins",
+    "price": 400
+  },
+  {
+    "id": "seba-cola",
+    "name_ru": "Себа-Кола",
+    "category": "buff",
+    "currency": "coins",
+    "price": 1500
+  },
+  {
+    "id": "lighter",
+    "name_ru": "Зажигалка",
+    "category": "squad_ritual",
+    "currency": "coins",
+    "price": 2000
+  },
+  {
+    "id": "ring-str-1",
+    "name_ru": "Деревянное кольцо силы",
+    "tier": 1,
+    "category": "ring",
+    "currency": "coins",
+    "price": 5000,
+    "stat": "strength"
+  },
+  {
+    "id": "ring-ag-1",
+    "name_ru": "Деревянное кольцо ловкости",
+    "tier": 1,
+    "category": "ring",
+    "currency": "coins",
+    "price": 5000,
+    "stat": "agility"
+  },
+  {
+    "id": "ring-wit-1",
+    "name_ru": "Деревянное кольцо мудрости",
+    "tier": 1,
+    "category": "ring",
+    "currency": "coins",
+    "price": 5000,
+    "stat": "wisdom"
+  },
+  {
+    "id": "egg",
+    "item_id": 17,
+    "name_ru": "Загадочное яйцо",
+    "category": "egg",
+    "currency": "coins",
+    "price": 9999
+  },
+  {
+    "id": "clock",
+    "name_ru": "Часы",
+    "category": "artifact",
+    "currency": "coins",
+    "price": 10000
+  },
+  {
+    "id": "book",
+    "name_ru": "Книга исследователей (The Story)",
+    "category": "artifact",
+    "currency": "coins",
+    "price": 20000
+  },
+  {
+    "id": "ring-str-2",
+    "name_ru": "Обсидиановое кольцо силы",
+    "tier": 2,
+    "category": "ring",
+    "currency": "coins",
+    "price": 30000,
+    "required_level": 10,
+    "stat": "strength"
+  },
+  {
+    "id": "ring-ag-2",
+    "name_ru": "Обсидиановое кольцо ловкости",
+    "tier": 2,
+    "category": "ring",
+    "currency": "coins",
+    "price": 30000,
+    "required_level": 10,
+    "stat": "agility"
+  },
+  {
+    "id": "ring-wit-2",
+    "name_ru": "Обсидиановое кольцо мудрости",
+    "tier": 2,
+    "category": "ring",
+    "currency": "coins",
+    "price": 30000,
+    "required_level": 10,
+    "stat": "wisdom"
+  },
+  {
+    "id": "chiller",
+    "name_ru": "Чиллер (Холодильник)",
+    "category": "artifact",
+    "currency": "coins",
+    "price": 100000,
+    "effect": "freezes_xp_gain"
+  },
+  {
+    "id": "ring-str-3",
+    "name_ru": "Золотое кольцо силы",
+    "tier": 3,
+    "category": "ring",
+    "currency": "coins",
+    "price": 150000,
+    "required_level": 20,
+    "stat": "strength"
+  },
+  {
+    "id": "ring-ag-3",
+    "name_ru": "Золотое кольцо ловкости",
+    "tier": 3,
+    "category": "ring",
+    "currency": "coins",
+    "price": 150000,
+    "required_level": 20,
+    "stat": "agility"
+  },
+  {
+    "id": "ring-wit-3",
+    "name_ru": "Золотое кольцо мудрости",
+    "tier": 3,
+    "category": "ring",
+    "currency": "coins",
+    "price": 150000,
+    "required_level": 20,
+    "stat": "wisdom"
+  },
+  {
+    "id": "mana-crystal",
+    "name_ru": "Кристалл маны",
+    "category": "artifact",
+    "currency": "coins",
+    "price": 999999,
+    "required_level": 10
+  },
+  {
+    "id": "egg-stars",
+    "name_ru": "Загадочное яйцо (Mystery)",
+    "category": "egg",
+    "currency": "stars",
+    "price": 100
+  },
+  {
+    "id": "recovery-pill",
+    "name_ru": "Таблетка восстановления",
+    "category": "medicine",
+    "currency": "stars",
+    "price": 300,
+    "cooldown_days": 7
+  },
+  {
+    "id": "golden-egg",
+    "item_id": 56,
+    "name_ru": "Золотое яйцо",
+    "category": "egg",
+    "currency": "stars",
+    "price": 500
+  },
+  {
+    "id": "flask-sp",
+    "name_ru": "Фласка навыков (SP Flask)",
+    "category": "artifact",
+    "currency": "stars",
+    "price": 500
+  },
+  {
+    "id": "floppy-xp",
+    "name_ru": "Дискета опыта (Floppy XP)",
+    "category": "artifact",
+    "currency": "stars",
+    "price": 500
+  }
+]

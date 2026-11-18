@@ -1,3 +1,4 @@
+import { SquadPage } from '../features/SquadPage';
 import { ReferralsPage } from '../features/ReferralsPage';
 import { SupportPage } from '../features/SupportPage';
 import { OwlPrices } from '../features/OwlPrices';
@@ -19,6 +20,7 @@ import { AdminPage } from '../features/AdminPage';
 import { authData, defaultGameLink, guideShareUrl, profileRequest, shareGuide, type GuideProfile } from '../features/guideProfile';
 
 const sections = [
+  ['Сквады и войны', '/squads'],
   ['Секреты', '/secrets'], ['Капсулы', '/capsules'], ['Яйца и совы', '/owl'],
   ['Коллекции', '/collections'], ['Бои и навыки', '/combat'], ['Предметы', '/assets'],
   ['Экосистема', '/ecosystem'], ['Пригласить друзей', '/referrals'],
@@ -30,7 +32,8 @@ function App() {
   const [hamster, setHamster] = useState(false);
   const [hamsterLocked, setHamsterLocked] = useState(false);
   const [coach, setCoach] = useState(() => localStorage.getItem('notwise.guide.dock.v1') !== '1');
-  const [joke, setJoke] = useState(sessionStorage.getItem('notwise.guide.secrets.v1') === '1');
+  const [joke, setJoke] = useState(localStorage.getItem('notwise.guide.secrets.v1') === '1' || sessionStorage.getItem('notwise.guide.secrets.v1') === '1');
+  const [showJoke, setShowJoke] = useState(false);
   const [popup, setPopup] = useState(false);
   const [profile, setProfile] = useState<GuideProfile | null>(null);
   const [profileFailed, setProfileFailed] = useState(false);
@@ -58,12 +61,16 @@ useEffect(() => {
   const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setHamster(false); };
   window.addEventListener('keydown', close);
   return () => window.removeEventListener('keydown', close);
-}, [hamster, hamsterLocked]);useEffect(()=>{telegramPopup()?.ready();const key='notwise.guide.startapp.v1';if(sessionStorage.getItem(key))return;const start=new URLSearchParams(location.search).get('startapp')??telegramPopup()?.initDataUnsafe?.start_param;const routes:Record<string,string>={capsules_gold:'/capsules/gold',eggs:'/owl',secrets:'/secrets',market:'/collections/market'};if(start&&Object.hasOwn(routes,start)){sessionStorage.setItem(key,'1');nav(routes[start],{replace:true})}},[nav]);const ask=()=>{lightHaptic();const tg=telegramPopup();if(tg?.showPopup){try { tg.showPopup({title:'Секреты Not Wise',message:'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты',buttons:[{id:'pay',text:'Заплатить',type:'default'},{id:'back',text:'Назад',type:'default'}]},()=>reveal()); return; } catch { /* Older Telegram clients use the local dialog. */ }}setPopup(true)};function reveal(){setPopup(false);setJoke(true);sessionStorage.setItem('notwise.guide.secrets.v1','1')}
+}, [hamster, hamsterLocked]);useEffect(()=>{telegramPopup()?.ready();const key='notwise.guide.startapp.v1';if(sessionStorage.getItem(key))return;const start=new URLSearchParams(location.search).get('startapp')??telegramPopup()?.initDataUnsafe?.start_param;const routes:Record<string,string>={capsules_gold:'/capsules/gold',eggs:'/owl',secrets:'/secrets',market:'/collections/market'};if(start&&Object.hasOwn(routes,start)){sessionStorage.setItem(key,'1');nav(routes[start],{replace:true})}},[nav]);const ask=()=>{lightHaptic();const tg=telegramPopup();if(tg?.showPopup){try { tg.showPopup({title:'Секреты Not Wise',message:'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты',buttons:[{id:'pay',text:'Заплатить',type:'default'},{id:'back',text:'Назад',type:'default'}]},()=>reveal()); return; } catch { /* Older Telegram clients use the local dialog. */ }}setPopup(true)};function reveal(){setPopup(false);setJoke(true);setShowJoke(true);localStorage.setItem('notwise.guide.secrets.v1','1')}
 return <div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach}><Link to="/" className="brand"><img src="/brand/notwise.svg" alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main key={loc.pathname} inert={hamster || coach}>{loc.pathname === '/' ? <Home profile={profile}/> : loc.pathname === '/admin' ? <AdminPage profile={profile}/> : <Page ask={ask} joke={joke} popup={popup} reveal={reveal}
   referrals={<ReferralsPage profile={profile} failed={profileFailed} onSave={setProfile} onRetry={() => {
     setProfileFailed(false);
     setProfileAttempt(value => value + 1);
-  }}/>}/>}</main>{coach && !hamster && <><div className="dockCoachTint" aria-hidden="true"/><DockCoach onClose={closeCoach}/></>}<Dock onGesture={coach ? closeCoach : undefined} hamster={hamster} locked={hamsterLocked} onHamster={() => {
+  }}/>}/>}</main>{coach && !hamster && <><div className="dockCoachTint" aria-hidden="true"/><DockCoach onClose={closeCoach}/></>}{showJoke && loc.pathname === '/secrets' && <aside className="card jokeToast" role="status">
+  <strong>Ладно, пошутили 😄 Секреты бесплатны.</strong>
+  <div><Link className="textLink" to="/support" onClick={() => setShowJoke(false)}>Поддержать проект</Link>
+  <button className="secondary" onClick={() => setShowJoke(false)}>К секретам</button></div>
+</aside>}<Dock onGesture={coach ? closeCoach : undefined} hamster={hamster} locked={hamsterLocked} onHamster={() => {
   if (hamsterLocked) return;
   if (hamster) {
     setHamster(false);
@@ -158,6 +165,7 @@ function Home({ profile }: { profile: GuideProfile | null }) {
   ['Коллекции', '/collections', '/game/albums/1.webp', 'Стикеры, альбомы и Getgems', '/game/stickers/1.webp'],
   ['Бои и навыки', '/combat', '/game/skills/1.png', 'Какие навыки выбрать и что качать?', '/game/skills/16.png'],
   ['Предметы', '/assets', '/game/items/ring-wit-3.webp', 'Что для чего нужно в инвентаре', '/game/items/book.webp'],
+  ['Сквады и войны', '/squads', '/game/items/lighter.webp', 'Ритуалы, осады и награды', '/game/war/siege-header.webp'],
   ['Экосистема', '/ecosystem', '/game/items/coins.webp', 'Токены, проекты и курсы', '/brand/tokens/gram.png'],
   ['Пригласить друзей', '/referrals', null, 'Твоя ссылка и список приглашённых', '/game/items/referral-egg.webp'],
  ] as const;
@@ -165,12 +173,12 @@ function Home({ profile }: { profile: GuideProfile | null }) {
   <section className="gameHero">
     <div className="heroCopy"><h1>Гайд по Not Wise</h1><p className="heroSub">Награды, бои и уход за совой.</p></div>
     <img className="heroImage" src="/brand/notwise-home.jpg" width="1170" height="1200" alt=""/>
-    <button className="heroShare secondary" onClick={() => shareGuide(guideShareUrl(profile?.referralCode))}>Поделиться гайдом</button>
     <div className="heroActions">
       <a className="primary" href={profile?.gameEntry ?? defaultGameLink}>Открыть игру</a>
       <a className="secondary" href="https://t.me/notgames_bot/squads?startapp=575801">
         <span className="squadMark" aria-hidden="true"/>Наш сквад
       </a>
+    <button className="heroShare secondary" onClick={() => shareGuide(guideShareUrl(profile?.referralCode))}>Поделиться гайдом</button>
     </div>
   </section>
   <OwlPrices/>
@@ -202,6 +210,7 @@ function Page({ ask, joke, popup, reveal, referrals }: {
     {section?.[1] === '/collections' && <CollectionPage/>}
     {section?.[1] === '/ecosystem' && <EcosystemPage/>}
     {section?.[1] === '/combat' && <CombatPage/>}
+    {section?.[1] === '/squads' && <SquadPage/>}
     {section?.[1] === '/secrets' && <Secrets ask={ask} joke={joke} popup={popup} reveal={reveal}/>}
     {section?.[1] === '/assets' && <InventoryPage/>}
     {section?.[1] === '/referrals' && referrals}
@@ -212,6 +221,15 @@ function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean;
   const { hash } = useLocation();
   const [tab, setTab] = useState<'secret' | 'achievement'>('secret');
   const selected = tab === 'secret' && hash.startsWith('#sticker-') ? Number(hash.slice(9)) : null;
+  const [completed, setCompleted] = useState<number[]>(() => {
+    try { return JSON.parse(localStorage.getItem('notwise.guide.completed') ?? '[]'); }
+    catch { return []; }
+  });
+  function toggleCompleted(id: number) {
+    const next = completed.includes(id) ? completed.filter(value => value !== id) : [...completed, id];
+    setCompleted(next);
+    localStorage.setItem('notwise.guide.completed', JSON.stringify(next));
+  }
   const items = (all as Item[]).filter(item => item.kind === tab);
   useEffect(() => {
     if (!joke || selected === null) return;
@@ -228,20 +246,17 @@ function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean;
       <p>Открой список, чтобы увидеть действия и награды.</p>
       <button className="primary" onClick={ask}>Открыть секреты</button>
     </Card> : <Card>
-      {tab === 'secret' && <aside className="joke">
-        <strong>Ладно-ладно, мы пошутили!</strong>
-        <p>Конечно же для своих всё бесплатно 😉 Забирай инфу ниже! Но если бот тебе реально помог — можешь закинуть донат на сервер и ИИ-токены.</p>
-        <Link to="/support">Поддержать проект</Link>
-      </aside>}
+      {tab === 'secret' && <Link className="textLink" to="/support">Поддержать проект</Link>}
       {items.map(item => {
         const quest = quests.secret_quests.find(row => row.key === item.key);
         const title = quest?.name.match(/\((.+)\)/)?.[1] ?? item.name;
-        return <details className="mediaDetails" id={`sticker-${item.id}`} key={item.id} open={selected === item.id || undefined}>
-          <summary><GameArt path={`/game/stickers/${item.id}.webp`}/><span>
-            <strong>{title}</strong><small>{title !== item.name ? item.name + ' · ' : ''}Стикер №{item.id}</small>
-          </span></summary>
-          <p>{tab === 'achievement' ? achievementActions[item.id] : quest?.action ?? 'Точное условие пока не подтверждено.'}</p>
-        </details>;
+        return <article className="secretRow" id={`sticker-${item.id}`} key={item.id} data-selected={selected === item.id}>
+          <GameArt path={`/game/stickers/${item.id}.webp`} size={42}/>
+          <div><h3>{title}</h3><small>{title !== item.name ? item.name + ' · ' : ''}Стикер №{item.id}</small>
+            <p>{tab === 'achievement' ? achievementActions[item.id] : quest?.action ?? 'Точное условие пока не подтверждено.'}</p>
+            <label className="secretCheck"><input type="checkbox" checked={completed.includes(item.id)} onChange={() => toggleCompleted(item.id)}/> Выполнено</label>
+          </div>
+        </article>;
       })}
     </Card>}
     {popup && <SecretDialog reveal={reveal}/>}

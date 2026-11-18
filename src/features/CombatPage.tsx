@@ -43,7 +43,7 @@ export function CombatPage() {
       branch ? <>
         <h2 className="subTitle">{branch[1]}</h2>
         <section className="card">
-          <p className="caption">Открывай навыки по порядку. На каждый нужен 1 свободный балл этой ветки.</p>
+          <p className="caption">Ветка доступна со 2-го уровня совы. Изучение каждого навыка стоит 1 очко этой ветки.</p>
           {skills.filter(item => item.branch === branch[0]).sort((a, b) => a.tier - b.tier).map(item =>
             <Link to={'/combat/skills/' + branch[0] + '/' + item.id} className="mediaRow skillRow" key={item.id}>
               <GameArt path={skillArt(item.id)} size={42}/>
@@ -84,6 +84,7 @@ export function CombatPage() {
 function SkillDetail({ skill }: { skill: Skill }) {
   const [level, setLevel] = useState(1);
   const [title, description] = skillCopy[skill.id - 1];
+  const prerequisite = skills.find(item => item.branch === skill.branch && item.tier === skill.tier - 1);
   const cooldown = [8, 10, 12, 15, 20][skill.tier - 1];
   const levels = skillLevels[String(skill.id) as keyof typeof skillLevels];
   const { type, dur, value } = levels;
@@ -103,7 +104,7 @@ function SkillDetail({ skill }: { skill: Skill }) {
       <h2>{title}</h2><p>{skill.name} · ступень {skill.tier}</p>
     </div></div>
     <p>{description}</p>
-    <p className="caption">Открытие: 1 очко ветки{skill.tier > 1 ? ' после изучения предыдущего навыка' : ' со 2-го уровня совы'}.</p>
+    <p className="caption">Открытие: 1 очко ветки{prerequisite ? ` после изучения «${skillCopy[prerequisite.id - 1][0]}»` : ' со 2-го уровня совы'}.</p>
     <label className="field">Уровень навыка
       <select value={level} onChange={event => setLevel(Number(event.target.value))}>
         {Array.from({ length: 21 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
