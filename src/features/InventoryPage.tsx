@@ -29,7 +29,7 @@ export function OwlPage() {
   const unknownChance = drops.reduce((sum, [id, chance]) => sum + (itemNames[id] ? 0 : chance), 0);
   return <>
     {!egg && !care && <>
-      <p className="intro">Найди яйцо по картинке, цвету карточки или способу получения.</p>
+      <p className="intro">В Лавке три предложения: одно за монеты и два за Stars. Каталог дропа включает также яйца, которые дают за сезон и другие игровые источники.</p>
       <div className="eggPicker" aria-label="Виды яиц">
         {eggs.map(item => <Link to={'/owl/' + item.slug} className="catalogTile" key={item.id}>
           <GameArt path={itemPath(item.id === 56 ? 'egg.webp' : item.id + '.png')} size={56}/>
@@ -106,7 +106,7 @@ const categories: Record<string, Category> = {
     title: 'Еда и лекарства', icon: 'croissant.webp', summary: 'Сытость, здоровье и снятие штрафа',
     items: [
       ...[5, 6, 7, 8, 15, 16].map(id => ({
-        name: itemNames[id][0], file: itemNames[id][1], effect: 'Восстанавливает сытость. Любимая еда даёт ×2. Порция указана на карточке в игре.',
+        name: itemNames[id][0], file: itemNames[id][1], effect: 'Восстанавливает сытость. Любимая еда даёт двойную сытость.',
         source: 'Добыча из яиц. Часть еды есть в Лавке за монеты.',
       })),
       { name: 'Рогач', file: 'rogach.webp', effect: 'Съедобный жук. Повышает сытость совы.', source: 'Еда' },
@@ -131,6 +131,11 @@ const categories: Record<string, Category> = {
           : 'Кристалл ускоряет восстановление здоровья. Размер бонуса указан на карточке в игре.', source: 'Артефакт',
       })),
       { name: 'Заточка', file: 'enchanter.webp', effect: 'Есть свитки для скинов и для колец, а также универсальная заточка. Каждый +1 даёт 5 п. п. к бонусу фарма.', source: 'Премиальная Лавка и крафт' },
+    ],
+  },
+  skins: {
+    title: 'Скины и жетоны', icon: 'skin-jetton.webp', summary: 'Типы жетонов и бонус к выпадению $NOT',
+    items: [
       ...([
         ['Обычный жетон', 'skin-jetton.webp'], ['Эпический жетон', 'skin-jetton-epic.webp'],
         ['Золотой жетон', 'skin-jetton-golden.webp'],
@@ -183,30 +188,28 @@ export function InventoryPage() {
       })) : [item]).map(item => <li className="mediaRow inventoryRow" key={item.file}>
         <GameArt path={itemPath(item.file)} size={42}/>
         <div><h3>{item.name}</h3><p>{item.effect}</p>
-          <small>{shopPrice(shopKey(item.file)) || item.source}</small></div>
+          <small className="inventoryPrice">
+            {shopPrice(shopKey(item.file)).includes('монет') && <GameArt path="/game/items/wise-coin.webp" size={16}/>}
+            {shopPrice(shopKey(item.file)) || item.source}
+          </small></div>
       </li>)}
   </ul>;
   return <>
     {(category ? [[slug, category] as const] : Object.entries(categories)).map(([id, entry]) =>
       <details className="card inventorySection" key={id} open={category !== undefined || undefined}>
         <summary><GameArt path={itemPath(entry.icon)} size={34}/><strong>{entry.title}</strong></summary>
+        {id === 'skins' && <p>Жетоны выпадают из яиц. Открыв жетон, ты получаешь скин. Экипированные детали скина повышают шанс получить $NOT из капсул.</p>}
         {renderCategory(entry)}
-        {id === 'gear' && !category && <Link className="textLink" to="/assets/gear">Заточка, скины и NFT</Link>}
+        {id === 'skins' && <details><summary>Детали скинов</summary>
+          {([
+            ['body', 'Оперение'], ['hat', 'Головные уборы'], ['glasses', 'Очки'],
+            ['chest', 'Украшения на груди'], ['eyes', 'Глаза'],
+          ] as const).map(([slot, label]) => <p key={slot}><strong>{label}:</strong> {skinParts[slot].join(', ')}</p>)}
+        </details>}
+        {id === 'gear' && !category && <Link className="textLink" to="/assets/gear">Заточка и NFT</Link>}
       </details>)}
     {slug === 'gear' && <>
       <EnchantGuide/>
-      <section className="card">
-        <h2>Детали скинов</h2>
-        <p>Обычная деталь даёт +5 п. п. к бонусу фарма. Golden Body даёт +15 п. п., NOT Chain — +10 п. п.</p>
-        {([
-          ['body', 'Оперение'], ['hat', 'Головные уборы'], ['glasses', 'Очки'],
-          ['chest', 'Украшения на груди'], ['eyes', 'Глаза'],
-        ] as const).map(([slot, label]) => <details key={slot}>
-          <summary>{label} · {skinParts[slot].length}</summary>
-          <p>{skinParts[slot].join(', ')}</p>
-        </details>)}
-        <p className="caption">Скин с золотым оперением считается золотым. У остальных редкость зависит от числа аксессуаров поверх оперения: без аксессуаров — обычный, с одним — редкий, с двумя и более — эпический.</p>
-      </section>
       <OwlPrices only="items"/>
     </>}
     <p className="caption">Цены приведены по данным Лавки из файла игры. В игре они могут измениться.</p>

@@ -1,17 +1,30 @@
+import { artSrc } from '../ui/warmArt';
+import { Link, useLocation } from 'react-router';
 import { GameArt } from '../ui/GameArt';
 import { shopPrice } from './shop';
 
 export function SquadPage() {
+  const { pathname } = useLocation();
+  if (pathname === '/squads/shop') return <section className="card">
+    <div className="mediaHeading"><span className="silverCoin"><GameArt path="/game/items/wise-coin.webp" size={40}/></span>
+      <div><h2>Магазин сквада</h2><p>С 3-го уровня совы. Оплата серебром сквада.</p></div>
+    </div>
+    <div className="mediaRow"><GameArt path="/game/items/scroll-enchant-ring.webp" size={38}/><span>Свиток для заточки кольца</span></div>
+    <div className="mediaRow"><GameArt path="/game/items/scroll-enchant-skin.webp" size={38}/><span>Свиток для заточки скина</span></div>
+    <p className="caption">Эти свитки связаны с осадой. Текущий ассортимент, остатки и цены магазин загружает из игры.</p>
+    <a className="textLink" href="https://t.me/notwise_bot/thegame">Посмотреть магазин в игре</a>
+  </section>;
   return <>
     <section className="card squadIntro">
-      <img src="/game/war/siege-header.webp" alt="" />
+      <img src={artSrc('/game/war/siege-header.webp')} alt="" />
       <h2>Осада и территории</h2>
       <p>Сквады доступны с 3-го уровня, война — с 4-го. Один раунд длится 8 часов. В конце раунда награду получает сквад, который удерживает территорию.</p>
     </section>
     <section className="card">
+      <Link className="sectionLink textLink" to="/squads/shop"><span className="silverCoin"><GameArt path="/game/items/wise-coin.webp" size={26}/></span>Магазин сквада</Link>
       <h2>Территории</h2>
-      <ul className="compactList">{['Heart of the Forest', 'Pine Ridge', 'Moon Grove', 'Ember Glade', 'Moss Hollow', 'Old Roots'].map(name =>
-        <li className="mediaRow" key={name}>{name}</li>)}</ul>
+      <details><summary>20 территорий на карте</summary><ul className="compactList">{['Heart of the Forest', 'Pine Ridge', 'Moon Grove', 'Ember Glade', 'Moss Hollow', 'Old Roots', 'Silver Thicket', 'High Pines', 'Mist Pass', 'Dawn Wood', 'Amber Grove', 'Fox Hollow', 'Sun Glade', 'Fern Valley', 'Deep Wood', 'Stone Roots', 'Raven Wood', 'Silent Grove', 'Frost Ridge', 'Watch Pines'].map(name =>
+        <li className="mediaRow" key={name}>{name}</li>)}</ul></details>
     </section>
     <section className="card">
       <h2>Как получить награду</h2>

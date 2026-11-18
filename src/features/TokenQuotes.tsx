@@ -1,3 +1,4 @@
+import { artSrc } from '../ui/warmArt';
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import tokens from '../../public/data/tokens.json';
@@ -94,7 +95,7 @@ function QuoteList({ quotes }: { quotes: ReturnType<typeof useQuotes> }) {
     <ul className="tokenRatesList" aria-busy={pending}>
       {tokens.tokens.map(({ symbol, name }) => (
         <li key={symbol}>
-          <img src={tokenIcon(symbol)} alt="" width="30" height="30"/>
+          <img src={artSrc(tokenIcon(symbol))} alt="" width="30" height="30"/>
           <div className="tokenRateName"><b>{symbol}</b><small>{name}</small></div>
           <strong>{usable.find(row => row.symbol === symbol)?.displayPrice ?? '—'}</strong>
         </li>
@@ -153,7 +154,7 @@ export function TokenTicker() {
           <motion.span className="tokenTickerValue" key={quote.symbol}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: reducedMotion ? 0 : 0.45, ease: 'easeInOut' }}>
-            <img src={tokenIcon(quote.symbol)} alt="" width="18" height="18"/>
+            <img src={artSrc(tokenIcon(quote.symbol))} alt="" width="18" height="18"/>
             <b>{quote.symbol}</b><span className="tickerPrice">{quote.displayPrice}</span>
           </motion.span>
         </AnimatePresence> : <span className="tokenTickerValue">USD</span>}

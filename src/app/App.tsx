@@ -1,3 +1,4 @@
+import { artSrc } from '../ui/warmArt';
 import { SquadPage } from '../features/SquadPage';
 import { ReferralsPage } from '../features/ReferralsPage';
 import { SupportPage } from '../features/SupportPage';
@@ -22,7 +23,7 @@ import { authData, defaultGameLink, guideShareUrl, profileRequest, shareGuide, t
 const sections = [
   ['Сквады и войны', '/squads'],
   ['Секреты', '/secrets'], ['Капсулы', '/capsules'], ['Яйца и совы', '/owl'],
-  ['Коллекции', '/collections'], ['Бои и навыки', '/combat'], ['Предметы', '/assets'],
+  ['Коллекции', '/collections'], ['Бои и навыки', '/combat'], ['Инвентарь', '/assets'],
   ['Экосистема', '/ecosystem'], ['Пригласить друзей', '/referrals'],
 ] as const;
 type Item={id:number;name:string;description:string;short_descr:string;rarity:number;kind?:string;key?:string};
@@ -84,7 +85,7 @@ return <div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header ine
 <AnimatePresence>{hamster && <motion.aside className="hamster" role="status"
   initial={{y:110,opacity:0}} animate={{y:0,opacity:1}} exit={{y:110,opacity:0}} transition={{duration:.22}}>
   <p className="hamsterSpeech">*#$@#, себя потыкай %*!</p>
-  <img src="/brand/hamster.png" width="1264" height="1371" alt="Хомяк CryptoOne"/>
+  <img src={artSrc('/brand/hamster.png')} width="1264" height="1371" alt="Хомяк CryptoOne"/>
 </motion.aside>}</AnimatePresence></div>}
 function Dock({ hamster, locked, onHamster, onGesture }: { hamster: boolean; locked: boolean; onHamster: () => void; onGesture?: () => void }) {
   const location = useLocation();
@@ -164,15 +165,15 @@ function Home({ profile }: { profile: GuideProfile | null }) {
   ['Яйца и совы', '/owl', '/game/items/egg.webp', 'Что выпадет из яйца и когда кормить?', '/game/items/golden-egg.webp'],
   ['Коллекции', '/collections', '/game/albums/1.webp', 'Стикеры, альбомы и Getgems', '/game/stickers/1.webp'],
   ['Бои и навыки', '/combat', '/game/skills/1.png', 'Какие навыки выбрать и что качать?', '/game/skills/16.png'],
-  ['Предметы', '/assets', '/game/items/ring-wit-3.webp', 'Что для чего нужно в инвентаре', '/game/items/book.webp'],
+  ['Инвентарь', '/assets', '/game/items/ring-wit-3.webp', 'Предметы и скины', '/game/items/book.webp'],
   ['Сквады и войны', '/squads', '/game/items/lighter.webp', 'Ритуалы, осады и награды', '/game/war/siege-header.webp'],
   ['Экосистема', '/ecosystem', '/game/items/coins.webp', 'Токены, проекты и курсы', '/brand/tokens/gram.png'],
-  ['Пригласить друзей', '/referrals', null, 'Твоя ссылка и список приглашённых', '/game/items/referral-egg.webp'],
+  ['Пригласить друзей', '/referrals', '/game/items/wise-coin.webp', 'Твоя ссылка и список приглашённых', '/game/items/referral-egg.webp'],
  ] as const;
  return <>
   <section className="gameHero">
     <div className="heroCopy"><h1>Гайд по Not Wise</h1><p className="heroSub">Награды, бои и уход за совой.</p></div>
-    <img className="heroImage" src="/brand/notwise-home.jpg" width="1170" height="1200" alt=""/>
+    <img className="heroImage" src={artSrc('/brand/notwise-home.jpg')} width="1170" height="1200" alt=""/>
     <div className="heroActions">
       <a className="primary" href={profile?.gameEntry ?? defaultGameLink}>Открыть игру</a>
       <a className="secondary" href="https://t.me/notgames_bot/squads?startapp=575801">
@@ -185,7 +186,7 @@ function Home({ profile }: { profile: GuideProfile | null }) {
   <div className="sectionHeading"><div><h2>Что ищешь?</h2></div></div>
   <div className="guideGrid">{tiles.map(([name, path, icon, description, art]) =>
     <Link to={path} className="guideTile" key={path}>
-      <img className="guideTileArt" src={art} alt="" width="108" height="108"/>
+      <img className="guideTileArt" src={artSrc(art)} alt="" width="108" height="108"/>
       {icon ? <GameArt path={icon} size={48}/> : <span className="guideFrensIcon" aria-hidden="true"/>}
       <span className="tileText"><b>{name}</b><small>{description}</small></span>
     </Link>
@@ -254,8 +255,8 @@ function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean;
           <GameArt path={`/game/stickers/${item.id}.webp`} size={42}/>
           <div><h3>{title}</h3><small>{title !== item.name ? item.name + ' · ' : ''}Стикер №{item.id}</small>
             <p>{tab === 'achievement' ? achievementActions[item.id] : quest?.action ?? 'Точное условие пока не подтверждено.'}</p>
-            <label className="secretCheck"><input type="checkbox" checked={completed.includes(item.id)} onChange={() => toggleCompleted(item.id)}/> Выполнено</label>
           </div>
+          <label className="secretCheck" title="Выполнено"><input type="checkbox" checked={completed.includes(item.id)} onChange={() => toggleCompleted(item.id)}/><span className="sr-only">Выполнено: {title}</span></label>
         </article>;
       })}
     </Card>}

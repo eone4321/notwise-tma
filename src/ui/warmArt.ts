@@ -1,6 +1,7 @@
 import paths from 'virtual:guide-art';
 
 const images = new Map<string, HTMLImageElement>();
+export const artSrc = (path: string) => images.get(path)?.src ?? path;
 
 export async function warmArt(onProgress: (loaded: number, total: number) => void) {
   let loaded = 0;
@@ -10,11 +11,16 @@ export async function warmArt(onProgress: (loaded: number, total: number) => voi
     while (next < paths.length) {
       const path = paths[next++];
       const image = new Image();
-      image.src = path;
+      let objectUrl: string | undefined;
       try {
+        const response = await fetch(path, { signal: AbortSignal.timeout(8000) });
+        if (!response.ok) throw new Error('Image unavailable');
+        objectUrl = URL.createObjectURL(await response.blob());
+        image.src = objectUrl;
         await image.decode();
         images.set(path, image);
       } catch {
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
         // Continue if an individual asset is unavailable.
       } finally {
         onProgress(++loaded, paths.length);

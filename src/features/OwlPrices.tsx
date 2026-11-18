@@ -1,3 +1,4 @@
+import { artSrc } from '../ui/warmArt';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import collections from './market-collections.json';
@@ -60,13 +61,13 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
         const rate = market?.gramToUsdt;
         return <a className="marketPriceRow" key={item.id}
           href={`https://getgems.io/collection/${collection.address}`} target="_blank" rel="noreferrer">
-          <img className="marketRowArt" src={item.id === 'items' ? '/game/items/ring-wit-3.webp' : `/brand/collections/${item.id}.png`} alt="" width="96" height="96"/>
+          <img className="marketRowArt" src={artSrc(item.id === 'items' ? '/game/items/ring-wit-3.webp' : `/brand/collections/${item.id}.png`)} alt="" width="96" height="96"/>
           <span><b>{item.name}</b><small>{item.description}</small></span>
           <span className="marketPriceValues">
             {hasPrice ? <>
-              <strong><img src="/brand/tokens/gram.png" alt="" width="15" height="15"/>от {gram.format(floor)} GRAM</strong>
+              <strong><img src={artSrc('/brand/tokens/gram.png')} alt="" width="15" height="15"/>от {gram.format(floor)} GRAM</strong>
               {rate && Number.isFinite(rate) && rate > 0 ? <small>
-                <img src="/brand/tokens/usdt.webp" alt="" width="14" height="14"/>≈ {usdt.format(floor * rate)} USDT
+                <img src={artSrc('/brand/tokens/usdt.webp')} alt="" width="14" height="14"/>≈ {usdt.format(floor * rate)} USDT
               </small> : null}
               {quote.status === 'stale' && <small>Сохранённая цена</small>}
             </> : <small>{market === null ? 'Загрузка…' : 'Цена недоступна'}</small>}

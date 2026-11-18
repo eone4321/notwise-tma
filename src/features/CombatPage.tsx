@@ -24,6 +24,13 @@ const modes = [
   ['Сезон', '14 дней', 'В каждом сезоне одна цель: лайки, победы, безупречные победы, монеты или дистанция в полёте, лучший полёт, загадки или удары в Додзе. Учитывается активность за текущий сезон.'],
 ] as const;
 const format = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
+const branchName = (branch: string) => branches.find(([id]) => id === branch)?.[1] ?? '';
+function unlockCondition(skill: Skill) {
+  const previous = skills.find(item => item.branch === skill.branch && item.tier === skill.tier - 1);
+  return previous
+    ? `После «${skillCopy[previous.id - 1][0]}» и ещё 1 очко в «${branchName(skill.branch)}»`
+    : `Со 2-го уровня совы: вложи 1 очко в «${branchName(skill.branch)}»`;
+}
 const skillArt = (id: number) => '/game/skills/' + id + '.png';
 type Skill = typeof skills[number];
 
@@ -47,7 +54,7 @@ export function CombatPage() {
           {skills.filter(item => item.branch === branch[0]).sort((a, b) => a.tier - b.tier).map(item =>
             <Link to={'/combat/skills/' + branch[0] + '/' + item.id} className="mediaRow skillRow" key={item.id}>
               <GameArt path={skillArt(item.id)} size={42}/>
-              <span><strong>{skillCopy[item.id - 1][0]}</strong><small>Ступень {item.tier} · {item.type === 'active' ? 'Активный' : 'Пассивный'}</small></span>
+              <span><strong>{skillCopy[item.id - 1][0]}</strong><small>{unlockCondition(item)}</small></span>
             </Link>)}
         </section>
       </> : isModes ? <section className="card">
@@ -84,7 +91,6 @@ export function CombatPage() {
 function SkillDetail({ skill }: { skill: Skill }) {
   const [level, setLevel] = useState(1);
   const [title, description] = skillCopy[skill.id - 1];
-  const prerequisite = skills.find(item => item.branch === skill.branch && item.tier === skill.tier - 1);
   const cooldown = [8, 10, 12, 15, 20][skill.tier - 1];
   const levels = skillLevels[String(skill.id) as keyof typeof skillLevels];
   const { type, dur, value } = levels;
@@ -104,7 +110,7 @@ function SkillDetail({ skill }: { skill: Skill }) {
       <h2>{title}</h2><p>{skill.name} · ступень {skill.tier}</p>
     </div></div>
     <p>{description}</p>
-    <p className="caption">Открытие: 1 очко ветки{prerequisite ? ` после изучения «${skillCopy[prerequisite.id - 1][0]}»` : ' со 2-го уровня совы'}.</p>
+    <div className="skillUnlock"><strong>Условие открытия</strong><p>{unlockCondition(skill)}.</p></div>
     <label className="field">Уровень навыка
       <select value={level} onChange={event => setLevel(Number(event.target.value))}>
         {Array.from({ length: 21 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}

@@ -1,3 +1,4 @@
+import { artSrc } from '../ui/warmArt';
 import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router';
 import { TokenQuotes } from './TokenQuotes';
@@ -84,7 +85,7 @@ export function EcosystemPage() {
         <article className="card projectCard" key={project.id} aria-labelledby={`project-${project.id}`}>
           <div className="projectHeading">
             {project.logo
-              ? <img className="projectLogo" src={`/brand/projects/${project.logo}`} alt="" width="52" height="52"/>
+              ? <img className="projectLogo" src={artSrc(`/brand/projects/${project.logo}`)} alt="" width="52" height="52"/>
               : <span className="projectLogo projectPlaceholder" aria-hidden="true">📚</span>}
             <div>
               <h3 id={`project-${project.id}`}>{project.name}</h3>

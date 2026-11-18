@@ -39,14 +39,14 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
     <section className="card">
       <h3>Гарантированные награды</h3>
       <label className="field">Уровень капсулы <input type="number" min="1" max={xp.length - 1} value={level} placeholder="1" inputMode="numeric" onChange={event => setLevel(event.target.value.replace(/\D/g, '').slice(0, 3))} /></label>
-      <div className="stats"><span>Опыт<b>{xpReward(capsuleLevel,currentTier,xp).toLocaleString('ru-RU')} XP</b></span><span>Монеты<b>{coinReward(capsuleLevel,currentTier)}</b></span></div>
+      <div className="stats"><span>Опыт<b>{xpReward(capsuleLevel,currentTier,xp).toLocaleString('ru-RU')} XP</b></span><span><span className="currencyInline"><GameArt path="/game/items/wise-coin.webp" size={17}/> Монеты</span><b>{coinReward(capsuleLevel,currentTier)}</b></span></div>
       <h3>Дополнительные награды</h3>
       <div className="mediaRow"><GameArt path="/game/items/egg.webp" size={40}/><Link className="textLink" to="/owl/mystery">Загадочное яйцо</Link><strong>{eggChances[index]}</strong></div>
       <div className="mediaRow"><GameArt path="/game/albums/1.webp" size={40}/><Link className="textLink" to="/collections">Набор стикеров</Link><strong>{stickerChances[index]}</strong></div>
       <details><summary>Шансы выпадения Notcoin ($NOT)</summary>
         <label className="field">Бонус к дропу $NOT из профиля совы, % <input type="number" min="0" value={farm} placeholder="0" inputMode="decimal" onChange={event => setFarm(event.target.value)}/></label>
         <p className="caption">Сложи бонусы деталей скина, заточки колец и скина, артефакта и лиги. Каждый уровень заточки добавляет 5 п. п.</p>
-        <Link className="textLink" to="/assets/gear">Детали скинов и заточка</Link>
+        <Link className="textLink" to="/assets/skins">Скины и жетоны</Link>
         <Link className="textLink spacedLink" to="/combat/modes#leagues">Бонус боевой лиги</Link>
         {notOdds(currentTier, Math.max(0, Number(farm) || 0)).map(row => <div className="mediaRow" key={row.amount}><span>{row.amount.toLocaleString('ru-RU')} $NOT</span><strong>{row.chance === 0 ? '0%' : chanceLabel(row.chance)}</strong></div>)}
       </details>

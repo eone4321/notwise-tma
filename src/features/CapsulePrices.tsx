@@ -1,3 +1,4 @@
+import { artSrc } from '../ui/warmArt';
 import { useState } from 'react';
 import { duration, speedupPrice, type Tier } from '../domain/mechanics';
 
@@ -49,7 +50,7 @@ export function CapsulePrices({ tier }: { tier: Tier }) {
       {valid && <p role="status" className="priceResult">{timeLabel(exactMinutes)} осталось <strong>{priceAt(exactMinutes)}{exactMinutes > 0 && <> · {estimateAt(exactMinutes)}</>}</strong></p>}
       {remaining && !valid && <p role="status" className="caption">Введи целое число от 0 до {totalMinutes}.</p>}
       <div className="capsuleGram">
-        <h3><img src="/brand/tokens/gram.png" width="18" height="18" alt=""/>Оплата в GRAM</h3>
+        <h3><img src={artSrc('/brand/tokens/gram.png')} width="18" height="18" alt=""/>Оплата в GRAM</h3>
         <p>GRAM — ориентир по данным игры. Точная цена зависит от текущего курса.</p>
         <details>
           <summary>Рассчитать по цене из игры</summary>

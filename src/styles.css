@@ -459,3 +459,31 @@ details > p { margin: 4px 0 8px; }
 .jokeToast > div { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .squadIntro > img { width: 100%; max-height: 150px; object-fit: contain; margin-bottom: 10px; }
 .guideLoading progress { width: min(220px, 68vw); height: 8px; accent-color: #b694ff; }
+/* Keep surfaces on a fixed color while their content changes height. */
+:is(.card,.gameHero,.guideTile,.albumGrid > a) {
+  background: var(--glass-sheen), #10162b;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+details > summary { -webkit-tap-highlight-color: transparent; }
+details > summary:active { color: var(--lavender); }
+.secretRow { display: grid; grid-template-columns: 42px minmax(0,1fr) 32px; gap: 8px; padding: 8px 4px; }
+.secretRow h3 { font-size: 14px; }
+.secretRow p { font-size: 13px; line-height: 1.4; margin: 3px 0; }
+.secretCheck { justify-content: center; }
+.secretCheck input { width: 18px; height: 18px; accent-color: #b694ff; }
+.tokenRatesDialog { width: min(350px, calc(100% - 28px)); }
+.tokenRatesList li { grid-template-columns: 28px minmax(0,1fr) max-content; gap: 8px; }
+.tokenRatesList strong { text-align: end; font-variant-numeric: tabular-nums; background: #ffffff0b; padding: 4px 7px; border-radius: 6px; }
+.guideLoading progress { appearance: none; height: 5px; border: 0; border-radius: 8px; overflow: hidden; background: #1a2033; color: var(--gold); }
+.guideLoading progress::-webkit-progress-bar { background: #1a2033; }
+.guideLoading progress::-webkit-progress-value { border-radius: 8px; background: linear-gradient(90deg,#a78bf4,#ffcc77); }
+.guideLoading progress::-moz-progress-bar { background: linear-gradient(90deg,#a78bf4,#ffcc77); }
+.inventoryPrice,.stats .currencyInline { display: inline-flex; align-items: center; gap: 4px; }
+.stats .currencyInline,.stats .gameArt { padding: 0; background: none; }
+.silverCoin { display: inline-flex; filter: grayscale(1) brightness(1.16); }
+.skillUnlock { border-left: 2px solid var(--lavender); padding: 4px 10px; margin: 8px 0 12px; }
+:is(.card,.gameHero,.guideTile,.albumGrid > a) {
+  background-size: 100% 180px, auto;
+  background-repeat: no-repeat;
+}
