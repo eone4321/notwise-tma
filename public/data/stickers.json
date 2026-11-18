@@ -1,0 +1,31 @@
+{
+  "system_overview": {
+    "title": "Игровые Стикерпаки NOT Wise (Альбомы для минта)",
+    "description": "В игре игроки выбивают стикеры из капсул и наград. Собрав полный тематический пак, игрок получает право сминтить официальный ончейн NFT-стикерпак на TON.",
+    "total_in_game_packs": 22
+  },
+  "packs": [
+    {"id": "wonderland", "name": "NOT Wise: Wonderland", "theme": "Сказочный мир", "verified": true},
+    {"id": "flying_saucer", "name": "NOT Wise: Flying Saucer", "theme": "НЛО и космос", "verified": true},
+    {"id": "cosmo_zone", "name": "NOT Wise: Cosmo Zone", "theme": "Галактические совы", "verified": true},
+    {"id": "summer_vibes", "name": "NOT Wise: Summer Vibes", "theme": "Летний отдых и пальмы", "verified": true},
+    {"id": "wild_fortune", "name": "NOT Wise: Wild Fortune", "theme": "Азарт и казино", "verified": true},
+    {"id": "hellborn", "name": "NOT Wise: Hellborn", "theme": "Инфернальные демонические совы", "verified": true},
+    {"id": "mimizuku", "name": "NOT Wise: Mimizuku", "theme": "Японский фольклор и сакура", "verified": true},
+    {"id": "showtime", "name": "NOT Wise: Showtime", "theme": "Иллюзионисты и магия сцены", "verified": true},
+    {"id": "power_mode", "name": "NOT Wise: Power Mode", "theme": "Спорт, фитнес и сила", "verified": true},
+    {"id": "hustle_pack", "name": "NOT Wise: Hustle Pack", "theme": "Крипто-хастл и бизнес", "verified": true},
+    {"id": "spellbound", "name": "NOT Wise: Spellbound", "theme": "Колдовство и зельеварение", "verified": true},
+    {"id": "internet_moments", "name": "NOT Wise: Internet Moments", "theme": "Культовые веб-мемы", "verified": true},
+    {"id": "laa_laa_land", "name": "NOT Wise: Laa-Laa Land", "theme": "Мультяшные фантазии", "verified": true},
+    {"id": "fine_art", "name": "NOT Wise: Fine Art", "theme": "Классическая музейная живопись", "verified": true},
+    {"id": "the_family", "name": "NOT Wise: The Family", "theme": "Мафия и клановые совы", "verified": true},
+    {"id": "golden_scarab", "name": "NOT Wise: Golden Scarab", "theme": "Древний Египет и фараоны", "verified": true},
+    {"id": "back_to_school", "name": "NOT Wise: Back to School", "theme": "Школа и знания", "verified": true},
+    {"id": "exp_sp", "name": "NOT Wise: EXP & SP", "theme": "Геймерские атрибуты прокачки", "verified": true},
+    {"id": "stonks_goodies", "name": "NOT Wise Stonks x Goodies", "theme": "Трейдинг, графики и свечи", "verified": true},
+    {"id": "naughty_mood", "name": "NOT Wise: Naughty Mood", "theme": "Пикантные и дерзкие эмоции", "verified": true},
+    {"id": "wanted_sheriff", "name": "NOT Wise: Wanted Sheriff", "theme": "Дикий Запад и шерифы", "verified": true},
+    {"id": "gg_pack", "name": "NOT Wise: GG Pack", "theme": "Киберспорт и Good Game", "verified": true}
+  ]
+}

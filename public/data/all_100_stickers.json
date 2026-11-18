@@ -1,0 +1,782 @@
+[
+  {
+    "id": 1,
+    "name": "Queen of Hearts",
+    "description": "Off with their heads! Politely.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 2,
+    "name": "Down the Rabbit Hole",
+    "description": "Coins, clocks and eggs. Normal Tuesday.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 3,
+    "name": "Cheshire Grin",
+    "description": "The smile stays even when the owl leaves.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 4,
+    "name": "Time Traveller",
+    "description": "Turned the clock forward. Nice try, the timers live on the server.",
+    "short_descr": "Some owls are always in a hurry.",
+    "rarity": 3,
+    "kind": "secret",
+    "key": "time_traveller"
+  },
+  {
+    "id": 5,
+    "name": "Tea Time",
+    "description": "Same tea, same time, every day. Mad, but loyal.",
+    "short_descr": "Play 10 days in a row",
+    "rarity": 2,
+    "kind": "achievement",
+    "key": "days_streak"
+  },
+  {
+    "id": 6,
+    "name": "UFO Pilot",
+    "description": "30 flights and still no driving licence.",
+    "short_descr": "Complete 30 flights",
+    "rarity": 3,
+    "kind": "achievement",
+    "key": "flights"
+  },
+  {
+    "id": 7,
+    "name": "Close Encounter",
+    "description": "They come in peace. Probably.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 8,
+    "name": "Beam Me Up",
+    "description": "Left the desk for five minutes. Got abducted.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 9,
+    "name": "Cheese Moon",
+    "description": "Seven taps and the moon turned into cheese.",
+    "short_descr": "The moon looks tasty tonight.",
+    "rarity": 2,
+    "kind": "secret",
+    "key": "cheese_moon"
+  },
+  {
+    "id": 10,
+    "name": "Alien Hug",
+    "description": "He just wants a fren. Don't move.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 11,
+    "name": "Quiet Hour",
+    "description": "Let the owl fall asleep on the branch.",
+    "short_descr": "Sometimes the best move is no move.",
+    "rarity": 1,
+    "kind": "secret",
+    "key": "quiet_hour"
+  },
+  {
+    "id": 12,
+    "name": "Wormhole Grab",
+    "description": "Reaching for coins across the galaxy.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 13,
+    "name": "Use the Force",
+    "description": "100 skills later, the Force is strong with this one.",
+    "short_descr": "Use skills in fights 100 times",
+    "rarity": 2,
+    "kind": "achievement",
+    "key": "skill_casts"
+  },
+  {
+    "id": 14,
+    "name": "Agent O",
+    "description": "Look into the light. You saw nothing.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 15,
+    "name": "Classified",
+    "description": "UFO files? Never heard of them.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 3
+  },
+  {
+    "id": 16,
+    "name": "Stranded",
+    "description": "Tiny island, big sharks, zero wifi.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 17,
+    "name": "Too Bright",
+    "description": "Light theme at night? The owl needed shades.",
+    "short_descr": "Owls hate bright screens at night.",
+    "rarity": 3,
+    "kind": "secret",
+    "key": "sunglasses"
+  },
+  {
+    "id": 18,
+    "name": "Respect+",
+    "description": "Mission passed. Cocktail earned.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 19,
+    "name": "Summer Egg",
+    "description": "10 eggs cracked. Summer is officially open.",
+    "short_descr": "Open 10 eggs",
+    "rarity": 1,
+    "kind": "achievement",
+    "key": "eggs"
+  },
+  {
+    "id": 20,
+    "name": "Beach Day",
+    "description": "Found a sunny spot. Everyone else found it first.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 21,
+    "name": "Jackpot",
+    "description": "Three items from one egg. The wheel loves you.",
+    "short_descr": "Some eggs are fuller than others.",
+    "rarity": 3,
+    "kind": "secret",
+    "key": "jackpot"
+  },
+  {
+    "id": 22,
+    "name": "High Roller",
+    "description": "100k in the bank. Chips are just a hobby.",
+    "short_descr": "Have 100,000 coins on your balance",
+    "rarity": 2,
+    "kind": "achievement",
+    "key": "balance"
+  },
+  {
+    "id": 23,
+    "name": "Poker Face",
+    "description": "All in. Hood up. Zero emotions.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 24,
+    "name": "Calculating Odds",
+    "description": "Did the math. Still confused.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 25,
+    "name": "Dumpster Drip",
+    "description": "Rich by vibe, homeless by address.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 26,
+    "name": "Money Devil",
+    "description": "Hot money, hotter owl.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 3
+  },
+  {
+    "id": 27,
+    "name": "Hungry as Hell",
+    "description": "Ten favourite meals. Devils know good food.",
+    "short_descr": "Feed your owl its favourite food 10 times",
+    "rarity": 2,
+    "kind": "achievement",
+    "key": "favourite_food"
+  },
+  {
+    "id": 28,
+    "name": "Devil in Love",
+    "description": "Even horns have a soft side.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 29,
+    "name": "Night Owl",
+    "description": "Three midnights in a row. GM, night shift.",
+    "short_descr": "Real owls don't sleep at midnight.",
+    "rarity": 1,
+    "kind": "secret",
+    "key": "night_owl"
+  },
+  {
+    "id": 30,
+    "name": "Devil's Laugh",
+    "description": "Laughs in fire, dresses in a tracksuit.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 31,
+    "name": "Fuji View",
+    "description": "Sakura, mountain, inner peace.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 32,
+    "name": "Kawaii",
+    "description": "Too cute to fight. Fights anyway.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 33,
+    "name": "Neko Owl",
+    "description": "A hundred pets later, it purrs.",
+    "short_descr": "Pet your owl 100 times",
+    "rarity": 3,
+    "kind": "achievement",
+    "key": "pets"
+  },
+  {
+    "id": 34,
+    "name": "Owlzilla",
+    "description": "The city wasn't ready.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 35,
+    "name": "Ninja",
+    "description": "Won a fight in complete silence.",
+    "short_descr": "The quietest owl wins.",
+    "rarity": 1,
+    "kind": "secret",
+    "key": "ninja"
+  },
+  {
+    "id": 36,
+    "name": "Untouchable",
+    "description": "Won a fight without taking a single hit.",
+    "short_descr": "Every knife missed.",
+    "rarity": 3,
+    "kind": "secret",
+    "key": "untouchable"
+  },
+  {
+    "id": 37,
+    "name": "Puppet",
+    "description": "Someone else pulls the strings.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 38,
+    "name": "Unicycle",
+    "description": "One wheel, zero fear.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 39,
+    "name": "Sad Clown",
+    "description": "The show must go on. Unfortunately.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 40,
+    "name": "Human Cannonball",
+    "description": "Launched, flew far, grabbed everything.",
+    "short_descr": "Collect 2,000 coins in one flight",
+    "rarity": 2,
+    "kind": "achievement",
+    "key": "flight_coins"
+  },
+  {
+    "id": 41,
+    "name": "Flat Out",
+    "description": "Gym 1, owl 0.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 42,
+    "name": "Sushi Master",
+    "description": "Three sushi in one flight. The scale disagrees.",
+    "short_descr": "Some flights are all-you-can-eat.",
+    "rarity": 2,
+    "kind": "secret",
+    "key": "sushi_master"
+  },
+  {
+    "id": 43,
+    "name": "Beast Mode",
+    "description": "The shirt didn't make it.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 44,
+    "name": "Iron Pump",
+    "description": "A thousand hits. Even the dumbbells are tired.",
+    "short_descr": "Land 1,000 hits in the dojo",
+    "rarity": 1,
+    "kind": "achievement",
+    "key": "dojo_hits"
+  },
+  {
+    "id": 45,
+    "name": "Fake Abs",
+    "description": "Summer body, printed at home.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 3
+  },
+  {
+    "id": 46,
+    "name": "Sweet Dream",
+    "description": "Dozed off to the flute and dreamed of a coin.",
+    "short_descr": "Turn off the lamp and listen.",
+    "rarity": 2,
+    "kind": "secret",
+    "key": "sweet_dream"
+  },
+  {
+    "id": 47,
+    "name": "Shy Owl",
+    "description": "Not like this, fren.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 48,
+    "name": "Tied Up",
+    "description": "It's not what it looks like.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 49,
+    "name": "Strict Officer",
+    "description": "Fifty wins. Everyone else, behave.",
+    "short_descr": "Win 50 fights",
+    "rarity": 2,
+    "kind": "achievement",
+    "key": "wins"
+  },
+  {
+    "id": 50,
+    "name": "Cherry on Top",
+    "description": "Sweet tooth, sweeter intentions.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 3
+  },
+  {
+    "id": 51,
+    "name": "Paperwork",
+    "description": "Twenty quests done. The inbox is still full.",
+    "short_descr": "Complete 20 squad ritual quests",
+    "rarity": 2,
+    "kind": "achievement",
+    "key": "ritual_quests"
+  },
+  {
+    "id": 52,
+    "name": "Deadline",
+    "description": "Everyone is pointing. Nobody is helping.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 53,
+    "name": "Long Shift",
+    "description": "One full hour in a single session.",
+    "short_descr": "Row, row, row your chair.",
+    "rarity": 3,
+    "kind": "secret",
+    "key": "long_shift"
+  },
+  {
+    "id": 54,
+    "name": "Boss Coffee",
+    "description": "The mug is bigger than the owl. Boss vibes.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 55,
+    "name": "Crunch Time",
+    "description": "Deadline survived. Sanity didn't.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 56,
+    "name": "Learner's Broom",
+    "description": "First ride on a broom. Not the last scream.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 57,
+    "name": "Full Moon",
+    "description": "Seven taps on a real full moon. Eyes on fire.",
+    "short_descr": "One night a month the moon answers back.",
+    "rarity": 1,
+    "kind": "secret",
+    "key": "full_moon"
+  },
+  {
+    "id": 58,
+    "name": "Crystal Ball",
+    "description": "I see coins in your future.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 59,
+    "name": "Money Ritual",
+    "description": "Candles lit. Wallet pending.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 60,
+    "name": "Spell Book",
+    "description": "Three perfect spells. The book is impressed.",
+    "short_descr": "Get the top grade in Wild Magic 3 times",
+    "rarity": 3,
+    "kind": "achievement",
+    "key": "wild_magic"
+  },
+  {
+    "id": 61,
+    "name": "Rodeo",
+    "description": "Eight seconds is all it takes.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 62,
+    "name": "Come Back Soon",
+    "description": "Store closed. Probably nothing.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 3
+  },
+  {
+    "id": 63,
+    "name": "Outlaw",
+    "description": "Ten raids, ten trophies, one wanted poster.",
+    "short_descr": "Win 10 raids",
+    "rarity": 2,
+    "kind": "achievement",
+    "key": "raid_wins"
+  },
+  {
+    "id": 64,
+    "name": "Peacemaker",
+    "description": "A fight ended in a draw. Nobody shot first.",
+    "short_descr": "Sometimes nobody wins, and that's the point.",
+    "rarity": 1,
+    "kind": "secret",
+    "key": "peacemaker"
+  },
+  {
+    "id": 65,
+    "name": "Shadow",
+    "description": "Faster than his own shadow. Almost.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 66,
+    "name": "Not a Clicker",
+    "description": "We all miss Notcoin, but it's not a clicker.",
+    "short_descr": "Tap tap tap... wait, wrong game.",
+    "rarity": 3,
+    "kind": "secret",
+    "key": "not_a_clicker"
+  },
+  {
+    "id": 67,
+    "name": "Yay",
+    "description": "Hands up if you claimed today.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 68,
+    "name": "Hmm",
+    "description": "Thinking about it. Will think tomorrow.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 69,
+    "name": "Level Up Party",
+    "description": "Level 10. Cake, balloons, no candles left.",
+    "short_descr": "Reach level 10",
+    "rarity": 2,
+    "kind": "achievement",
+    "key": "level"
+  },
+  {
+    "id": 70,
+    "name": "Magic",
+    "description": "Rainbow sweater, unlimited power.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 71,
+    "name": "Baby Sun",
+    "description": "Good morning, it's Notwise time.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 72,
+    "name": "Roll the Credits",
+    "description": "Watched the credits to the very end.",
+    "short_descr": "The story isn't over until the last line.",
+    "rarity": 3,
+    "kind": "secret",
+    "key": "credits"
+  },
+  {
+    "id": 73,
+    "name": "Pay Day",
+    "description": "Friends who share coins stay friends.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 74,
+    "name": "Breaking News",
+    "description": "The owl channel is live. Panic included.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 75,
+    "name": "Big Hug",
+    "description": "Three frens hatched. Group hug!",
+    "short_descr": "Invite 3 friends who hatch their owls",
+    "rarity": 1,
+    "kind": "achievement",
+    "key": "friends"
+  },
+  {
+    "id": 76,
+    "name": "Owl Lisa",
+    "description": "Fifteen stickers. A real art collector now.",
+    "short_descr": "Collect 15 different stickers",
+    "rarity": 2,
+    "kind": "achievement",
+    "key": "stickers"
+  },
+  {
+    "id": 77,
+    "name": "The Scream",
+    "description": "When you see the energy bar.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 78,
+    "name": "Warm It Up",
+    "description": "Warmed the egg until it glowed. Life begins.",
+    "short_descr": "Eggs love heat.",
+    "rarity": 1,
+    "kind": "secret",
+    "key": "warm_it_up"
+  },
+  {
+    "id": 79,
+    "name": "Birth of Venus",
+    "description": "Fresh from the shell. Flawless.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 80,
+    "name": "The Kiss",
+    "description": "Gold, love and a little bit of art.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 3
+  },
+  {
+    "id": 81,
+    "name": "Counting Money",
+    "description": "Every coin has its place.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 82,
+    "name": "Friendly Fire",
+    "description": "Raided a friend you invited. Don't forget to say goodbye to your friendship.",
+    "short_descr": "Keep your friends close...",
+    "rarity": 2,
+    "kind": "secret",
+    "key": "friendly_fire"
+  },
+  {
+    "id": 83,
+    "name": "The Offer",
+    "description": "An offer you can't refuse.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 84,
+    "name": "Boss of the Land",
+    "description": "Seven rounds without a break. The throne is warm.",
+    "short_descr": "Attack for your squad in 7 siege rounds in a row",
+    "rarity": 3,
+    "kind": "achievement",
+    "key": "siege_streak"
+  },
+  {
+    "id": 85,
+    "name": "Mugshot",
+    "description": "Looked better in color.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 86,
+    "name": "Creeper",
+    "description": "Ssssss... boom?",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 3
+  },
+  {
+    "id": 87,
+    "name": "Ice Combo",
+    "description": "Five wins in a row. Cold as ice.",
+    "short_descr": "Win 5 fights in a row",
+    "rarity": 1,
+    "kind": "achievement",
+    "key": "win_streak"
+  },
+  {
+    "id": 88,
+    "name": "Phoenix",
+    "description": "Used all three revive rockets in one flight.",
+    "short_descr": "Rise from the ashes. Again. And again.",
+    "rarity": 2,
+    "kind": "secret",
+    "key": "phoenix"
+  },
+  {
+    "id": 89,
+    "name": "Rush B",
+    "description": "No plan, only rush.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 90,
+    "name": "Bomber",
+    "description": "Planted. Now run.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 91,
+    "name": "Cleopatra",
+    "description": "Eyeliner sharp enough to rule Egypt.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 92,
+    "name": "Walk Like an Egyptian",
+    "description": "Sideways is the only way.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  },
+  {
+    "id": 93,
+    "name": "Polyglot",
+    "description": "Changed the language. The Sphinx approves.",
+    "short_descr": "Riddles sound different in other languages.",
+    "rarity": 2,
+    "kind": "secret",
+    "key": "polyglot"
+  },
+  {
+    "id": 94,
+    "name": "Sarcophagus",
+    "description": "Thirty capsules opened. Nothing cursed. Yet.",
+    "short_descr": "Open 30 capsules",
+    "rarity": 1,
+    "kind": "achievement",
+    "key": "capsules"
+  },
+  {
+    "id": 95,
+    "name": "Tomb Raider",
+    "description": "Fortune and glory, kid.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 3
+  },
+  {
+    "id": 96,
+    "name": "Willingly",
+    "description": "Prove you came here willingly.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 97,
+    "name": "Tree Shaker",
+    "description": "Shook the tree hard enough.",
+    "short_descr": "Some trees need a good shake.",
+    "rarity": 3,
+    "kind": "secret",
+    "key": "tree_shake"
+  },
+  {
+    "id": 98,
+    "name": "Exam Night",
+    "description": "Studied all night. Remembered nothing.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 2
+  },
+  {
+    "id": 99,
+    "name": "Alchemist",
+    "description": "A +5 ring. Chemistry is magic with paperwork.",
+    "short_descr": "Enchant a ring to +5",
+    "rarity": 1,
+    "kind": "achievement",
+    "key": "ring"
+  },
+  {
+    "id": 100,
+    "name": "Paper Plane",
+    "description": "Flies better than you think.",
+    "short_descr": "Drops from sticker packs",
+    "rarity": 1
+  }
+]
