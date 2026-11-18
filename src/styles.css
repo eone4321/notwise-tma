@@ -65,16 +65,16 @@ header { display: flex; align-items: center; justify-content: space-between; mar
 .pageTitle { font-size: clamp(26px, 7vw, 34px); margin-bottom: 12px; }
 .intro { color: var(--muted); margin-bottom: 16px; }
 .gameHero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
+  grid-template-columns: 1fr;
   gap: 12px;
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 20px;
 }
-.heroArt { aspect-ratio: 4 / 3; margin-top: 12px; overflow: hidden; border-radius: 12px; }
-.heroImage { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; transform: scale(1.12); transform-origin: center top; }
 .heroCopy h1 { font-size: clamp(26px, 7vw, 38px); margin-bottom: 8px; }
 .heroSub { color: var(--muted); }
 .heroActions { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -391,3 +391,43 @@ details > p { margin: 4px 0 8px; }
   -webkit-mask-image: radial-gradient(ellipse at 62% 38%, #000 24%, transparent 72%);
   mask-image: radial-gradient(ellipse at 62% 38%, #000 24%, transparent 72%);
 }
+
+.gameHero::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, #0a0e1a 8%, #0a0e1ae6 33%, #0a0e1a15 100%), linear-gradient(0deg, #0a0e1a 5%, transparent 70%); }
+.heroImage { position: absolute; z-index: -2; inset: 0 0 0 auto; width: 72%; height: 100%; object-fit: cover; object-position: center 28%; transform: none; }
+.heroCopy { width: min(66%, 290px); min-height: 100px; }
+.heroCopy h1 { text-wrap: initial; }
+.heroShare { justify-self: start; min-height: 44px; margin-top: 0; }
+.dockCoach { position: fixed; z-index: 21; bottom: calc(var(--dock-height) + 8px); left: 50%; translate: -50% 0; width: min(340px, calc(100% - 32px)); box-shadow: 0 18px 50px #0008; background-color: #151c2d; }
+.dockCoach::after { content: ""; position: absolute; left: calc(50% - 7px); bottom: -7px; width: 14px; height: 14px; rotate: 45deg; background: #151c2d; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.dockCoach h2 { font-size: 17px; }
+.dockCoach dl { display: grid; gap: 6px; margin: 0; font-size: 13px; }
+.dockCoach dl div { display: flex; justify-content: space-between; gap: 10px; }
+.dockCoach dd { color: var(--muted); }
+.dockCoach button { margin-top: 10px; width: 100%; }
+.actionPair { display: flex; flex-wrap: wrap; gap: 8px; }
+.actionPair > * { flex: 1 0 max-content; margin-top: 0; }
+.compactList { list-style: none; padding: 0; margin: 0; }
+.compactList small:last-child { margin-inline-start: auto; }
+.referralStatus { color: var(--lavender); }
+.catalogGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.catalogTile { display: grid; align-content: start; justify-items: start; gap: 5px; padding: 10px; border-radius: 14px; border: 1px solid var(--glass-border); background: var(--glass-fill), var(--surface); min-width: 0; }
+.catalogTile strong { line-height: 1.25; }
+.catalogTile small, .sectionLink small { display: block; }
+.eggPicker .catalogTile { text-align: center; justify-items: center; }
+.sectionLink { display: flex; align-items: center; gap: 10px; }
+.subTitle { margin-block: 12px; }
+.lootList { margin-top: 8px; }
+.lootList .mediaRow { padding-block: 6px; min-height: 44px; }
+.lootList strong { white-space: nowrap; }
+
+.dockCoachTint { position: fixed; inset: 0; z-index: 19; background: #080a13b8; }
+.albumGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.albumGrid > a { min-height: 88px; padding: 6px 4px; font-size: 12px; line-height: 1.22; }
+@media (min-width: 400px) { .albumGrid { grid-template-columns: repeat(4, minmax(0,1fr)); } }
+.priceResult { display: flex; justify-content: space-between; gap: 8px; color: var(--gold); }
+.skillRow > span:last-child { display: grid; }
+.skillRow > span:last-child > strong { margin: 0; text-align: start; }
+.guideLoading { display: grid; min-height: 100dvh; place-content: center; justify-items: center; gap: 12px; color: var(--muted); font-size: 13px; }
+.ringVariants { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.ringVariants > div { display: grid; gap: 4px; }
+.ringVariants > div > div { display: flex; flex-wrap: wrap; gap: 4px; }

@@ -71,13 +71,17 @@ export async function bootTelegram() {
   setTimeout(applySafeArea, 500);
 }
 
-export function lightHaptic() {
+export function impactHaptic(style: 'light' | 'heavy') {
   try {
-    if (hapticFeedback.isSupported()) hapticFeedback.impactOccurred('light');
-    else window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+    if (hapticFeedback.isSupported()) hapticFeedback.impactOccurred(style);
+    else window.Telegram?.WebApp?.HapticFeedback?.impactOccurred(style);
   } catch {
     /* client may not support haptics */
   }
+}
+
+export function lightHaptic() {
+  impactHaptic('light');
 }
 
 export function telegramPopup() {

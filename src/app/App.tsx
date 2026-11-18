@@ -10,12 +10,49 @@ import { CollectionPage } from '../features/CollectionPage';
 import { CapsulePage } from '../features/CapsulePage';
 import { achievementActions } from '../features/inventory';
 import {useEffect,useRef,useState}from'react';
-import{Link,useLocation,useNavigate,useNavigationType}from'react-router';
+import{Link,useLocation,useNavigate}from'react-router';
 import{AnimatePresence,motion}from'motion/react';
-import all from'../../public/data/all_100_stickers.json';import quests from'../../public/data/secret_quests.json';import{lightHaptic,telegramPopup}from'../telegram/client';
-const sections=[['Капсулы','/capsules','✦'],['Яйца и совы','/owl','◉'],['Коллекции','/collections','▧'],['Экосистема','/ecosystem','◈'],['Бои и навыки','/combat','⚔'],['Секреты','/secrets','✧'],['Предметы','/assets','◇'],['Пригласить друзей','/referrals','◇']] as const;
+import all from'../../public/data/all_100_stickers.json';import quests from'../../public/data/secret_quests.json';import{impactHaptic,lightHaptic,telegramPopup}from'../telegram/client';
+import { useGuideNavigation } from './navigation';
+import { DockCoach } from './DockCoach';
+import { AdminPage } from '../features/AdminPage';
+import { authData, defaultGameLink, guideShareUrl, profileRequest, shareGuide, type GuideProfile } from '../features/guideProfile';
+
+const sections = [
+  ['Секреты', '/secrets'], ['Капсулы', '/capsules'], ['Яйца и совы', '/owl'],
+  ['Коллекции', '/collections'], ['Бои и навыки', '/combat'], ['Предметы', '/assets'],
+  ['Экосистема', '/ecosystem'], ['Пригласить друзей', '/referrals'],
+] as const;
 type Item={id:number;name:string;description:string;short_descr:string;rarity:number;kind?:string;key?:string};
-function App(){const loc=useLocation(),nav=useNavigate(),navigationType=useNavigationType(),[hamster,setHamster]=useState(false),[hamsterLocked,setHamsterLocked]=useState(false),[joke,setJoke]=useState(sessionStorage.getItem('notwise.guide.secrets.v1')==='1'),[popup,setPopup]=useState(false);useEffect(()=>{if (!loc.hash) { if (navigationType !== 'POP') window.scrollTo(0, 0); return; } const frame=requestAnimationFrame(()=>document.getElementById(loc.hash.slice(1))?.scrollIntoView()); return()=>cancelAnimationFrame(frame)},[loc.hash,loc.pathname,navigationType]);useEffect(() => {
+function App() {
+  const loc = useLocation();
+  const nav = useNavigate();
+  const [hamster, setHamster] = useState(false);
+  const [hamsterLocked, setHamsterLocked] = useState(false);
+  const [coach, setCoach] = useState(() => localStorage.getItem('notwise.guide.dock.v1') !== '1');
+  const [joke, setJoke] = useState(sessionStorage.getItem('notwise.guide.secrets.v1') === '1');
+  const [popup, setPopup] = useState(false);
+  const [profile, setProfile] = useState<GuideProfile | null>(null);
+  const [profileFailed, setProfileFailed] = useState(false);
+  const [profileAttempt, setProfileAttempt] = useState(0);
+  useEffect(() => {
+    if (!authData()) return;
+    const abort = new AbortController();
+    profileRequest<GuideProfile>({}, abort.signal).then(setProfile).catch(() => {
+      if (!abort.signal.aborted) setProfileFailed(true);
+    });
+    return () => abort.abort();
+  }, [profileAttempt]);
+  const closeCoach = () => {
+    localStorage.setItem('notwise.guide.dock.v1', '1');
+    setCoach(false);
+  };
+  useEffect(() => {
+    if (!loc.hash) { window.scrollTo(0, 0); return; }
+    const frame = requestAnimationFrame(() => document.getElementById(loc.hash.slice(1))?.scrollIntoView());
+    return () => cancelAnimationFrame(frame);
+  }, [loc.hash, loc.pathname]);
+  useEffect(() => {
   if (!hamster) return;
   const unlock = window.setTimeout(() => setHamsterLocked(false), 1000);
   return () => window.clearTimeout(unlock);
@@ -25,8 +62,12 @@ useEffect(() => {
   const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setHamster(false); };
   window.addEventListener('keydown', close);
   return () => window.removeEventListener('keydown', close);
-}, [hamster, hamsterLocked]);useEffect(()=>{telegramPopup()?.ready();const key='notwise.guide.startapp.v1';if(sessionStorage.getItem(key))return;const start=new URLSearchParams(location.search).get('startapp')??telegramPopup()?.initDataUnsafe?.start_param;const routes:Record<string,string>={capsules_gold:'/capsules#gold',eggs:'/owl',secrets:'/secrets',market:'/collections'};if(start&&routes[start]){sessionStorage.setItem(key,'1');nav(routes[start],{replace:true})}},[nav]);const ask=()=>{lightHaptic();const tg=telegramPopup();if(tg?.showPopup){try { tg.showPopup({title:'Секреты Not Wise',message:'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты',buttons:[{id:'pay',text:'Заплатить',type:'default'},{id:'back',text:'Назад',type:'default'}]},()=>reveal()); return; } catch { /* Older Telegram clients use the local dialog. */ }}setPopup(true)};function reveal(){setPopup(false);setJoke(true);sessionStorage.setItem('notwise.guide.secrets.v1','1')}
-return <div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster}><Link to="/" className="brand"><img src="/brand/notwise.svg" alt="Not Wise"/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main key={loc.pathname} inert={hamster}>{loc.pathname === '/' ? <Home/> : <Page ask={ask} joke={joke} popup={popup} reveal={reveal}/>}</main><Dock hamster={hamster} locked={hamsterLocked} onHamster={() => {
+}, [hamster, hamsterLocked]);useEffect(()=>{telegramPopup()?.ready();const key='notwise.guide.startapp.v1';if(sessionStorage.getItem(key))return;const start=new URLSearchParams(location.search).get('startapp')??telegramPopup()?.initDataUnsafe?.start_param;const routes:Record<string,string>={capsules_gold:'/capsules/gold',eggs:'/owl',secrets:'/secrets',market:'/collections/market'};if(start&&Object.hasOwn(routes,start)){sessionStorage.setItem(key,'1');nav(routes[start],{replace:true})}},[nav]);const ask=()=>{lightHaptic();const tg=telegramPopup();if(tg?.showPopup){try { tg.showPopup({title:'Секреты Not Wise',message:'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты',buttons:[{id:'pay',text:'Заплатить',type:'default'},{id:'back',text:'Назад',type:'default'}]},()=>reveal()); return; } catch { /* Older Telegram clients use the local dialog. */ }}setPopup(true)};function reveal(){setPopup(false);setJoke(true);sessionStorage.setItem('notwise.guide.secrets.v1','1')}
+return <div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach}><Link to="/" className="brand"><img src="/brand/notwise.svg" alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main key={loc.pathname} inert={hamster || coach}>{loc.pathname === '/' ? <Home profile={profile}/> : loc.pathname === '/admin' ? <AdminPage profile={profile}/> : <Page ask={ask} joke={joke} popup={popup} reveal={reveal}
+  referrals={<ReferralsPage profile={profile} failed={profileFailed} onSave={setProfile} onRetry={() => {
+    setProfileFailed(false);
+    setProfileAttempt(value => value + 1);
+  }}/>}/>}</main>{coach && !hamster && <><div className="dockCoachTint" aria-hidden="true"/><DockCoach onClose={closeCoach}/></>}<Dock onGesture={coach ? closeCoach : undefined} hamster={hamster} locked={hamsterLocked} onHamster={() => {
   if (hamsterLocked) return;
   if (hamster) {
     setHamster(false);
@@ -42,15 +83,13 @@ return <div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header ine
   <p className="hamsterSpeech">*#$@#, себя потыкай %*!</p>
   <img src="/brand/hamster.png" width="1264" height="1371" alt="Хомяк CryptoOne"/>
 </motion.aside>}</AnimatePresence></div>}
-function Dock({ hamster, locked, onHamster }: { hamster: boolean; locked: boolean; onHamster: () => void }) {
+function Dock({ hamster, locked, onHamster, onGesture }: { hamster: boolean; locked: boolean; onHamster: () => void; onGesture?: () => void }) {
   const location = useLocation();
-  const navigate = useNavigate();
+  const navigation = useGuideNavigation();
   const gesture = useRef({ count: 0, started: 0, pointer: -1, x: 0, y: 0, timer: 0 });
   const back = () => {
     if (hamster) { onHamster(); return; }
-    if (location.pathname === '/') return;
-    if (window.history.state?.idx > 0) navigate(-1);
-    else navigate('/');
+    navigation.back();
   };
   const cancel = () => {
     const state = gesture.current;
@@ -74,9 +113,10 @@ function Dock({ hamster, locked, onHamster }: { hamster: boolean; locked: boolea
         event.currentTarget.setPointerCapture(event.pointerId);
         state.timer = window.setTimeout(() => {
           cancel();
-          lightHaptic();
+          impactHaptic('heavy');
+          onGesture?.();
           if (hamster) onHamster();
-          else navigate('/');
+          else navigation.home();
           window.scrollTo(0, 0);
         }, 500);
       }}
@@ -92,6 +132,7 @@ function Dock({ hamster, locked, onHamster }: { hamster: boolean; locked: boolea
         clearTimeout(state.timer);
         state.pointer = -1;
         lightHaptic();
+        onGesture?.();
         if (hamster || location.pathname !== '/') {
           state.count = 0;
           back();
@@ -107,31 +148,30 @@ function Dock({ hamster, locked, onHamster }: { hamster: boolean; locked: boolea
           onHamster();
         }
       }}
-      onClick={event => { if (event.detail === 0) { lightHaptic(); back(); } }}
+      onClick={event => { if (event.detail === 0) { lightHaptic(); onGesture?.(); back(); } }}
       onContextMenu={event => event.preventDefault()}>
       <img src="/brand/cryptoone.svg" width="32" height="33" alt=""/>
     </button>
   </nav>;
 }
-function Home(){
+function Home({ profile }: { profile: GuideProfile | null }) {
  const tiles = [
+  ['Секреты', '/secrets', '/game/stickers/9.webp', 'Скрытые условия и достижения', '/game/stickers/42.webp'],
   ['Капсулы', '/capsules', '/game/capsules/gold.webp', 'Что выпадет и сколько стоит открыть сейчас?', '/game/capsules/silver.webp'],
   ['Яйца и совы', '/owl', '/game/items/egg.webp', 'Что выпадет из яйца и когда кормить?', '/game/items/golden-egg.webp'],
   ['Коллекции', '/collections', '/game/albums/1.webp', 'Стикеры, альбомы и Getgems', '/game/stickers/1.webp'],
-  ['Экосистема', '/ecosystem', '/game/items/coins.webp', 'Токены, проекты и курсы', '/brand/tokens/gram.png'],
   ['Бои и навыки', '/combat', '/game/skills/1.png', 'Какие навыки выбрать и что качать?', '/game/skills/16.png'],
-  ['Секреты', '/secrets', '/game/stickers/9.webp', 'Скрытые условия и достижения', '/game/stickers/42.webp'],
   ['Предметы', '/assets', '/game/items/ring-wit-3.webp', 'Что для чего нужно в инвентаре', '/game/items/book.webp'],
-  ['Пригласить друзей', '/referrals', null, 'Подключи свой код и получи ссылку для друзей', '/game/items/referral-egg.webp'],
+  ['Экосистема', '/ecosystem', '/game/items/coins.webp', 'Токены, проекты и курсы', '/brand/tokens/gram.png'],
+  ['Пригласить друзей', '/referrals', null, 'Твоя ссылка и список приглашённых', '/game/items/referral-egg.webp'],
  ] as const;
  return <>
   <section className="gameHero">
     <div className="heroCopy"><h1>Гайд по Not Wise</h1><p className="heroSub">Награды, бои и уход за совой.</p></div>
-    <div className="heroArt">
-      <img className="heroImage" src="/brand/notwise-home.jpg" width="1170" height="1200" alt="Золотая сова на ветке"/>
-    </div>
+    <img className="heroImage" src="/brand/notwise-home.jpg" width="1170" height="1200" alt=""/>
+    <button className="heroShare secondary" onClick={() => shareGuide(guideShareUrl(profile?.referralCode))}>Поделиться гайдом</button>
     <div className="heroActions">
-      <a className="primary" href="https://t.me/notwise_bot/thegame?startapp=a51c09d4110f4f18baac577a6eec011a">Открыть игру</a>
+      <a className="primary" href={profile?.gameEntry ?? defaultGameLink}>Открыть игру</a>
       <a className="secondary" href="https://t.me/notgames_bot/squads?startapp=575801">
         <span className="squadMark" aria-hidden="true"/>Наш сквад
       </a>
@@ -141,16 +181,37 @@ function Home(){
   <div className="sectionHeading"><div><h2>Что ищешь?</h2></div></div>
   <div className="guideGrid">{tiles.map(([name, path, icon, description, art]) =>
     <Link to={path} className="guideTile" key={path}>
-      <img className="guideTileArt" src={art} alt="" width="108" height="108" loading="lazy" decoding="async"/>
+      <img className="guideTileArt" src={art} alt="" width="108" height="108"/>
       {icon ? <GameArt path={icon} size={48}/> : <span className="guideFrensIcon" aria-hidden="true"/>}
       <span className="tileText"><b>{name}</b><small>{description}</small></span>
     </Link>
   )}</div>
   <div className="supportFooter"><a className="supportPill" href="https://t.me/cryptoeone"><img className="channelLogo" src="/brand/cryptoone-channel.jpg" alt="" width="24" height="24"/>Канал CryptoOne</a><Link className="supportPill" to="/support"><img src="/brand/cryptoone.svg" alt="" width="18" height="19"/>Поддержать проект</Link></div>
+  {profile?.isAdmin && <Link className="textLink" to="/admin">Управление гайдом</Link>}
  </>;
 }
 function Card({children}:{children:React.ReactNode}){return <section className="card">{children}</section>}
-function Page({ask,joke,popup,reveal}:{ask:()=>void;joke:boolean;popup:boolean;reveal:()=>void}){const loc=useLocation(),nav=useNavigate();const title=sections.find(x=>loc.pathname===x[1]||loc.pathname.startsWith(x[1]+'/'))?.[0]??(loc.pathname==='/support'?'Поддержать проект':'Путеводитель');const goBack=()=>{const idx=(window.history.state as any)?.idx;idx>0?nav(-1):nav('/')};const known=loc.pathname==='/'||loc.pathname==='/support'||sections.some(x=>loc.pathname===x[1]||loc.pathname.startsWith(x[1]+'/'));return <>{!known?<Card><h2>Страница не найдена</h2><p>Такого раздела нет в справочнике.</p><Link to="/">На главную</Link></Card>:<><button className="back" onClick={goBack}>‹ Назад</button><h1 className="pageTitle">{title}</h1>{loc.pathname.startsWith('/capsules')&&<CapsulePage/>}{loc.pathname.startsWith('/owl')&&<OwlPage/>}{loc.pathname.startsWith('/collections')&&<CollectionPage/>}{loc.pathname.startsWith('/ecosystem')&&<EcosystemPage/>}{loc.pathname.startsWith('/combat')&&<CombatPage/>}{loc.pathname.startsWith('/secrets')&&<Secrets ask={ask} joke={joke} popup={popup} reveal={reveal}/>}{loc.pathname==='/support'&&<SupportPage/>}{loc.pathname==='/assets'&&<InventoryPage/>}{loc.pathname==='/referrals'&&<ReferralsPage/>}</>}</>}
+function Page({ ask, joke, popup, reveal, referrals }: {
+  ask: () => void; joke: boolean; popup: boolean; reveal: () => void; referrals: React.ReactNode;
+}) {
+  const { pathname } = useLocation();
+  const section = sections.find(([, path]) => pathname === path || pathname.startsWith(path + '/'));
+  if (!section && pathname !== '/support') return <Card>
+    <h1>Страница не найдена</h1><Link className="textLink" to="/">На главную</Link>
+  </Card>;
+  return <>
+    <h1 className="pageTitle">{section?.[0] ?? 'Поддержать проект'}</h1>
+    {section?.[1] === '/capsules' && <CapsulePage/>}
+    {section?.[1] === '/owl' && <OwlPage/>}
+    {section?.[1] === '/collections' && <CollectionPage/>}
+    {section?.[1] === '/ecosystem' && <EcosystemPage/>}
+    {section?.[1] === '/combat' && <CombatPage/>}
+    {section?.[1] === '/secrets' && <Secrets ask={ask} joke={joke} popup={popup} reveal={reveal}/>}
+    {section?.[1] === '/assets' && <InventoryPage/>}
+    {section?.[1] === '/referrals' && referrals}
+    {pathname === '/support' && <SupportPage/>}
+  </>;
+}
 function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean; popup: boolean; reveal: () => void }) {
   const { hash } = useLocation();
   const [tab, setTab] = useState<'secret' | 'achievement'>('secret');

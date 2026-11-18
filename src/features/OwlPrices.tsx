@@ -18,7 +18,7 @@ type Quote = {
 };
 type MarketPrices = { items: Quote[]; gramToUsdt: number | null };
 
-export function OwlPrices() {
+export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' } = {}) {
   const [market, setMarket] = useState<MarketPrices | null>(null);
 
   useEffect(() => {
@@ -47,10 +47,10 @@ export function OwlPrices() {
   }, []);
 
   return <section className="card" aria-labelledby="owl-market">
-    <h2 id="owl-market">Цены на NFT в Not Wise</h2>
+    <h2 id="owl-market">{only === 'eggs' ? 'Цена NFT-яйца' : 'Цены на NFT в Not Wise'}</h2>
     <p className="caption">От минимальной цены на Getgems. USDT — эквивалент.</p>
     <div className="owlMarketList" aria-busy={market === null}>
-      {featured.map(item => {
+      {featured.filter(item => !only || item.id === only).map(item => {
         const collection = collections.find(({ id }) => id === item.id);
         if (!collection) return null;
         const quote = market?.items.find(({ id }) => id === item.id);
@@ -73,6 +73,6 @@ export function OwlPrices() {
         </a>;
       })}
     </div>
-    <Link className="textLink" to="/collections">Все коллекции</Link>
+    {!only && <Link className="textLink" to="/collections/market">Все коллекции</Link>}
   </section>;
 }

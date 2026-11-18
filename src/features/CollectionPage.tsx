@@ -6,17 +6,16 @@ import { GameArt } from '../ui/GameArt';
 import { achievementActions } from './inventory';
 import marketCollections from './market-collections.json';
 
-const albums = ['Wonderland','Flying Saucer','Cosmo Zone','Summer Vibes','Wild Fortune','Hellborn','Mimizuku','Showtime','Power Mode','Naughty Mood','Hustle Pack','Spellbound','Wanted Sheriff','Internet Moments','Laa-Laa Land','Fine Art','The Family','GG Pack','Golden Scarab','Back to School'];
+const albums = ['Wonderland','Flying Saucer','Cosmo Zone','Summer Vibes','Wild Fortune','Hellborn','Mimizuku','Showtime','Power Mode','Naughty Mood','Spellbound','Magic Moments','Wanted Sheriff','Internet Moments','Laa-Laa Land','Fine Art','The Family','EXP & SP','Golden Scarab','Back to School'];
 
 export function CollectionPage() {
-  const [tab,setTab] = useState('albums');
   const { pathname } = useLocation();
   const albumId = Number(pathname.match(/albums\/(\d+)$/)?.[1]);
   const album = albumId >= 1 && albumId <= albums.length ? albumId : null;
-  const [query,setQuery] = useState('');
+  const marketView = pathname === '/collections/market';
   const [market,setMarket] = useState<Record<string, number>>({});
   useEffect(() => {
-    if (tab !== 'market') return;
+    if (!marketView) return;
     const controller = new AbortController();
     fetch('/api/market/collections',{signal:controller.signal}).then(response => response.ok ? response.json() : null)
       .then(data => {
@@ -26,23 +25,23 @@ export function CollectionPage() {
         }
       }).catch(() => {});
     return () => controller.abort();
-  },[tab]);
-  const term = query.trim().toLowerCase().replace(/^#0*/, '');
-  const matches = stickers.filter(item => (album === null || Math.ceil(item.id/5) === album) &&
-    (!term || (String(item.id) === term || item.name.toLowerCase().includes(term))));
+  },[marketView]);
+  const matches = album === null ? [] : stickers.filter(item => Math.ceil(item.id / 5) === album);
   return <>
-    <p className="intro">У каждого игрового альбома пять стикеров. Их получают из наборов, за достижения и за раскрытие секретов.</p>
-    <div className="choiceBar" aria-label="Раздел коллекций">
-      <button aria-pressed={tab === 'albums'} onClick={() => setTab('albums')}>Игровые альбомы</button>
-      <button aria-pressed={tab === 'market'} onClick={() => setTab('market')}>Рынок Getgems</button>
-    </div>
-    {tab === 'albums' ? <>
-      <label className="field">{album === null ? 'Поиск стикера' : 'Поиск в альбоме'}<input type="search" placeholder="Например, 42 или Sushi Master" value={query} onChange={event => setQuery(event.target.value)}/></label>
-      {!query.trim() && album === null ? <div className="albumGrid">{albums.map((label,i) =>
-        <Link key={label} to={`/collections/albums/${i+1}`}><GameArt path={`/game/albums/${i+1}.webp`} size={72}/><span>{label}</span><small>№{i*5+1}–{i*5+5}</small></Link>
-      )}</div> : <section className="card">
-        {album !== null && <><Link className="textLink" to="/collections">← Все альбомы</Link><h2>{albums[album-1]}</h2></>}
-        {matches.length === 0 && <p>Стикеров с таким названием или номером нет.</p>}
+    {album === null && <nav className="choiceBar" aria-label="Раздел коллекций">
+      <Link to="/collections" aria-current={!marketView ? 'page' : undefined}>Стикеры</Link>
+      <Link to="/collections/market" aria-current={marketView ? 'page' : undefined}>NFT на Getgems</Link>
+    </nav>}
+    {!marketView ? <>
+      {album === null ? <>
+        <p className="intro">20 наборов по 5 стикеров. Открой набор, чтобы узнать, где найти каждый стикер.</p>
+        <div className="albumGrid">{albums.map((label,i) =>
+          <Link key={label} to={`/collections/albums/${i+1}`}>
+            <GameArt path={`/game/albums/${i+1}.webp`} size={48}/><span>{label}</span>
+          </Link>
+        )}</div>
+      </> : <section className="card">
+        <h2>{albums[album-1]}</h2>
         {matches.map(item => <details className="mediaDetails" key={item.id}><summary>
           <GameArt path={`/game/stickers/${item.id}.webp`}/>
           <span><strong>{item.name}</strong><small>№{item.id} · {item.kind === 'secret' ? 'Секрет' : item.kind === 'achievement' ? 'Достижение' : 'Из набора стикеров'}</small></span>

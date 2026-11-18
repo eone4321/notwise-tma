@@ -10,7 +10,12 @@ export function notOdds(tier:Tier,farmPct=0){
  const raw=amounts.map(amount=>({amount,scaled:Math.min(100,(100/amount/3/(amount>5000?10:amount>100?3:1))*(1+Math.max(0,farmPct)/100)*baseChance[tier])}));
  let larger=0;return raw.reverse().map(({amount,scaled})=>{const chance=Math.min(scaled,Math.max(0,100-larger));larger+=scaled;return{amount,chance}}).reverse();
 }
-export function chanceLabel(p:number){return p>=1?`${new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(p)}%`:`1 / ${new Intl.NumberFormat('ru-RU',{maximumFractionDigits:1}).format(100/p)}`;}
-export function eggShardsPercent(){return 100-(.02+.9+1.5+1.125+100/889+100/1778+100/4444+20+60);}
-export function xpReward(level:number,tier:Tier,xp:number[]){const multi={dark:4,silver:6,gold:14}[tier];return xp[Math.max(1,Math.min(99,level))]*multi;}
+const percent = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
+const whole = new Intl.NumberFormat('ru-RU');
+export function chanceLabel(value: number) {
+  if (value === 0) return '0%';
+  if (value < .05) return '≈ 1 из ' + whole.format(Math.round(100 / value));
+  return percent.format(value) + '%';
+}
+export function xpReward(level:number,tier:Tier,xp:number[]){const multi={dark:4,silver:6,gold:14}[tier];return xp[Math.max(1,Math.min(xp.length - 1,level))]*multi;}
 export function coinReward(level:number,tier:Tier){const multi={dark:1.5,silver:2.5,gold:5}[tier];return (level<20?70:100)*multi;}

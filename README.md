@@ -16,3 +16,25 @@ Production bundle: `npm run build`. Telegram features degrade to browser behavio
 ## Current scope
 
 Implemented guide screens include capsule probabilities and calculators, egg loot and hunger guidance, the 100-sticker catalog and 20 albums, Getgems collections, token quotes, 20 combat skills and builds, secrets and achievements, and explicit Stars support. The API validates Telegram initData and invoice ownership. Production deployment still needs an HTTPS reverse proxy for `/api`, configured bot credentials, and verification in a real Telegram client. See `../NotWise_docs/NOT_WISE_GUIDE_IMPLEMENTATION.md` for the product contract and acceptance checklist.
+
+## Visitor log and referrals
+
+The Vercel endpoint `/api/guide/profile` checks Telegram's signed init data on
+every request. It rejects launches older than one hour. Reopen the Mini App
+if the current session expires. Add these environment variables to the
+production Vercel project and redeploy:
+
+- `BOT_TOKEN` for the Telegram bot that serves the Mini App.
+- `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` for a private Redis database.
+- `GUIDE_ADMIN_IDS` set to comma-separated Telegram numeric IDs allowed to view
+  the authenticated `/admin` screen.
+
+The Main Mini App link defaults to `https://t.me/NotWiseGuideBot?startapp`. Set
+`VITE_GUIDE_TMA_URL` at build time if the bot uses a different direct Mini App URL.
+
+The backend stores each verified visitor's Telegram ID, display name, first and
+last visit, optional game invite link, and first referral to the guide. The
+referral list shown to the inviter contains names and first-visit dates.
+Game-side referrals and the old bot's records are separate data sources.
+The new visitor log starts when the endpoint is configured. Regular guide
+content remains available if the profile service is unavailable.
