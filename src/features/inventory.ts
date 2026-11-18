@@ -4,7 +4,7 @@ export const itemNames: Record<number, [string, string]> = {
   10: ['Пластырь', 'patch.webp'], 11: ['Аптечка', 'first-aid-kit.webp'],
   12: ['Цветная гирлянда', 'string-light-color.webp'], 13: ['Белая гирлянда', 'string-lights.webp'],
   14: ['Берёзовая кора', 'birch.webp'], 15: ['Дубайский шоколад', 'dubai-chocolate.webp'],
-  16: ['Плантан (бананы)', 'plantain.webp'], 24: ['Себа-кола', 'seba-cola.webp'],
+  16: ['Плантан (бананы)', 'plantain.webp'], 24: ['Seba Cola', 'seba-cola.webp'],
   25: ['Жетон скина · золотой след', '25.png'],
   26: ['Жетон скина · радужный след', '26.png'],
   27: ['Жетон скина · звёздный след', '27.png'],

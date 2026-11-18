@@ -73,6 +73,7 @@ export function OwlPage() {
       </div>
       <ul className="compactList">
         <li className="mediaRow"><span>Максимум сытости</span><strong>20</strong></li>
+        <li className="mediaRow"><span>Минимум сытости для полёта</span><strong>10</strong></li>
         <li className="mediaRow"><span>Любимая еда</span><strong>×2 сытости</strong></li>
         <li className="mediaRow"><span>Время штрафа</span><strong>24 ч</strong></li>
         <li className="mediaRow"><span>Монеты, XP, восстановление HP и энергии при голоде</span><strong>−50%</strong></li>
@@ -96,15 +97,18 @@ const categories: Record<string, Category> = {
   care: {
     title: 'Еда и лекарства', icon: 'croissant.webp', summary: 'Сытость, здоровье и снятие штрафа',
     items: [
-      ...[5, 6, 7, 8, 15, 16, 24].map(id => ({
+      ...[5, 6, 7, 8, 15, 16].map(id => ({
         name: itemNames[id][0], file: itemNames[id][1], effect: 'Восстанавливает сытость. Любимая еда даёт ×2. Порция указана на карточке в игре.',
         source: 'Добыча из яиц. Часть еды есть в Лавке за монеты.',
       })),
+      { name: 'Рогач', file: 'rogach.webp', effect: 'Съедобный жук. Повышает сытость совы.', source: 'Еда' },
+      { name: 'Seba Cola', file: 'seba-cola.webp', effect: 'Защищает сову от рейдов и подбора в соперники. Если сова сама нападёт, защита спадёт. Длительность указана в игре.', source: 'Защита от атак' },
+      { name: 'Большие чёрные часы', file: 'big-black-clock.webp', effect: 'Блокируют новый штраф за голод на 30 дней. Действующий штраф закончится по своему таймеру. Каждые часы добавляют ещё 30 дней защиты.', source: 'Защита от голода' },
       { name: 'Груша', file: 'pear.webp', effect: 'Восстанавливает сытость. Может быть любимой едой совы.', source: 'Еда' },
       { name: 'Круассан', file: 'croissant.webp', effect: 'Восстанавливает сытость. Может быть любимой едой совы.', source: 'Обычная Лавка · монеты' },
       { name: 'Пластырь', file: 'patch.webp', effect: 'Восстанавливает здоровье.', source: 'Лечение · яйцо' },
       { name: 'Аптечка', file: 'first-aid-kit.webp', effect: 'Восстанавливает здоровье.', source: 'Лечение · яйцо' },
-      { name: 'Таблетка восстановления', file: 'recovery-pill.webp', effect: 'Снимает штраф голода. Повторное применение через 7 дней.', source: 'Расходник' },
+      { name: 'Таблетка восстановления', file: 'recovery-pill.webp', effect: 'Снимает штраф голода и полностью восстанавливает сытость. Можно использовать раз в 7 дней.', source: 'Расходник' },
     ],
   },
   gear: {
@@ -113,11 +117,10 @@ const categories: Record<string, Category> = {
       { name: 'Кольца', file: 'ring-wit-3.webp', effect: 'Три слота. Есть кольца силы, ловкости и мудрости. У каждого вида три ступени. Точный бонус виден в карточке кольца.', source: 'Инвентарь и рынок NFT' },
       ...([
         ['Эпическая книга исследователей', 'book.webp'], ['Монтмориллонит', 'montmorillonite.webp'],
-        ['Чёрные часы', 'big-black-clock.webp'], ['Рогач', 'rogach.webp'],
       ] as const).map(([name, file]) => ({
         name, file, effect: file === 'book.webp'
           ? 'Открывает ежедневную загадку. На ответ 60 секунд. Верный ответ даёт монеты, опыт и +5 мудрости на сутки. Три ошибки уничтожают книгу.'
-          : 'Занимает слот артефакта. Бонусы указаны на карточке предмета в игре.', source: 'Артефакт',
+          : 'Кристалл ускоряет восстановление здоровья. Размер бонуса указан на карточке в игре.', source: 'Артефакт',
       })),
       { name: 'Заточка', file: 'enchanter.webp', effect: 'Есть свитки для скинов и для колец, а также универсальная заточка. Каждый +1 даёт 5 п. п. к бонусу фарма.', source: 'Премиальная Лавка и крафт' },
       ...([
@@ -139,8 +142,8 @@ const categories: Record<string, Category> = {
       })),
       { name: 'Зажигалка сквада', file: 'lighter.webp', effect: 'Один заряд позволяет благословить сквад в ежедневном ритуале. Когда ритуалы выполнят 50% сквада, участники получают бонус на 24 часа.', source: 'Добыча из яиц' },
       { name: 'Пустая колба SP', file: 'flask-empty.webp', effect: 'Для заполнения нужно вдвое больше SP, чем вмещает колба. Сгорают все свободные SP. Очки, вложенные в навыки, сохраняются.', source: 'Обычная Лавка · монеты' },
-      { name: 'Колба SP наполовину', file: 'flask-half.webp', effect: 'Содержит часть очков от полной ёмкости. Точное количество смотри на карточке.', source: 'Хранение очков навыков' },
-      { name: 'Полная колба SP', file: 'flask-full.webp', effect: 'Используй, чтобы получить записанные очки навыков.', source: 'Хранение очков навыков' },
+      { name: 'Колба на 100 000 SP', file: 'flask-half.webp', effect: 'Содержит 100 000 очков навыков. Для записи нужно 200 000 SP.', source: 'Хранение очков навыков' },
+      { name: 'Колба на 1 000 000 SP', file: 'flask-full.webp', effect: 'Содержит 1 000 000 очков навыков. Для записи нужно 2 000 000 SP.', source: 'Хранение очков навыков' },
       { name: 'Ваучер 10 000 $NOT', file: 'voucher-10k.webp', effect: 'Номинал — 10 000 $NOT.', source: 'Ваучер' },
       { name: 'Ваучер 100 000 $NOT', file: 'voucher-100k.webp', effect: 'Номинал — 100 000 $NOT.', source: 'Ваучер' },
     ],
@@ -171,7 +174,9 @@ export function InventoryPage() {
     {selected.file === 'ring-wit-3.webp' && <div className="ringVariants">
       {[['str', 'Сила'], ['ag', 'Ловкость'], ['wit', 'Мудрость']].map(([key, name]) => <div key={key}>
         <small>{name}</small>
-        <div>{[1, 2, 3].map(tier => <GameArt key={tier} path={itemPath(`ring-${key}-${tier}.webp`)} size={38}/>)}</div>
+        <div>{['Дерево', 'Обсидиан', 'Золото'].map((material, index) => <span className="ringVariant" key={material}>
+          <GameArt path={itemPath(`ring-${key}-${index + 1}.webp`)} size={38}/><small>{material}</small>
+        </span>)}</div>
       </div>)}
     </div>}
   </section>;
