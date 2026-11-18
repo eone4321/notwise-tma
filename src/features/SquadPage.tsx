@@ -18,11 +18,14 @@ export function SquadPage() {
   </section>;
   if (pathname === '/squads/shop') return <section className="card">
     <div className="mediaHeading"><span className="silverCoin"><GameArt path="/game/items/wise-coin.webp" size={40}/></span>
-      <div><h2>Магазин сквада</h2><p>С 3-го уровня совы. Оплата серебром сквада.</p></div>
+      <div><h2>Магазин сквада</h2><p>С 3-го уровня совы. Оплата серебром сквада (Ⓢ).</p></div>
     </div>
-    <div className="mediaRow"><GameArt path="/game/items/scroll-enchant-ring.webp" size={38}/><span>Свиток для заточки кольца</span></div>
-    <div className="mediaRow"><GameArt path="/game/items/scroll-enchant-skin.webp" size={38}/><span>Свиток для заточки скина</span></div>
-    <p className="caption">Эти свитки связаны с осадой. Текущий ассортимент, остатки и цены магазин загружает из игры.</p>
+    <div className="mediaRow"><GameArt path="/game/items/scroll-enchant-ring.webp" size={38}/><span>Заточка кольца</span><strong className="inventoryPrice"><span className="silverCoin"><GameArt path="/game/items/wise-coin.webp" size={16}/></span>500</strong></div>
+    <div className="mediaRow"><GameArt path="/game/items/lighter.webp" size={38}/><span>Зажигалка</span><strong className="inventoryPrice"><span className="silverCoin"><GameArt path="/game/items/wise-coin.webp" size={16}/></span>1 000</strong></div>
+    <div className="mediaRow"><GameArt path="/game/items/scroll-enchant-skin.webp" size={38}/><span>Заточка скина</span><strong className="inventoryPrice"><span className="silverCoin"><GameArt path="/game/items/wise-coin.webp" size={16}/></span>5 000</strong></div>
+    <div className="mediaRow"><GameArt path="/game/items/morpher.webp" size={38}/><span>Морфер</span><strong className="inventoryPrice"><span className="silverCoin"><GameArt path="/game/items/wise-coin.webp" size={16}/></span>5 000</strong></div>
+    <div className="mediaRow"><GameArt path="/game/items/chiller.webp" size={38}/><span>Чиллер</span><strong className="inventoryPrice"><span className="silverCoin"><GameArt path="/game/items/wise-coin.webp" size={16}/></span>25 000</strong></div>
+    <p className="caption">Серебро зарабатывается в осадах территорий (3 раунда в сутки по 8 часов). Чиллер в скваде стоит 25 000 серебра (вместо 100 000 золотых монет в обычной лавке).</p>
     <a className="textLink" href="https://t.me/notwise_bot/thegame">Посмотреть магазин в игре</a>
   </section>;
   return <>

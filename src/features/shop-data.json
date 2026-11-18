@@ -244,5 +244,40 @@
     "category": "artifact",
     "currency": "stars",
     "price": 500
+  },
+  {
+    "id": "squad-scroll-ring",
+    "name_ru": "Заточка кольца",
+    "category": "squad",
+    "currency": "squad_silver",
+    "price": 500
+  },
+  {
+    "id": "squad-lighter",
+    "name_ru": "Зажигалка",
+    "category": "squad",
+    "currency": "squad_silver",
+    "price": 1000
+  },
+  {
+    "id": "squad-scroll-skin",
+    "name_ru": "Заточка скина",
+    "category": "squad",
+    "currency": "squad_silver",
+    "price": 5000
+  },
+  {
+    "id": "squad-morpher",
+    "name_ru": "Морфер",
+    "category": "squad",
+    "currency": "squad_silver",
+    "price": 5000
+  },
+  {
+    "id": "squad-chiller",
+    "name_ru": "Чиллер",
+    "category": "squad",
+    "currency": "squad_silver",
+    "price": 25000
   }
 ]
