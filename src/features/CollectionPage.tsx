@@ -6,7 +6,7 @@ import { GameArt } from '../ui/GameArt';
 import { achievementActions } from './inventory';
 import marketCollections from './market-collections.json';
 
-const albums = ['Wonderland','Flying Saucer','Cosmo Zone','Summer Vibes','Wild Fortune','Hellborn','Mimizuku','Showtime','Power Mode','Naughty Mood','Spellbound','Magic Moments','Wanted Sheriff','Internet Moments','Laa-Laa Land','Fine Art','The Family','EXP & SP','Golden Scarab','Back to School'];
+const albums = ['Wonderland','Flying Saucer','Cosmo Zone','Summer Vibes','Wild Fortune','Hellborn','Mimizuku','Showtime','Power Mode','Naughty Mood','Hustle Pack','Spellbound','Wanted Sheriff','Internet Moments','Laa-Laa Land','Fine Art','The Family','GG Pack','Golden Scarab','Back to School'];
 
 export function CollectionPage() {
   const { pathname } = useLocation();

@@ -1,0 +1,60 @@
+{
+  "body": [
+    "Brown",
+    "Gray",
+    "Dark",
+    "Green",
+    "Arctic Blue",
+    "Rose",
+    "Violet",
+    "Cherry",
+    "Polar",
+    "Buckle",
+    "Camo",
+    "Artistry",
+    "Demonic",
+    "Night City",
+    "Python",
+    "Golden"
+  ],
+  "hat": [
+    "Birthday Hat",
+    "Captain Hat",
+    "Detective Hat",
+    "Cherry",
+    "Horns",
+    "Nest",
+    "Broken Egg",
+    "Patch",
+    "Ninja Gear",
+    "Crown",
+    "Golden Egg",
+    "Nimbus"
+  ],
+  "glasses": [
+    "Aviator",
+    "Las Vegas",
+    "Pirate Patch"
+  ],
+  "chest": [
+    "Bow Tie",
+    "Red Tie",
+    "Green Tie",
+    "Bolo Tie",
+    "Pipe",
+    "NOT Chain",
+    "Smoking Pipe"
+  ],
+  "eyes": [
+    "High Blue",
+    "High Brown",
+    "High Green",
+    "High Pink",
+    "High Red",
+    "High Wine",
+    "High Yellow",
+    "Demonic",
+    "Red Laser",
+    "Blue Laser"
+  ]
+}

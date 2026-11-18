@@ -44,7 +44,9 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
       <div className="mediaRow"><GameArt path="/game/albums/1.webp" size={40}/><Link className="textLink" to="/collections">Набор стикеров</Link><strong>{stickerChances[index]}</strong></div>
       <details><summary>Шансы выпадения Notcoin ($NOT)</summary>
         <label className="field">Бонус к дропу $NOT из профиля совы, % <input type="number" min="0" value={farm} onChange={event => setFarm(Math.max(0, Number(event.target.value) || 0))}/></label>
-        <p className="caption">Бонус из профиля учитывает экипировку, заточку и лигу.</p><Link className="textLink" to="/assets/gear">Как повысить бонус</Link>
+        <p className="caption">Сложи бонусы деталей скина, заточки колец и скина, артефакта и лиги. Каждый уровень заточки добавляет 5 п. п.</p>
+        <Link className="textLink" to="/assets/gear">Детали скинов и заточка</Link>
+        <Link className="textLink spacedLink" to="/combat/modes#leagues">Бонус боевой лиги</Link>
         {notOdds(currentTier, farm).map(row => <div className="mediaRow" key={row.amount}><span>{row.amount.toLocaleString('ru-RU')} $NOT</span><strong>{row.chance === 0 ? '0%' : chanceLabel(row.chance)}</strong></div>)}
       </details>
       <p className="caption">Расчёт по базовым параметрам клиента. Сервер игры может менять условия. При заморозке опыта XP не начисляется.</p>

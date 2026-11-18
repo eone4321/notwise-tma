@@ -8,7 +8,7 @@ export const itemNames: Record<number, [string, string]> = {
   25: ['Жетон скина · золотой след', '25.png'],
   26: ['Жетон скина · радужный след', '26.png'],
   27: ['Жетон скина · звёздный след', '27.png'],
-  38: ['Книга', '38.png'], 39: ['Кристалл', '39.png'],
+  38: ['Эпическая книга исследователей', '38.png'], 39: ['Кристалл', '39.png'],
   50: ['Зажигалка сквада', 'lighter.webp'],
   51: ['Осколки скорлупы', 'eggshell-shards-icon.webp'],
 };
@@ -22,9 +22,11 @@ const common: Drop[] = [[25,.02], ...decor, ...gear, ...consumables, ...food];
 const rareDecor: Drop[] = [[12,10],[13,10],[14,7.5],[15,8.75],[16,8.75]];
 const treasure: Drop[] = [...rareDecor.map(([id, weight]): Drop => [id, weight * 41.8 / 45]),[53,500/11],[54,50/11]];
 
-// Wp and Yp in the archived game bundle. The remaining weight goes to shards.
+// Base Wp and Yp tables in main-CDMhjS0e.js. The remaining weight goes to shards.
 export const eggPools: Record<number, Drop[]> = {
   17: common,
+  56: [[25,100/550],[12,.09],[13,.09],[14,.072],[15,.036],[16,.036],
+    [24,3],[50,2.25],[38,1],[39,100/889],[52,.5],[53,4],[54,.4],[10,5],[11,5],[7,10],[8,10]],
   19: [[25,100/110],[26,100/550],[12,.18],[13,.18],[14,.144],[15,.10368],[16,.10368],[24,6],[50,4.5],[38,2],[39,100/444],[52,1],[53,8],[54,.8],[10,5],[11,5],[7,10],[8,10]],
   18: [[26,8.2], ...treasure], 20: [[27,8.2], ...treasure],
 };

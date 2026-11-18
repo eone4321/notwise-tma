@@ -5,6 +5,7 @@ import progression from './owl-progression.json';
 import { GameArt } from '../ui/GameArt';
 import { skillCopy } from './skill-copy';
 import skillLevels from './skill-levels.json';
+import { battleLeagues } from './battle-leagues';
 
 const branches = [
   ['wisdom', 'Мудрость', 'Критический удар и мана', 1],
@@ -14,10 +15,10 @@ const branches = [
 ] as const;
 const modes = [
   ['Рейтинговый бой', 'Рейтинг и капсулы', 'Атакуй зоны, которые соперник не блокирует, и переключай свой блок. Победа может дать капсулу при наличии слота.'],
-  ['Рейд', 'С 1-го уровня', 'Нападай на других игроков. Успешные рейды засчитываются для достижения Outlaw.'],
-  ['Додзе', 'Навыки со 2-го уровня', 'Бей манекен, чтобы заработать SP. Трать SP на улучшения, а очки атрибута — на открытие навыков его ветки.'],
-  ['Сквады и осады', 'Сквады с 3-го · война с 4-го', 'Вступи в сквад и участвуй в атаках по раундам. Активность засчитывается для достижений сквада.'],
-  ['Полёт', 'С 5-го уровня', 'Собирай монеты на трассе и обходи препятствия.'],
+  ['Рейд', 'С 1-го уровня', 'Нападай на сов из рейтинга. Проигравший отдаёт победителю 3% монет. После трёх проигранных рейдов сова защищена до возвращения игрока.'],
+  ['Додзе', 'Навыки со 2-го уровня', 'Обычный удар по манекену тратит 2 энергии и приносит SP. Навыки тоже можно тренировать на манекене. Трать SP на улучшения, а очки атрибута — на открытие навыков его ветки.'],
+  ['Сквады и осады', 'Сквады с 3-го · война с 4-го', 'Раунд длится 8 часов. Территория приносит серебро сквада, монеты или +1–2 к атрибуту. Чтобы забрать награду своего сквада за раунд, участвуй в атаке. Усиление действует 24 часа после получения.'],
+  ['Полёт', 'С 5-го уровня', 'Полёт тратит энергию и даёт монеты с небольшим количеством XP. Игра выдаёт 3 ракеты в день, дополнительные можно подобрать в полёте. Ракета умножает монеты, суши забирает 20%.'],
   ['Wild Magic', 'Тренировка заклинаний', 'Три максимальные оценки открывают достижение Spell Book.'],
   ['Книга загадок', '60 секунд на ответ', 'Сотри поле, чтобы открыть загадку и запустить таймер. Серия верных ответов умножает монеты и XP до ×3. Верный ответ даёт +5 мудрости на 24 часа. После трёх ошибок книга сгорает.'],
   ['Сезон', '14 дней', 'В каждом сезоне одна цель: лайки, победы, безупречные победы, монеты или дистанция в полёте, лучший полёт, загадки или удары в Додзе. Учитывается активность за текущий сезон.'],
@@ -27,7 +28,7 @@ const skillArt = (id: number) => '/game/skills/' + id + '.png';
 type Skill = typeof skills[number];
 
 export function CombatPage() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   const [, , page, branchId, skillId] = pathname.split('/');
   const [isStats, isModes] = [page === 'stats', page === 'modes'];
   const branch = branches.find(item => item[0] === branchId);
@@ -53,7 +54,20 @@ export function CombatPage() {
         {modes.map(([title, when, description]) => <details className="mediaDetails" key={title}>
           <summary><span><strong>{title}</strong><small>{when}</small></span></summary><p>{description}</p>
         </details>)}
-      </section> : isStats ? <CombatStats/> : <>
+        <details className="mediaDetails"><summary><span><strong>Призы сезона</strong><small>Первые 100 мест</small></span></summary>
+        <p>Базовый фонд клиента — 1 млн $NOT. 1-е место получает 400 000, 2-е — 350 000, 3-е — 250 000 $NOT. Топ-10 получает золотое загадочное яйцо, места 11–100 — сезонное загадочное яйцо.</p>
+        <p className="caption">Игра может изменить фонд конкретного сезона. Призы приходят автоматически.</p>
+        <Link className="textLink" to="/owl/season">Что выпадает из сезонного яйца</Link>
+      </details>
+      <details className="mediaDetails" id="leagues" open={hash === "#leagues" || undefined}><summary><span><strong>Боевые лиги</strong><small>Пороги рейтинга и бонус к $NOT</small></span></summary>
+        <table className="priceTable">
+          <thead><tr><th scope="col">Лига</th><th scope="col">От MMR</th><th scope="col">Фарм</th></tr></thead>
+          <tbody>{battleLeagues.map(([name, rating], index) => <tr key={name}>
+            <th scope="row">{name}</th><td>{format.format(rating)}</td><td>+{index + 1}%</td>
+          </tr>)}</tbody>
+        </table>
+      </details>
+    </section> : isStats ? <CombatStats/> : <>
         <p className="intro">Ветки навыков открываются на 2-м уровне. В бой можно взять до трёх навыков.</p>
         <div className="catalogGrid">
           {branches.map(([id, title, purpose, icon]) =>
