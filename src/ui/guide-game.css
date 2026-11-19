@@ -397,10 +397,8 @@
   font-weight: 700;
   color: var(--gold);
 }
-.siegeRewardsGrid .gameAttribute { font-size: 16px; }
-.siegeRewardDetails > summary { min-height: 46px; }
-.siegeRewardDetails .mediaRow { justify-content: space-between; gap: 7px; font-size: 13px; }
-.siegeRewardDetails .mediaRow > strong { font-size: 12px; }
+.siegeRewardsGrid .gameAttribute, .squadMapReward .gameAttribute { font-size: 16px; }
+.squadMapReward { display: flex; align-items: center; justify-content: center; gap: 5px; color: var(--gold); font-size: 13px; }
 .siegeRewards .siegeChat { display: flex; justify-content: center; margin: 6px 0 9px; }
 
 .inventoryPanel .inventoryRow {
