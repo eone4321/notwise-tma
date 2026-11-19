@@ -7,8 +7,8 @@
   ],
   "schedules": {
     "owl-sales": {
-      "schedule": "*/10 * * * *",
-      "function": "api/owl-sales-scheduled.ts",
+      "schedule": "*/15 * * * *",
+      "function": "api/owl-sales-scheduled",
       "timezone": "UTC"
     }
   },

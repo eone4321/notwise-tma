@@ -7,7 +7,7 @@ const COLLECTIONS = [
   { id: 'skins', address: 'EQC_CN9MU1igRcqmuWeUxxyB6_Uvr4JrnyUCaLe609qQNrRA' },
 ];
 
-export default async function handler(req: Request) {
+export default async function handler() {
   try {
     const usdtAddress = 'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs';
 

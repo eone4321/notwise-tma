@@ -69,7 +69,7 @@ after their owners save them again with a verified subscription.
 
 ## NOT Wise owl sale alerts
 
-The private Vercel schedule `owl-sales` runs every ten minutes. Private chat
+The private Vercel schedule `owl-sales` runs every fifteen minutes, subject to the Hobby plan's dispatch window. Private chat
 users opt in via `/owlsales` or the bot's subscription link and can stop with
 `/stopowlsales`. Redis stores the feed checkpoint, pending sales and delivery
 receipts. The bot checks sales from the moment subscriptions first opened.
