@@ -41,7 +41,7 @@ export function CollectionPage() {
   const marketView = pathname === '/collections/market';
   const { data: market, pending } = collectionMarket.useSnapshot();
 
-  const matches = album === null ? [] : [...stickers.filter(item => stickerAlbum(item.id) === album)].sort((a, b) => (a.rarity ?? 0) - (b.rarity ?? 0));
+  const matches = album === null ? [] : [...stickers.filter(item => stickerAlbum(item.id) === album)].sort((a, b) => (a.rarity ?? 0) - (b.rarity ?? 0) || a.id - b.id);
   const count = album === null ? stickers.filter(item => isDone(item.id)).length : matches.filter(item => isDone(item.id)).length;
   const quotesById = new Map(market?.items.map(quote => [quote.id, quote]));
   const editionFor = (id: number) => publishing.albums[id - 1];
@@ -155,7 +155,7 @@ function AlbumPublishing({ edition, minted, floor }: {
   return <div className="albumPublishing">
     <dl>
       <div><dt>Сминчено на Getgems</dt><dd>{typeof minted === 'number' ? `${format.format(minted)} из ${format.format(edition.edition)}` : '—'}</dd></div>
-      <div><dt>Минт в TON</dt><dd><Price value={edition.mintGram} currency="gram"/></dd></div>
+      <div><dt>Стоимость минта</dt><dd><Price value={edition.mintGram} currency="gram"/></dd></div>
       <div><dt>Флор на Getgems</dt><dd>{floor && floor > 0 ? <Price value={floor} currency="gram" from/> : '—'}</dd></div>
     </dl>
     <a className="textLink" href={`https://getgems.io/collection/${stickerData.collectionByAlbum[edition.id]}`} target="_blank" rel="noreferrer">

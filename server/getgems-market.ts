@@ -102,15 +102,15 @@ function nameToSlug(name: unknown): string | undefined {
   if (n.includes('morpher')) return 'morpher';
   if (n.includes('clock')) return 'big-black-clock';
   if (n.includes('montmorillonite')) return 'montmorillonite';
-  if (n.includes('wooden ring of strength')) return 'ring-str-1';
-  if (n.includes('obsidian ring of strength')) return 'ring-str-2';
-  if (n.includes('strength') && n.includes('iii')) return 'ring-str-3';
-  if (n.includes('wooden ring of agility')) return 'ring-ag-1';
-  if (n.includes('obsidian ring of agility')) return 'ring-ag-2';
-  if (n.includes('agility') && n.includes('iii')) return 'ring-ag-3';
-  if (n.includes('wooden ring of wisdom')) return 'ring-wit-1';
-  if (n.includes('obsidian ring of wisdom')) return 'ring-wit-2';
-  if (n.includes('wisdom') && n.includes('iii')) return 'ring-wit-3';
+  if (n.includes('golden ring of strength') || (n.includes('strength') && n.includes('iii'))) return 'ring-str-3';
+  if (n.includes('obsidian ring of strength') || (n.includes('strength') && n.includes('ii'))) return 'ring-str-2';
+  if (n.includes('wooden ring of strength') || n.includes('ring of strength')) return 'ring-str-1';
+  if (n.includes('golden ring of agility') || (n.includes('agility') && n.includes('iii'))) return 'ring-ag-3';
+  if (n.includes('obsidian ring of agility') || (n.includes('agility') && n.includes('ii'))) return 'ring-ag-2';
+  if (n.includes('wooden ring of agility') || n.includes('ring of agility')) return 'ring-ag-1';
+  if (n.includes('golden ring of wisdom') || (n.includes('wisdom') && n.includes('iii'))) return 'ring-wit-3';
+  if (n.includes('obsidian ring of wisdom') || (n.includes('wisdom') && n.includes('ii'))) return 'ring-wit-2';
+  if (n.includes('wooden ring of wisdom') || n.includes('ring of wisdom')) return 'ring-wit-1';
   if (n.includes('voucher') && n.includes('100k')) return 'voucher-100k';
   if (n.includes('voucher') && n.includes('10k')) return 'voucher-10k';
   if (n.includes('floppy') && n.includes('100k')) return 'floppy-100k';
@@ -118,6 +118,10 @@ function nameToSlug(name: unknown): string | undefined {
   if (n.includes('floppy') && n.includes('10m')) return 'floppy-10m';
   if (n.includes('floppy') && n.includes('100m')) return 'floppy-100m';
   if (n.includes('floppy') && n.includes('1b')) return 'floppy-1b';
+  if (n.includes('floppy') && n.includes('empty')) return 'floppy-empty';
+  if (n.includes('flask') && n.includes('empty')) return 'flask-empty';
+  if (n.includes('flask') && n.includes('half')) return 'flask-half';
+  if (n.includes('flask') && n.includes('full')) return 'flask-full';
 }
 
 function itemSlug(image: unknown, name?: unknown) {
@@ -164,7 +168,7 @@ async function fetchCollectionFloorByKind(collectionAddress: string, maxPages: n
 }
 
 export async function itemQuotes(): Promise<ItemsSnapshot> {
-  const key = 'notwise:getgems:items:v4';
+  const key = 'notwise:getgems:items:v5';
   if (memoryItems?.updatedAt && Date.now() - Date.parse(memoryItems.updatedAt) < 600_000) {
     return memoryItems;
   }
