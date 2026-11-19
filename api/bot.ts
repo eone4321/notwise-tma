@@ -4,7 +4,7 @@ export const config = {
 
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
 const TMA_URL = 'https://notwise-tma.vercel.app';
-const BANNER_URL = `${TMA_URL}/banner.png`;
+const BANNER_URL = `${TMA_URL}/banner_v2.png`;
 
 async function callTelegram(method: string, body: Record<string, unknown>) {
   if (!BOT_TOKEN) {
