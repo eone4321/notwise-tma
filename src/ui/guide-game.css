@@ -75,38 +75,90 @@
   color: #d5dae4;
   max-width: 18ch;
 }
-.heroActions { gap: 7px; }
+.heroActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
 .heroActions > :is(a, button) {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding-inline: 6px;
+  gap: 6px;
+  min-height: 48px;
+  padding: 8px 6px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
   white-space: normal;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
 }
 .heroActions .openGame, [data-theme="graphite"] .heroActions .openGame {
   background: #ffe6b7;
   color: #1d1511;
-  min-height: 53px;
+  min-height: 48px;
   border: 1px solid #fff0d2;
   border-radius: 12px;
   box-shadow: inset 0 1px #fff7e4, 0 8px 14px #0a070946;
 }
-.launchMark {
-  display: block;
-  flex: none;
-  width: 21px;
-  height: 21px;
-  background: currentColor;
-  mask: url('/brand/notwise.svg') center / contain no-repeat;
-}
 .heroActions .secondary {
   background: var(--game-tile);
   color: var(--text);
-  border-radius: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
   box-shadow: none;
+  min-height: 48px;
 }
-.heroShare .gameGlyph, .heroActions .squadMark, .supportPill .gameGlyph { font-size: 16px; }
+.launchMark {
+  display: block;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  background: currentColor;
+  mask: url('/brand/notwise.svg') center / contain no-repeat;
+}
+.heroActions .squadMark {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+.heroActions .gameGlyph {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  line-height: 1;
+}
+.heroShare .gameGlyph, .supportPill .gameGlyph { font-size: 16px; }
+.heroBuilds {
+  position: relative;
+}
+.heroBadge {
+  position: absolute;
+  top: -5px;
+  right: 6px;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #2a1f42;
+  color: #d3c2ff;
+  border: 1px solid #7c5cb8;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+[data-theme="graphite"] .heroBadge {
+  background: #262626;
+  color: #e5e5e5;
+  border-color: #525252;
+}
 .owlMarket.card {
   padding: 12px;
   border-radius: 12px;
@@ -398,6 +450,7 @@
   color: var(--gold);
 }
 .siegeRewardsGrid .gameAttribute, .squadMapReward .gameAttribute { font-size: 16px; }
+.siegePayoutExample > summary { min-height: 44px; }
 .squadMapReward { display: flex; align-items: center; justify-content: center; gap: 5px; color: var(--gold); font-size: 13px; }
 .siegeRewards .siegeChat { display: flex; justify-content: center; margin: 6px 0 9px; }
 
@@ -486,6 +539,13 @@
 .albumTileMeta { display: flex; justify-content: center; gap: 3px; white-space: nowrap; font-size: 9px; line-height: 1.4; }
 .albumTileMeta span { padding: 1px 3px; border-radius: 4px; background: var(--game-tile); color: var(--muted); }
 .albumTileMeta span.isComplete { color: #211812; background: #ffce91; }
+.albumTileMeta span.nftBadge, .nftBadge { color: #f3d49c; background: rgba(243, 212, 156, 0.16); border: 1px solid rgba(243, 212, 156, 0.35); font-weight: 600; border-radius: 4px; padding: 1px 4px; }
+.priceGramBlock { display: inline-flex; flex-direction: column; align-items: flex-end; vertical-align: middle; line-height: 1.15; }
+.priceUsdSubtext { color: var(--muted); font-size: 10px; font-weight: 500; white-space: nowrap; letter-spacing: -0.01em; line-height: 1.2; }
+.inventoryMint .priceGramBlock, .inventoryMeta .priceGramBlock { align-items: flex-start; }
+.albumPublishing dd .priceGramBlock { align-items: flex-start; }
+.floorPrice .priceGramBlock { align-items: flex-start; }
+.marketPriceValues .priceGramBlock { align-items: flex-end; }
 .albumPublishing { display: grid; gap: 2px; margin-block: 9px; padding: 9px 10px 2px; border-radius: 8px; background: var(--game-tile); }
 .albumPublishing dl { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 10px; font-size: 11px; }
 .albumPublishing dt { color: var(--muted); }
@@ -864,3 +924,1123 @@
   .guideScreen .mediaDetails > summary::after { transition: transform 160ms ease-out; }
   dialog.modal[open] { animation: guideDialogIn 180ms cubic-bezier(.16,1,.3,1); }
 }
+
+/* ==========================================================================
+   Build Constructor (Interactive RPG Calculator)
+   ========================================================================== */
+.buildConstructor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-block-end: 24px;
+}
+
+.buildConstructor .card {
+  margin: 0;
+  border-radius: 14px;
+  background: var(--game-panel);
+  border-color: var(--game-panel-line);
+}
+
+.buildCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-block-end: 12px;
+}
+
+.buildCardHeader h3 {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.buildCardHeader small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.buildCardHeader .gameGlyph {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--gold);
+  background: var(--game-tile);
+  flex-shrink: 0;
+}
+
+/* --- Presets --- */
+.buildIntroHead h2 {
+  font-size: 18px;
+  margin-block-end: 4px;
+}
+
+.buildSectionLabel {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--game-tab-quiet);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-block: 10px 6px;
+}
+
+.buildPresetGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+@media (max-width: 360px) {
+  .buildPresetGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.buildPresetBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 38px;
+  padding: 6px 4px;
+  border-radius: 8px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  transition: transform .1s, border-color .15s, background-color .15s;
+}
+
+.buildPresetBtn:active {
+  transform: scale(.96);
+  border-color: var(--gold);
+}
+
+.buildPresetIcon {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.buildPresetReset {
+  border-color: color-mix(in srgb, #ff5c5c 40%, var(--game-panel-line));
+  color: #ff9d9d;
+}
+
+/* --- Level & Remaining Points --- */
+.buildLevelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-block-end: 10px;
+}
+
+.buildLevelTitleGroup {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.buildLevelLabel {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.buildLevelValue {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.buildPointsBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.buildPointsPositive {
+  background: color-mix(in srgb, var(--gold) 15%, var(--game-tile));
+  border-color: color-mix(in srgb, var(--gold) 50%, transparent);
+  color: var(--gold);
+}
+
+.buildPointsSpent {
+  background: var(--game-tile);
+  border-color: var(--game-panel-line);
+  color: var(--game-tab-quiet);
+}
+
+.buildLevelControls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.buildSlider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--game-tile);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.buildSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 8px rgba(255, 204, 119, 0.4);
+  border: 2px solid #fff;
+  cursor: pointer;
+}
+
+.buildSlider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 8px rgba(255, 204, 119, 0.4);
+  border: 2px solid #fff;
+  cursor: pointer;
+}
+
+.buildQuickLevels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.buildQuickLvlBtn {
+  flex: 1 1 0;
+  min-width: 44px;
+  min-height: 30px;
+  padding: 4px;
+  border-radius: 6px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--game-tab-quiet);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.buildQuickLvlBtn.active {
+  background: color-mix(in srgb, var(--gold) 16%, var(--game-tile));
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* --- Battle Combat HUD --- */
+.buildHudGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+@media (min-width: 480px) {
+  .buildHudGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.buildHudItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  min-width: 0;
+}
+
+.buildHudCrit {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 480px) {
+  .buildHudCrit {
+    grid-column: auto;
+  }
+}
+
+.buildHudItemTop {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--game-tab-quiet);
+}
+
+.buildHudItemTop .gameGlyph {
+  font-size: 12px;
+  color: var(--gold);
+}
+
+.buildHudVal {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--gold);
+  line-height: 1.2;
+}
+
+.buildHudHp .buildHudVal { color: #5ce687; }
+.buildHudMana .buildHudVal { color: #6bb8ff; }
+.buildHudHit .buildHudVal { color: #ff8b77; }
+.buildHudDodge .buildHudVal { color: #8ee99c; }
+.buildHudCrit .buildHudVal { color: #e5b0ff; }
+
+.buildHudSub {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Base Stat Points Allocation --- */
+.buildStatList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.buildStatRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+}
+
+.buildStatInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.buildStatNameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.buildStatNameRow strong {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.buildStatDesc {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.25;
+}
+
+.buildStatBreakdown {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--game-tab-quiet);
+  margin-top: 2px;
+}
+
+.buildStatRingBonus {
+  color: var(--gold);
+}
+
+.buildStatTotal {
+  color: #fff;
+}
+
+.buildStatSteppers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.buildStepBtn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-panel);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .1s, background-color .15s;
+}
+
+.buildStepBtn:active:not(:disabled) {
+  transform: scale(.94);
+  background: var(--game-tile);
+}
+
+.buildStepBtn:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+
+.buildStepQuickBtn {
+  display: grid;
+  place-items: center;
+  min-width: 32px;
+  height: 34px;
+  padding: 0 4px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--game-panel-line));
+  background: color-mix(in srgb, var(--gold) 10%, var(--game-panel));
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.buildStepQuickBtn:disabled {
+  opacity: .3;
+  cursor: not-allowed;
+}
+
+.buildStatCurrent {
+  min-width: 22px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* --- Equipment Rings --- */
+.buildRingGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.buildRingSlotCard {
+  border-radius: 10px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  padding: 8px 10px;
+}
+
+.buildSlotHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-end: 6px;
+}
+
+.buildSlotIdx {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--game-tab-quiet);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.buildSlotClearBtn {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.buildSlotClearBtn:active {
+  background: color-mix(in srgb, #ff5c5c 20%, transparent);
+  color: #ff8b77;
+}
+
+.buildEmptySlotBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  border: 1px dashed var(--game-panel-line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--lavender);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.buildEmptySlotBtn:active {
+  background: color-mix(in srgb, var(--lavender) 10%, transparent);
+}
+
+.buildRingSlotContent {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.buildRingThumbBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.buildRingNameGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.buildRingNameGroup strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.buildRingTierBadge {
+  align-self: flex-start;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--gold) 15%, var(--game-panel));
+  color: var(--gold);
+}
+
+.buildRingBonusRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.buildRingBonusTag {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.buildRingBaseNote {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.buildEnchantRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-block-start: 4px;
+  border-block-start: 1px solid color-mix(in srgb, var(--game-panel-line) 60%, transparent);
+}
+
+.buildEnchantLabel {
+  font-size: 12px;
+  color: var(--game-tab-quiet);
+}
+
+.buildEnchantSteppers {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.buildEnchantBtn {
+  width: 28px;
+  height: 28px;
+  font-size: 14px;
+}
+
+.buildEnchantVal {
+  min-width: 28px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+/* --- Skills Loadout --- */
+.buildSkillSlotGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.buildSkillSlotCard {
+  border-radius: 10px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  padding: 8px 10px;
+}
+
+.buildSkillSlotContent {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.buildSkillSlotItemBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.buildSkillSlotText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.buildSkillSlotText strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.buildSkillBadges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+
+.buildSkillBranchBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--game-tab-quiet);
+}
+
+.buildSkillBranchBadge .gameAttribute {
+  font-size: 16px;
+}
+
+.buildSkillTierBadge {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--game-panel);
+  color: var(--text);
+  border: 1px solid var(--game-panel-line);
+}
+
+.buildSkillMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.buildSkillManaTag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6bb8ff;
+}
+
+.buildSkillTypeTag {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.buildSkillSlotDesc {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.35;
+  margin: 0;
+}
+
+/* --- Modal Pickers --- */
+.buildPickerModal {
+  max-width: 440px;
+  width: calc(100% - 24px);
+  padding: 16px;
+}
+
+.buildPickerBody {
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+
+.buildFilterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-block: 8px 10px;
+}
+
+.buildChipBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--game-tab-quiet);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.buildChipBtn.active {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 15%, var(--game-tile));
+  color: var(--gold);
+}
+
+.buildPickerList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  max-height: 52vh;
+  padding-right: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.buildPickerItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s, background-color .15s;
+}
+
+.buildPickerItem:active:not(:disabled) {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 12%, var(--game-tile));
+}
+
+.buildPickerItemActive {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 14%, var(--game-tile));
+}
+
+.buildPickerItemDisabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+.buildPickerClearItem {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.buildPickerClearIcon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--game-panel);
+  color: #ff8b77;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.buildPickerItemInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.buildPickerItemTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.buildPickerItemTitleRow strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.buildPickerItemStats {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.buildPickerBonusText {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.buildPickerItemDesc {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.3;
+  margin: 2px 0 0;
+}
+
+.buildPickerSkillMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.buildSkillTierWarn {
+  font-size: 10px;
+  color: #ffcc77;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(255, 204, 119, 0.12);
+}
+
+.buildSkillAlreadyEquipped {
+  font-size: 10px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.buildPickerCheck {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Artifact Mechanics Info Modal & Tactical Guide (Requirement R3)
+   ========================================================================== */
+
+.pageTitleWithAction {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.pageTitleWithAction .pageTitle {
+  margin-bottom: 0;
+}
+
+.pageTitleWithAction .infoCircleBtn {
+  margin-top: 2px;
+}
+
+.artifactInfoModal {
+  width: min(460px, calc(100% - 24px));
+  max-height: 85dvh;
+  padding: 0;
+  margin: auto;
+  border-radius: 20px;
+  background: var(--game-panel, #0f152a);
+  border: 1px solid var(--game-panel-line, #303a54);
+  color: var(--text, #f3f4f6);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75);
+  overflow: hidden;
+}
+
+[data-theme="graphite"] .artifactInfoModal {
+  background: #19191b;
+  border-color: #353539;
+}
+
+.artifactModalBody {
+  display: flex;
+  flex-direction: column;
+  max-height: 85dvh;
+  padding: 18px 16px 20px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.artifactModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--game-panel-line, rgba(255, 255, 255, 0.08));
+  flex-shrink: 0;
+}
+
+.artifactModalHeading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.artifactHeaderBadge {
+  pointer-events: none;
+}
+
+.artifactModalHeading h2 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--gold, #deb86a);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.artifactModalClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--game-tab-quiet, #a1a1aa);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 0;
+  transition: color 0.15s, background 0.15s, transform 0.15s;
+  float: none;
+}
+
+.artifactModalClose:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.artifactModalClose:active {
+  transform: scale(0.92);
+}
+
+.artifactModalSubtitle {
+  font-size: 12px;
+  color: var(--muted, #94a3b8);
+  margin: 10px 0 12px;
+  line-height: 1.45;
+  flex-shrink: 0;
+}
+
+.artifactCardsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+  padding-bottom: 8px;
+  margin-top: 2px;
+}
+
+.artifactCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--game-tile, #192138);
+  border: 1px solid var(--game-panel-line, rgba(255, 255, 255, 0.08));
+  transition: border-color 0.15s;
+}
+
+[data-theme="graphite"] .artifactCard {
+  background: #242427;
+  border-color: #353539;
+}
+
+.artifactCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.artifactCardIcons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.artifactCardTitleCol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.artifactCardTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.artifactBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.artifactBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--game-tab-quiet, #cbd5e1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.artifactBadge--farm {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.artifactBadge--pvp {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.artifactBadge--security {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.artifactBadge--reset {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.artifactCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.42;
+}
+
+.artifactSection {
+  padding: 8px 10px;
+  border-radius: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.artifactMechanic {
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid var(--gold, #deb86a);
+}
+
+.artifactTactic {
+  background: rgba(56, 189, 248, 0.05);
+  border-left: 3px solid #38bdf8;
+}
+
+.artifactSectionLabel {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.artifactMechanic .artifactSectionLabel {
+  color: var(--gold, #deb86a);
+}
+
+.artifactTactic .artifactSectionLabel {
+  color: #38bdf8;
+}
+
+.artifactSectionText {
+  margin: 0;
+  color: #d1d5db;
+}
+
+@media (max-width: 360px) {
+  .artifactInfoModal {
+    width: calc(100% - 16px);
+    border-radius: 16px;
+  }
+  .artifactModalBody {
+    padding: 14px 10px 16px;
+  }
+  .artifactCard {
+    padding: 11px 9px;
+  }
+  .artifactCardTitle {
+    font-size: 13.5px;
+  }
+  .artifactCardBody {
+    font-size: 11.5px;
+  }
+  .artifactBadge {
+    font-size: 10px;
+    padding: 1px 5px;
+  }
+}
+
+

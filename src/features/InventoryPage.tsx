@@ -11,7 +11,7 @@ import { dropsFor, eggDrawCounts, itemNames } from './inventory';
 import marketCollections from './market-collections.json';
 import { OwlPrices } from './OwlPrices';
 import { Price, type Currency } from './Price';
-import { MintUsdEstimate, StarsAndGram } from './GamePrice';
+import { StarsAndGram } from './GamePrice';
 import { SkinExamples } from './SkinExamples';
 import shopItems from './shop-data.json';
 import skinParts from './skin-parts.json';
@@ -354,7 +354,7 @@ function InventoryRow({ item, id, collectionFloor }: { item: CatalogItem; id?: s
       <p>{item.effect}</p>
       <div className="inventoryMeta">
         <small className="itemSource">{item.source}{level ? ` · с ${level}-го ур.` : ''}</small>
-        {mintPrice !== undefined && <span className="inventoryMint">Минт NFT <Price value={mintPrice} currency="gram"/><MintUsdEstimate gram={mintPrice}/></span>}
+        {mintPrice !== undefined && <span className="inventoryMint">Минт NFT <Price value={mintPrice} currency="gram"/></span>}
       </div>
     </div>
   </li>;

@@ -10,6 +10,7 @@ import { skillCopy } from './skill-copy';
 import skillLevels from './skill-levels.json';
 import { battleLeagues } from './battle-leagues';
 import { battleStats, skillHpMultiplier } from '../domain/combat';
+import { BuildConstructor } from './BuildConstructor';
 
 export function SpBadge({ value }: { value?: number | string }) {
   return <span className="spBadge">
@@ -48,17 +49,22 @@ const skillArt = (id: number) => '/game/skills/' + id + '.png';
 type Skill = typeof skills[number];
 
 export function CombatPage() {
-  const { pathname } = useLocation();
+  const { pathname, search, state } = useLocation();
   const [, , page, branchId, skillId] = pathname.split('/');
-  const isStats = page === 'stats';
-  const branch = branches.find(item => item[0] === branchId);
-  const skill = skills.find(item => item.id === Number(skillId) && item.branch === branchId);
+  const searchParams = new URLSearchParams(search);
+  const isBuilds = page === 'builds' || searchParams.get('tab') === 'builds' || searchParams.get('tab') === 'build' || (state as any)?.tab === 'builds';
+  const isStats = page === 'stats' && !isBuilds;
+  const isSkills = !page && !isBuilds && !isStats;
+  const branch = !isBuilds && branches.find(item => item[0] === branchId);
+  const skill = !isBuilds && skills.find(item => item.id === Number(skillId) && item.branch === branchId);
   return <>
     {!branch && <nav className="choiceBar profileTabs combatTabs" aria-label="Раздел боя">
-      <Link to="/combat" replace aria-current={!page ? 'page' : undefined}><GameGlyph name="lightning"/>Навыки</Link>
+      <Link to="/combat" replace aria-current={isSkills ? 'page' : undefined}><GameGlyph name="lightning"/>Навыки</Link>
       <Link to="/combat/stats" replace aria-current={isStats ? 'page' : undefined}><GameGlyph name="shield"/>Характеристики</Link>
+      <Link to="/combat/builds" replace aria-current={isBuilds ? 'page' : undefined}><GameGlyph name="sparkles"/>Билды</Link>
     </nav>}
-    {skill ? <SkillDetail key={skill.id} skill={skill}/> :
+    {isBuilds ? <BuildConstructor/> :
+      skill ? <SkillDetail key={skill.id} skill={skill}/> :
       branch ? <>
         <h2 className="subTitle">{branch[1]}</h2>
         <section className="card skillShelf">

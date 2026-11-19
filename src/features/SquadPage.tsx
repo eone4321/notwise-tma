@@ -19,17 +19,26 @@ const squadItemUse: Record<string, string> = {
   'chiller': 'Заморозить начисление XP',
 };
 
+function SiegeTotals({ totals }: { totals: typeof siegeRewardTotals }) {
+  return <dl className="siegeRewardsGrid">
+    {(Object.keys(siegeRewardLabels) as (keyof typeof siegeRewardLabels)[]).map(kind => <div key={kind}>
+      <dt>{siegeRewardLabels[kind]}</dt><dd><SiegeRewardValue kind={kind} amount={totals[kind] ?? 0}/></dd>
+    </div>)}
+  </dl>;
+}
+
 function SiegeRewards() {
   return <section className="card siegeRewards" id="siege-rewards">
     <h2>Награды за осаду</h2>
     <p>За удержанные территории можно получить монеты, серебро сквада и усиления на 24 часа. Награда учитывает раунды, в которых ты атаковал. Забери её в День празднования.</p>
-    <h3>Сумма наград по всем 20 участкам карты</h3>
-    <dl className="siegeRewardsGrid">
-      {(Object.keys(siegeRewardLabels) as (keyof typeof siegeRewardLabels)[]).map(kind => <div key={kind}>
-        <dt>{siegeRewardLabels[kind]}</dt><dd><SiegeRewardValue kind={kind} amount={siegeRewardTotals[kind] ?? 0}/></dd>
-      </div>)}
-    </dl>
-    <p className="caption">Карта проверена 20 ноября 2026. Личная выплата зависит от удержанных участков и участия в раундах.</p>
+    <h3>Все 20 участков за один раунд</h3>
+    <SiegeTotals totals={siegeRewardTotals}/>
+    <p className="caption">Карта проверена 20 ноября 2026. Игра суммирует награды по раундам. Один участок засчитывается заново в каждом раунде, в котором его удержал сквад.</p>
+    <details className="mediaDetails siegePayoutExample">
+      <summary><strong>Пример выплаты за 40 удержаний</strong></summary>
+      <p>В игровом отчёте это сумма за несколько раундов. На этой карте такой итог дают два раунда с удержанием всех 20 участков.</p>
+      <SiegeTotals totals={{ coins: 7000, squad_silver: 1400, wisdom: 6, endurance: 2, agility: 4, strength: 4 }}/>
+    </details>
     <a className="secondary siegeChat" href={communityChat} onClick={() => trackGuide('action:chat')}>
       <GameGlyph name="chat"/>Чат для планирования осад
     </a>

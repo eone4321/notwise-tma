@@ -1,7 +1,6 @@
 import { DetailLink } from '../ui/DetailLink';
 import publishing from '../domain/game-publishing.json';
 import { Price } from './Price';
-import { MintUsdEstimate } from './GamePrice';
 import { collectionMarket } from './marketData';
 import { Link, useLocation } from 'react-router';
 import stickers from '../../public/data/all_100_stickers.json';
@@ -42,13 +41,10 @@ export function CollectionPage() {
   const marketView = pathname === '/collections/market';
   const { data: market, pending } = collectionMarket.useSnapshot();
 
-  const matches = album === null ? [] : stickers.filter(item => stickerAlbum(item.id) === album);
+  const matches = album === null ? [] : [...stickers.filter(item => stickerAlbum(item.id) === album)].sort((a, b) => (a.rarity ?? 0) - (b.rarity ?? 0));
   const count = album === null ? stickers.filter(item => isDone(item.id)).length : matches.filter(item => isDone(item.id)).length;
   const quotesById = new Map(market?.items.map(quote => [quote.id, quote]));
-  const editionFor = (id: number) => {
-    const entry = publishing.albums[id - 1];
-    return { ...entry, created: entry.edition - (market?.albumIssue?.[id] ?? entry.remaining) };
-  };
+  const editionFor = (id: number) => publishing.albums[id - 1];
   const supplyFor = (id: number) => quotesById.get('album-' + id)?.supply;
   const knownSupplies = publishing.albums.map(item => supplyFor(item.id));
   const totalMinted = knownSupplies.every((supply): supply is number => typeof supply === 'number')
@@ -88,7 +84,7 @@ export function CollectionPage() {
           <summary><AlbumLogo id={id} size={48}/>
             <span><strong>{title}</strong><small>{typeof quote?.supply === 'number' ? `Сминчено ${format.format(quote.supply)}` : 'Выпуск NFT'}{quote?.floor ? <> · <Price value={quote.floor} currency="gram" from/></> : null}</small></span>
           </summary>
-          <p>Создано в игре {format.format(published.created)} из {format.format(published.edition)}.</p>
+          <p>{typeof quote?.supply === 'number' ? `Сминчено на Getgems: ${format.format(quote.supply)} из ${format.format(published.edition)}.` : `Лимит коллекции: ${format.format(published.edition)} наборов в TON.`}</p>
           <a className="textLink" href={`https://getgems.io/collection/${stickerData.collectionByAlbum[id]}`} target="_blank" rel="noreferrer">Открыть на Getgems</a>
         </details>;
       })}
@@ -112,7 +108,7 @@ export function CollectionPage() {
               <span className="sr-only">{label}, собрано {found} из 5{typeof minted === 'number' ? `, сминчено ${minted}` : ''}</span>
               <span className="albumTileMeta" aria-hidden="true">
                 <span className={found === 5 ? 'isComplete' : undefined}>{found}/5</span>
-                {typeof minted === 'number' && <span>{format.format(minted)} NFT</span>}
+                {typeof minted === 'number' && <span className="nftBadge">{format.format(minted)} NFT</span>}
               </span>
             </DetailLink>;
           })}</div>
@@ -154,17 +150,16 @@ function ProgressCount({ count, total }: { count: number; total: number }) {
 }
 
 function AlbumPublishing({ edition, minted, floor }: {
-  edition: typeof publishing.albums[number] & { created: number }; minted?: number | null; floor?: number | null;
+  edition: typeof publishing.albums[number]; minted?: number | null; floor?: number | null;
 }) {
   return <div className="albumPublishing">
     <dl>
-      <div><dt>Сминчено</dt><dd>{typeof minted === 'number' ? format.format(minted) : '—'}</dd></div>
-      <div><dt>Создано в игре</dt><dd>{format.format(edition.created)}/{format.format(edition.edition)}</dd></div>
-      <div><dt>Создание</dt><dd><Price value={edition.creationGram} currency="gram"/><MintUsdEstimate gram={edition.creationGram}/></dd></div>
-      <div><dt>Минт</dt><dd><Price value={edition.mintGram} currency="gram"/><MintUsdEstimate gram={edition.mintGram}/></dd></div>
+      <div><dt>Сминчено на Getgems</dt><dd>{typeof minted === 'number' ? `${format.format(minted)} из ${format.format(edition.edition)}` : '—'}</dd></div>
+      <div><dt>Минт в TON</dt><dd><Price value={edition.mintGram} currency="gram"/></dd></div>
+      <div><dt>Флор на Getgems</dt><dd>{floor && floor > 0 ? <Price value={floor} currency="gram" from/> : '—'}</dd></div>
     </dl>
     <a className="textLink" href={`https://getgems.io/collection/${stickerData.collectionByAlbum[edition.id]}`} target="_blank" rel="noreferrer">
-      Getgems {floor ? <Price value={floor} currency="gram"/> : <span className="externalMark" aria-hidden="true"/>}
+      Открыть коллекцию на Getgems <span className="externalMark" aria-hidden="true"/>
     </a>
   </div>;
 }

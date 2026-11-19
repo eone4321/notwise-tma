@@ -18,6 +18,7 @@ import { GameArt } from '../ui/GameArt';
 import { GameGlyph } from '../ui/GameGlyph';
 import { AlbumLogo } from '../ui/AlbumLogo';
 import { CarePage, InventoryPage, OwlPage } from '../features/InventoryPage';
+import { ArtifactInfoModal } from '../features/ArtifactInfoModal';
 import { CombatPage, ModesPage } from '../features/CombatPage';
 import { CollectionPage } from '../features/CollectionPage';
 import { CapsulePage } from '../features/CapsulePage';
@@ -213,13 +214,29 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, english: en }
     <div className="heroCopy"><h1>{en ? <>NOT Wise <span>Guide</span></> : <>Гайд по <span>NOT Wise</span></>}</h1><p className="heroSub">{en ? 'Loot, combat and owl care.' : 'Награды, бои и уход за совой.'}</p></div>
     <img className="heroImage" src={artSrc('/brand/notwise-home.jpg')} width="1170" height="1200" alt=""/>
     <div className="heroActions">
-      {fromInvite && !profile ? <button className="primary openGame" disabled={!profileFailed} onClick={retryProfile}>
-        {profileFailed ? en ? 'Retry' : 'Повторить проверку' : en ? 'Checking invitation…' : 'Проверяем приглашение…'}
-      </button> : <a className="primary openGame" href={profile?.gameEntry ?? defaultGameLink} onClick={() => trackGuide('action:game')}><span className="launchMark" aria-hidden="true"/>{en ? 'Open the game' : 'Открыть игру'}</a>}
+      {fromInvite && !profile ? (
+        <button className="primary openGame" disabled={!profileFailed} onClick={retryProfile}>
+          {profileFailed ? (en ? 'Retry' : 'Повторить проверку') : (en ? 'Checking invitation…' : 'Проверяем приглашение…')}
+        </button>
+      ) : (
+        <a className="primary openGame" href={profile?.gameEntry ?? defaultGameLink} onClick={() => trackGuide('action:game')}>
+          <span className="launchMark" aria-hidden="true"/>
+          {en ? 'Open the game' : 'Открыть игру'}
+        </a>
+      )}
+      <Link className="secondary heroBuilds" to="/combat/builds" onClick={() => { lightHaptic(); (trackGuide as (e: string) => void)('action:builds'); }}>
+        <GameGlyph name="fight"/>
+        <span>{en ? 'Builds' : 'Собрать билд'}</span>
+        <span className="heroBadge">{en ? 'Beta' : 'В разработке'}</span>
+      </Link>
       <a className="secondary" href={squadLink} onClick={() => trackGuide('action:squad')}>
-        <span className="squadMark" aria-hidden="true"/>{en ? 'Our squad' : 'Наш сквад'}
+        <span className="squadMark" aria-hidden="true"/>
+        {en ? 'Our squad' : 'Наш сквад'}
       </a>
-    <button className="heroShare secondary" aria-haspopup="dialog" onClick={() => { lightHaptic(); setShare(true); }}><GameGlyph name="share"/>{en ? 'Share guide' : 'Поделиться гайдом'}</button>
+      <button className="heroShare secondary" aria-haspopup="dialog" onClick={() => { lightHaptic(); setShare(true); }}>
+        <GameGlyph name="share"/>
+        {en ? 'Share guide' : 'Поделиться гайдом'}
+      </button>
     </div>
   </section>
   {share && <ShareDialog english={en} close={() => setShare(false)}/>}
@@ -280,6 +297,7 @@ function Page({ profile, ask, joke, popup, reveal, referrals }: {
   ask: () => void; joke: boolean; popup: boolean; reveal: () => void; referrals: React.ReactNode;
 }) {
   const { pathname, hash, state } = useLocation();
+  const [artifactModalOpen, setArtifactModalOpen] = useState(false);
   if (pathname === '/owl/care' || pathname === '/combat/modes') {
     return <Navigate to={(pathname === '/owl/care' ? '/care' : '/modes') + hash} state={state} replace/>;
   }
@@ -288,7 +306,24 @@ function Page({ profile, ask, joke, popup, reveal, referrals }: {
     <h1>Страница не найдена</h1><Link className="textLink" to="/">На главную</Link>
   </Card>;
   return <>
-    <h1 className="pageTitle">{section?.[0] ?? 'О проекте'}</h1>
+    {section?.[1] === '/assets' ? (
+      <div className="headingWithAction pageTitleWithAction">
+        <h1 className="pageTitle">{section?.[0] ?? 'О проекте'}</h1>
+        <button
+          type="button"
+          className="infoCircleBtn"
+          aria-label="Справка по механике артефактов"
+          onClick={() => {
+            lightHaptic();
+            setArtifactModalOpen(true);
+          }}
+        >
+          i
+        </button>
+      </div>
+    ) : (
+      <h1 className="pageTitle">{section?.[0] ?? 'О проекте'}</h1>
+    )}
     {section?.[1] === '/capsules' && <CapsulePage/>}
     {section?.[1] === '/owl' && <OwlPage/>}
     {section?.[1] === '/collections' && <CollectionPage/>}
@@ -300,6 +335,12 @@ function Page({ profile, ask, joke, popup, reveal, referrals }: {
     {section?.[1] === '/secrets' && <Secrets ask={ask} joke={joke} popup={popup} reveal={reveal}/>}
     {section?.[1] === '/assets' && <InventoryPage/>}
     {section?.[1] === '/referrals' && referrals}
+    {section?.[1] === '/assets' && (
+      <ArtifactInfoModal
+        open={artifactModalOpen}
+        onClose={() => setArtifactModalOpen(false)}
+      />
+    )}
   </>;
 }
 function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean; popup: boolean; reveal: () => void }) {
