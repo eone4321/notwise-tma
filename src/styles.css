@@ -544,14 +544,14 @@ html { scrollbar-gutter: stable; }
 .inventoryRow { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; align-items: start; gap: 8px; padding: 7px 0; border-top: 1px solid var(--line); }
 .inventoryRow h3 { font-size: 13px; line-height: 1.25; }
 .inventoryRow p { font-size: 12px; line-height: 1.35; margin: 3px 0 0; color: var(--muted); }
-.inventoryRow small, .inventoryRow .itemSource { font-size: 11.5px; color: #d6b473; margin-top: 3px; display: block; font-weight: 500; }
+.inventoryRow small, .inventoryRow .itemSource { font-size: 11.5px; color: #79a8d8; margin-top: 3px; display: block; font-weight: 500; }
 .eggRowText small, .shopUse, .skillRow small { color: #d6b473; }
-.priceBadge { display: inline-flex; align-items: center; justify-content: center; gap: 4px; color: var(--gold); font-size: 12px; font-weight: 700; white-space: nowrap; line-height: 1; }
+.priceBadge { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; color: var(--gold); font-size: 12px; font-weight: 700; white-space: nowrap; line-height: 1; }
 .priceBadge .priceVal { display: inline-flex; align-items: center; line-height: 1; }
-.priceBadge .priceIcon { display: inline-flex; align-items: center; justify-content: center; line-height: 1; flex: none; transform: translateY(-1px); }
+.priceBadge .priceIcon { display: inline-flex; align-items: center; justify-content: center; line-height: 1; flex: none; }
 .priceBadge .priceIcon .gameArt { display: inline-flex; align-items: center; justify-content: center; }
 .priceBadge .priceIcon img { display: block; }
-.priceBadge .starIcon { font-size: 12px; line-height: 1; display: inline-flex; align-items: center; transform: translateY(-1px); }
+.priceBadge .starIcon { font-size: 12px; line-height: 1; display: inline-flex; align-items: center; }
 .eggShopRow .priceBadge { margin-inline-start: auto; }
 .leanList .mediaRow { min-height: 50px; padding: 7px 0; gap: 9px; }
 .leanList .mediaRow small { display: block; }
@@ -1522,3 +1522,142 @@ body { font-weight: 500; -webkit-font-smoothing: antialiased; -moz-osx-font-smoo
   color: var(--gold);
   font-weight: 600;
 }
+
+/* Capsule Drop Mechanics Guide */
+.capsuleDropGuide {
+  margin-top: 10px;
+}
+.capsuleDropGuide h2 {
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+.capsuleDropGuide .caption {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.capsuleRulesList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.capsuleRulesList li {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+.ruleNumber {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(222, 184, 106, 0.15);
+  border: 1px solid rgba(222, 184, 106, 0.35);
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.ruleContent strong {
+  display: block;
+  font-size: 13.5px;
+  color: #fff;
+  margin-bottom: 3px;
+}
+.ruleContent p {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+  margin: 0;
+}
+.ruleContent em {
+  color: var(--gold);
+  font-style: normal;
+}
+
+/* Album On-chain & Cooldown Notices */
+.albumNoticeCard {
+  margin: 10px 0 14px;
+  background: rgba(40, 48, 68, 0.45);
+  border: 1px solid rgba(121, 168, 216, 0.25);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.albumNoticeHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.albumNoticeIcon {
+  font-size: 20px;
+  line-height: 1;
+  flex: none;
+}
+.albumNoticeHeader strong {
+  display: block;
+  font-size: 13px;
+  color: #fff;
+  margin-bottom: 2px;
+}
+.albumNoticeHeader p {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin: 0;
+}
+.albumNoticeDesc {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #b0c2de;
+  margin: 0;
+}
+.albumMintBadge {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--gold);
+  background: rgba(222, 184, 106, 0.12);
+  border: 1px solid rgba(222, 184, 106, 0.25);
+  border-radius: 6px;
+  padding: 1px 6px;
+  line-height: 1.3;
+}
+.albumMintInfo {
+  padding: 8px 0 4px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.albumCooldownAlert {
+  margin: 10px 0;
+  padding: 10px 12px;
+  background: rgba(230, 81, 0, 0.08);
+  border: 1px solid rgba(255, 152, 0, 0.25);
+  border-radius: 10px;
+}
+.albumCooldownAlert strong {
+  display: block;
+  font-size: 12px;
+  color: #ffb74d;
+  margin-bottom: 4px;
+}
+.albumCooldownAlert p {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: #d1d5db;
+  margin: 0 0 6px;
+}
+.albumCooldownAlert p:last-child {
+  margin-bottom: 0;
+}
+.spacedLink {
+  display: inline-block;
+  margin-top: 6px;
+}
+

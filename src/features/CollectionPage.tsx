@@ -66,12 +66,28 @@ export function CollectionPage() {
       {album === null ? <>
         <ProgressCount count={count} total={total}/>
         <ProgressStatus/>
+        <div className="albumNoticeCard card">
+          <div className="albumNoticeHeader">
+            <span className="albumNoticeIcon" aria-hidden="true">💎</span>
+            <div>
+              <strong>Ончейн-мониторинг минта (лимит 500 шт. на альбом)</strong>
+              <p>Парсер отслеживает фактически сминченные NFT-альбомы на блокчейне TON (Getgems).</p>
+            </div>
+          </div>
+          <p className="albumNoticeDesc">
+            В игре у некоторых альбомов может быть уже 498/500, но в блокчейне они появляются с задержкой:
+            покупка за Telegram Stars накладывает <strong>21-дневный кулдаун</strong> (холд) на минт,
+            а также требуется выпустить пак в Telegram перед отправкой транзакции. Как только NFT подтверждается в сети TON, парсер автоматически вычитает её из остатка.
+          </p>
+        </div>
         <div className="albumGrid">{albums.map((label, index) => {
           const pack = index + 1;
           const found = stickers.filter(item => stickerAlbum(item.id) === pack && isDone(item.id)).length;
           return <Link key={label} to={`/collections/albums/${pack}`}>
-            <GameArt path={`/game/albums/${pack}.webp`} size={45}/><strong>{label}</strong>
+            <GameArt path={`/game/albums/${pack}.webp`} size={45}/>
+            <strong>{label}</strong>
             <small>{found}/5 · осталось {5 - found}</small>
+            <span className="albumMintBadge">500/500 NFT</span>
           </Link>;
         })}</div>
       </> : <section className="card stickerCollection">
@@ -94,9 +110,31 @@ export function CollectionPage() {
             <span className="sr-only">Собран: {item.name}</span></label>
         </div>)}
         <details className="mediaDetails guideDisclosure" open={state?.mintOpen || undefined}>
-          <summary><GameArt path="/game/items/coins.webp" size={34}/><span><strong>Выпуск NFT</strong><small>После сбора 5 стикеров</small></span></summary>
-          <p>Полный набор позволяет начать выпуск в игре. Лимит и число выпущенных NFT для этого набора пока не подтверждены.</p>
-          <Link to="/collections/market" className="textLink" state={{ returnTo: pathname, mintOpen: true }}>Коллекции на Getgems</Link>
+          <summary>
+            <GameArt path="/brand/collections/classics.png" size={34}/>
+            <span><strong>Ончейн-минт NFT альбома</strong><small>Лимит 500 шт. · 500/500 доступно</small></span>
+          </summary>
+          <div className="albumMintInfo">
+            <p>
+              Сбор всех 5 стикеров альбома даёт право выпустить официальный NFT-стикерпак на блокчейне TON.
+              Лимит каждого альбома строго ограничен <strong>500 NFT</strong>.
+            </p>
+            <div className="albumCooldownAlert">
+              <strong>⏳ Кулдаун 21 день и ончейн-статус:</strong>
+              <p>
+                Мы парсим <strong>фактически сминченные NFT</strong> в сети TON на Getgems. В игре у альбома может отображаться меньше 500 доступных копий (например, 498/500), если игроки собрали пак, но ещё не сминтили его на блокчейне.
+              </p>
+              <p>
+                Причина — <strong>21-дневный кулдаун</strong>: компоненты, полученные или купленные за Telegram Stars, заморожены для ончейн-минта на 21 день (<em>«a purchase for Telegram Stars holds it for 21 days»</em>). Также перед минтом требуется создать пак в Telegram.
+              </p>
+              <p>
+                Как только NFT подтверждается в блокчейне TON, парсер автоматически фиксирует её и счётчик уменьшается (например, 499/500).
+              </p>
+            </div>
+            <a className="textLink spacedLink" href="https://getgems.io/collection/EQAh0jRY7l_jw7o2lI8N5Bl0bFo-5eOKYinsZ56ZRcKABnup" target="_blank" rel="noreferrer">
+              Коллекция стикерпаков на Getgems
+            </a>
+          </div>
         </details>
       </section>}
     </>}

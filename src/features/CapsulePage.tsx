@@ -23,9 +23,13 @@ export function CapsulePage() {
         <span className="rowEnd"><b>{duration[tier] / 3_600_000} ч</b><span className="rowChevron" aria-hidden="true"/></span>
       </Link>)}
     </section>
+    <CapsuleDropGuide/>
     <SlotGuide/>
   </>;
-  return <CapsuleDetail tier={currentTier}/>;
+  return <>
+    <CapsuleDetail tier={currentTier}/>
+    <CapsuleDropGuide/>
+  </>;
 }
 
 function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
@@ -121,4 +125,45 @@ function SlotGuide() {
         {Array.from({length:8}, (_,i) => <div className="mediaRow" key={i}><span>Слот {i+4}</span><strong>{(i+1)*10} ур. или {(500*2**i).toLocaleString('ru-RU')} ⭐</strong></div>)}
       </details>
     </section>;
+}
+
+function CapsuleDropGuide() {
+  return <section className="card capsuleDropGuide">
+    <h2>От чего зависит выпадение капсул</h2>
+    <p className="caption">Механика получения капсул в боях Not Wise: The Game</p>
+    <ul className="capsuleRulesList">
+      <li>
+        <span className="ruleNumber">1</span>
+        <div className="ruleContent">
+          <strong>Свободный слот для капсулы</strong>
+          <p>Капсула занимает слот, пока не закончится таймер или пока её не откроют. Если все слоты заняты — капсула <strong>не выпадет вовсе</strong> (<em>«No free slot — no capsule»</em>).</p>
+        </div>
+      </li>
+      <li>
+        <span className="ruleNumber">2</span>
+        <div className="ruleContent">
+          <strong>Победа в рейтинговом PvP</strong>
+          <p>Капсулы выпадают <strong>только при победе</strong> в рейтинговом бою. Тренировки в Додзе, ничьи и поражения капсул не приносят.</p>
+        </div>
+      </li>
+      <li>
+        <span className="ruleNumber">3</span>
+        <div className="ruleContent">
+          <strong>Боевая лига и рейтинг MMR</strong>
+          <p>Шанс выпадения редких капсул масштабируется с ростом рейтинга (MMR). Чем выше лига, тем вероятнее получить Серебряную или Золотую капсулу вместо Обсидиановой.</p>
+        </div>
+      </li>
+      <li>
+        <span className="ruleNumber">4</span>
+        <div className="ruleContent">
+          <strong>Градация редкости и таймеры</strong>
+          <p>
+            <strong>Обсидиановая (4 ч)</strong> — базовая и самая частая капсула.<br/>
+            <strong>Лунное серебро (8 ч)</strong> — редкая капсула с увеличенными наградами.<br/>
+            <strong>Золотая (24 ч)</strong> — главный трофей: максимум монет и опыта, гарантированный стикерпак (100%) и повышенный шанс яйца (15%).
+          </p>
+        </div>
+      </li>
+    </ul>
+  </section>;
 }

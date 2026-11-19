@@ -11,9 +11,9 @@ import skinParts from './skin-parts.json';
 import { SkinFarmCalculator } from './SkinFarmCalculator';
 
 const eggs = [
-  { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное', source: 'Из капсул или в Лавке', details: 'У варианта за монеты и яйца из капсул тот же набор наград: еда, лекарства, оформление и жетон скина.' },
-  { id: 19, slug: 'red', file: 'golden-egg-special.webp', name: 'Золотое загадочное', source: 'За места 1–10 в сезоне', details: 'Вручается автоматически по итогам сезона. Может дать два вида жетонов скина.' },
-  { id: 56, slug: 'season', file: 'golden-egg.webp', name: 'Сезонное загадочное', source: 'За места 11–100 или за скорлупу', details: 'Дают за 11–100-е места по итогам сезона. Можно собрать за 15 000 осколков скорлупы или купить в Лавке за Stars.' },
+  { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное', source: 'Лавка (9 999 монет), капсулы и крафт', details: 'Базовое яйцо за монеты, капсулы и осколки (3 000 скорлупы). Содержит еду, лекарства, оформление, скин-жетон и чиллер.' },
+  { id: 56, slug: 'season', file: 'golden-egg.webp', name: 'Золотое загадочное', source: 'Крафт за 15 000 скорлупы · Лавка (500 ⭐) · Топ 11–100 сезона', details: 'Крафтится из 15 000 осколков скорлупы, продаётся в Лавке за 500 Stars или вручается за 11–100 места сезона. Содержит эпический скин-жетон, заточки скина и кольца, чиллер и монтмориллонит.' },
+  { id: 19, slug: 'red', file: 'golden-egg-special.webp', name: 'Специальное золотое', source: 'Эксклюзив за места 1–10 в сезоне', details: 'Вручается автоматически по итогам сезона лучшим игрокам (места 1–10, на красном фоне). Даёт повышенные шансы, заточки и сразу два вида жетонов скинов.' },
   { id: 18, slug: 'green', file: '18.png', name: 'Бежевое', source: 'Способ получения не подтверждён', details: 'Из этого яйца выпадают оформление, жетон скина и другие награды. Еды в пуле нет.' },
   { id: 20, slug: 'gold', file: '20.png', name: 'Белое', source: 'Способ получения не подтверждён', details: 'Пул похож на бежевое яйцо, но здесь выпадает золотой жетон скина.' },
 ] as const;
@@ -57,9 +57,9 @@ export function OwlPage() {
           <span><strong>Загадочное яйцо</strong></span>
           <span className="rowEnd shardCost"><strong>3 000</strong><GameArt path={itemPath('eggshell-shards-icon.webp')} size={23}/><span className="rowChevron" aria-hidden="true"/></span>
         </Link>
-        <Link className="mediaRow" to="/owl/season" state={{ returnTo: pathname }} aria-label="Сезонное загадочное яйцо, 15 000 осколков скорлупы">
+        <Link className="mediaRow" to="/owl/season" state={{ returnTo: pathname }} aria-label="Золотое загадочное яйцо, 15 000 осколков скорлупы">
           <GameArt path={itemPath('golden-egg.webp')} size={40}/>
-          <span><strong>Сезонное загадочное</strong><small>Золотое на зелёном фоне</small></span>
+          <span><strong>Золотое загадочное яйцо</strong><small>15 000 скорлупы · в Лавке за 500 ⭐ или за топ 11–100 сезона</small></span>
           <span className="rowEnd shardCost"><strong>15 000</strong><GameArt path={itemPath('eggshell-shards-icon.webp')} size={23}/><span className="rowChevron" aria-hidden="true"/></span>
         </Link>
       </section>
@@ -154,7 +154,7 @@ function EggLink({ egg, from }: { egg: typeof eggs[number]; from: string }) {
 function EggShopPrices({ slug }: { slug: typeof eggs[number]['slug'] }) {
   if (slug !== 'mystery' && slug !== 'season') return null;
   return <span className="eggPrices" aria-label="Цена в Лавке">
-    {slug === 'season' && <small>В Лавке как золотое яйцо</small>}
+    {slug === 'season' && <small>В Лавке за Stars</small>}
     {eggOffers[slug].map(id => {
       const offer = shopItems.find(item => item.id === id);
       return offer && <Price key={id} value={offer.price} currency={offer.currency === 'stars' ? 'stars' : 'coins'}/>;
@@ -242,7 +242,7 @@ const categories: Record<string, Category> = {
   craft: {
     title: 'Крафт и хранение XP', icon: 'eggshell-shards-icon.webp', summary: 'Скорлупа, дискеты опыта, колбы SP и ваучеры',
     items: [
-      { name: 'Осколки скорлупы', file: 'eggshell-shards-icon.webp', effect: 'Из осколков можно собрать яйца и другие награды. Загадочное яйцо стоит 3 000 осколков, сезонное загадочное — 15 000.', source: 'Яйца и капсулы · рецепты в инвентаре' },
+      { name: 'Осколки скорлупы', file: 'eggshell-shards-icon.webp', effect: 'Из осколков можно собрать яйца и другие награды. Загадочное яйцо стоит 3 000 осколков, золотое загадочное — 15 000.', source: 'Яйца и капсулы · рецепты в инвентаре' },
       ...floppySpecs.map(([id, contents, cost]) => ({
         name: 'Дискета ' + contents + ' XP', file: 'floppy-' + id + '.webp',
         effect: `Нужна пустая дискета и минимум ${cost} XP. Запись сбрасывает весь текущий опыт, SP и навыки, сова снова становится яйцом. При чтении дискета даёт ${contents} XP.`, source: 'Создаётся из пустой дискеты',
@@ -360,10 +360,10 @@ function EnchantGuide() {
     <div className="enchantBurnAlert">
       <span className="enchantBurnIcon" aria-hidden="true">🔥</span>
       <div>
-        <strong>Внимание: предмет может сгореть навсегда!</strong>
+        <strong>Внимание: предмет сгорает при неудаче!</strong>
         <p>
-          При неудачной заточке предмет не сохраняется и не откатывается, а <strong>полностью уничтожается</strong> —
-          в игре появляется сообщение: <em>«Предмет рассыпался на осколки»</em> (игрок получает лишь горстку осколков скорлупы).
+          При неудачной заточке предмет не сохраняется и не откатывается на ступень назад, а <strong>полностью уничтожается</strong> —
+          в игре появляется сообщение: <em>«The item crumbled into shards · +Eggshell Shards»</em> (предмет рассыпается на осколки скорлупы).
         </p>
         <p>
           Первые 3 ступени <strong>(+1, +2, +3)</strong> гарантированы на <strong>100%</strong> (риск 0%).
