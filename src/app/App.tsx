@@ -281,11 +281,12 @@ function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean;
   const { hash } = useLocation();
   const [tab, setTab] = useState<'secret' | 'achievement'>('secret');
   const selected = tab === 'secret' && hash.startsWith('#sticker-') ? Number(hash.slice(9)) : null;
-  const { completed, percentages, setMark } = useProgress();
+  const { completed, collected, percentages, setMark } = useProgress();
+  const isDone = (id: number) => completed.includes(id) || collected.includes(id);
   const items = (all as Item[]).filter(item => item.kind === tab);
   const groups = [
-    { title: 'Осталось', items: items.filter(item => !completed.includes(item.id)) },
-    { title: 'Выполнено', items: items.filter(item => completed.includes(item.id)) },
+    { title: 'Осталось', items: items.filter(item => !isDone(item.id)) },
+    { title: 'Выполнено', items: items.filter(item => isDone(item.id)) },
   ];
   useEffect(() => {
     if (!joke || selected === null) return;
@@ -316,7 +317,7 @@ function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean;
             <p>{tab === 'achievement' ? achievementActions[item.id] : quest?.action ?? 'Точное условие пока не подтверждено.'}</p>
             {tab === 'secret' && percentages && <small>Отметили {percentages[item.id] ?? 0}% игроков</small>}
           </div>
-          <label className="secretCheck" title="Выполнено"><input type="checkbox" checked={completed.includes(item.id)} onChange={event => setMark('completed', item.id, event.target.checked)}/><span className="sr-only">Выполнено: {title}</span></label>
+          <label className="secretCheck" title="Выполнено"><input type="checkbox" checked={isDone(item.id)} onChange={event => setMark('completed', item.id, event.target.checked)}/><span className="sr-only">Выполнено: {title}</span></label>
         </article>;
         })}
       </section>)}

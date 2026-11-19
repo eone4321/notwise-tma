@@ -560,7 +560,7 @@ html { scrollbar-gutter: stable; }
 
 /* Compact guide rows and controls share the same edge treatment. */
 .heroActions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.heroActions > :first-child { grid-column: 1 / -1; font-size: 14px; }
+.heroActions > :first-child { grid-column: 1 / -1; font-size: 16px; font-weight: 750; min-height: 50px; }
 .heroActions > * { width: 100%; }
 .heroImage {
   inset: 0 -4% 0 auto;

@@ -27,14 +27,15 @@ const stickerAlbum = (id: number) => Math.ceil(id / 5);
 
 export function CollectionPage() {
   const { pathname, hash, state } = useLocation();
-  const { collected, setMark } = useProgress();
+  const { collected, completed, setMark } = useProgress();
+  const isDone = (id: number) => collected.includes(id) || completed.includes(id);
   const albumNumber = Number(pathname.match(/albums\/(\d+)$/)?.[1]);
   const album = albumNumber >= 1 && albumNumber <= albums.length ? albumNumber : null;
   const marketView = pathname === '/collections/market';
   const { data: market, pending } = collectionMarket.useSnapshot();
 
   const matches = album === null ? [] : stickers.filter(item => stickerAlbum(item.id) === album);
-  const count = album === null ? collected.length : matches.filter(item => collected.includes(item.id)).length;
+  const count = album === null ? stickers.filter(item => isDone(item.id)).length : matches.filter(item => isDone(item.id)).length;
   const title = album === null ? '' : albums[album - 1];
   const theme = themes[title] ?? marketPacks.packs.find(pack => pack.name === 'NOT Wise: ' + title)?.theme;
   const total = album === null ? stickers.length : matches.length;
@@ -67,7 +68,7 @@ export function CollectionPage() {
         <ProgressStatus/>
         <div className="albumGrid">{albums.map((label, index) => {
           const pack = index + 1;
-          const found = collected.filter(id => stickerAlbum(id) === pack).length;
+          const found = stickers.filter(item => stickerAlbum(item.id) === pack && isDone(item.id)).length;
           return <Link key={label} to={`/collections/albums/${pack}`}>
             <GameArt path={`/game/albums/${pack}.webp`} size={45}/><strong>{label}</strong>
             <small>{found}/5 · осталось {5 - found}</small>
@@ -88,7 +89,7 @@ export function CollectionPage() {
           {item.kind === 'secret' ? <Link className="textLink" to={`/secrets#sticker-${item.id}`} state={{ returnTo: pathname }}>Условие секрета</Link> :
             <p>{achievementActions[item.id] ?? 'Может выпасть при открытии набора стикеров.'}</p>}
           </details>
-          <label className="secretCheck"><input type="checkbox" checked={collected.includes(item.id)}
+          <label className="secretCheck"><input type="checkbox" checked={isDone(item.id)}
             onChange={event => setMark('collected', item.id, event.target.checked)}/>
             <span className="sr-only">Собран: {item.name}</span></label>
         </div>)}

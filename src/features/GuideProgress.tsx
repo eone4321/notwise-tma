@@ -33,20 +33,27 @@ const migrated = (user: string) => 'notwise.guide.imported.' + user;
 const importOwner = 'notwise.guide.importOwner';
 
 export function GuideProgress({ user, children }: { user?: string; children: ReactNode }) {
-  const session = useMemo(() => ({
-    initial: { completed: read('completed', user), collected: read('collected', user), percentages: null } as Progress,
-    queue: [] as Change[],
-    working: false,
-    controller: null as AbortController | null,
-  }), [user]);
+  const session = useMemo(() => {
+    const rawCompleted = read('completed', user);
+    const rawCollected = read('collected', user);
+    const mergedCollected = [...new Set([...rawCollected, ...rawCompleted])];
+    return {
+      initial: { completed: rawCompleted, collected: mergedCollected, percentages: null } as Progress,
+      queue: [] as Change[],
+      working: false,
+      controller: null as AbortController | null,
+    };
+  }, [user]);
   const [snapshot, setSnapshot] = useState({ session, data: session.initial, error: '' });
   const data = snapshot.session === session ? snapshot.data : session.initial;
   const error = snapshot.session === session ? snapshot.error : '';
 
   function apply(progress: Progress) {
-    save('completed', progress.completed, user);
-    save('collected', progress.collected, user);
-    setSnapshot({ session, data: session.queue.reduce(changed, progress), error: '' });
+    const mergedCollected = [...new Set([...progress.collected, ...progress.completed])];
+    const normalized = { ...progress, collected: mergedCollected };
+    save('completed', normalized.completed, user);
+    save('collected', normalized.collected, user);
+    setSnapshot({ session, data: session.queue.reduce(changed, normalized), error: '' });
   }
 
   async function sync(refresh: boolean) {
@@ -104,16 +111,23 @@ export function GuideProgress({ user, children }: { user?: string; children: Rea
 
   function setMark(list: List, id: number, checked: boolean) {
     lightHaptic();
-    const change = { list, id, checked };
+    const otherList: List = list === 'completed' ? 'collected' : 'completed';
+    const changes: Change[] = [
+      { list, id, checked },
+      { list: otherList, id, checked },
+    ];
     if (user) {
-      session.queue.push(change);
+      session.queue.push(...changes);
       setSnapshot(current => ({
-        session, data: changed(current.session === session ? current.data : session.initial, change), error,
+        session, data: changes.reduce(changed, current.session === session ? current.data : session.initial), error,
       }));
       void sync(false);
     } else {
-      const next = changed(data, change);
-      save(list, next[list]);
+      let next = data;
+      for (const change of changes) {
+        next = changed(next, change);
+        save(change.list, next[change.list], user);
+      }
       setSnapshot({ session, data: next, error: '' });
     }
   }
