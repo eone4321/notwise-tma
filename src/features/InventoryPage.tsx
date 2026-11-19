@@ -14,6 +14,7 @@ const eggs = [
   { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное', source: 'Лавка (9 999 монет), капсулы и крафт', details: 'Базовое яйцо за монеты, капсулы и осколки (3 000 скорлупы). Содержит еду, лекарства, оформление, скин-жетон и чиллер.' },
   { id: 56, slug: 'season', file: 'golden-egg.webp', name: 'Золотое загадочное', source: 'Крафт за 15 000 скорлупы · Лавка (500 ⭐) · Топ 11–100 сезона', details: 'Крафтится из 15 000 осколков скорлупы, продаётся в Лавке за 500 Stars или вручается за 11–100 места сезона. Содержит эпический скин-жетон, заточки скина и кольца, чиллер и монтмориллонит.' },
   { id: 19, slug: 'red', file: 'golden-egg-special.webp', name: 'Специальное золотое', source: 'Эксклюзив за места 1–10 в сезоне', details: 'Вручается автоматически по итогам сезона лучшим игрокам (места 1–10, на красном фоне). Даёт повышенные шансы, заточки и сразу два вида жетонов скинов.' },
+  { id: 17, slug: 'referral', file: 'referral-egg.webp', name: 'Реферальное', source: 'За вход в игру по ссылке друга (+5 000 монет)', details: 'Выдаётся новому игроку вместе с 5 000 монет при старте по пригласительной ссылке. Набор наград и шансов полностью идентичен базовому загадочному яйцу.' },
   { id: 18, slug: 'green', file: '18.png', name: 'Бежевое', source: 'Способ получения не подтверждён', details: 'Из этого яйца выпадают оформление, жетон скина и другие награды. Еды в пуле нет.' },
   { id: 20, slug: 'gold', file: '20.png', name: 'Белое', source: 'Способ получения не подтверждён', details: 'Пул похож на бежевое яйцо, но здесь выпадает золотой жетон скина.' },
 ] as const;
@@ -65,10 +66,7 @@ export function OwlPage() {
       </section>
       <section className="card leanList eggSources">
         <h2>За приглашение</h2>
-        <Link to="/referrals" className="mediaRow"><GameArt path={itemPath('referral-egg.webp')} size={38}/>
-          <span><strong>Реферальное яйцо</strong><small>За вход в игру по ссылке друга · ещё 5 000 монет</small></span>
-          <span className="rowChevron" aria-hidden="true"/>
-        </Link>
+        <EggLink egg={eggs.find(item => item.slug === 'referral')!} from={pathname}/>
       </section>
       <section className="card eggSources">
         <h2>Редкие яйца и NFT</h2>
@@ -94,20 +92,22 @@ export function OwlPage() {
         <div><h2>{egg.name} яйцо</h2><p>{egg.source}</p></div>
       </div>
       <p>{egg.details}</p>
+      {egg.slug === 'referral' && (
+        <p><Link className="textLink" to="/referrals" state={{ returnTo: pathname }}>Как пригласить друзей и получить награды</Link></p>
+      )}
       <EggShopPrices slug={egg.slug}/>
       <h3>Шанс за открытие</h3>
       <p className="caption">Шанс получить награду хотя бы раз. За открытие выпадает 1 предмет в 80% случаев, 2 — в 15%, 3 — в 5%.</p>
       <ul className="compactList lootList">
-        {drops.filter(([id]) => itemNames[id]).map(([id, chance, ratio]) => {
+        {drops.filter(([id]) => itemNames[id]).map(([id, chance]) => {
           const [name, file] = itemNames[id];
           const target = lootDestination(id, file);
           const row = (
             <>
               <GameArt path={itemPath(file)} size={36}/>
               <span className="lootItemName">{name}</span>
-              <span className="rowEnd lootOddsCol">
-                {ratio && <strong className="lootRatioBadge">{ratio}</strong>}
-                <small className="lootChancePercent">{chanceLabel(openingChance(chance))}</small>
+              <span className="rowEnd lootRowEnd">
+                <strong className="lootChancePercent">{chanceLabel(openingChance(chance))}</strong>
                 {target && <span className="rowChevron" aria-hidden="true"/>}
               </span>
             </>
@@ -181,7 +181,8 @@ const rings = shopItems.filter(offer => offer.category === 'ring').map(offer => 
   const effect = offer.stat === 'strength' ? 'Усиливает обычные удары.' :
     offer.stat === 'agility' ? 'Повышает шанс уклониться.' : 'Повышает шанс крита и запас маны.';
   const tier = offer.tier ?? 1;
-  const levelText = tier === 1 ? 'с 1-го уровня (без ограничений)' : `с ${offer.required_level}-го уровня`;
+  const level = offer.required_level ?? (tier === 1 ? 5 : tier === 2 ? 10 : 20);
+  const levelText = `с ${level}-го уровня`;
   return {
     name: offer.name_ru,
     file: offer.id + '.webp',

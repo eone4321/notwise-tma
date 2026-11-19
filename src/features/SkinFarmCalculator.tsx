@@ -1,4 +1,5 @@
-import { useState, useId } from 'react';
+import { useState, useId, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { battleLeagues } from './battle-leagues';
 
 export interface SkinFarmState {
@@ -43,9 +44,18 @@ export function calculateFarmBonus(state: SkinFarmState) {
 }
 
 export function FarmInfoModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="farmModalBackdrop" onClick={onClose} role="presentation">
       <div
         className="farmModalContent card"
@@ -116,7 +126,8 @@ export function FarmInfoModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
           Понятно!
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -199,7 +210,7 @@ export function SkinFarmCalculator({
             <div className="slotBoxCheck">{state.hat ? '✓' : ''}</div>
             <div className="slotBoxInfo">
               <span className="slotBoxName">🎩 Головной убор</span>
-              <small className="slotBoxSub">{state.hat ? 'Надет (+5%)' : 'Нет детали (0%)'}</small>
+              <small className="slotBoxSub">{state.hat ? 'Надет' : 'Нет детали'}</small>
             </div>
             <strong className="slotBoxValue">+{state.hat ? 5 : 0}%</strong>
           </button>
@@ -214,7 +225,7 @@ export function SkinFarmCalculator({
             <div className="slotBoxCheck">{state.glasses ? '✓' : ''}</div>
             <div className="slotBoxInfo">
               <span className="slotBoxName">🕶️ Очки / маска</span>
-              <small className="slotBoxSub">{state.glasses ? 'Надеты (+5%)' : 'Нет детали (0%)'}</small>
+              <small className="slotBoxSub">{state.glasses ? 'Надеты' : 'Нет детали'}</small>
             </div>
             <strong className="slotBoxValue">+{state.glasses ? 5 : 0}%</strong>
           </button>
@@ -229,7 +240,7 @@ export function SkinFarmCalculator({
             <div className="slotBoxCheck">{state.eyes ? '✓' : ''}</div>
             <div className="slotBoxInfo">
               <span className="slotBoxName">👀 Особые глаза</span>
-              <small className="slotBoxSub">{state.eyes ? 'Есть (+5%)' : 'Обычные (0%)'}</small>
+              <small className="slotBoxSub">{state.eyes ? 'Особые' : 'Обычные'}</small>
             </div>
             <strong className="slotBoxValue">+{state.eyes ? 5 : 0}%</strong>
           </button>
@@ -246,14 +257,14 @@ export function SkinFarmCalculator({
                 aria-pressed={state.body === 'none'}
                 onClick={() => updateState(s => ({ ...s, body: 'none' }))}
               >
-                Нет (0%)
+                Нет
               </button>
               <button
                 type="button"
                 aria-pressed={state.body === 'regular'}
                 onClick={() => updateState(s => ({ ...s, body: 'regular' }))}
               >
-                Обычное (+5%)
+                Обычное
               </button>
               <button
                 type="button"
@@ -261,7 +272,7 @@ export function SkinFarmCalculator({
                 aria-pressed={state.body === 'gold'}
                 onClick={() => updateState(s => ({ ...s, body: 'gold' }))}
               >
-                ⭐ Золотое (+15%)
+                ⭐ Золотое
               </button>
             </div>
           </div>
@@ -278,14 +289,14 @@ export function SkinFarmCalculator({
                 aria-pressed={state.chest === 'none'}
                 onClick={() => updateState(s => ({ ...s, chest: 'none' }))}
               >
-                Нет (0%)
+                Нет
               </button>
               <button
                 type="button"
                 aria-pressed={state.chest === 'regular'}
                 onClick={() => updateState(s => ({ ...s, chest: 'regular' }))}
               >
-                Обычное (+5%)
+                Обычное
               </button>
               <button
                 type="button"
@@ -293,7 +304,7 @@ export function SkinFarmCalculator({
                 aria-pressed={state.chest === 'chain'}
                 onClick={() => updateState(s => ({ ...s, chest: 'chain' }))}
               >
-                💎 Цепь NOT (+10%)
+                💎 Цепь NOT
               </button>
             </div>
           </div>

@@ -90,6 +90,7 @@
     "category": "ring",
     "currency": "coins",
     "price": 5000,
+    "required_level": 5,
     "stat": "strength"
   },
   {
@@ -99,6 +100,7 @@
     "category": "ring",
     "currency": "coins",
     "price": 5000,
+    "required_level": 5,
     "stat": "agility"
   },
   {
@@ -108,6 +110,7 @@
     "category": "ring",
     "currency": "coins",
     "price": 5000,
+    "required_level": 5,
     "stat": "wisdom"
   },
   {
