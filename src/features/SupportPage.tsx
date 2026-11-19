@@ -1,8 +1,9 @@
+import { artSrc } from '../ui/warmArt';
 import { useRef, useState } from 'react';
 import { openTelegramInvoice, telegramPopup } from '../telegram/client';
 
 const wallet = 'UQDm9yL64jkyN-3ejCnfmcVLq_zZu2u4YjR3qWg5w6itHPgz';
-const presets = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000];
+const presets = [1, 3, 5, 10, 25, 50, 100, 250, 500, 1000];
 const stars = new Intl.NumberFormat('ru-RU');
 
 async function paymentConfirmed(id: string, initData: string) {
@@ -16,12 +17,13 @@ async function paymentConfirmed(id: string, initData: string) {
 }
 
 export function SupportPage() {
-  const [amount, setAmount] = useState(100);
+  const [amount, setAmount] = useState(5);
   const [message, setMessage] = useState('');
   const [order, setOrder] = useState('');
   const [busy, setBusy] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
   const walletField = useRef<HTMLTextAreaElement>(null);
+  const orderKey = useRef<{ amount: number; key: string } | null>(null);
 
   async function donate() {
     const initData = telegramPopup()?.initData;
@@ -30,6 +32,7 @@ export function SupportPage() {
       return;
     }
     setBusy(true);
+    if (!orderKey.current || orderKey.current.amount !== amount) orderKey.current = { amount, key: crypto.randomUUID() };
     setOrder('');
     setMessage('Создаём счёт…');
     try {
@@ -38,12 +41,13 @@ export function SupportPage() {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `tma ${initData}`,
-          'Idempotency-Key': crypto.randomUUID(),
+          'Idempotency-Key': orderKey.current.key,
         },
         body: JSON.stringify({ amountStars: amount }),
       });
       if (!response.ok) throw new Error('Invoice unavailable');
       const { id, invoiceUrl } = await response.json();
+      orderKey.current = null;
       setOrder(id);
       setMessage('Ожидаем подтверждение оплаты…');
       const result = await openTelegramInvoice(invoiceUrl);
@@ -64,7 +68,9 @@ export function SupportPage() {
         setMessage('Счёт открыт в Telegram. После оплаты можно проверить статус здесь.');
       }
     } catch {
-      setMessage('Не удалось подтвердить операцию. Если оплата уже была, проверь её статус.');
+      setMessage(orderKey.current
+        ? 'Не удалось создать счёт. Попробуй ещё раз.'
+        : 'Не удалось проверить оплату. Если счёт уже оплачен, проверь статус.');
     } finally {
       setBusy(false);
     }
@@ -121,10 +127,11 @@ export function SupportPage() {
       <button className="secondary" onClick={copyWallet}>Скопировать адрес</button>
       {copyStatus && <p className="supportStatus" role="status">{copyStatus}</p>}
     </section>
-    <section className="card">
-      <h2>Вопросы об оплате</h2>
-      <p>Напиши боту команду /paysupport или обратись к @cryptoeone.</p>
-      <a className="textLink" href="https://t.me/NotWiseGuideBot">Открыть бота</a>
+    <section className="card supporterCollection">
+      <img src={artSrc('/brand/collections/prohamsters.jpg')} width="800" height="431" alt="Коллекция PRO ХОМЯКИ от CryptoOne"/>
+      <div><h2>PRO ХОМЯКИ</h2><p>100 NFT · закрытый чат</p></div>
+      <p>Владелец NFT получает доступ в закрытый чат сообщества участников рынка. CryptoOne объединяет их с 2022 года.</p>
+      <a className="secondary" href="https://getgems.io/prohamsters" target="_blank" rel="noreferrer">Открыть на Getgems</a>
     </section>
   </>;
 }

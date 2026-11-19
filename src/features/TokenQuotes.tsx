@@ -1,3 +1,4 @@
+import { useModal } from '../ui/useModal';
 import { artSrc } from '../ui/warmArt';
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
@@ -13,9 +14,12 @@ const usd = new Intl.NumberFormat('ru-RU', {
   style: 'currency', currency: 'USD', maximumFractionDigits: 2,
 });
 
-const smallUsd = new Intl.NumberFormat('ru-RU', {
-  style: 'currency', currency: 'USD', maximumSignificantDigits: 2,
-});
+const smallUsd = new Intl.NumberFormat('ru-RU', { maximumSignificantDigits: 3 });
+
+function formatQuote(symbol: string, price: number) {
+  if (symbol === 'NOT') return smallUsd.format(price * 1000) + ' $ / 1 000';
+  return price < 0.01 ? smallUsd.format(price) + ' $' : usd.format(price);
+}
 
 function tokenIcon(symbol: string) {
   return `/brand/tokens/${symbol === 'GRAM' ? 'gram.png' : `${symbol.toLowerCase()}.webp`}`;
@@ -79,7 +83,7 @@ function useQuotes() {
   const usable = tokens.tokens.flatMap(({ symbol }) => {
     const row = rows.find(quote => quote.symbol === symbol);
     const price = Number(row?.priceUsd);
-    return row && Number.isFinite(price) && price > 0 ? [{ ...row, displayPrice: (price < 1 ? smallUsd : usd).format(price) }] : [];
+    return row && Number.isFinite(price) && price > 0 ? [{ ...row, displayPrice: formatQuote(symbol, price) }] : [];
   });
   function reload() {
     setPending(true);
@@ -97,14 +101,7 @@ function QuoteList({ quotes }: { quotes: ReturnType<typeof useQuotes> }) {
         <li key={symbol}>
           <img src={artSrc(tokenIcon(symbol))} alt="" width="30" height="30"/>
           <div className="tokenRateName"><b>{symbol}</b><small>{name}</small></div>
-          <strong>{(() => {
-            const quote = usable.find(row => row.symbol === symbol);
-            if (!quote) return '—';
-            const price = Number(quote.priceUsd);
-            return price < 0.001
-              ? <span title={quote.displayPrice}>{(price * 1000).toLocaleString('ru-RU', { maximumSignificantDigits: 3 })} <small>$ / 1 000</small></span>
-              : quote.displayPrice;
-          })()}</strong>
+          <strong>{usable.find(row => row.symbol === symbol)?.displayPrice ?? '—'}</strong>
         </li>
       ))}
     </ul>
@@ -134,7 +131,8 @@ export function TokenTicker() {
   const [focused, setFocused] = useState(false);
   const [opened, setOpened] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
-  const { usable, reload } = quotes;
+  const { usable } = quotes;
+  useModal(dialog, opened);
 
   useEffect(() => {
     if (reducedMotion || hovered || focused || opened || usable.length < 2) return;
@@ -145,36 +143,29 @@ export function TokenTicker() {
   }, [reducedMotion, hovered, focused, opened, usable.length]);
 
   const quote = usable.length ? usable[index % usable.length] : undefined;
-  function showRates() {
-    dialog.current?.showModal();
-    setOpened(true);
-    reload();
-  }
-
   return <>
     <button className="tokenTicker" type="button" aria-label="Курсы токенов" aria-haspopup="dialog"
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-      onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onClick={showRates}>
-      <span className="tokenTickerLabel">Курсы</span>
+      onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onClick={() => setOpened(true)}>
       <span className="tokenTickerTrack" aria-hidden="true">
         {quote ? <AnimatePresence initial={false}>
           <motion.span className="tokenTickerValue" key={quote.symbol}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ y: 12, opacity: 0, filter: "blur(3px)" }} animate={{ y: 0, opacity: 1, filter: "blur(0px)" }} exit={{ y: -12, opacity: 0, filter: "blur(3px)" }}
             transition={{ duration: reducedMotion ? 0 : 0.45, ease: 'easeInOut' }}>
-            <img src={artSrc(tokenIcon(quote.symbol))} alt="" width="18" height="18"/>
             <b>{quote.symbol}</b><span className="tickerPrice">{quote.displayPrice}</span>
+            <img src={artSrc(tokenIcon(quote.symbol))} alt="" width="20" height="20"/>
           </motion.span>
-        </AnimatePresence> : <span className="tokenTickerValue">USD</span>}
+        </AnimatePresence> : <span className="tokenTickerEmpty">USD</span>}
       </span>
     </button>
     <dialog className="modal tokenRatesDialog" ref={dialog} aria-labelledby="ticker-rates-title"
-      onClose={() => setOpened(false)} onClick={event => {
-        if (event.target === event.currentTarget) dialog.current?.close();
+      onCancel={event => { event.preventDefault(); setOpened(false); }} onClick={event => {
+        if (event.target === event.currentTarget) setOpened(false);
       }}>
       <div className="tokenRatesDialogBody">
         <div className="tokenRatesDialogHeader">
-          <h2 id="ticker-rates-title">Курсы токенов</h2>
-          <button className="close" type="button" aria-label="Закрыть курсы" onClick={() => dialog.current?.close()}>×</button>
+          <h2 id="ticker-rates-title" data-dialog-title tabIndex={-1}>Курсы токенов</h2>
+          <button className="close" type="button" aria-label="Закрыть курсы" onClick={() => setOpened(false)}>×</button>
         </div>
         <QuoteList quotes={quotes}/>
       </div>

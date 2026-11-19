@@ -11,7 +11,7 @@ export function useGuideScroll() {
   const restore = state?.restoreGuideScroll || (navigationType === 'POP' && positions.has(address));
 
   useLayoutEffect(() => {
-    const save = () => positions.set(address, window.scrollY);
+    const save = () => { if (document.body.style.position !== 'fixed') positions.set(address, window.scrollY); };
     const anchor = hash ? document.getElementById(hash.slice(1)) : null;
     const previousPosition = positions.get(address);
     if (restore && previousPosition !== undefined) window.scrollTo(0, previousPosition);
@@ -32,13 +32,19 @@ export function useGuideScroll() {
 }
 
 export function useGuideNavigation() {
-  const { pathname, hash } = useLocation();
+  const { pathname, hash, state } = useLocation();
   const navigate = useNavigate();
   const sections = pathname.split('/').filter(Boolean);
   const skipGrouping = (sections[0] === 'collections' && sections[1] === 'albums') ||
     (sections[0] === 'combat' && sections[1] === 'skills' && sections.length === 3);
   const isEgg = sections[0] === 'owl' && ['mystery','red','season','green','gold'].includes(sections[1]);
-  const parent = hash ? pathname : isEgg ? '/owl/loot' : sections.length > 1
+  const returnTo = state?.returnTo;
+  const fromEgg = pathname.startsWith('/assets/item/') || pathname === '/owl/skins';
+  const hasReturn = typeof returnTo === 'string' && (
+    (fromEgg && /^\/owl\/(mystery|red|season|green|gold)$/.test(returnTo)) ||
+    (isEgg && ['/owl', '/owl/loot', '/owl/shop'].includes(returnTo))
+  );
+  const parent = hasReturn ? returnTo : hash ? pathname : isEgg ? '/owl' : sections.length > 1
     ? '/' + sections.slice(0, skipGrouping ? 1 : -1).join('/')
     : '/';
 

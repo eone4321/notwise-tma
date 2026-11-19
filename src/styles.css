@@ -559,3 +559,139 @@ html { scrollbar-gutter: stable; }
 .squadMap g[aria-pressed=true] circle { fill: #ffefbe; }
 .squadMapLabel { display: grid; text-align: center; border-top: 1px solid var(--line); padding-top: 8px; }
 .shopUse { display: block; font-size: 12px; }
+
+/* Compact guide rows and controls share the same edge treatment. */
+.heroActions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.heroActions > :first-child { grid-column: 1 / -1; font-size: 14px; }
+.heroActions > * { width: 100%; }
+.heroImage {
+  inset: 0 -4% 0 auto;
+  height: 100%;
+  width: 77%;
+  object-position: 55% top;
+  mask-image: radial-gradient(ellipse at 66% 43%, #000 26%, #000b 51%, transparent 84%);
+}
+.gameHero::after {
+  background: linear-gradient(90deg, #0a0e1a 3%, #0a0e1acc 33%, transparent 72%),
+    linear-gradient(0deg, #0a0e1a 8%, transparent 76%);
+}
+.supportPill { transition: scale 160ms ease, filter 160ms ease; }
+.supportPill:active { scale: .96; filter: brightness(1.28); }
+
+.tokenTicker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 124px;
+  max-width: none;
+  min-height: 44px;
+  padding: 2px 0 2px 4px;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--muted);
+  text-align: end;
+}
+.tokenTickerTrack {
+  width: 100%;
+  display: grid;
+  overflow: hidden;
+  grid-template: 35px / minmax(0,1fr);
+  mask-image: linear-gradient(transparent, #000 15% 85%, transparent);
+}
+.tokenTickerValue {
+  justify-content: end;
+  align-content: center;
+  justify-items: end;
+  grid-template-columns: minmax(0,1fr) 22px;
+  grid-template-rows: auto auto;
+  column-gap: 7px;
+  row-gap: 1px;
+  font-variant-numeric: tabular-nums;
+}
+.tokenTickerValue > b { grid-area: 1 / 1; color: var(--text); font-size: 11px; }
+.tokenTickerValue > .tickerPrice { grid-area: 2 / 1; color: var(--muted); font-size: 12px; }
+.tokenTickerValue > img { grid-area: 1 / 2 / span 2; align-self: center; }
+.tokenTickerEmpty { grid-area: 1 / 1; align-self: center; }
+.tokenRatesList li { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; padding-inline: 0; }
+.tokenRatesList li strong { background: none; padding: 0; }
+.modal { overscroll-behavior: contain; }
+.modal .close { border: 0; background: none; box-shadow: none; -webkit-tap-highlight-color: transparent; }
+.modal .close:active { opacity: .65; }
+.modal [data-dialog-title]:focus { outline: none; }
+.dialogBody { padding: 2px; }
+.dialogBody > :is(button,a):not(.close) { display: grid; place-items: center; width: 100%; }
+
+.rowChevron, .mediaDetails > summary::after {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border: solid var(--lavender);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(-45deg);
+  padding: 0;
+}
+.mediaDetails > summary::after { transform: rotate(45deg); margin-inline: auto 4px; }
+.mediaDetails[open] > summary::after { content: ''; transform: rotate(225deg); }
+.rowEnd { display: inline-flex; align-items: center; justify-content: flex-end; flex: none; gap: 10px; margin-inline-start: auto; }
+.mediaRow > span:has(> small) { min-width: 0; }
+.leanList a.mediaRow:active, .mediaRow:is(a):active, .mediaDetails > summary:active { background: #d3c2ff10; border-radius: 8px; }
+.leanList .mediaRow > .rowChevron { margin-inline-start: auto; margin-inline-end: 4px; }
+.guideDisclosure > summary { min-height: 54px; padding: 0; cursor: pointer; }
+.guideDisclosure[open] > summary { margin-bottom: 8px; }
+.eggSources :is(h2,h3) { font-size: 17px; }
+.eggSources > .caption { margin: 9px 0 0; }
+.eggSources .eggShopRow { display: grid; grid-template-columns: 38px minmax(0,1fr) auto 8px; gap: 8px; }
+.eggSources .eggShopRow > strong { color: var(--text); }
+.eggSources li + li { border-top: 1px solid var(--line); }
+.eggPrices { display: flex; gap: 12px; margin: 8px 0 16px; }
+.lootList li:not(:first-child) { border-top: 1px solid var(--line); }
+.gameSymbol { display: inline-block; background-size: 4800% 100%; background-repeat: no-repeat; flex: none; }
+.gameGlyph { display: grid; place-items: center; width: 36px; height: 36px; font: 26px/1 "Not Wise Frens"; flex: none; }
+.notDrop .choiceBar { margin-block: 10px; }
+.notDrop .choiceBar button { flex: 1 1 auto; padding-inline: 5px; font-size: 12px; }
+.customSkin { display: grid; gap: 3px 10px; grid-template-columns: repeat(2, minmax(0,1fr)); }
+.customSkin .field, .customSkin > :first-child { grid-column: 1 / -1; }
+.customSkin > label:not(.field) { display: flex; align-items: center; min-height: 44px; font-size: 12px; gap: 5px; }
+.customSkin input[type=checkbox] { accent-color: var(--lavender); }
+.oddsList .mediaRow { min-height: 41px; }
+.inventorySection > summary small { display: block; font-size: 12px; }
+.inventoryRow { grid-template-columns: 36px minmax(0,1fr) auto; align-items: start; }
+.inventoryRow > div { min-width: 0; }
+.inventoryRow h3 { text-wrap: wrap; }
+.inventoryRow h3, .inventoryRow p { overflow-wrap: anywhere; }
+.singleItem .inventoryRow { border-top: 0; }
+.progressCounts { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 3px 0 9px; font-size: 13px; }
+.progressCounts span { color: var(--muted); }
+.progressGroup > h2 { font-size: 15px; color: var(--lavender); margin: 12px 0 2px; }
+.secretRow { scroll-margin-top: 12px; }
+.secretRow .secretCheck, .stickerProgressRow .secretCheck { justify-self: end; min-width: 44px; }
+.stickerProgressRow { display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: start; gap: 4px; border-top: 1px solid var(--line); }
+.stickerProgressRow .mediaDetails > summary { min-height: 50px; }
+.stickerProgressRow .secretCheck { min-height: 50px; }
+.albumGrid > a { gap: 3px; }
+.albumGrid > a small { font-size: 10px; line-height: 1.2; }
+.marketCollection + .marketCollection { border-top: 1px solid var(--line); }
+.marketCollection > summary { min-height: 62px; }
+.marketCollection img { border-radius: 8px; }
+.floorPrice { display: inline-flex; align-items: center; gap: 4px; color: var(--gold); font-weight: 600; }
+.friendAvatar {
+  width: 32px; height: 32px; display: grid; place-items: center; flex: none;
+  background: #ae9ddd2a; color: var(--lavender); font-size: 11px; font-weight: 750;
+  border-radius: 50%; overflow: hidden;
+}
+.friendAvatar img { object-fit: cover; }
+.invitedFriend strong { margin-right: auto; text-align: start; }
+.invitedFriend small { white-space: nowrap; font-size: 11px; }
+.referralRewards { display: grid; gap: 8px; margin: 10px 0 2px; }
+.referralRewards .mediaHeading { margin-bottom: 0; }
+.referralRewards p { margin: 0; }
+.supporterCollection { display: grid; gap: 10px; }
+.supporterCollection > img { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; }
+.supporterCollection p { margin: 0; }
+.supporterCollection .secondary { text-align: center; }
+.donationAmounts .amount { font-size: 12px; white-space: nowrap; }
+@media (max-width: 389px) { .donationAmounts > :last-child { grid-column: 2; } }
+@media (min-width: 390px) { .donationAmounts { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .supportPill { transition: none; } }

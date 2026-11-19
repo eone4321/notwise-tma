@@ -1,6 +1,8 @@
+import { GuideProgress, ProgressStatus, useProgress } from '../features/GuideProgress';
+import { useModal } from '../ui/useModal';
 import { artSrc } from '../ui/warmArt';
 import { SquadPage } from '../features/SquadPage';
-import { ReferralsPage } from '../features/ReferralsPage';
+import { ReferralsPage, warmFriendAvatar } from '../features/ReferralsPage';
 import { SupportPage } from '../features/SupportPage';
 import { OwlPrices } from '../features/OwlPrices';
 import { EcosystemPage } from '../features/EcosystemPage';
@@ -22,8 +24,8 @@ import { authData, defaultGameLink, guideShareUrl, profileRequest, shareGuide, t
 
 const sections = [
   ['Сквады и войны', '/squads'],
-  ['Секреты', '/secrets'], ['Капсулы', '/capsules'], ['Яйца и совы', '/owl'],
-  ['Коллекции', '/collections'], ['Бои и навыки', '/combat'], ['Инвентарь', '/assets'],
+  ['Секреты', '/secrets'], ['Капсулы', '/capsules'], ['Яйца и скины', '/owl'],
+  ['Коллекции', '/collections'], ['Бои и навыки', '/combat'], ['Предметы', '/assets'],
   ['Экосистема', '/ecosystem'], ['Пригласить друзей', '/referrals'],
 ] as const;
 type Item={id:number;name:string;description:string;short_descr:string;rarity:number;kind?:string;key?:string};
@@ -47,6 +49,9 @@ function App() {
     });
     return () => abort.abort();
   }, [profileAttempt]);
+  useEffect(() => {
+    for (const friend of profile?.invited ?? []) if (friend.avatar) void warmFriendAvatar(friend.avatar);
+  }, [profile]);
   const closeCoach = () => {
     localStorage.setItem('notwise.guide.dock.v1', '1');
     setCoach(false);
@@ -63,7 +68,7 @@ useEffect(() => {
   window.addEventListener('keydown', close);
   return () => window.removeEventListener('keydown', close);
 }, [hamster, hamsterLocked]);useEffect(()=>{telegramPopup()?.ready();const key='notwise.guide.startapp.v1';if(sessionStorage.getItem(key))return;const start=new URLSearchParams(location.search).get('startapp')??telegramPopup()?.initDataUnsafe?.start_param;const routes:Record<string,string>={capsules_gold:'/capsules/gold',eggs:'/owl',secrets:'/secrets',market:'/collections/market'};if(start&&Object.hasOwn(routes,start)){sessionStorage.setItem(key,'1');nav(routes[start],{replace:true})}},[nav]);const ask=()=>{lightHaptic();const tg=telegramPopup();if(tg?.showPopup){try { tg.showPopup({title:'Секреты Not Wise',message:'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты',buttons:[{id:'pay',text:'Заплатить',type:'default'},{id:'back',text:'Назад',type:'default'}]},()=>reveal()); return; } catch { /* Older Telegram clients use the local dialog. */ }}setPopup(true)};function reveal(){setPopup(false);setJoke(true);setShowJoke(true);localStorage.setItem('notwise.guide.secrets.v1','1')}
-return <div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach}><Link to="/" className="brand"><img src="/brand/notwise.svg" alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main key={loc.pathname} inert={hamster || coach}>{loc.pathname === '/' ? <Home profile={profile} profileFailed={profileFailed} retryProfile={() => {
+return <GuideProgress key={profile?.userId ?? "local"} user={profile?.userId}><div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach}><Link to="/" className="brand"><img src="/brand/notwise.svg" alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main key={loc.pathname} inert={hamster || coach}>{loc.pathname === '/' ? <Home profile={profile} profileFailed={profileFailed} retryProfile={() => {
   setProfileFailed(false); setProfileAttempt(value => value + 1);
 }}/> : loc.pathname === '/admin' ? <AdminPage profile={profile}/> : <Page ask={ask} joke={joke} popup={popup} reveal={reveal}
   referrals={<ReferralsPage profile={profile} failed={profileFailed} onSave={setProfile} onRetry={() => {
@@ -88,7 +93,7 @@ return <div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header ine
   initial={{y:110,opacity:0}} animate={{y:0,opacity:1}} exit={{y:110,opacity:0}} transition={{duration:.22}}>
   <p className="hamsterSpeech">*#$@#, себя потыкай %*!</p>
   <img src={artSrc('/brand/hamster.png')} width="1264" height="1371" alt="Хомяк CryptoOne"/>
-</motion.aside>}</AnimatePresence></div>}
+</motion.aside>}</AnimatePresence></div></GuideProgress>}
 function Dock({ hamster, locked, onHamster, onGesture }: { hamster: boolean; locked: boolean; onHamster: () => void; onGesture?: () => void }) {
   const location = useLocation();
   const navigation = useGuideNavigation();
@@ -163,14 +168,15 @@ function Dock({ hamster, locked, onHamster, onGesture }: { hamster: boolean; loc
 function Home({ profile, profileFailed, retryProfile }: {
   profile: GuideProfile | null; profileFailed: boolean; retryProfile: () => void;
 }) {
+ const [share, setShare] = useState(false);
  const fromInvite = authData() && /^g_[a-f0-9]{32}$/.test(telegramPopup()?.initDataUnsafe?.start_param ?? '');
  const tiles = [
   ['Секреты', '/secrets', '/game/stickers/9.webp', 'Скрытые условия и достижения', '/game/stickers/42.webp'],
   ['Капсулы', '/capsules', '/game/capsules/gold.webp', 'Что выпадет и сколько стоит открыть сейчас?', '/game/capsules/silver.webp'],
-  ['Яйца и совы', '/owl', '/game/items/egg.webp', 'Что выпадет из яйца и когда кормить?', '/game/items/golden-egg.webp'],
+  ['Яйца и скины', '/owl', '/game/items/egg.webp', 'Дроп, облики сов и жетоны', '/game/skins/5565.svg'],
   ['Коллекции', '/collections', '/game/albums/1.webp', 'Стикеры, альбомы и Getgems', '/game/stickers/1.webp'],
   ['Бои и навыки', '/combat', '/game/skills/1.png', 'Какие навыки выбрать и что качать?', '/game/skills/16.png'],
-  ['Инвентарь', '/assets', '/game/items/ring-wit-3.webp', 'Предметы и скины', '/game/items/book.webp'],
+  ['Предметы', '/assets', '/game/items/ring-wit-3.webp', 'Еда, кольца и оформление', '/game/items/book.webp'],
   ['Сквады и войны', '/squads', '/game/items/lighter.webp', 'Ритуалы, осады и награды', '/game/war/siege-header.webp'],
   ['Экосистема', '/ecosystem', '/game/items/coins.webp', 'Токены, проекты и курсы', '/brand/tokens/gram.png'],
   ['Пригласить друзей', '/referrals', '/game/items/wise-coin.webp', 'Твоя ссылка и список приглашённых', '/game/items/referral-egg.webp'],
@@ -186,9 +192,10 @@ function Home({ profile, profileFailed, retryProfile }: {
       <a className="secondary" href="https://t.me/notgames_bot/squads?startapp=575801">
         <span className="squadMark" aria-hidden="true"/>Наш сквад
       </a>
-    <button className="heroShare secondary" onClick={() => shareGuide(guideShareUrl())}>Поделиться гайдом</button>
+    <button className="heroShare secondary" aria-haspopup="dialog" onClick={() => { lightHaptic(); setShare(true); }}>Поделиться гайдом</button>
     </div>
   </section>
+  {share && <ShareDialog profile={profile} close={() => setShare(false)}/>}
   <OwlPrices/>
   <div className="sectionHeading"><div><h2>Что ищешь?</h2></div></div>
   <div className="guideGrid">{tiles.map(([name, path, icon, description, art]) =>
@@ -201,6 +208,29 @@ function Home({ profile, profileFailed, retryProfile }: {
   <div className="supportFooter"><a className="supportPill" href="https://t.me/cryptoeone"><img className="channelLogo" src="/brand/cryptoone-channel.jpg" alt="" width="24" height="24"/>Канал CryptoOne</a><Link className="supportPill" to="/support"><img src="/brand/cryptoone.svg" alt="" width="18" height="19"/>Поддержать проект</Link></div>
   {profile?.isAdmin && <Link className="textLink" to="/admin">Управление гайдом</Link>}
  </>;
+}
+function ShareDialog({ profile, close }: { profile: GuideProfile | null; close: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useModal(dialog, true);
+  const linked = profile?.gameLinkVerified === true;
+  function send(personal: boolean) {
+    lightHaptic();
+    shareGuide(guideShareUrl(personal && linked ? profile?.referralCode : undefined));
+    close();
+  }
+  return <dialog className="modal" ref={dialog} aria-labelledby="share-title"
+    onCancel={event => { event.preventDefault(); close(); }}
+    onClick={event => { if (event.target === event.currentTarget) close(); }}>
+    <div className="dialogBody">
+      <div className="tokenRatesDialogHeader"><h2 id="share-title" data-dialog-title tabIndex={-1}>Поделиться гайдом</h2>
+        <button className="close" onClick={close} aria-label="Закрыть">×</button></div>
+      <p>{linked ? 'Хочешь, чтобы друзья могли открыть игру по твоей рефке?' :
+        'Можно отправить гайд сейчас. В нём будет игровая ссылка проекта.'}</p>
+      {linked ? <button className="primary" onClick={() => send(true)}>С моей рефкой</button> :
+        <Link className="secondary" to="/referrals" onClick={close}>Привязать мою рефку</Link>}
+      <button className={linked ? 'secondary' : 'primary'} onClick={() => send(false)}>Без моей рефки</button>
+    </div>
+  </dialog>;
 }
 function Card({children}:{children:React.ReactNode}){return <section className="card">{children}</section>}
 function Page({ ask, joke, popup, reveal, referrals }: {
@@ -229,16 +259,12 @@ function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean;
   const { hash } = useLocation();
   const [tab, setTab] = useState<'secret' | 'achievement'>('secret');
   const selected = tab === 'secret' && hash.startsWith('#sticker-') ? Number(hash.slice(9)) : null;
-  const [completed, setCompleted] = useState<number[]>(() => {
-    try { return JSON.parse(localStorage.getItem('notwise.guide.completed') ?? '[]'); }
-    catch { return []; }
-  });
-  function toggleCompleted(id: number) {
-    const next = completed.includes(id) ? completed.filter(value => value !== id) : [...completed, id];
-    setCompleted(next);
-    localStorage.setItem('notwise.guide.completed', JSON.stringify(next));
-  }
+  const { completed, percentages, setMark } = useProgress();
   const items = (all as Item[]).filter(item => item.kind === tab);
+  const groups = [
+    { title: 'Осталось', items: items.filter(item => !completed.includes(item.id)) },
+    { title: 'Выполнено', items: items.filter(item => completed.includes(item.id)) },
+  ];
   useEffect(() => {
     if (!joke || selected === null) return;
     document.getElementById(`sticker-${selected}`)?.scrollIntoView({ block: 'nearest' });
@@ -254,28 +280,35 @@ function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean;
       <p>Открой список, чтобы увидеть действия и награды.</p>
       <button className="primary" onClick={ask}>Открыть секреты</button>
     </Card> : <Card>
-      {tab === 'secret' && <Link className="textLink" to="/support">Поддержать проект</Link>}
-      {items.map(item => {
+      <div className="progressCounts"><strong>{groups[1].items.length}/{items.length} выполнено</strong><span>Осталось {groups[0].items.length}</span></div>
+      <ProgressStatus/>
+      {tab === 'secret' && percentages && <p className="caption">Проценты показывают долю игроков, отметивших секрет в гайде.</p>}
+      {groups.filter(group => group.items.length).map(group => <section className="progressGroup" key={group.title}>
+        <h2>{group.title}</h2>
+        {group.items.map(item => {
         const quest = quests.secret_quests.find(row => row.key === item.key);
         const title = quest?.name.match(/\((.+)\)/)?.[1] ?? item.name;
         return <article className="secretRow" id={`sticker-${item.id}`} key={item.id} data-selected={selected === item.id}>
           <GameArt path={`/game/stickers/${item.id}.webp`} size={42}/>
           <div><h3>{title}</h3><small>{title !== item.name ? item.name + ' · ' : ''}Стикер №{item.id}</small>
             <p>{tab === 'achievement' ? achievementActions[item.id] : quest?.action ?? 'Точное условие пока не подтверждено.'}</p>
+            {tab === 'secret' && percentages && <small>Отметили {percentages[item.id] ?? 0}% игроков</small>}
           </div>
-          <label className="secretCheck" title="Выполнено"><input type="checkbox" checked={completed.includes(item.id)} onChange={() => toggleCompleted(item.id)}/><span className="sr-only">Выполнено: {title}</span></label>
+          <label className="secretCheck" title="Выполнено"><input type="checkbox" checked={completed.includes(item.id)} onChange={event => setMark('completed', item.id, event.target.checked)}/><span className="sr-only">Выполнено: {title}</span></label>
         </article>;
-      })}
+        })}
+      </section>)}
+      {tab === 'secret' && <Link className="textLink" to="/support">Поддержать проект</Link>}
     </Card>}
     {popup && <SecretDialog reveal={reveal}/>}
   </>;
 }
 function SecretDialog({reveal}: {reveal: () => void}) {
   const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => { dialog.current?.showModal(); }, []);
+  useModal(dialog, true);
   return <dialog className="modal" ref={dialog} aria-labelledby="modalTitle" onCancel={event => {event.preventDefault();reveal();}}>
     <button className="close" onClick={reveal} aria-label="Закрыть окно">×</button>
-    <h2 id="modalTitle">Секреты Not Wise</h2>
+    <h2 id="modalTitle" data-dialog-title tabIndex={-1}>Секреты Not Wise</h2>
     <p>Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты</p>
     <button className="primary" onClick={reveal}>Заплатить</button>
     <button className="secondary" onClick={reveal}>Назад</button>

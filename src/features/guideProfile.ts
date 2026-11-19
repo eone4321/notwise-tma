@@ -1,11 +1,12 @@
 import { telegramPopup } from '../telegram/client';
 
-export type GuideMember = { id: string; name: string; joinedAt: number; seenAt: number };
+export type GuideMember = { id: string; name: string; avatar?: string; joinedAt: number; seenAt: number };
 export type GuideProfile = {
+  userId: string;
   gameLink: string | null;
   gameLinkVerified: boolean;
   gameEntry: string | null;
-  invited: Pick<GuideMember, 'name' | 'joinedAt'>[];
+  invited: Pick<GuideMember, 'name' | 'joinedAt' | 'avatar'>[];
   invitedCount: number;
   referralCode: string;
   isAdmin: boolean;

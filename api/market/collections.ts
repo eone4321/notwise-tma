@@ -12,12 +12,13 @@ const ALL_COLLECTIONS = [
   { id: 'family', address: 'EQD8uo-PGjYTihplpM6hiUp9xAFp5F_8fXU7UADhjpyufvjK' },
 ];
 
-export default async function handler(req: Request) {
+export default async function handler() {
   try {
     const promises = ALL_COLLECTIONS.map(async ({ id, address }) => {
       try {
         const r = await fetch(`https://api.getgems.io/public-api/v1/collection/basic-info/${address}`, {
           headers: { 'User-Agent': 'Mozilla/5.0' },
+          signal: AbortSignal.timeout(4500),
         });
         if (!r.ok) return { id, address, supply: null };
         const d = await r.json();
@@ -27,7 +28,7 @@ export default async function handler(req: Request) {
           address,
           supply: typeof info?.total_supply === 'number' ? info.total_supply : null,
           holders: typeof info?.unique_owners === 'number' ? info.unique_owners : null,
-          floor: typeof info?.floor === 'number' ? info.floor : null,
+          floor: typeof info?.floor === 'number' && info.floor > 0 ? info.floor : null,
         };
       } catch {
         return { id, address, supply: null };

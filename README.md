@@ -11,11 +11,9 @@ npm ci
 npm run dev
 ```
 
-Production bundle: `npm run build`. Telegram features degrade to browser behavior outside Telegram. Static guide content is bundled locally, so the guide works without the optional market API. The secret popup is intentionally a joke and never creates an invoice. Voluntary Stars donations are available only from the explicit Support screen when the bot API is configured. In local Vite mode, `/api` is proxied to `http://127.0.0.1:8787`. Start the existing bot service with `BOT_TOKEN` set to enable authenticated donation invoices and live market data. Market data is optional; static guide content remains available when the API is offline.
-
-## Current scope
-
-Implemented guide screens include capsule probabilities and calculators, egg loot and hunger guidance, the 100-sticker catalog and 20 albums, Getgems collections, token quotes, 20 combat skills and builds, secrets and achievements, and explicit Stars support. The API validates Telegram initData and invoice ownership. Production deployment still needs an HTTPS reverse proxy for `/api`, configured bot credentials, and verification in a real Telegram client. See `../NotWise_docs/NOT_WISE_GUIDE_IMPLEMENTATION.md` for the product contract and acceptance checklist.
+Run `npm run typecheck` and `npm run build` to check the production bundle.
+Vite proxies `/api` to `127.0.0.1:8787` in local development. The guide remains
+readable in a browser with local progress when the Telegram APIs are unavailable.
 
 ## Visitor log and referrals
 
@@ -34,10 +32,25 @@ The Main Mini App link defaults to `https://t.me/NotWiseGuideBot?startapp`. Set
 
 The backend stores each verified visitor's Telegram ID, display name, first and
 last visit, optional game invite link, and first referral to the guide. The
-referral list shown to the inviter contains names and first-visit dates.
+referral list shown to the inviter contains names, first-visit dates, and
+Telegram avatars when provided.
 Game-side referrals and the old bot's records are separate data sources.
 The new visitor log starts when the endpoint is configured. Regular guide
 content remains available if the profile service is unavailable.
+
+## Progress and Stars
+
+Secrets, achievements, and collected stickers are stored per verified
+Telegram user. The first sync imports browser marks. Completion rates
+use the number of registered Telegram visitors and appear from 50 users.
+
+The Vercel API creates Stars invoices from the support screen and records
+payments in Redis after it receives Telegram’s `successful_payment`
+update. For `/api/bot`, configure Telegram’s webhook secret as the
+hex-encoded HMAC-SHA256 of `notwise-guide:webhook:v1` keyed by the bot token.
+Set it as the webhook’s `secret_token` and include `message` and
+`pre_checkout_query` in the accepted updates. Refresh the secret when the
+bot token changes. The `/paysupport` command points users to CryptoOne.
 
 ## Game data
 

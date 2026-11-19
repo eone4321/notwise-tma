@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 import collections from './market-collections.json';
 
 const featured = [
-  { id: 'eggs', name: 'Яйца', description: 'Случайные награды' },
+  { id: 'eggs', name: 'Яйца', description: 'Исторический выпуск NOT Wise' },
   { id: 'genesis', name: 'Совы Genesis', description: 'Первая коллекция NOT Wise' },
   { id: 'skins', name: 'Скины', description: 'Облик и бонус к фарму' },
   { id: 'items', name: 'NFT-предметы', description: 'Рынок Getgems' },

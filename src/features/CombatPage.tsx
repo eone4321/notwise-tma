@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import skills from '../../public/data/skills.json';
 import progression from './owl-progression.json';
+import { GameSymbol } from '../ui/GameSymbol';
 import { GameArt } from '../ui/GameArt';
 import { skillCopy } from './skill-copy';
 import skillLevels from './skill-levels.json';
@@ -14,14 +15,14 @@ const branches = [
   ['endurance', 'Выносливость', 'Здоровье и защита', 16],
 ] as const;
 const modes = [
-  ['Рейтинговый бой', 'Рейтинг и капсулы', 'Атакуй зоны, которые соперник не блокирует, и переключай свой блок. Победа может дать капсулу при наличии слота.'],
-  ['Рейд', 'С 1-го уровня', 'Нападай на сов из рейтинга. Проигравший отдаёт победителю 3% монет. После трёх проигранных рейдов сова защищена до возвращения игрока.'],
-  ['Додзе', 'Навыки со 2-го уровня', 'Обычный удар по манекену тратит 2 энергии и приносит SP. Навыки тоже можно тренировать на манекене. Трать SP на улучшения, а очки атрибута — на открытие навыков его ветки.'],
-  ['Сквады и осады', 'Сквады с 3-го · война с 4-го', 'Раунд длится 8 часов. Территория приносит серебро сквада, монеты или +1–2 к атрибуту. Чтобы забрать награду своего сквада за раунд, участвуй в атаке. Усиление действует 24 часа после получения.'],
-  ['Полёт', 'С 5-го уровня', 'Для полёта нужно не меньше 10 сытости. Полёт тратит энергию и даёт монеты с небольшим количеством XP. Игра выдаёт 3 ракеты в день, дополнительные можно подобрать в полёте. Ракета умножает монеты, суши забирает 20%.'],
-  ['Wild Magic', 'Тренировка заклинаний', 'Три максимальные оценки открывают достижение Spell Book.'],
-  ['Книга загадок', '60 секунд на ответ', 'Сотри поле, чтобы открыть загадку и запустить таймер. Серия верных ответов умножает монеты и XP до ×3. Верный ответ даёт +5 мудрости на 24 часа. После трёх ошибок книга сгорает.'],
-  ['Сезон', '14 дней', 'В каждом сезоне одна цель: лайки, победы, безупречные победы, монеты или дистанция в полёте, лучший полёт, загадки или удары в Додзе. Учитывается активность за текущий сезон.'],
+  ['swords', 'Рейтинговый бой', 'Рейтинг и капсулы', 'Атакуй зоны, которые соперник не блокирует, и переключай свой блок. Победа может дать капсулу при наличии слота.'],
+  ['target', 'Рейд', 'С 1-го уровня', 'Нападай на сов из рейтинга. Проигравший отдаёт победителю 3% монет. После трёх проигранных рейдов сова защищена до возвращения игрока.'],
+  ['boxing', 'Додзе', 'Навыки со 2-го уровня', 'Обычный удар по манекену тратит 2 энергии и приносит SP. Навыки тоже можно тренировать на манекене. Трать SP на улучшения, а очки атрибута — на открытие навыков его ветки.'],
+  ['shield', 'Сквады и осады', 'Сквады с 3-го · война с 4-го', 'Раунд длится 8 часов. Территория приносит серебро сквада, монеты или +1–2 к атрибуту. Чтобы забрать награду своего сквада за раунд, участвуй в атаке. Усиление действует 24 часа после получения.'],
+  ['rocket', 'Полёт', 'С 5-го уровня', 'Для полёта нужно не меньше 10 сытости. Полёт тратит энергию и даёт монеты с небольшим количеством XP. Игра выдаёт 3 ракеты в день, дополнительные можно подобрать в полёте. Ракета умножает монеты, суши забирает 20%.'],
+  ['bolt', 'Wild Magic', 'Тренировка заклинаний', 'Три максимальные оценки открывают достижение Spell Book.'],
+  ['magnifier', 'Книга загадок', '60 секунд на ответ', 'Сотри поле, чтобы открыть загадку и запустить таймер. Серия верных ответов умножает монеты и XP до ×3. Верный ответ даёт +5 мудрости на 24 часа. После трёх ошибок книга сгорает.'],
+  ['trophy', 'Сезон', '14 дней', 'В каждом сезоне одна цель: лайки, победы, безупречные победы, монеты или дистанция в полёте, лучший полёт, загадки или удары в Додзе. Учитывается активность за текущий сезон.'],
 ] as const;
 const format = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
 const branchName = (branch: string) => branches.find(([id]) => id === branch)?.[1] ?? '';
@@ -58,15 +59,15 @@ export function CombatPage() {
             </Link>)}
         </section>
       </> : isModes ? <section className="card">
-        {modes.map(([title, when, description]) => <details className="mediaDetails" key={title}>
-          <summary><span><strong>{title}</strong><small>{when}</small></span></summary><p>{description}</p>
+        {modes.map(([icon, title, when, description]) => <details className="mediaDetails" key={title}>
+          <summary><GameSymbol name={icon}/><span><strong>{title}</strong><small>{when}</small></span></summary><p>{description}</p>
         </details>)}
-        <details className="mediaDetails"><summary><span><strong>Призы сезона</strong><small>Первые 100 мест</small></span></summary>
+        <details className="mediaDetails"><summary><GameSymbol name="trophy"/><span><strong>Призы сезона</strong><small>Первые 100 мест</small></span></summary>
         <p>Базовый фонд клиента — 1 млн $NOT. 1-е место получает 400 000, 2-е — 350 000, 3-е — 250 000 $NOT. Топ-10 получает золотое загадочное яйцо, места 11–100 — сезонное загадочное яйцо.</p>
         <p className="caption">Игра может изменить фонд конкретного сезона. Призы приходят автоматически.</p>
         <Link className="textLink" to="/owl/season">Что выпадает из сезонного яйца</Link>
       </details>
-      <details className="mediaDetails" id="leagues" open={hash === "#leagues" || undefined}><summary><span><strong>Боевые лиги</strong><small>Пороги рейтинга и бонус к $NOT</small></span></summary>
+      <details className="mediaDetails" id="leagues" open={hash === "#leagues" || undefined}><summary><GameSymbol name="shield"/><span><strong>Боевые лиги</strong><small>Пороги рейтинга и бонус к $NOT</small></span></summary>
         <table className="priceTable">
           <thead><tr><th scope="col">Лига</th><th scope="col">От MMR</th><th scope="col">Фарм</th></tr></thead>
           <tbody>{battleLeagues.map(([name, rating], index) => <tr key={name}>
@@ -131,10 +132,10 @@ function SkillDetail({ skill }: { skill: Skill }) {
 }
 
 const attributes = [
-  ['Сила', 'Урон', '+0,065 за очко', 'Удары сильнее.'],
-  ['Ловкость', 'Уклонение', '+0,7 п. п. за очко', 'Предел уклонения — 70%.'],
-  ['Мудрость', 'Крит и мана', '+0,7 п. п. и +20 маны за очко', 'Предел крита — 70%. Базовая мана — 200.'],
-  ['Выносливость', 'Здоровье', '+2 HP дома, +3 HP в бою за очко', 'Базовое боевое здоровье — 20 HP.'],
+  ['muscle', 'Сила', '+0,065 урона за очко', 'Повышает урон обычных ударов.'],
+  ['target', 'Ловкость', '+0,7% к шансу уклонения за очко', 'Шанс складывается. Например, с 20% он вырастет до 20,7%. Предел — 70%.'],
+  ['bolt', 'Мудрость', '+0,7% к шансу крита и +20 маны за очко', 'Например, шанс крита 20% вырастет до 20,7%. Предел — 70%. Базовая мана — 200.'],
+  ['heart', 'Выносливость', '+2 HP дома, +3 HP в бою за очко', 'Базовое боевое здоровье — 20 HP.'],
 ] as const;
 
 function CombatStats() {
@@ -144,9 +145,10 @@ function CombatStats() {
   const curve = legacy ? progression.previous : progression.current;
   return <>
     <section className="card"><h2>Эффект одного очка атрибута</h2>
-      <ul className="compactList">{attributes.map(([name, use, effect, detail]) => <li className="mediaRow" key={name}>
-        <div><h3>{name} · {use}</h3><p><strong>{effect}</strong></p><small>{detail}</small></div>
-      </li>)}</ul>
+      {attributes.map(([icon, name, effect, detail]) => <details className="mediaDetails" key={name}>
+        <summary><GameSymbol name={icon}/><span><strong>{name}</strong><small>{effect}</small></span></summary>
+        <p>{detail}</p>
+      </details>)}
     </section>
     <section className="card"><h2>Перки и опыт</h2>
       <p>Перки покупаются за SP. Запас энергии растёт на 100 за ступень. Восстановление энергии и здоровья растёт на 3% за ступень соответствующего перка.</p>

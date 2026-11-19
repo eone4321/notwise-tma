@@ -1,3 +1,5 @@
+import { answerCheckout, recordPayment, validWebhook } from '../server/donations';
+
 export const config = {
   runtime: 'edge',
 };
@@ -18,8 +20,8 @@ async function callTelegram(method: string, body: Record<string, unknown>) {
       body: JSON.stringify(body),
     });
     return await res.json();
-  } catch (err) {
-    console.error(`Telegram API error (${method}):`, err);
+  } catch {
+    console.error(`Telegram API error (${method})`);
     return null;
   }
 }
@@ -36,14 +38,24 @@ export default async function handler(req: Request) {
     return new Response('Method Not Allowed', { status: 405 });
   }
 
+  if (!BOT_TOKEN || !await validWebhook(req, BOT_TOKEN)) return new Response('Forbidden', { status: 403 });
+
   try {
     const update = await req.json();
     const message = update?.message;
+    if (update?.pre_checkout_query) await answerCheckout(BOT_TOKEN, update.pre_checkout_query);
+    if (message?.successful_payment) await recordPayment(message.successful_payment, message.from?.id);
 
     if (message?.text && message.chat?.id) {
       const chatId = message.chat.id;
       const text = message.text.trim();
 
+      if (text === '/paysupport' || text === '/paysupport@NotWiseGuideBot') {
+        await callTelegram('sendMessage', {
+          chat_id: chatId,
+          text: 'По вопросам платежей напиши в CryptoOne: https://t.me/cryptoeone. Укажи время платежа и сумму в Stars.',
+        });
+      }
       if (text.startsWith('/start')) {
         // 1. Устанавливаем системную кнопку Menu WebApp слева от поля ввода
         void callTelegram('setChatMenuButton', {
@@ -84,8 +96,8 @@ export default async function handler(req: Request) {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch (err) {
-    console.error('Webhook error:', err);
+  } catch {
+    console.error('Webhook update failed');
     return new Response(JSON.stringify({ ok: false }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

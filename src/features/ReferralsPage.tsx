@@ -1,4 +1,4 @@
-import { useState, useRef, type FormEvent } from 'react';
+import { useEffect, useState, useRef, type FormEvent } from 'react';
 import { GameArt } from '../ui/GameArt';
 import { authData, guideShareUrl, profileRequest, shareGuide, type GuideProfile } from './guideProfile';
 
@@ -20,7 +20,7 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
   const [linkMessage, setLinkMessage] = useState('');
   const [more, setMore] = useState<GuideProfile['invited']>([]);
   const [loadingMore, setLoadingMore] = useState(false);
-  const url = guideShareUrl(profile?.referralCode);
+  const url = guideShareUrl(profile?.gameLinkVerified ? profile.referralCode : undefined);
   const value = input ?? profile?.gameLink ?? '';
   const invited = [...(profile?.invited ?? []), ...more];
   const canEnterLink = subscribed ?? profile?.gameLinkVerified ?? false;
@@ -140,17 +140,54 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
       <section className="card">
         <h2>Открыли гайд по ссылке · {profile.invitedCount}</h2>
         {invited.length ? <ul className="compactList">{invited.map((friend, index) =>
-          <li className="mediaRow" key={index}><strong>{friend.name}</strong><small>{date.format(friend.joinedAt)}</small></li>)}</ul>
+          <li className="mediaRow invitedFriend" key={friend.joinedAt + ':' + index}>
+            <FriendAvatar name={friend.name} avatar={friend.avatar}/>
+            <strong>{friend.name}</strong><small>{date.format(friend.joinedAt)}</small>
+          </li>)}</ul>
           : <p>Здесь появятся друзья, которые впервые открыли гайд по твоей ссылке.</p>}
         {invited.length < profile.invitedCount && <button className="secondary" disabled={loadingMore} onClick={loadMore}>Показать ещё</button>}
       </section>
     </>}
     <section className="card">
       <details><summary>Что дают приглашения в игре?</summary>
-        <p>Приглашённый получает 5 000 монет и реферальное яйцо. Тебе начисляются монеты когда друзья вступают или повышают уровень. Награды идут с трёх уровней цепочки приглашений. За задания на 3, 5 и 10 друзей игра начисляет 3 000, 7 000 и 15 000 монет соответственно.</p>
+        <div className="referralRewards">
+          <div className="mediaHeading"><GameArt path="/game/items/referral-egg.webp" size={34}/><div>
+            <h3>Другу</h3><p>Реферальное яйцо и 5 000 монет за вступление в игру.</p>
+          </div></div>
+          <div className="mediaHeading"><GameArt path="/game/items/wise-coin.webp" size={34}/><div>
+            <h3>Тебе</h3><p>Монеты за вступление и уровни приглашённых. Игра учитывает три уровня цепочки.</p>
+          </div></div>
+          <p>Задания на 3, 5 и 10 друзей дают 3 000, 7 000 и 15 000 монет соответственно.</p>
+        </div>
         <a className="textLink" href="https://t.me/notwise_bot/thegame">Посмотреть друзей в игре</a>
       </details>
     </section>
     <p role="status" className="referralStatus">{message}</p>
   </>;
+}
+
+const avatars = new Map<string, Promise<HTMLImageElement | undefined>>();
+
+export function warmFriendAvatar(url: string) {
+  if (!avatars.has(url)) {
+    const image = new Image();
+    image.referrerPolicy = 'no-referrer';
+    image.src = url;
+    avatars.set(url, image.decode().then(() => image, () => undefined));
+  }
+  return avatars.get(url)!;
+}
+
+function FriendAvatar({ name, avatar }: { name: string; avatar?: string }) {
+  const [source, setSource] = useState<string>();
+  useEffect(() => {
+    if (!avatar) return;
+    let active = true;
+    void warmFriendAvatar(avatar).then(image => { if (active) setSource(image?.src); });
+    return () => { active = false; };
+  }, [avatar]);
+  const initials = name.trim().split(/\s+/).slice(0, 2).map(word => Array.from(word)[0]).join('').toUpperCase();
+  return <span className="friendAvatar" aria-hidden="true">{source && source === avatar
+    ? <img src={source} referrerPolicy="no-referrer" alt="" width="32" height="32" onError={() => setSource(undefined)}/>
+    : initials || '?'}</span>;
 }
