@@ -1,57 +1,79 @@
 import { useState } from 'react';
 import { battleLeagues } from './battle-leagues';
+import { emptySkin, type SkinParts } from './skin-examples';
 import { GameArt } from '../ui/GameArt';
+import { GameGlyph } from '../ui/GameGlyph';
 
-const initial = {
-  hat: false, glasses: false, eyes: false, body: 5, chest: 0,
-  skinEnchant: '0', ringEnchant: '0', montmorillonite: false, league: 0,
-};
+const defaultGear = { rings: '', artifact: false, league: 0 };
 
-export function SkinFarmCalculator({ showTitle = false }: { showTitle?: boolean }) {
-  const [state, setState] = useState(initial);
-  const skinBonus = state.body + state.chest + [state.hat, state.glasses, state.eyes].filter(Boolean).length * 5 + 5 * Number(state.skinEnchant);
-  const gearBonus = 5 * Number(state.ringEnchant) + (state.montmorillonite ? 10 : 0);
-  const total = skinBonus + gearBonus + state.league;
-  return <div className="compactFarm calculator farmCalculator">
-    <div className="farmTotal" aria-live="polite">
+function enchantValue(raw: string, max: number) {
+  const digits = raw.replace(/\D/g, '');
+  return digits ? String(Math.min(max, Number(digits))) : '';
+}
+
+export function SkinFarmCalculator({ parts, onChange }: { parts: SkinParts; onChange: (parts: SkinParts) => void }) {
+  const [enchant, setEnchant] = useState('');
+  const [gear, setGear] = useState(defaultGear);
+  const skinBonus = Object.values(parts).reduce((total, value) => total + value, 0) + 5 * Number(enchant);
+  const gearBonus = 5 * Number(gear.rings) + (gear.artifact ? 10 : 0);
+  const total = skinBonus + gearBonus + gear.league;
+  const extras = gearBonus + gear.league;
+
+  function reset() {
+    onChange(emptySkin);
+    setEnchant('');
+    setGear(defaultGear);
+  }
+
+  return <div className="calculator farmCalculator">
+    <div className="farmCalcHeader">
+      <h2 id="farm-title">Бонус к монетам</h2><button type="button" className="textLink" onClick={reset}>Сбросить</button>
+    </div>
+    <div className="farmTotal" role="status">
       <GameArt path="/game/items/wise-coin.webp" size={30}/>
-      <span>{showTitle ? 'Калькулятор фарма' : 'Фарм монет'}<small>Скин +{skinBonus}% · предметы +{gearBonus}% · лига +{state.league}%</small></span>
+      <span>В боях и полётах<small>Скин +{skinBonus}%{gearBonus > 0 && ` · экипировка +${gearBonus}%`}{gear.league > 0 && ` · лига +${gear.league}%`}</small></span>
       <strong>+{total}%</strong>
     </div>
-    <div className="compactFarmGrid calculatorGrid">
+    <div className="calculatorGrid">
       <label className="field">Оперение
-        <select value={state.body} onChange={event => setState({ ...state, body: Number(event.target.value) })}>
+        <select value={parts.body} onChange={event => onChange({ ...parts, body: Number(event.target.value) })}>
           <option value={0}>Нет</option><option value={5}>Обычное +5%</option><option value={15}>Золотое +15%</option>
         </select>
       </label>
       <label className="field">Украшение на груди
-        <select value={state.chest} onChange={event => setState({ ...state, chest: Number(event.target.value) })}>
+        <select value={parts.chest} onChange={event => onChange({ ...parts, chest: Number(event.target.value) })}>
           <option value={0}>Нет</option><option value={5}>Обычное +5%</option><option value={10}>Цепь NOT +10%</option>
         </select>
       </label>
     </div>
-    <div className="compactFarmParts" role="group" aria-label="Аксессуары по 5%">
+    <div className="compactFarmParts" role="group" aria-label="Аксессуары скина">
       {([['hat', 'Убор'], ['glasses', 'Очки'], ['eyes', 'Глаза']] as const).map(([key, label]) =>
-        <button key={key} type="button" aria-pressed={state[key]} onClick={() => setState({ ...state, [key]: !state[key] })}>{label} <small>+5%</small></button>)}
+        <button key={key} type="button" aria-pressed={parts[key] > 0} onClick={() => onChange({ ...parts, [key]: parts[key] ? 0 : 5 })}>{label} <small>+5%</small></button>)}
     </div>
-    <div className="compactFarmGrid calculatorGrid">
-      {([['skinEnchant', 'Заточка скина', 20], ['ringEnchant', 'Заточка колец суммарно', 60]] as const).map(([key, label, max]) =>
-        <label className="field" key={key}>{label}<input value={state[key]} inputMode="numeric" maxLength={2} placeholder="0"
-          onChange={event => {
-            const digits = event.target.value.replace(/\D/g, '');
-            setState({ ...state, [key]: digits ? String(Math.min(max, Number(digits))) : '' });
-          }}/></label>)}
-      <label className="field">Боевая лига
-        <select value={state.league} onChange={event => setState({ ...state, league: Number(event.target.value) })}>
-          <option value={0}>Без бонуса</option>
-          {battleLeagues.map(([name], index) => <option key={name} value={index + 1}>{name} +{index + 1}%</option>)}
-        </select>
-      </label>
-      <label className="farmArtifact"><input type="checkbox" checked={state.montmorillonite}
-        onChange={event => setState({ ...state, montmorillonite: event.target.checked })}/> Монтмориллонит +10%</label>
-    </div>
-    <p className="caption farmApplies">Бонус добавляет монеты за победу в рейтинге и успешный полёт. Шансы на $NOT указаны в разделе капсул.</p>
-    <div className="compactFarmFoot"><small>Каждый уровень заточки даёт +5%.</small>
-      <button type="button" className="textLink" onClick={() => setState(initial)}>Сбросить</button></div>
+    <label className="farmEnchant">
+      <GameArt path="/game/items/scroll-enchant-skin.webp" size={30}/>
+      <span>Заточка скина<small>+5% за уровень</small></span>
+      <input value={enchant} placeholder="0" inputMode="numeric" maxLength={2}
+        onChange={event => setEnchant(enchantValue(event.target.value, 20))}/>
+    </label>
+    <details className="mediaDetails farmExtras" id="farm-equipment">
+      <summary><GameGlyph name="shield"/><strong>Кольца, артефакт и лига</strong>
+        {extras > 0 && <b className="farmExtrasValue">+{extras}%</b>}
+      </summary>
+      <div className="calculatorGrid">
+        <label className="field">Сумма заточек колец
+          <input value={gear.rings} inputMode="numeric" maxLength={2} placeholder="0"
+            onChange={event => setGear({ ...gear, rings: enchantValue(event.target.value, 60) })}/>
+        </label>
+        <label className="field">Боевая лига
+          <select value={gear.league} onChange={event => setGear({ ...gear, league: Number(event.target.value) })}>
+            <option value={0}>Без бонуса</option>
+            {battleLeagues.map(([name], index) => <option key={name} value={index + 1}>{name} +{index + 1}%</option>)}
+          </select>
+        </label>
+      </div>
+      <label className="farmArtifact"><input type="checkbox" checked={gear.artifact}
+        onChange={event => setGear({ ...gear, artifact: event.target.checked })}/> Монтмориллонит +10%</label>
+    </details>
   </div>;
 }

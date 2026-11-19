@@ -519,18 +519,6 @@
 }
 
 
-.card .skinMintFee {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  margin-block-start: 8px;
-  padding-top: 6px;
-  border-top: 1px solid var(--game-panel-line);
-  color: var(--muted);
-  font-size: 12px;
-}
-
 /* Apply the same icon baseline to actions without changing their layout when they have text only. */
 :is(.primary, .secondary, .textLink, .supportPill):has(> :is(.gameGlyph, .gameArt, .gameAttribute)) {
   display: inline-flex;
@@ -633,10 +621,78 @@
 .battleResults dt { color: var(--muted); font-size: 12px; }
 .battleResults dd { margin: 0; color: var(--gold); font-weight: 700; text-align: end; }
 
-.calculator .farmTotal { border: 0; border-radius: 9px; padding: 8px 10px; background: var(--game-tile); }
-.calculator .farmTotal strong { font-size: 22px; }
-.calculator .compactFarmParts button { background: var(--game-tile); }
-.calculator .farmArtifact { font-size: 11px; padding: 5px 1px; }
+.farmCalculator {
+  display: grid;
+  gap: 9px;
+}
+.farmCalcHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.farmCalcHeader .textLink { font-size: 12px; font-weight: 650; }
+.farmTotal {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9px;
+  padding: 8px 10px;
+  background: var(--game-tile);
+}
+.farmTotal > span { min-width: 0; }
+.farmTotal small { display: block; font-size: 11px; }
+.farmTotal strong { font-size: 22px; color: var(--gold); white-space: nowrap; }
+.compactFarmParts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
+.compactFarmParts button {
+  min-height: 44px;
+  padding: 3px;
+  border: 1px solid var(--game-panel-line);
+  border-radius: 8px;
+  background: var(--game-tile);
+  font-size: 12px;
+}
+.compactFarmParts button[aria-pressed="true"] {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 13%, var(--game-tile));
+}
+.compactFarmParts small { white-space: nowrap; }
+.farmEnchant {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 58px;
+  gap: 8px;
+  align-items: center;
+  font-weight: 600;
+  padding: 2px 0;
+}
+.farmEnchant small { display: block; font-size: 11px; font-weight: 400; }
+.farmEnchant input {
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--game-panel-line);
+  border-radius: 8px;
+  background: var(--game-tile);
+  font-size: 16px;
+  text-align: center;
+}
+.farmExtras { padding-bottom: 0; }
+.farmExtras > summary, .slotGuide > summary { min-height: 44px; gap: 8px; }
+.farmExtras > summary strong { font-size: 13px; }
+.farmExtrasValue { margin-inline-start: auto; color: var(--gold); font-size: 12px; white-space: nowrap; }
+.farmExtras:has(.farmExtrasValue) > summary::after { margin-inline-start: 4px; }
+.farmArtifact { display: flex; align-items: center; gap: 7px; min-height: 42px; font-size: 12px; }
+.farmArtifact input { accent-color: var(--gold); flex: 0 0 16px; width: 16px; }
+
+.slotGuide { border-color: var(--game-panel-line); margin-block-start: 9px; padding-bottom: 0; }
+.slotTable { margin-block: 0 8px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.slotTable :is(th, td) { padding: 7px 5px; white-space: nowrap; }
+.slotTable :is(th, td):nth-child(3) { text-align: end; }
+.slotTable thead th { color: var(--muted); font-weight: 600; }
+.slotTable tbody td:nth-child(2) { color: var(--text); }
+.inventoryMarketLabel { color: var(--muted); font-size: 11px; font-weight: 650; }
+.inventoryPanel .inventoryRow p { text-wrap: wrap; }
 
 .eggSources .eggLink {
   display: grid;
@@ -672,7 +728,7 @@
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
   min-height: 155px;
   aspect-ratio: 1.82;
@@ -686,7 +742,7 @@
 }
 .skinStageCopy { z-index: 1; padding: 12px 0 12px 12px; }
 .skinStageCopy > span { color: var(--muted); font-size: 11px; }
-.skinStageCopy h3 { font-size: 17px; line-height: 1.14; margin-block: 3px 9px; text-wrap: wrap; }
+.skinStageCopy h3 { font-size: clamp(15px, 4.4vw, 17px); line-height: 1.14; margin-block: 3px 7px; text-wrap: wrap; }
 .skinStageCopy p { display: grid; gap: 3px; margin: 0; }
 .skinStageCopy p strong { color: var(--gold); font-size: 29px; line-height: 1; }
 .skinStageCopy p small { font-size: 11px; }
@@ -732,7 +788,7 @@
 }
 .skinPartValues > div + div { border-block-start: 1px solid var(--game-panel-line); }
 .skinPartValues dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
-.skinShowcase .skinCalcLink { display: flex; width: 100%; margin: 0 0 6px; min-height: 44px; }
+.skinShowcase .skinCalcLink { display: flex; align-items: center; justify-content: center; width: 100%; margin: 0 0 6px; min-height: 44px; }
 .skinRuleDisclosure { border-block-start: 1px solid var(--game-panel-line); }
 .skinRuleDisclosure > summary, .skinPartsList > summary { min-height: 44px; cursor: pointer; }
 .skinRuleDisclosure > summary strong, .skinPartsList > summary strong { font-size: 13px; }

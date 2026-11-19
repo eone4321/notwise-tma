@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { duration, speedupPrice, starPrice, type Tier } from '../domain/mechanics';
+import { duration, estimatedGramForStars, speedupPrice, starPrice, type Tier } from '../domain/mechanics';
 import { Price } from './Price';
 import { GameArt } from '../ui/GameArt';
 
 const decimal = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
-const fullGram = { dark: 1.4, silver: 7, gold: 35 };
 
 export function CapsulePrices({ tier }: { tier: Tier }) {
   const totalMinutes = duration[tier] / 60_000;
@@ -17,7 +16,7 @@ export function CapsulePrices({ tier }: { tier: Tier }) {
   const starsAt = (minutes: number) => minutes === 0 ? 0 :
     speedupPrice(tier, duration[tier] - minutes * 60_000);
   const stars = starsAt(remaining);
-  const gram = Math.ceil(stars * fullGram[tier] * 100 / starPrice[tier] - 1e-9) / 100;
+  const gram = estimatedGramForStars(stars);
   const step = Math.min(remaining, 15);
   const saving = (stars - starsAt(remaining - step)) / starPrice[tier] * 100;
 

@@ -62,7 +62,7 @@ export function CombatPage() {
       branch ? <>
         <h2 className="subTitle">{branch[1]}</h2>
         <section className="card skillShelf">
-          <p className="caption">С уровня 2 открой дерево навыков. В характеристиках вложи свободное очко атрибута в эту ветку, затем изучи навык за полученное очко ветки. Очки <SpBadge/> из Додзе нужны для улучшений.</p>
+          <p className="caption">С уровня 2 вложи очко атрибута в эту ветку и открой навык за полученное очко ветки. Для улучшения навыков нужны <SpBadge/> из Додзе.</p>
           {skills.filter(item => item.branch === branch[0]).sort((a, b) => a.tier - b.tier).map(item =>
             <DetailLink to={'/combat/skills/' + branch[0] + '/' + item.id} className="mediaRow skillRow" key={item.id}>
               <span className="skillTile"><GameArt path={skillArt(item.id)} size={38}/><b aria-hidden="true">{item.tier}</b></span>
@@ -94,11 +94,14 @@ export function ModesPage() {
               icon === 'boxing' ? <span className="energyBadge">Со 2-го уровня · 2 <GameSymbol name="bolt" size={13}/> / удар</span> : when}</small></span>
           </summary>
           {icon === 'rocket' ? <FlightDetails/> : <p>{description}</p>}
-          {icon === 'swords' && <p>Зон три: голова, корпус и живот. Попадание в выбранную соперником зону блока не наносит урона. В тренировке перезарядка атаки занимает 1,5 с, смена блока — 1 с.</p>}
+          {icon === 'swords' && <>
+            <p>Целься в голову, корпус или живот. Блок соперника отменяет урон в выбранной зоне.</p>
+            <p>В тренировке между атаками проходит 1,5 с, между сменами блока — 1 с.</p>
+          </>}
           {icon === 'target' && <p>Ориентир расхода энергии — 20 на 5–9-м уровне, 30 на 10–14-м. Стоимость растёт на 10 каждые пять уровней, начиная с 10 энергии на уровнях 1–4.</p>}
         </details>)}
         <details className="mediaDetails"><summary><GameSymbol name="trophy"/><span><strong>Призы сезона</strong><small>Первые 100 мест</small></span></summary>
-        <p>Пример распределения фонда в 1 млн $NOT. 1-е место получает 400 000, 2-е — 350 000, 3-е — 250 000 $NOT. Топ-10 получает золотое загадочное яйцо, места 11–100 — загадочное яйцо за 100 Stars из Лавки.</p>
+        <p>При фонде 1 млн $NOT первые три места получают 400 000, 350 000 и 250 000 $NOT соответственно.</p><p>Топ-10 получает золотое загадочное яйцо. Места 11–100 получают загадочное яйцо, которое продаётся за 100 Stars.</p>
         <p>Призы приходят автоматически. Фонд зависит от сезона.</p>
         <DetailLink className="textLink" to="/owl/season">Что выпадает из загадочного яйца</DetailLink>
       </details>
@@ -191,9 +194,9 @@ function CombatStats() {
         <li><GameSymbol name="rocket" size={24}/><span>Восстановление энергии</span><b>+3% за уровень</b></li>
         <li><GameSymbol name="heart" size={24}/><span>Восстановление здоровья</span><b>+3% за уровень</b></li>
       </ul>
-      <details><summary>Стоимость прокачки перков совы</summary>
-        <p className="caption">Каждый из трёх перков выше (Запас энергии, Восстановление энергии и Восстановление здоровья) прокачивается отдельно от 0 до 21 уровня за <SpBadge/>. Стоимость удваивается с каждым следующим уровнем: 10, 20, 40, 80… <SpBadge/>.</p>
-        <label className="field">Текущий уровень перка
+      <details><summary>Цена улучшений</summary>
+        <p className="caption">Каждое улучшение можно прокачать до 21-го уровня. Первый шаг стоит 10 <SpBadge/>, каждый следующий вдвое дороже.</p>
+        <label className="field">Текущий уровень улучшения
           <select value={level} onChange={event => setLevel(Number(event.target.value))}>
             {Array.from({ length: 21 }, (_, i) => <option key={i} value={i}>{i} → {i + 1} ур.</option>)}
           </select>
@@ -250,23 +253,23 @@ function FlightDetails() {
       <div><span>Каждые +5 ур.</span><strong>+50 <GameSymbol name="bolt" size={15}/></strong></div>
     </div>
 
-    <h4>Баффы и предметы на трассе</h4>
+    <h4>Что помогает в полёте</h4>
     <ul className="compactList flightItemsList">
       <li>
         <span className="flightItemHead"><GameSymbol name="rocket" size={20}/><strong>Ракета</strong></span>
-        <p>Полная неуязвимость к препятствиям, ускорение и умножение монет. Даётся 3 в день (+ сбор на трассе).</p>
+        <p>Ускоряет, защищает от препятствий и умножает монеты. Три ракеты в день, ещё можно найти на трассе.</p>
       </li>
       <li>
         <span className="flightItemHead"><GameSymbol name="magnet" size={20}/><strong>Магнит (10 сек)</strong></span>
-        <p>Автоматически притягивает все монеты со всех трёх дорожек в течение 10 секунд.</p>
+        <p>Притягивает монеты со всех трёх дорожек.</p>
       </li>
       <li>
-        <span className="flightItemHead"><span className="emojiIcon">🍣</span><strong>Суши (Механика риска)</strong></span>
-        <p>Каждая пойманная суши отнимает <strong>20% текущего счёта</strong>, кроме третьей. Она прибавляет <strong>20%</strong> к оставшимся монетам и открывает секретный стикер <strong>#042 Sushi Master</strong>.</p>
+        <span className="flightItemHead"><span className="emojiIcon">🍣</span><strong>Суши</strong></span>
+        <p>Первые две суши отнимают по <strong>20% текущего счёта</strong>. Третья прибавляет <strong>20%</strong> к оставшимся монетам и открывает стикер <strong>Sushi Master</strong>.</p>
       </li>
     </ul>
 
-    <h4>Дебаффы и ловушки на трассе</h4>
+    <h4>Ловушки на трассе</h4>
     <ul className="compactList flightItemsList flightDebuffs">
       <li>
         <span className="flightItemHead"><GameSymbol name="cocktail" size={20}/><strong>Коктейль · Реверс (10 сек)</strong></span>

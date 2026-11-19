@@ -1,5 +1,6 @@
 import { DetailLink } from '../ui/DetailLink';
-import { itemMarket } from './marketData';
+import { useState } from 'react';
+import { collectionMarket, itemMarket } from './marketData';
 import publishing from '../domain/game-publishing.json';
 import mintableItems from './mintable-items.json';
 import { Link, useLocation } from 'react-router';
@@ -14,6 +15,7 @@ import { SkinExamples } from './SkinExamples';
 import shopItems from './shop-data.json';
 import skinParts from './skin-parts.json';
 import { SkinFarmCalculator } from './SkinFarmCalculator';
+import { emptySkin } from './skin-examples';
 
 const eggs = [
   { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное яйцо', note: 'Также выпадает из капсул', source: 'Лавка или капсулы', reward: 'Еда, лекарства, оформление, обычный жетон скина и чиллер.' },
@@ -66,7 +68,7 @@ export function OwlPage() {
         <details className="mediaDetails guideDisclosure">
           <summary><GameArt path="/brand/collections/eggs.png" size={34}/>
             <span><strong>NFT-яйца и лотки Lottoque</strong><small>Коллекции на Getgems</small></span></summary>
-          <p>Раньше NFT из NOT Wise Eggs можно было обменять на яйца в игре, сжигая NFT. В 2024 году за лоток Lottoque обещали 10 особых золотых яиц. Доступность обмена сейчас не подтверждена.</p>
+          <p>Раньше сжигание NOT Wise Eggs давало игровые яйца. В 2024 году за Lottoque обещали 10 особых золотых яиц.</p><p>Доступность обмена сейчас не подтверждена.</p>
           <DetailLink className="textLink" to="/collections/market#eggs">Флор NFT-яиц</DetailLink>
           <a className="textLink spacedLink" href={`https://getgems.io/collection/${marketEggs.address}`} target="_blank" rel="noreferrer">NFT-яйца</a>
           <a className="textLink spacedLink" href="https://getgems.io/lottoque" target="_blank" rel="noreferrer">Lottoque</a>
@@ -154,13 +156,29 @@ function EggLink({ egg, method }: { egg: Egg; method?: 'shop' | 'craft' }) {
 }
 
 const itemPath = (file: string) => '/game/items/' + file;
+const skinsCollection = marketCollections.find(item => item.id === 'skins')!;
+const itemsCollection = marketCollections.find(item => item.id === 'items')!;
 
 type CatalogItem = {
   name: string; file: string; effect: string; source: string;
   offerId?: string;
+  minLevel?: number;
+  art?: string;
+  marketAddress?: string;
   price?: { value: number; currency: Currency };
 };
 type Category = { title: string; icon: string; summary: string; items: CatalogItem[] };
+
+const jettons: (CatalogItem & { id: number })[] = [
+  { id: 25, name: 'Обычный жетон', file: 'skin-jetton.webp', effect: 'Даёт случайный скин с обычным оперением.', source: 'Яйца', marketAddress: itemsCollection.address },
+  { id: 26, name: 'Эпический жетон', file: 'skin-jetton-epic.webp', effect: 'Даёт скин с оперением и несколькими аксессуарами.', source: 'Яйца', marketAddress: itemsCollection.address },
+  { id: 27, name: 'Золотой жетон', file: 'skin-jetton-golden.webp', effect: 'Гарантирует золотое оперение. Цепь NOT может выпасть среди аксессуаров.', source: 'Яйца', marketAddress: itemsCollection.address },
+];
+const skinNft: CatalogItem = {
+  name: 'Готовые NFT-скины', file: 'owl-skin.webp', art: '/brand/collections/skins.png',
+  effect: 'Выбери готовый облик с нужным оперением и аксессуарами.',
+  source: 'Коллекция NOT Wise Skins', marketAddress: skinsCollection.address,
+};
 
 const floppySpecs = [
   ['100k', '100 000', '200 000'], ['1m', '1 млн', '2 млн'],
@@ -173,75 +191,79 @@ const rings = shopItems.filter(offer => offer.category === 'ring').map(offer => 
     offer.stat === 'agility' ? 'Повышает шанс уклониться.' : 'Повышает шанс крита и запас маны.';
   const tier = offer.tier ?? 1;
   const level = offer.required_level ?? (tier === 1 ? 5 : tier === 2 ? 10 : 20);
-  const levelText = `с ${level}-го уровня`;
   return {
     name: offer.name_ru,
     file: offer.id + '.webp',
     effect: `+${[2, 5, 10][tier - 1]} к ${attribute}. ${effect}`,
-    source: `Лавка · ${levelText}`,
+    source: 'Лавка', minLevel: level,
   };
 });
 
 const categories: Record<string, Category> = {
   consumables: {
-    title: 'Расходники', icon: 'seba-cola.webp', summary: 'Лавка Wise Plaza · защита, пластилин, колбы и книги',
+    title: 'Расходники', icon: 'seba-cola.webp', summary: 'Защита, сброс навыков и восстановление',
     items: [
-      { name: 'Seba Cola', file: 'seba-cola.webp', effect: 'Защищает сову от рейдов и подбора в соперники на 24 часа. Если сова сама нападёт, защита спадёт.', source: 'Лавка', price: { value: 1500, currency: 'coins' } },
-      { name: 'Зажигалка', file: 'lighter.webp', effect: '10 зарядов для благословений в ритуалах сквада. Доступна с 3-го уровня.', source: 'Лавка или яйца' },
-      { name: 'Большие чёрные часы', file: 'big-black-clock.webp', effect: 'Блокируют новый штраф за голод на 30 дней. Действующий штраф закончится по своему таймеру. Каждые часы добавляют ещё 30 дней защиты.', source: 'Лавка', price: { value: 10000, currency: 'coins' } },
-      { name: 'Эпическая книга исследователей', file: 'book.webp', effect: 'Открывает ежедневную загадку на 60 секунд. Верный ответ даёт монеты, опыт и +5 мудрости на сутки. Три ошибки уничтожают книгу.', source: 'Лавка', price: { value: 20000, currency: 'coins' } },
-      { name: 'Холодильник XP', file: 'chiller.webp', effect: 'Открытая дверца замораживает опыт: капсулы продолжают давать монеты и лут, но XP не начисляется.', source: 'Лавка', price: { value: 100000, currency: 'coins' } },
-      { name: 'Морфер', file: 'morpher.webp', effect: 'Сбрасывает распределение характеристик и навыки совы. Очки навыков (SP) сохраняются.', source: 'Лавка', offerId: 'morpher-stars' },
-      { name: 'Пустая колба SP', file: 'flask-empty.webp', effect: 'Заготовка для записи SP. Для заполнения нужно вдвое больше SP, чем вмещает колба. Сгорают все свободные SP совы.', source: 'Лавка', price: { value: 500, currency: 'stars' } },
-      { name: 'Пустая дискета XP', file: 'floppy-empty.webp', effect: 'Заготовка для записи XP. Запись сбрасывает весь текущий опыт, SP и навыки, сова снова становится яйцом.', source: 'Лавка', price: { value: 500, currency: 'stars' } },
-      { name: 'Таблетка восстановления', file: 'recovery-pill.webp', effect: 'Снимает штраф голода и полностью восстанавливает сытость (20). Можно использовать раз в 7 дней.', source: 'Лавка', price: { value: 300, currency: 'stars' } },
+      { name: 'Seba Cola', file: 'seba-cola.webp', effect: 'Защита от рейдов и подбора соперником на 24 ч. Снимается при твоём нападении.', source: 'Лавка', price: { value: 1500, currency: 'coins' } },
+      { name: 'Зажигалка', file: 'lighter.webp', effect: '10 зарядов для ритуалов сквада.', source: 'Лавка или яйца', minLevel: 3 },
+      { name: 'Большие чёрные часы', file: 'big-black-clock.webp', effect: 'Добавляют 30 дней защиты от голода. Действующий штраф сохраняется до конца таймера.', source: 'Лавка', price: { value: 10000, currency: 'coins' } },
+      { name: itemNames[38][0], file: 'book.webp', effect: 'Загадка дня на 60 с. Успех даёт монеты, XP и +5 мудрости на сутки. Три ошибки уничтожают книгу.', source: 'Лавка', price: { value: 20000, currency: 'coins' } },
+      { name: 'Холодильник XP', file: 'chiller.webp', effect: 'Пока дверца открыта, капсулы дают монеты и предметы, а опыт заморожен.', source: 'Лавка', price: { value: 100000, currency: 'coins' } },
+      { name: 'Морфер', file: 'morpher.webp', effect: 'Сбрасывает характеристики и навыки. Накопленные SP сохраняются.', source: 'Лавка', offerId: 'morpher-stars' },
+      { name: 'Пустая колба SP', file: 'flask-empty.webp', effect: 'Нужна для записи SP. Потребуется вдвое больше SP, чем вмещает колба. Все свободные SP списываются.', source: 'Лавка', price: { value: 500, currency: 'stars' } },
+      { name: 'Пустая дискета XP', file: 'floppy-empty.webp', effect: 'Нужна для записи XP. Запись сбрасывает XP, SP и навыки и возвращает сову в яйцо.', source: 'Лавка', price: { value: 500, currency: 'stars' } },
+      { name: 'Таблетка восстановления', file: 'recovery-pill.webp', effect: 'Снимает штраф голода и возвращает сытость до 20. Раз в 7 дней.', source: 'Лавка', price: { value: 300, currency: 'stars' } },
     ],
   },
   squad: {
-    title: 'Лавка сквада', icon: 'morpher.webp', summary: 'Морфер, заточки и зажигалка за серебро осад',
+    title: 'Лавка сквада', icon: 'morpher.webp', summary: 'Морфер, свитки заточки и ритуалы',
     items: [
-      { name: 'Морфер', file: 'morpher.webp', effect: 'Сбрасывает распределение характеристик и навыки совы. Очки навыков (SP) сохраняются.', source: 'Лавка сквада', price: { value: 5000, currency: 'squad_silver' } },
-      { name: 'Заточка кольца', file: 'scroll-enchant-ring.webp', effect: 'Мистический свиток с поля осады. Улучшает кольцо: +1 к его атрибуту и +5% к бонусу фарма монет.', source: 'Лавка сквада', price: { value: 500, currency: 'squad_silver' } },
-      { name: 'Заточка скина', file: 'scroll-enchant-skin.webp', effect: 'Мистический свиток с поля осады. Улучшает скин, прибавляя 5% к бонусу фарма монет за ступень.', source: 'Лавка сквада', price: { value: 5000, currency: 'squad_silver' } },
-      { name: 'Зажигалка сквада', file: 'lighter.webp', effect: 'Один заряд позволяет благословить сквад в ежедневном ритуале за командное серебро.', source: 'Лавка сквада', offerId: 'squad-lighter' },
-      { name: 'Холодильник XP (Сквад)', file: 'chiller.webp', effect: 'Замораживает опыт совы при открытии капсул. Покупка за валюту осад.', source: 'Лавка сквада', price: { value: 25000, currency: 'squad_silver' } },
-      { name: 'Универсальная заточка', file: 'enchanter.webp', effect: 'Подходит для кольца и скина. За одну ступень даёт тот же бонус, что и соответствующий свиток.', source: 'Награда осад' },
+      { name: 'Морфер', file: 'morpher.webp', effect: 'Сбрасывает характеристики и навыки. Накопленные SP сохраняются.', source: 'Лавка сквада', price: { value: 5000, currency: 'squad_silver' } },
+      { name: 'Заточка кольца', file: 'scroll-enchant-ring.webp', effect: '+1 к атрибуту кольца и +5% к монетам за каждую ступень заточки.', source: 'Лавка сквада', price: { value: 500, currency: 'squad_silver' } },
+      { name: 'Заточка скина', file: 'scroll-enchant-skin.webp', effect: '+5% к монетам за ступень заточки скина.', source: 'Лавка сквада', price: { value: 5000, currency: 'squad_silver' } },
+      { name: 'Зажигалка сквада', file: 'lighter.webp', effect: 'Даёт заряд для ежедневного благословения сквада.', source: 'Лавка сквада', offerId: 'squad-lighter' },
+      { name: 'Холодильник XP', file: 'chiller.webp', effect: 'Открой дверцу, чтобы заморозить опыт из капсул.', source: 'Лавка сквада', price: { value: 25000, currency: 'squad_silver' } },
+      { name: 'Универсальная заточка', file: 'enchanter.webp', effect: 'Заменяет свиток заточки кольца или скина.', source: 'Награда осад' },
     ],
   },
   gear: {
-    title: 'Кольца и артефакты', icon: 'ring-wit-3.webp', summary: 'Кольца атрибутов и Монтмориллонит',
+    title: 'Кольца и артефакты', icon: 'ring-wit-3.webp', summary: 'Сила, ловкость, мудрость и здоровье',
     items: [
       ...rings,
-      { name: 'Монтмориллонит', file: 'montmorillonite.webp', effect: 'С экипированным артефактом здоровье остаётся полным, а бонус фарма монет растёт на 10%. Выпадает из загадочных яиц.',
-        source: 'Лавка или яйца', price: { value: 999999, currency: 'coins' } },
+      { name: 'Монтмориллонит', file: 'montmorillonite.webp', effect: 'Удерживает здоровье полным и даёт +10% к монетам, пока экипирован.',
+        source: 'Лавка или яйца', offerId: 'mana-crystal', price: { value: 999999, currency: 'coins' } },
     ],
   },
+  skins: {
+    title: 'Жетоны и скины', icon: 'skin-jetton-epic.webp', summary: 'Три жетона и готовые NFT-скины',
+    items: [...jettons, skinNft],
+  },
   care: {
-    title: 'Еда и лекарства', icon: 'croissant.webp', summary: 'Сытость, здоровье и любимая еда',
+    title: 'Еда и лекарства', icon: 'croissant.webp', summary: 'Восстановление сытости и здоровья',
     items: [
       ...([[1, 5], [2, 5], [3, 5], [5, 10], [6, 10], [7, 20], [8, 20]] as const).map(([id, satiety]) => ({
         name: itemNames[id][0], file: itemNames[id][1],
-        effect: `Восстанавливает ${satiety} сытости.${id === 7 ? ' Доступна с 5-го уровня.' : ''}`,
+        effect: `+${satiety} к сытости.`,
         source: id >= 5 ? 'Лавка или яйца' : 'Лавка',
+        minLevel: id === 7 ? 5 : undefined,
       })),
-      { name: 'Подорожник', file: 'plantain.webp', effect: 'Восстанавливает 1 здоровье.', source: 'Лавка' },
-      { name: 'Пластырь', file: 'patch.webp', effect: 'Восстанавливает 20 здоровья.', source: 'Лавка или яйца' },
-      { name: 'Аптечка', file: 'first-aid-kit.webp', effect: 'Восстанавливает 50 здоровья. Доступна с 5-го уровня.', source: 'Лавка или яйца' },
+      { name: 'Подорожник', file: 'plantain.webp', effect: '+1 к здоровью.', source: 'Лавка' },
+      { name: 'Пластырь', file: 'patch.webp', effect: '+20 к здоровью.', source: 'Лавка или яйца' },
+      { name: 'Аптечка', file: 'first-aid-kit.webp', effect: '+50 к здоровью.', source: 'Лавка или яйца', minLevel: 5 },
     ],
   },
   craft: {
-    title: 'Крафт и хранение XP', icon: 'eggshell-shards-icon.webp', summary: 'Скорлупа, дискеты опыта, колбы SP и ваучеры',
+    title: 'Крафт и накопления', icon: 'eggshell-shards-icon.webp', summary: 'Яйца, хранение XP и SP, ваучеры $NOT',
     items: [
-      { name: 'Осколки скорлупы', file: 'eggshell-shards-icon.webp', effect: 'Из осколков можно собрать яйца и другие награды. Загадочное яйцо стоит 3 000 осколков, золотое загадочное — 15 000.', source: 'Яйца и капсулы' },
+      { name: 'Осколки скорлупы', file: 'eggshell-shards-icon.webp', effect: 'На загадочное яйцо нужно 3 000 осколков, на золотое загадочное — 15 000.', source: 'Яйца и капсулы' },
       ...floppySpecs.map(([id, contents, cost]) => ({
         name: 'Дискета ' + contents + ' XP', file: 'floppy-' + id + '.webp',
-        effect: `Нужна пустая дискета и минимум ${cost} XP. Запись сбрасывает весь текущий опыт, SP и навыки, сова снова становится яйцом. При чтении дискета даёт ${contents} XP.`, source: 'Из пустой дискеты',
+        effect: `Для записи нужно ${cost} XP. Запись сбрасывает XP, SP и навыки и возвращает сову в яйцо.`, source: 'Из пустой дискеты',
       })),
-      { name: 'Колба на 100 000 SP', file: 'flask-half.webp', effect: 'Даёт 100 000 очков навыков при использовании. Для записи нужна пустая колба и минимум 200 000 SP.', source: 'Из пустой колбы' },
-      { name: 'Колба на 1 000 000 SP', file: 'flask-full.webp', effect: 'Даёт 1 000 000 очков навыков при использовании. Для записи нужна пустая колба и минимум 2 000 000 SP.', source: 'Из пустой колбы' },
+      { name: 'Колба на 100 000 SP', file: 'flask-half.webp', effect: 'Для записи нужно 200 000 SP. При использовании даёт 100 000 SP.', source: 'Из пустой колбы' },
+      { name: 'Колба на 1 000 000 SP', file: 'flask-full.webp', effect: 'Для записи нужно 2 000 000 SP. При использовании даёт 1 000 000 SP.', source: 'Из пустой колбы' },
       ...([['10k', 10_000], ['100k', 100_000]] as const).map(([id, value]): CatalogItem => ({
         name: `Ваучер ${value.toLocaleString('ru-RU')} $NOT`, file: `voucher-${id}.webp`,
-        effect: 'Накопи $NOT в игре, нажми на баланс Notcoin и выбери ваучер. Игра спишет $NOT с игрового баланса.',
+        effect: 'Создаётся за $NOT с игрового баланса.',
         source: 'Раздел «Ноткоины»', price: { value, currency: 'not' },
       })),
     ],
@@ -251,18 +273,12 @@ const categories: Record<string, Category> = {
     items: [
       { name: 'Цветная гирлянда', file: 'string-light-color.webp', effect: 'Включает разноцветные огни на дереве совы.', source: 'Яйца' },
       { name: 'Белая гирлянда', file: 'string-lights.webp', effect: 'Включает белые огни на дереве совы.', source: 'Яйца' },
-      { name: 'Берёзовая кора', file: 'birch.webp', effect: 'Заменяет внешний вид дерева на домашнем экране.', source: 'Яйца' },
+      { name: 'Берёзовая кора', file: 'birch.webp', effect: 'Меняет кору дерева на берёзовую.', source: 'Яйца' },
       { name: 'Дубайский шоколад', file: 'dubai-chocolate.webp', effect: 'Переносит гнездо совы на небоскрёб в Дубае.', source: 'Яйца' },
       { name: 'Ветка Эмпайр-стейт', file: 'new-york.webp', effect: 'Переносит гнездо совы на небоскрёб в Нью-Йорке.', source: 'Фон для совы' },
     ],
   },
 };
-
-const jettons: (CatalogItem & { id: number })[] = [
-  { id: 25, name: 'Обычный жетон', file: 'skin-jetton.webp', effect: 'Даёт случайный обычный скин с новым оперением.', source: 'Яйца' },
-  { id: 26, name: 'Эпический жетон', file: 'skin-jetton-epic.webp', effect: 'Даёт случайный эпический скин с оперением и несколькими аксессуарами.', source: 'Яйца' },
-  { id: 27, name: 'Золотой жетон', file: 'skin-jetton-golden.webp', effect: 'Даёт случайный эпический скин с золотым оперением. Цепь NOT зависит от выпавших деталей.', source: 'Яйца' },
-];
 
 function lootDestination(id: number, file: string) {
   if ([25, 26, 27].includes(id)) return '/owl/skins#jetton-' + id;
@@ -271,19 +287,19 @@ function lootDestination(id: number, file: string) {
 }
 
 function SkinCatalog() {
-  const { data: market } = itemMarket.useSnapshot();
-  const mint = market?.mintQuotes?.['owl-skin'] ?? itemMintGram[mintableItems['owl-skin']];
+  const [parts, setParts] = useState(emptySkin);
   return <>
-    <SkinExamples/>
-    <section className="card skinCalculatorPanel" id="skin-calculator">
-      <SkinFarmCalculator showTitle />
-      {mint !== undefined && <p className="skinMintFee">Минт скина <Price value={mint} currency="gram"/></p>}
+    <SkinExamples onUseExample={setParts}/>
+    <section className="card skinCalculatorPanel" id="skin-calculator" aria-labelledby="farm-title" tabIndex={-1}>
+      <SkinFarmCalculator parts={parts} onChange={setParts}/>
     </section>
     <section className="card inventoryPanel skinJettons" data-category="skins">
       <h2>Как получить скин</h2>
       <p className="caption">Открой жетон в инвентаре и надень выпавший скин на сову.</p>
-      <ul className="compactList">{jettons.map(item =>
-        <InventoryRow item={item} key={item.file} id={'jetton-' + item.id}/>)}</ul>
+      <ul className="compactList">
+        {jettons.map(item => <InventoryRow item={item} key={item.file} id={'jetton-' + item.id}/>)}
+        <SkinCollectionRow/>
+      </ul>
     </section>
     <details className="card mediaDetails skinPartsList" id="skin-parts">
       <summary><GameGlyph name="skin"/><strong>Все детали скинов</strong></summary>
@@ -295,7 +311,13 @@ function SkinCatalog() {
   </>;
 }
 
-function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {
+function SkinCollectionRow() {
+  const { data } = collectionMarket.useSnapshot();
+  const floor = data?.items.find(entry => entry.id === 'skins')?.floor;
+  return <InventoryRow item={skinNft} collectionFloor={floor ?? undefined}/>;
+}
+
+function InventoryRow({ item, id, collectionFloor }: { item: CatalogItem; id?: string; collectionFloor?: number }) {
   const { data: market } = itemMarket.useSnapshot();
   const marketKey = item.file.split('.')[0];
   const listing = market?.items.find(quote => quote.id === marketKey);
@@ -306,24 +328,25 @@ function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {
     'floppy-empty.webp': 'floppy-xp',
   }[item.file] ?? item.file.split('.')[0]);
   const offer = shopItems.find(offer => offer.id === (item.offerId ?? key));
-  const level = offer?.required_level;
+  const level = item.minLevel ?? offer?.required_level;
   const price = item.price ?? (offer && { value: offer.price, currency: offer.currency as Currency });
-  const showLevel = level && !item.source.includes('уровн');
+  const floor = collectionFloor ?? listing?.floor;
+  const marketUrl = listing?.href ?? (item.marketAddress ? 'https://getgems.io/collection/' + item.marketAddress : undefined);
   return <li className="inventoryRow" id={id}>
-    <span className="inventoryIcon"><GameArt path={itemPath(item.file)} size={33}/></span>
+    <span className="inventoryIcon"><GameArt path={item.art ?? itemPath(item.file)} size={33}/></span>
     <h3>{item.name}</h3>
-    {(price || listing) && <div className="inventoryPrices">
+    {(price || floor || marketUrl) && <div className="inventoryPrices">
       {price && <span className="inventoryShopPrice"><Price value={price.value} currency={price.currency}/></span>}
-      {listing && (listing.href
-        ? <a className="inventoryFloor" href={listing.href} target="_blank" rel="noreferrer"
-          aria-label={`${item.name} за ${listing.floor.toLocaleString('ru-RU')} GRAM на Getgems`}>
-          <Price value={listing.floor} currency="gram"/><span aria-hidden="true" className="rowChevron"/>
+      {marketUrl ? <a className="inventoryFloor" href={marketUrl} target="_blank" rel="noreferrer"
+          aria-label={floor ? `${item.name} за ${collectionFloor !== undefined ? 'сумму от ' : ''}${floor.toLocaleString('ru-RU')} GRAM на Getgems` : `Открыть коллекцию для «${item.name}» на Getgems`}>
+          {floor ? <Price value={floor} currency="gram" from={collectionFloor !== undefined}/> : <span className="inventoryMarketLabel">Getgems</span>}
+          <span aria-hidden="true" className="rowChevron"/>
         </a>
-        : <span className="inventoryFloor"><Price value={listing.floor} currency="gram"/></span>)}
+        : floor ? <span className="inventoryFloor"><Price value={floor} currency="gram"/></span> : null}
     </div>}
     <p>{item.effect}</p>
     <div className="inventoryMeta">
-      <small className="itemSource">{item.source}{showLevel ? ` · с ${level}-го ур.` : ''}</small>
+      <small className="itemSource">{item.source}{level ? ` · с ${level}-го ур.` : ''}</small>
       {mintPrice !== undefined && <span className="inventoryMint">Минт NFT <Price value={mintPrice} currency="gram"/></span>}
     </div>
   </li>;
@@ -336,10 +359,9 @@ export function InventoryPage() {
   const itemCategory = slug === 'item' ? Object.entries(categories).find(([, entry]) =>
     entry.items.some(value => value.file.split('.')[0] === file)) : undefined;
   const item = itemCategory?.[1].items.find(value => value.file.split('.')[0] === file);
-  if (slug === 'skins') return <SkinCatalog/>;
   if (slug === 'item') return <section className="card inventoryPanel" data-category={itemCategory?.[0]}>
     {item ? <><h2 className="inventoryCategoryLabel">{itemCategory?.[1].title}</h2>
-      <ul className="compactList singleItem"><InventoryRow item={item}/></ul></> : <p>Предмет не найден.</p>}
+      <ul className="compactList singleItem">{item === skinNft ? <SkinCollectionRow/> : <InventoryRow item={item}/>}</ul></> : <p>Предмет не найден.</p>}
   </section>;
 
   return <>
@@ -347,14 +369,16 @@ export function InventoryPage() {
       <details className="card mediaDetails inventoryPanel inventorySection" key={id} id={'inventory-' + id}
         data-category={id} open={category !== undefined || undefined}>
         <summary><GameArt path={itemPath(entry.icon)} size={34}/><span><strong>{entry.title}</strong><small>{entry.summary}</small></span></summary>
-        <ul className="compactList">{entry.items.map(item => <InventoryRow item={item} key={item.file}/>)}</ul>
+        <ul className="compactList">{entry.items.map(item => item === skinNft
+          ? <SkinCollectionRow key={item.file}/> : <InventoryRow item={item} key={item.file}/>)}</ul>
         {id === 'gear' && !category && <DetailLink className="textLink" to="/assets/gear">Шансы заточки и NFT</DetailLink>}
+        {id === 'skins' && <DetailLink className="textLink" to="/owl/skins">Облики и калькулятор бонуса</DetailLink>}
       </details>)}
     {slug === 'gear' && <>
       <EnchantGuide/>
       <OwlPrices only="items"/>
       <details className="card plainDisclosure"><summary>Как предмет становится NFT</summary>
-        <p>При выпуске NFT предмет уходит из инвентаря и появляется в кошельке. Его можно продать или вернуть в игру. Покупка за Stars может закрыть выпуск на 21 день.</p>
+        <p>Минт переносит предмет из инвентаря в кошелёк. NFT можно продать или вернуть в игру.</p><p>После покупки за Stars минт может быть закрыт на 21 день.</p>
       </details>
     </>}
   </>;
@@ -373,21 +397,13 @@ function EnchantGuide() {
     <div className="enchantBurnAlert">
       <span className="enchantBurnIcon" aria-hidden="true">🔥</span>
       <div>
-        <strong>Внимание: предмет сгорает при неудаче!</strong>
-        <p>
-          При неудачной заточке предмет не сохраняется и не откатывается на ступень назад, а <strong>полностью уничтожается</strong> —
-          в игре появляется сообщение: <em>«The item crumbled into shards · +Eggshell Shards»</em> (предмет рассыпается на осколки скорлупы).
-        </p>
-        <p>
-          Первые 3 ступени <strong>(+1, +2, +3)</strong> гарантированы на <strong>100%</strong> (риск 0%).
-          Ступень <strong>+4</strong> имеет шанс успеха <strong>95%</strong> (5% риск безвозвратно сжечь скин или кольцо!).
-          Далее шанс успеха падает на 5% за каждый уровень.
-        </p>
+        <strong>При неудаче предмет рассыпается в скорлупу</strong>
+        <p>Заточка до +3 гарантирована. На +4 шанс успеха 95%, затем снижается на пять процентных пунктов за ступень.</p>
       </div>
     </div>
 
-    <details className="plainDisclosure" open>
-      <summary>Таблица шансов на каждой ступени (+1..+20)</summary>
+    <details className="mediaDetails" id="enchant-chances">
+      <summary><strong>Шансы от +1 до +20</strong></summary>
       <table className="priceTable enchantTable">
         <thead>
           <tr>

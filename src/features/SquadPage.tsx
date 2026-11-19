@@ -53,7 +53,7 @@ export function SquadPage({ gameEntry }: { gameEntry: string }) {
     <SquadMap/>
     <section className="card">
       <h2>Как получить награду</h2>
-      <p>Атакуй во время раунда, чтобы получить свою долю. Территории дают серебро сквада, обычные монеты или +1–2 к атрибуту. Усиление действует 24 часа после получения награды.</p>
+      <p>Участвуй в атаке раунда, чтобы получить награду.</p><p>Территория даёт серебро сквада, монеты или +1–2 к атрибуту на 24 ч.</p>
     </section>
     <section className="card">
       <div className="mediaHeading"><GameArt path="/game/items/lighter.webp" size={45}/><h2>Ежедневный ритуал</h2></div>

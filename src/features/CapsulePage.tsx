@@ -3,10 +3,10 @@ import { CapsulePrices } from './CapsulePrices';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import xp from '../../public/data/xp_levels.json';
-import { chanceLabel, coinReward, duration, notOdds, tierNames, tiers, xpReward } from '../domain/mechanics';
+import { chanceLabel, coinReward, duration, estimatedGramForStars, notOdds, tierNames, tiers, xpReward } from '../domain/mechanics';
 import { GameGlyph } from '../ui/GameGlyph';
 import { GameArt } from '../ui/GameArt';
-import { SkinFarmCalculator } from './SkinFarmCalculator';
+import { Price } from './Price';
 
 const capsuleNames = ['Obsidian', 'Moonlight Silver', 'Golden'];
 const eggChances = ['3% (≈ 1 из 33)', '4,5% (≈ 1 из 22)', '15% (≈ 1 из 7)'];
@@ -80,28 +80,32 @@ function CapsuleDetail({ tier: currentTier, keepParent }: { tier: typeof tiers[n
           <span>{row.amount.toLocaleString('ru-RU')} $NOT</span><strong>{chanceLabel(row.chance)}</strong>
         </li>)}
       </ul>
-      <p className="caption">Каждый уровень капсулы добавляет 1% к множителю базовых шансов. Сначала учитываются крупные суммы. Если их шансы заполняют часть таблицы, частым наградам остаётся меньше места.</p>
-      <details className="mediaDetails farmCalcDisclosure">
-        <summary>
-          <span>
-            <strong>Калькулятор бонуса к фарму монет</strong>
-            <small>Дополнительные монеты в боях и полётах</small>
-          </span>
-        </summary>
-        <SkinFarmCalculator showTitle={false} />
-      </details>
-      <DetailLink className="textLink" to="/owl/skins">Как работают скины и жетоны</DetailLink>
+      <p className="caption">Каждый уровень прибавляет 1% к множителю базового шанса. При расчёте игра сначала учитывает самые крупные награды.</p>
     </section>
   </>;
 }
 
 function SlotGuide() {
-  return <section className="card"><h2>Как открыть больше слотов</h2>
-      <p>Первые три слота доступны сразу. Слоты 4–11 открываются за уровень или Stars. Слот 12 открывается за 200 ⭐.</p>
-      <details><summary><GameGlyph name="lock"/> Требования к каждому слоту</summary>
-        {Array.from({length:8}, (_,i) => <div className="mediaRow" key={i}><span>Слот {i+4}</span><strong>{(i+1)*10} ур. или {(500*2**i).toLocaleString('ru-RU')} ⭐</strong></div>)}
-      </details>
-    </section>;
+  const slots = [...Array.from({ length: 8 }, (_, index) => ({
+    number: index + 4, level: (index + 1) * 10, stars: 500 * 2 ** index,
+  })), { number: 12, level: null, stars: 200 }];
+
+  return <section className="card">
+    <h2>Слоты капсул</h2>
+    <p>Первые три слота доступны сразу. Слоты с 4-го по 11-й открываются по очереди за уровень или оплату. Слот 12 можно купить на любом уровне.</p>
+    <details className="mediaDetails slotGuide" id="capsule-slots">
+      <summary><GameGlyph name="lock"/><strong>Уровни и цены</strong></summary>
+      <table className="priceTable slotTable">
+        <thead><tr><th scope="col">Слот</th><th scope="col">Уровень</th><th scope="col">Stars</th><th scope="col">GRAM</th></tr></thead>
+        <tbody>{slots.map(({ number, level, stars }) => <tr key={number}>
+          <th scope="row">{number}</th><td>{level ?? '—'}</td>
+          <td><Price value={stars} currency="stars"/></td>
+          <td><Price value={estimatedGramForStars(stars)} currency="gram" approximate/></td>
+        </tr>)}</tbody>
+      </table>
+      <p className="caption">Курс GRAM меняется. Точную сумму показывает игра перед оплатой.</p>
+    </details>
+  </section>;
 }
 
 function CapsuleDropGuide() {
