@@ -1,8 +1,6 @@
-import collections from '../src/features/market-collections.json' with { type: 'json' };
-import tokens from '../public/data/tokens.json' with { type: 'json' };
 import { usdtAddress } from './ton-rates.js';
 
-const collection = collections.find(item => item.id === 'genesis')!.address;
+const collection = 'EQA5HalN4asamSjufbmXF_Wr3jyapCEYcYN0igfBDe5Nmbm7';
 const friendly = /^[A-Za-z0-9_-]{48}$/;
 const raw = /^0:[0-9a-f]{64}$/i;
 const hex = (bytes: string) => Array.from(bytes, char => char.charCodeAt(0).toString(16).padStart(2, '0')).join('');
@@ -10,7 +8,7 @@ const rawAddress = (address: string) => friendly.test(address)
   ? '0:' + hex(atob(address.replaceAll('-', '+').replaceAll('_', '/')).slice(2, 34))
   : raw.test(address) ? address.toLowerCase() : '';
 const rawCollection = rawAddress(collection);
-export const notAddress = tokens.tokens.find(token => token.symbol === 'NOT')!.master_address!;
+export const notAddress = 'EQAvlWFDxGF2lXm67y4yzC17wYKD9A0guwPkMs1gOsM__NOT';
 export type SaleCurrency = 'GRAM' | 'USDT' | 'NOT';
 export type OwlSale = { id: string; at: number; nft: string; name: string; amount: number; currency: SaleCurrency };
 
