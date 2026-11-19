@@ -67,7 +67,7 @@ export function OwlPage() {
           <summary><GameArt path="/brand/collections/eggs.png" size={34}/>
             <span><strong>NFT-яйца и лотки Lottoque</strong><small>Коллекции на Getgems</small></span></summary>
           <p>Ранее NFT из коллекции NOT Wise Eggs сжигали за яйца в игре. В 2024 году за NFT-лоток Lottoque обещали 10 специальных золотых яиц. Доступность обмена сейчас не подтверждена.</p>
-          <Link className="textLink" to="/collections/market#eggs">Флор NFT-яиц</Link>
+          <Link className="textLink" to="/collections/market#eggs" state={{ returnTo: pathname }}>Флор NFT-яиц</Link>
           <a className="textLink spacedLink" href={`https://getgems.io/collection/${marketEggs.address}`} target="_blank" rel="noreferrer">NFT-яйца</a>
           <a className="textLink spacedLink" href="https://getgems.io/lottoque" target="_blank" rel="noreferrer">Lottoque</a>
         </details>
@@ -144,7 +144,6 @@ type CatalogItem = {
   name: string; file: string; effect: string; source: string;
   offerId?: string;
   price?: { value: number; currency: Currency };
-  link?: { href: string; label: string };
 };
 type Category = { title: string; icon: string; summary: string; items: CatalogItem[] };
 
@@ -184,9 +183,7 @@ const categories: Record<string, Category> = {
       ...rings,
       { name: 'Эпическая книга исследователей', file: 'book.webp', effect: 'Открывает ежедневную загадку. На ответ 60 секунд. Верный ответ даёт монеты, опыт и +5 мудрости на сутки. Три ошибки уничтожают книгу.', source: 'Лавка или награда из яйца' },
       { name: 'Монтмориллонит', file: 'montmorillonite.webp', effect: 'С экипированным артефактом здоровье остаётся полным, а бонус к дропу $NOT растёт на 10%. Выпадает из загадочных яиц.',
-        source: 'Цена продажи NFT · 17 ноября 2026',
-        price: { value: 100, currency: 'gram' },
-        link: { href: 'https://tonviewer.com/transaction/96b3e53931c904798dd57809a93d2ecf0ec28599358fced7de7fce16f2bed697', label: 'Сделка Getgems' } },
+        source: 'Лавка · Кристалл маны', offerId: 'mana-crystal' },
       { name: 'Заточка кольца', file: 'scroll-enchant-ring.webp', offerId: 'squad-scroll-ring', effect: 'Мистический свиток с поля осады. Улучшает кольцо: +1 к его атрибуту и +5% к бонусу дропа $NOT.', source: 'Лавка сквада · серебро за осады' },
       { name: 'Заточка скина', file: 'scroll-enchant-skin.webp', offerId: 'squad-scroll-skin', effect: 'Мистический свиток с поля осады. Улучшает скин, прибавляя 5% к бонусу дропа $NOT за ступень.', source: 'Лавка сквада · серебро за осады' },
       { name: 'Универсальная заточка', file: 'enchanter.webp', effect: 'Подходит для кольца и скина. За одну ступень даёт тот же бонус, что и соответствующий свиток.', source: 'Источник и цена пока не подтверждены' },
@@ -267,8 +264,7 @@ function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {
   return <li className="inventoryRow" id={id}>
     <GameArt path={itemPath(item.file)} size={36}/>
     <div><h3>{item.name}</h3><p>{item.effect}</p>
-      <small>{level ? `С ${level}-го уровня` : item.source}</small>
-      {item.link && <a className="textLink itemEvidence" href={item.link.href} target="_blank" rel="noreferrer">{item.link.label}</a>}
+      <small>{item.source}{level ? ` · с ${level}-го уровня` : ''}</small>
     </div>
     {price && <Price value={price.value} currency={price.currency}/>}
   </li>;

@@ -2,12 +2,15 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import { MotionConfig } from 'motion/react';
+import { collectionMarket, tokenMarket } from './features/marketData';
 import { App } from './app/App';
 import './styles.css';
 import { bootTelegram } from './telegram/client';
 import { warmArt } from './ui/warmArt';
 
 void (async () => {
+  tokenMarket.refresh();
+  collectionMarket.refresh();
   const bar = document.querySelector<HTMLProgressElement>('.guideLoading progress');
   const percent = document.querySelector('.guideLoadPercent');
   await warmArt((loaded, total) => {

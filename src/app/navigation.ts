@@ -76,16 +76,19 @@ export function useGuideNavigation() {
     (sections[0] === 'combat' && sections[1] === 'skills' && sections.length === 3);
   const isEgg = sections[0] === 'owl' && ['mystery','red','season','green','gold'].includes(sections[1]);
   const returnTo = state?.returnTo;
+  const market = pathname === '/collections/market';
+  const marketSource = market && typeof returnTo === 'string' &&
+    (/^\/collections(?:\/albums\/(?:[1-9]|1\d|20))?$/.test(returnTo) || ['/', '/owl', '/owl/shop', '/owl/loot'].includes(returnTo));
   const fromEgg = pathname.startsWith('/assets/item/') || pathname === '/owl/skins';
   const fromAlbum = pathname === '/secrets' && /^#sticker-\d+$/.test(hash) &&
     typeof returnTo === 'string' && /^\/collections\/albums\/(?:[1-9]|1\d|20)$/.test(returnTo);
   const hasReturn = typeof returnTo === 'string' && (
-    fromAlbum ||
+    fromAlbum || marketSource ||
     (pathname === '/ecosystem' && hash.startsWith('#token-') && returnTo === '/') ||
     (fromEgg && /^\/owl\/(mystery|red|season|green|gold)$/.test(returnTo)) ||
     (isEgg && ['/owl', '/owl/loot', '/owl/shop'].includes(returnTo))
   );
-  const parent = hasReturn ? returnTo : hash ? pathname : isEgg ? '/owl' : sections.length > 1
+  const parent = hasReturn ? returnTo : market ? '/' : hash ? pathname : isEgg ? '/owl' : sections.length > 1
     ? '/' + sections.slice(0, skipGrouping ? 1 : -1).join('/')
     : '/';
 
@@ -95,6 +98,7 @@ export function useGuideNavigation() {
       positions.set(pathname + hash, window.scrollY);
       navigate(parent, { replace: true, state: {
         restoreGuideScroll: true,
+        ...(marketSource && state?.mintOpen === true && { mintOpen: true }),
         ...(fromAlbum && { stickerId: Number(hash.slice('#sticker-'.length)) }),
       } });
     },

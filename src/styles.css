@@ -458,8 +458,6 @@ details > p { margin: 4px 0 8px; }
 .secretRow[data-selected=true] { background: #a98cf523; box-shadow: inset 3px 0 var(--lavender); border-radius: 8px; }
 .secretRow p { margin: 6px 0; }
 .secretCheck { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; color: var(--muted); }
-.jokeToast { position: fixed; z-index: 23; inset: auto 16px calc(var(--dock-height) + 8px); width: min(420px, calc(100% - 32px)); margin: auto; background-color: #151c2d; }
-.jokeToast > div { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .squadIntro > img { width: 100%; max-height: 150px; object-fit: contain; margin-bottom: 10px; }
 .guideLoading progress { width: min(220px, 68vw); height: 8px; accent-color: #b694ff; }
 details > summary { -webkit-tap-highlight-color: transparent; }
@@ -581,9 +579,9 @@ html { scrollbar-gutter: stable; }
 .tokenTicker {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  flex: 0 1 185px;
+  flex: 0 1 132px;
   min-width: 0;
-  width: 185px;
+  width: 132px;
   max-width: none;
   min-height: 44px;
   padding: 2px 0 2px 4px;
@@ -612,7 +610,6 @@ html { scrollbar-gutter: stable; }
 }
 .tokenTickerValue > b { grid-area: 1 / 1; color: var(--text); font-size: 11px; }
 .tokenTickerValue > .tickerPrice { grid-area: 2 / 1; color: var(--muted); font-size: 12px; }
-.tokenTickerValue[data-symbol="NOT"] > .tickerPrice { font-size: 10px; }
 .tokenTickerValue > img { grid-area: 1 / 2 / span 2; align-self: center; }
 .tokenTickerEmpty { grid-area: 1 / 1; align-self: center; }
 .tokenRatesList li { display: block; min-height: 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; padding: 0; }
@@ -665,7 +662,6 @@ html { scrollbar-gutter: stable; }
 .eggPrices > small { color: var(--muted); font-size: 11px; }
 .card > .eggPrices { margin: 8px 0 14px; }
 .eggSources .textLink { font-size: 13px; }
-.itemEvidence { font-size: 12px; display: flex; }
 .owlUpgrades { margin-block: 10px; }
 .owlUpgrades li {
   display: grid; grid-template-columns: 24px minmax(0, 1fr) max-content; align-items: center;
@@ -726,3 +722,10 @@ html { scrollbar-gutter: stable; }
 @media (max-width: 389px) { .donationAmounts > :last-child { grid-column: 2; } }
 @media (min-width: 390px) { .donationAmounts { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .supportPill { transition: none; } }
+
+.quoteNumbers { display: grid; text-align: end; line-height: 1.3; padding-block: 3px; }
+.quoteNumbers small { font-size: 11px; white-space: nowrap; }
+.fdvNote { font-size: 11px; margin-bottom: 8px; }
+.marketPriceValues { grid-template-rows: 17px 16px; align-items: center; }
+.marketPriceValues > :first-child { grid-row: 1; }
+.marketPriceValues > :nth-child(2) { grid-row: 2; }

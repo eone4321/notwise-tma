@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { collectionMarket } from './marketData';
 import { Link, useLocation } from 'react-router';
 import stickers from '../../public/data/all_100_stickers.json';
 import marketPacks from '../../public/data/stickers.json';
@@ -22,10 +22,8 @@ const purpose: Record<string, string> = {
   family: 'Отдельная коллекция Not Wise Family на TON.',
 };
 
-type MarketRow = { id: string; floor: number | null; supply: number | null };
 const format = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
 const stickerAlbum = (id: number) => Math.ceil(id / 5);
-let cachedMarket: MarketRow[] | null = null;
 
 export function CollectionPage() {
   const { pathname, hash, state } = useLocation();
@@ -33,20 +31,7 @@ export function CollectionPage() {
   const albumNumber = Number(pathname.match(/albums\/(\d+)$/)?.[1]);
   const album = albumNumber >= 1 && albumNumber <= albums.length ? albumNumber : null;
   const marketView = pathname === '/collections/market';
-  const [market, setMarket] = useState(cachedMarket);
-
-  useEffect(() => {
-    if (!marketView) return;
-    const controller = new AbortController();
-    fetch('/api/market/collections', { signal: controller.signal })
-      .then(response => response.ok ? response.json() : null)
-      .then(result => {
-        if (controller.signal.aborted) return;
-        cachedMarket = Array.isArray(result?.items) ? result.items : [];
-        setMarket(cachedMarket);
-      }).catch(() => { if (!controller.signal.aborted) setMarket([]); });
-    return () => controller.abort();
-  }, [marketView]);
+  const { data: market, pending } = collectionMarket.useSnapshot();
 
   const matches = album === null ? [] : stickers.filter(item => stickerAlbum(item.id) === album);
   const count = album === null ? collected.length : matches.filter(item => collected.includes(item.id)).length;
@@ -56,23 +41,24 @@ export function CollectionPage() {
   return <>
     {album === null && <nav className="choiceBar" aria-label="Раздел коллекций">
       <Link to="/collections" aria-current={!marketView ? 'page' : undefined}>Стикеры</Link>
-      <Link to="/collections/market" aria-current={marketView ? 'page' : undefined}>NFT на Getgems</Link>
+      <Link to="/collections/market" state={{ returnTo: state?.returnTo ?? '/collections' }} aria-current={marketView ? 'page' : undefined}>NFT на Getgems</Link>
     </nav>}
-    {marketView ? <section className="card marketCollections" aria-busy={market === null}>
+    {marketView ? <section className="card marketCollections" aria-busy={!market && pending}>
       {marketCollections.map(item => {
-        const quote = market?.find(row => row.id === item.id);
+        const quote = market?.items.find(row => row.id === item.id);
         const floor = quote?.floor;
         return <details className="mediaDetails marketCollection" key={item.id} id={item.id} open={hash === "#" + item.id || undefined}>
           <summary>
             <GameArt path={'/brand/collections/' + item.id + '.png'} size={42}/>
             <span><strong>{item.name}</strong>
-              <small>{market === null ? 'Загружаем флор…' : floor && floor > 0
-                ? <span className="floorPrice">от {format.format(floor)} <GameArt path="/brand/tokens/gram.png" size={15}/> GRAM</span>
+              <small>{!market && pending ? 'Загружаем флор…' : floor && floor > 0
+                ? <span className="floorPrice" title={quote?.available === false ? 'Последняя доступная цена' : undefined}>от {format.format(floor)} <GameArt path="/brand/tokens/gram.png" size={15}/> GRAM</span>
                 : 'Флор недоступен'}</small></span>
           </summary>
           <p>{purpose[item.id]}</p>
           {typeof quote?.supply === 'number' && <small>Выпущено {format.format(quote.supply)} NFT в коллекции</small>}
           <div><a className="textLink" href={`https://getgems.io/collection/${item.address}`} target="_blank" rel="noreferrer">Открыть на Getgems</a></div>
+          {item.id === 'genesis' && <a className="textLink" href="https://t.me/NotWiseGuideBot?start=owl_sales">Уведомления о продажах</a>}
         </details>;
       })}
     </section> : <>
@@ -106,10 +92,10 @@ export function CollectionPage() {
             onChange={event => setMark('collected', item.id, event.target.checked)}/>
             <span className="sr-only">Собран: {item.name}</span></label>
         </div>)}
-        <details className="mediaDetails guideDisclosure">
+        <details className="mediaDetails guideDisclosure" open={state?.mintOpen || undefined}>
           <summary><GameArt path="/game/items/coins.webp" size={34}/><span><strong>Выпуск NFT</strong><small>После сбора 5 стикеров</small></span></summary>
           <p>Полный набор позволяет начать выпуск в игре. Лимит и число выпущенных NFT для этого набора пока не подтверждены.</p>
-          <Link to="/collections/market" className="textLink">Коллекции на Getgems</Link>
+          <Link to="/collections/market" className="textLink" state={{ returnTo: pathname, mintOpen: true }}>Коллекции на Getgems</Link>
         </details>
       </section>}
     </>}

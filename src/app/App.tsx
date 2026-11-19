@@ -1,3 +1,4 @@
+import { startMarketUpdates } from '../features/marketData';
 import { copyLink } from '../ui/copyLink';
 import { GuideProgress, ProgressStatus, useProgress } from '../features/GuideProgress';
 import { useModal } from '../ui/useModal';
@@ -58,6 +59,7 @@ function App() {
     setCoach(false);
   };
   useGuideScroll();
+  useEffect(startMarketUpdates, []);
   useEffect(() => {
   if (!hamster) return;
   const unlock = window.setTimeout(() => setHamsterLocked(false), 1000);
@@ -75,11 +77,7 @@ return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathn
   referrals={<ReferralsPage profile={profile} failed={profileFailed} onSave={setProfile} onRetry={() => {
     setProfileFailed(false);
     setProfileAttempt(value => value + 1);
-  }}/>}/>}</main>{coach && !hamster && <><div className="dockCoachTint" aria-hidden="true"/><DockCoach onClose={closeCoach}/></>}{showJoke && loc.pathname === '/secrets' && <aside className="card jokeToast" role="status">
-  <strong>Ладно, пошутили 😄 Секреты бесплатны.</strong>
-  <div><Link className="textLink" to="/support" onClick={() => setShowJoke(false)}>Поддержать проект</Link>
-  <button className="secondary" onClick={() => setShowJoke(false)}>К секретам</button></div>
-</aside>}<Dock onGesture={coach ? closeCoach : undefined} hamster={hamster} locked={hamsterLocked} onHamster={() => {
+  }}/>}/>}</main>{coach && !hamster && <><div className="dockCoachTint" aria-hidden="true"/><DockCoach onClose={closeCoach}/></>}{showJoke && loc.pathname === '/secrets' && <RevealedSecrets close={() => setShowJoke(false)}/>}<Dock onGesture={coach ? closeCoach : undefined} hamster={hamster} locked={hamsterLocked} onHamster={() => {
   if (hamsterLocked) return;
   if (hamster) {
     setHamster(false);
@@ -312,6 +310,23 @@ function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean;
     </Card>}
     {popup && <SecretDialog reveal={reveal}/>}
   </>;
+}
+function RevealedSecrets({ close }: { close: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useModal(dialog, true);
+  return <dialog className="modal" ref={dialog} aria-labelledby="secret-reveal-title"
+    onCancel={event => { event.preventDefault(); close(); }}
+    onClick={event => { if (event.target === event.currentTarget) close(); }}>
+    <div className="dialogBody">
+      <div className="tokenRatesDialogHeader">
+        <h2 id="secret-reveal-title" data-dialog-title tabIndex={-1}>Ладно, пошутили 😄</h2>
+        <button className="close" aria-label="Закрыть" onClick={close}>×</button>
+      </div>
+      <p>Все секреты бесплатны.</p>
+      <button className="primary" onClick={close}>К секретам</button>
+      <Link className="secondary" to="/support" onClick={close}>Поддержать проект</Link>
+    </div>
+  </dialog>;
 }
 function SecretDialog({reveal}: {reveal: () => void}) {
   const dialog = useRef<HTMLDialogElement>(null);
