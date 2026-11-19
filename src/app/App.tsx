@@ -39,7 +39,10 @@ function App() {
   useGuideAnalytics(loc.pathname);
   const [hamster, setHamster] = useState(false);
   const [hamsterLocked, setHamsterLocked] = useState(false);
-  const [coach, setCoach] = useState(() => localStorage.getItem('notwise.guide.dock.v1') !== '1');
+  const [coach, setCoach] = useState<'dock' | 'theme' | null>(() => {
+    if (localStorage.getItem('notwise.guide.dock.v1') !== '1') return 'dock';
+    return localStorage.getItem('notwise.guide.theme-tip.v1') === '1' ? null : 'theme';
+  });
   const [joke, setJoke] = useState(localStorage.getItem('notwise.guide.secrets.v1') === '1' || sessionStorage.getItem('notwise.guide.secrets.v1') === '1');
   const [showJoke, setShowJoke] = useState(false);
   const [popup, setPopup] = useState(false);
@@ -57,9 +60,14 @@ function App() {
   useEffect(() => {
     for (const friend of profile?.invited ?? []) if (friend.avatar) void warmFriendAvatar(friend.avatar);
   }, [profile]);
-  const closeCoach = () => {
-    localStorage.setItem('notwise.guide.dock.v1', '1');
-    setCoach(false);
+  const advanceCoach = () => {
+    if (coach === 'dock') {
+      localStorage.setItem('notwise.guide.dock.v1', '1');
+      setCoach('theme');
+    } else {
+      localStorage.setItem('notwise.guide.theme-tip.v1', '1');
+      setCoach(null);
+    }
   };
   useGuideScroll();
   useEffect(startMarketUpdates, []);
@@ -74,13 +82,13 @@ useEffect(() => {
   window.addEventListener('keydown', close);
   return () => window.removeEventListener('keydown', close);
 }, [hamster, hamsterLocked]);useEffect(()=>{telegramPopup()?.ready();const key='notwise.guide.startapp.v1';if(sessionStorage.getItem(key))return;const start=new URLSearchParams(location.search).get('startapp')??telegramPopup()?.initDataUnsafe?.start_param;const routes:Record<string,string>={capsules_gold:'/capsules/gold',eggs:'/owl',secrets:'/secrets',market:'/collections/market'};if(start&&Object.hasOwn(routes,start)){sessionStorage.setItem(key,'1');nav(routes[start],{replace:true})}},[nav]);const ask=()=>{lightHaptic();const tg=telegramPopup();if(tg?.showPopup){try { tg.showPopup({title:'Секреты Not Wise',message:'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты',buttons:[{id:'pay',text:'Заплатить',type:'default'},{id:'back',text:'Назад',type:'default'}]},()=>reveal()); return; } catch { /* Older Telegram clients use the local dialog. */ }}setPopup(true)};function reveal(){setPopup(false);setJoke(true);setShowJoke(true);localStorage.setItem('notwise.guide.secrets.v1','1')}
-return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach}><Link to="/" className="brand"><img src="/brand/notwise.svg" alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main key={loc.pathname} inert={hamster || coach}>{loc.pathname === '/' ? <Home profile={profile} profileFailed={profileFailed} retryProfile={() => {
+return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach !== null}><Link to="/" className="brand"><img src="/brand/notwise.svg" alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main key={loc.pathname} inert={hamster || coach !== null}>{loc.pathname === '/' ? <Home profile={profile} profileFailed={profileFailed} retryProfile={() => {
   setProfileFailed(false); setProfileAttempt(value => value + 1);
 }}/> : loc.pathname === '/admin' ? <AdminPage profile={profile}/> : <Page profile={profile} ask={ask} joke={joke} popup={popup} reveal={reveal}
   referrals={<ReferralsPage profile={profile} failed={profileFailed} onSave={setProfile} onRetry={() => {
     setProfileFailed(false);
     setProfileAttempt(value => value + 1);
-  }}/>}/>}</main>{coach && !hamster && <><div className="dockCoachTint" aria-hidden="true"/><DockCoach onClose={closeCoach}/></>}{showJoke && loc.pathname === '/secrets' && <RevealedSecrets close={() => setShowJoke(false)}/>}<Dock onGesture={coach ? closeCoach : undefined} hamster={hamster} locked={hamsterLocked} onHamster={() => {
+  }}/>}/>}</main>{coach && !hamster && <><div className="dockCoachTint" aria-hidden="true"/><DockCoach step={coach} onContinue={advanceCoach}/></>}{showJoke && loc.pathname === '/secrets' && <RevealedSecrets close={() => setShowJoke(false)}/>}<Dock onGesture={coach ? advanceCoach : undefined} hamster={hamster} locked={hamsterLocked} onHamster={() => {
   if (hamsterLocked) return;
   if (hamster) {
     setHamster(false);

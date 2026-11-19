@@ -10,7 +10,7 @@ import shopItems from './shop-data.json';
 import skinParts from './skin-parts.json';
 
 const eggs = [
-  { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное', source: 'Из капсул или в Лавке', details: 'Лавка продаёт его за монеты или Stars. Из капсулы можно получить такое же яйцо. В пуле есть еда, лекарства, оформление и жетон скина.' },
+  { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное', source: 'Из капсул или в Лавке', details: 'Белое яйцо на красном фоне в Лавке стоит 100 Stars. У варианта за монеты и яйца из капсул тот же набор наград: еда, лекарства, оформление и жетон скина.' },
   { id: 19, slug: 'red', file: 'golden-egg-special.webp', name: 'Золотое загадочное', source: 'За места 1–10 в сезоне', details: 'Вручается автоматически по итогам сезона. Может дать два вида жетонов скина.' },
   { id: 56, slug: 'season', file: 'golden-egg.webp', name: 'Сезонное загадочное', source: 'За места 11–100 или за скорлупу', details: 'Дают за 11–100-е места по итогам сезона. Можно собрать за 15 000 осколков скорлупы или купить в Лавке за Stars.' },
   { id: 18, slug: 'green', file: '18.png', name: 'Бежевое', source: 'Способ получения не подтверждён', details: 'Из этого яйца выпадают оформление, жетон скина и другие награды. Еды в пуле нет.' },
@@ -51,11 +51,11 @@ export function OwlPage() {
       <section className="card leanList eggSources" id="shards">
         <h2>Крафт за скорлупу</h2>
         <p className="caption">В игре открой осколки в инвентаре и выбери яйцо.</p>
-        <div className="mediaRow">
+        <Link className="mediaRow" to="/owl/mystery" state={{ returnTo: pathname }} aria-label="Загадочное яйцо, 3 000 осколков скорлупы">
           <GameArt path={itemPath('egg-stars.webp')} size={40}/>
-          <span><strong>Белое яйцо</strong><small>На красном фоне</small></span>
-          <span className="rowEnd shardCost" aria-label="3 000 осколков скорлупы"><strong>3 000</strong><GameArt path={itemPath('eggshell-shards-icon.webp')} size={23}/></span>
-        </div>
+          <span><strong>Загадочное яйцо</strong><small>Белое на красном фоне</small></span>
+          <span className="rowEnd shardCost"><strong>3 000</strong><GameArt path={itemPath('eggshell-shards-icon.webp')} size={23}/><span className="rowChevron" aria-hidden="true"/></span>
+        </Link>
         <Link className="mediaRow" to="/owl/season" state={{ returnTo: pathname }} aria-label="Сезонное загадочное яйцо, 15 000 осколков скорлупы">
           <GameArt path={itemPath('golden-egg.webp')} size={40}/>
           <span><strong>Сезонное загадочное</strong><small>Золотое на зелёном фоне</small></span>
@@ -207,7 +207,7 @@ const categories: Record<string, Category> = {
     title: 'Крафт и хранение XP', icon: 'eggshell-shards-icon.webp', summary: 'Скорлупа, дискеты опыта и колбы SP',
     items: [
       { name: 'Холодильник XP', file: 'chiller.webp', effect: 'Открытая дверца замораживает опыт: капсулы продолжают давать монеты и лут, но XP не начисляется.', source: 'Управление опытом' },
-      { name: 'Осколки скорлупы', file: 'eggshell-shards-icon.webp', effect: 'Из осколков можно собрать яйца и другие награды. Белое яйцо на красном фоне стоит 3 000 осколков, сезонное загадочное — 15 000.', source: 'Яйца и капсулы · рецепты в инвентаре' },
+      { name: 'Осколки скорлупы', file: 'eggshell-shards-icon.webp', effect: 'Из осколков можно собрать яйца и другие награды. Загадочное яйцо (белое на красном фоне) стоит 3 000 осколков, сезонное загадочное — 15 000.', source: 'Яйца и капсулы · рецепты в инвентаре' },
       { name: 'Пустая дискета XP', file: 'floppy-empty.webp', effect: 'Заготовка для записи XP. Размер дискеты выбираешь при записи.', source: 'Лавка · покупка за Stars' },
       ...floppySpecs.map(([id, contents, cost]) => ({
         name: 'Дискета ' + contents + ' XP', file: 'floppy-' + id + '.webp',

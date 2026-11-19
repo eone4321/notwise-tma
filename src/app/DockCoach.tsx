@@ -1,10 +1,10 @@
-export function DockCoach({ onClose }: { onClose: () => void }) {
+export function DockCoach({ step, onContinue }: { step: 'dock' | 'theme'; onContinue: () => void }) {
   return <aside className="dockCoach card" aria-labelledby="dock-coach-title">
-    <h2 id="dock-coach-title">Одна кнопка для навигации</h2>
-    <dl>
+    <h2 id="dock-coach-title">{step === 'dock' ? 'Одна кнопка для навигации' : 'Выбери оформление'}</h2>
+    {step === 'dock' ? <dl>
       <div><dt>Один тап</dt><dd>На уровень выше</dd></div>
       <div><dt>Удержание</dt><dd>Сразу на главную</dd></div>
-    </dl>
-    <button className="secondary" onClick={onClose}>Понятно</button>
+    </dl> : <p role="status">Тему можно поменять внизу раздела <strong>«О проекте»</strong>.</p>}
+    <button className="secondary" onClick={onContinue}>{step === 'dock' ? 'Дальше' : 'Понятно'}</button>
   </aside>;
 }
