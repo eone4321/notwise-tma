@@ -16,13 +16,13 @@ import { TokenTicker } from '../features/TokenQuotes';
 import { GameArt } from '../ui/GameArt';
 import { GameGlyph } from '../ui/GameGlyph';
 import { AlbumLogo } from '../ui/AlbumLogo';
-import { InventoryPage, OwlPage } from '../features/InventoryPage';
-import { CombatPage } from '../features/CombatPage';
+import { CarePage, InventoryPage, OwlPage } from '../features/InventoryPage';
+import { CombatPage, ModesPage } from '../features/CombatPage';
 import { CollectionPage } from '../features/CollectionPage';
 import { CapsulePage } from '../features/CapsulePage';
 import { achievementActions } from '../features/inventory';
 import {useEffect,useRef,useState}from'react';
-import{Link,useLocation,useNavigate}from'react-router';
+import{Link,Navigate,useLocation,useNavigate}from'react-router';
 import{AnimatePresence,motion}from'motion/react';
 import all from'../../public/data/all_100_stickers.json';import quests from'../../public/data/secret_quests.json';import{impactHaptic,lightHaptic,telegramPopup}from'../telegram/client';
 import { useGuideNavigation, useGuideScroll } from './navigation';
@@ -35,6 +35,7 @@ const sections = [
   ['Секреты', '/secrets'], ['Капсулы', '/capsules'], ['Яйца и скины', '/owl'],
   ['Коллекции', '/collections'], ['Бои и навыки', '/combat'], ['Предметы', '/assets'],
   ['Экосистема', '/ecosystem'], ['Пригласить друзей', '/referrals'],
+  ['Кормление', '/care'], ['Режимы игры', '/modes'],
 ] as const;
 type Item={id:number;name:string;description:string;short_descr:string;rarity:number;kind?:string;key?:string};
 function App() {
@@ -222,6 +223,10 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, english: en }
     </div>
   </section>
   {share && <ShareDialog english={en} close={() => setShare(false)}/>}
+  <section className="homeGameActions" aria-label={en ? 'Gameplay' : 'Об игре'}>
+    <Link to="/care"><GameArt path="/game/items/croissant.webp" size={34}/><span>{en ? 'Feeding' : 'Кормление'}</span><span className="rowChevron" aria-hidden="true"/></Link>
+    <Link to="/modes"><GameArt path="/game/ui/fight-vs.png" size={34}/><span>{en ? 'Game modes' : 'Режимы игры'}</span><span className="rowChevron" aria-hidden="true"/></Link>
+  </section>
   <OwlPrices/>
   <div className="sectionHeading"><div><h2>{en ? 'Explore' : 'Что ищешь?'}</h2></div></div>
   <div className="guideGrid">{tiles.map(([name, path, icon, description, art], index) =>
@@ -274,7 +279,10 @@ function Page({ profile, ask, joke, popup, reveal, referrals }: {
   profile: GuideProfile | null;
   ask: () => void; joke: boolean; popup: boolean; reveal: () => void; referrals: React.ReactNode;
 }) {
-  const { pathname } = useLocation();
+  const { pathname, hash, state } = useLocation();
+  if (pathname === '/owl/care' || pathname === '/combat/modes') {
+    return <Navigate to={(pathname === '/owl/care' ? '/care' : '/modes') + hash} state={state} replace/>;
+  }
   const section = sections.find(([, path]) => pathname === path || pathname.startsWith(path + '/'));
   if (!section) return <Card>
     <h1>Страница не найдена</h1><Link className="textLink" to="/">На главную</Link>
@@ -286,6 +294,8 @@ function Page({ profile, ask, joke, popup, reveal, referrals }: {
     {section?.[1] === '/collections' && <CollectionPage/>}
     {section?.[1] === '/ecosystem' && <EcosystemPage gameEntry={profile?.gameEntry ?? defaultGameLink}/>}
     {section?.[1] === '/combat' && <CombatPage/>}
+    {section?.[1] === '/modes' && <ModesPage/>}
+    {section?.[1] === '/care' && <CarePage/>}
     {section?.[1] === '/squads' && <SquadPage gameEntry={profile?.gameEntry ?? defaultGameLink}/>}
     {section?.[1] === '/secrets' && <Secrets ask={ask} joke={joke} popup={popup} reveal={reveal}/>}
     {section?.[1] === '/assets' && <InventoryPage/>}

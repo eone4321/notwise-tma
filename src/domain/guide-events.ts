@@ -1,6 +1,6 @@
 export const guidePages = {
   home: 'Главная', squads: 'Сквады и войны', secrets: 'Секреты', capsules: 'Капсулы',
-  owl: 'Яйца и скины', collections: 'Коллекции', combat: 'Бои и навыки',
+  care: 'Кормление', modes: 'Режимы игры', owl: 'Яйца и скины', collections: 'Коллекции', combat: 'Бои и навыки',
   assets: 'Предметы', ecosystem: 'Экосистема', referrals: 'Пригласить друзей', support: 'Настройки',
 } as const;
 

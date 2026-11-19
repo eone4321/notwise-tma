@@ -47,16 +47,15 @@ const skillArt = (id: number) => '/game/skills/' + id + '.png';
 type Skill = typeof skills[number];
 
 export function CombatPage() {
-  const { pathname, hash } = useLocation();
+  const { pathname } = useLocation();
   const [, , page, branchId, skillId] = pathname.split('/');
-  const [isStats, isModes] = [page === 'stats', page === 'modes'];
+  const isStats = page === 'stats';
   const branch = branches.find(item => item[0] === branchId);
   const skill = skills.find(item => item.id === Number(skillId) && item.branch === branchId);
   return <>
     {!branch && <nav className="choiceBar profileTabs combatTabs" aria-label="Раздел боя">
       <Link to="/combat" aria-current={!page ? 'page' : undefined}><GameGlyph name="lightning"/>Навыки</Link>
       <Link to="/combat/stats" aria-current={isStats ? 'page' : undefined}><GameGlyph name="shield"/>Характеристики</Link>
-      <Link to="/combat/modes" aria-current={isModes ? 'page' : undefined}><GameGlyph name="fight"/>Режимы</Link>
     </nav>}
     {skill ? <SkillDetail key={skill.id} skill={skill}/> :
       branch ? <>
@@ -70,7 +69,23 @@ export function CombatPage() {
               <span className="rowChevron" aria-hidden="true"/>
             </Link>)}
         </section>
-      </> : isModes ? <section className="card">
+      </> : isStats ? <CombatStats/> : <>
+        <p className="intro">Ветки навыков открываются на 2-м уровне. В бой можно взять до трёх навыков.</p>
+        <div className="card combatBranches">
+          {branches.map(([id, title, purpose]) =>
+            <Link className="mediaRow" to={'/combat/skills/' + id} key={id}>
+              <GameAttribute name={id}/><span><strong>{title}</strong><small>{purpose}</small></span><span className="rowChevron" aria-hidden="true"/>
+            </Link>
+          )}
+        </div>
+        <section className="card"><h2>Как прокачивать</h2><p>Вложи очко в нужный атрибут и открой следующий навык ветки. Затем прокачивай его за <SpBadge/>. Очки <SpBadge/> дают тренировки в Додзе и применение навыков в бою.</p></section>
+      </>}
+  </>;
+}
+
+export function ModesPage() {
+  const { hash } = useLocation();
+  return <section className="card modesCard">
         {modes.map(([icon, title, when, description]) => <details className="mediaDetails" key={title}
           id={icon === 'rocket' ? 'flight' : undefined} open={icon === 'rocket' && hash === '#flight' || undefined}>
           <summary>{icon === 'swords' ? <GameArt path="/game/ui/fight-vs.png" size={36}/> : <GameSymbol name={icon}/>}<span><strong>{title}</strong>
@@ -83,8 +98,8 @@ export function CombatPage() {
         </details>)}
         <details className="mediaDetails"><summary><GameSymbol name="trophy"/><span><strong>Призы сезона</strong><small>Первые 100 мест</small></span></summary>
         <p>Пример распределения фонда в 1 млн $NOT. 1-е место получает 400 000, 2-е — 350 000, 3-е — 250 000 $NOT. Топ-10 получает золотое загадочное яйцо, места 11–100 — белое загадочное яйцо на красном фоне.</p>
-        <p className="caption">Игра может изменить фонд конкретного сезона. Призы приходят автоматически.</p>
-        <Link className="textLink" to="/owl/season">Что выпадает из белого загадочного яйца</Link>
+        <p>Призы приходят автоматически. Фонд зависит от сезона.</p>
+        <Link className="textLink" to="/owl/season" state={{ returnTo: '/modes' }}>Что выпадает из белого загадочного яйца</Link>
       </details>
       <details className="mediaDetails" id="leagues" open={hash === "#leagues" || undefined}><summary><GameSymbol name="shield"/><span><strong>Боевые лиги</strong><small>Пороги рейтинга и бонус к фарму</small></span></summary>
         <table className="priceTable">
@@ -94,18 +109,7 @@ export function CombatPage() {
           </tr>)}</tbody>
         </table>
       </details>
-    </section> : isStats ? <CombatStats/> : <>
-        <p className="intro">Ветки навыков открываются на 2-м уровне. В бой можно взять до трёх навыков.</p>
-        <div className="card combatBranches">
-          {branches.map(([id, title, purpose]) =>
-            <Link className="mediaRow" to={'/combat/skills/' + id} key={id}>
-              <GameAttribute name={id}/><span><strong>{title}</strong><small>{purpose}</small></span><span className="rowChevron" aria-hidden="true"/>
-            </Link>
-          )}
-        </div>
-        <section className="card"><h2>Как прокачивать</h2><p>Вложи очко в нужный атрибут и открой следующий навык ветки. Затем прокачивай его за <SpBadge/>. Очки <SpBadge/> дают тренировки в Додзе и применение навыков в бою.</p></section>
-      </>}
-  </>;
+    </section>;
 }
 
 function SkillDetail({ skill }: { skill: Skill }) {

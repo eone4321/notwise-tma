@@ -1,3 +1,4 @@
+import { getgemsItemLink } from './owl-sales-feed';
 import { redis } from './redis';
 import collections from '../src/features/market-collections.json';
 import stickers from '../src/features/sticker-data.json';
@@ -8,7 +9,8 @@ const addresses = [...collections, ...stickers.collectionByAlbum.flatMap((addres
   address ? [{ id: 'album-' + index, address }] : [])];
 
 type CollectionQuote = { id: string; address: string; floor: number | null; supply: number | null; available: boolean };
-type ItemsSnapshot = { items: { id: string; floor: number }[]; status: 'ready' | 'unavailable'; updatedAt?: string };
+type Listing = { floor: number; href: string };
+type ItemsSnapshot = { items: ({ id: string; floor: number; href?: string })[]; status: 'ready' | 'unavailable'; updatedAt?: string };
 
 export async function collectionQuotes() {
   const previous = await redis<string | null>(['GET', 'notwise:getgems:collections:v1']).catch(() => null)
@@ -41,14 +43,15 @@ function itemSlug(image: unknown) {
   return /^https:\/\/cdn\.notwise\.co\/nft\/items\/img\/([\w-]+)\.(?:png|webp)(?:\?|$)/i.exec(image)?.[1];
 }
 
-function addPrice(prices: Map<string, number>, image: unknown, nano: unknown) {
+function addPrice(prices: Map<string, Listing>, image: unknown, nano: unknown, nft: unknown, collection: string) {
   const id = itemSlug(image);
-  if (!id || typeof nano !== 'string' || !/^\d{1,30}$/.test(nano)) return;
+  if (!id || typeof nano !== 'string' || !/^\d{1,30}$/.test(nano) ||
+      typeof nft !== 'string' || !/^(?:[A-Za-z0-9_-]{48}|0:[0-9a-f]{64})$/i.test(nft)) return;
   const floor = Number(nano) / 1e9;
-  if (floor > 0 && floor < (prices.get(id) ?? Infinity)) prices.set(id, floor);
+  if (floor > 0 && floor < (prices.get(id)?.floor ?? Infinity)) prices.set(id, { floor, href: getgemsItemLink(nft, collection) });
 }
 
-async function getgemsPage(collection: string, after: string, token: string, prices: Map<string, number>) {
+async function getgemsPage(collection: string, after: string, token: string, prices: Map<string, Listing>) {
   const query = new URLSearchParams({ limit: '100', ...(after ? { after } : {}) });
   const response = await fetch(`${api}/nfts/on-sale/${collection}?${query}`, {
     headers: { Authorization: token }, signal: AbortSignal.timeout(3500),
@@ -58,13 +61,13 @@ async function getgemsPage(collection: string, after: string, token: string, pri
   if (!Array.isArray(result?.items)) throw new Error('Unexpected Getgems listings');
   for (const listing of result.items) {
     if (listing.sale?.type === 'FixPriceSale' && listing.sale.currency === 'TON') {
-      addPrice(prices, listing.image, listing.sale.fullPrice);
+      addPrice(prices, listing.image, listing.sale.fullPrice, listing.address, collection);
     }
   }
   return result.cursor || '';
 }
 
-async function publicListingPage(collection: string, after: string, prices: Map<string, number>) {
+async function publicListingPage(collection: string, after: string, prices: Map<string, Listing>) {
   const offset = Number(after);
   const query = new URLSearchParams({ limit: '100', offset: String(offset) });
   const response = await fetch(`https://tonapi.io/v2/nfts/collections/${collection}/items?${query}`, {
@@ -75,34 +78,37 @@ async function publicListingPage(collection: string, after: string, prices: Map<
   if (!Array.isArray(rows)) throw new Error('Unexpected TON indexed listings');
   for (const row of rows) {
     if (row.sale?.market?.address === marketWallet && row.sale.price?.currency_type === 'native' &&
-        row.sale.price.decimals === 9) addPrice(prices, row.metadata?.image, row.sale.price.value);
+        row.sale.price.decimals === 9) addPrice(prices, row.metadata?.image, row.sale.price.value, row.address, collection);
   }
   return rows.length === 100 ? String(offset + 100) : '';
 }
 
 export async function itemQuotes(): Promise<ItemsSnapshot> {
   const token = process.env.GETGEMS_READ_TOKEN;
-  const key = 'notwise:getgems:items:v2:' + (token ? 'official' : 'public');
+  const previousKey = 'notwise:getgems:items:v2:' + (token ? 'official' : 'public');
+  const key = previousKey.replace(':v2:', ':v3:');
   const [cached, cursorCache] = await Promise.all([
     redis<string | null>(['GET', key]).catch(() => null),
     redis<string | null>(['GET', key + ':scan']).catch(() => null),
   ]);
   const stored = cached ? JSON.parse(cached) as ItemsSnapshot : null;
   if (stored?.updatedAt && Date.now() - Date.parse(stored.updatedAt) < 900_000) return stored;
-  const stale: ItemsSnapshot = { items: stored?.items ?? [], updatedAt: stored?.updatedAt, status: 'unavailable' };
+  const previous = stored ?? await redis<string | null>(['GET', previousKey]).catch(() => null)
+    .then(value => value ? JSON.parse(value) as ItemsSnapshot : null);
+  const stale: ItemsSnapshot = { items: previous?.items ?? [], updatedAt: previous?.updatedAt, status: 'unavailable' };
   const lock = crypto.randomUUID();
   if (!await redis(['SET', key + ':lock', lock, 'NX', 'EX', 35]).catch(() => null)) return stale;
 
   try {
     const collection = collections.find(item => item.id === 'items')!.address;
-    const scan = cursorCache ? JSON.parse(cursorCache) as { cursor: string; prices: [string, number][] } : null;
+    const scan = cursorCache ? JSON.parse(cursorCache) as { cursor: string; prices: [string, Listing][] } : null;
     let after = scan?.cursor ?? '';
-    const prices = new Map<string, number>(scan?.prices);
+    const prices = new Map<string, Listing>(scan?.prices);
     const deadline = Date.now() + 4500;
     for (let page = 0; page < 20 && Date.now() < deadline; page++) {
       const next = token ? await getgemsPage(collection, after, token, prices) : await publicListingPage(collection, after, prices);
       if (!next) {
-        const result: ItemsSnapshot = { items: [...prices].map(([id, floor]) => ({ id, floor })), status: 'ready', updatedAt: new Date().toISOString() };
+        const result: ItemsSnapshot = { items: [...prices].map(([id, listing]) => ({ id, ...listing })), status: 'ready', updatedAt: new Date().toISOString() };
         await redis(['SET', key, JSON.stringify(result), 'EX', 86400]);
         await redis(['DEL', key + ':scan']);
         return result;

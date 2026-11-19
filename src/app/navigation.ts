@@ -76,7 +76,7 @@ export function useGuideNavigation() {
     (sections[0] === 'combat' && sections[1] === 'skills' && sections.length === 3);
   const isEgg = sections[0] === 'owl' && ['mystery','red','season','referral','green','gold'].includes(sections[1]);
   const returnTo = state?.returnTo;
-  const owlTabs = ['/owl/shop', '/owl/loot', '/owl/skins', '/owl/care'];
+  const rootPages = ['/owl', '/owl/shop', '/owl/loot', '/owl/skins', '/care', '/modes'];
   const ecosystemTab = sections[0] === 'ecosystem' && (sections.length === 2 || hash.startsWith('#token-'));
   const ecosystemReturn = ecosystemTab && hash.startsWith('#token-') &&
     ['/', '/ecosystem', '/ecosystem/quotes'].includes(returnTo);
@@ -88,11 +88,13 @@ export function useGuideNavigation() {
     typeof returnTo === 'string' && /^\/collections\/albums\/(?:[1-9]|1\d|20)$/.test(returnTo);
   const hasReturn = typeof returnTo === 'string' && (
     fromAlbum || marketSource ||
+    (pathname === '/assets/care' && returnTo === '/care') ||
+    (isEgg && returnTo === '/modes') ||
     ecosystemReturn ||
     (fromEgg && /^\/owl\/(mystery|red|season|referral|green|gold)$/.test(returnTo)) ||
     (isEgg && ['/owl', '/owl/loot', '/owl/shop'].includes(returnTo))
   );
-  const parent = hasReturn ? returnTo : market ? '/collections' : pathname === '/owl' || owlTabs.includes(pathname) || ecosystemTab ? '/' : isEgg ? '/owl' : hash ? pathname : sections.length > 1
+  const parent = hasReturn ? returnTo : market ? '/collections' : rootPages.includes(pathname) || ecosystemTab ? '/' : isEgg ? '/owl' : hash ? pathname : sections.length > 1
     ? '/' + sections.slice(0, skipGrouping ? 1 : -1).join('/')
     : '/';
 

@@ -27,8 +27,18 @@ export function userAwards(id: string) {
   return redis<GuideAchievement[]>(['SMEMBERS', prefix + id]);
 }
 
+const awardRules: Record<GuideAchievement, string> = {
+  mascot: 'Открыть пасхалку десятью быстрыми нажатиями кнопки CryptoOne на главной.',
+  explorer: 'Посетить все девять основных разделов гайда.',
+  referral: 'Привязать игровую ссылку после подтверждения подписки на канал.',
+  shared: 'Отправить гайд через окно получателя в Telegram и дождаться подтверждения отправки.',
+  five: 'Привести пять пользователей, впервые открывших гайд по личной ссылке.',
+  community: 'Подтвердить членство в чате CryptoOne при возвращении в гайд.',
+  squad: 'Получить подтверждение вступления в сквад CryptoOne от игрового сервера.',
+};
+
 export async function awardStats() {
-  const keys = Object.keys(guideAchievements);
+  const keys = Object.keys(guideAchievements) as GuideAchievement[];
   const values = await redis<(string | null)[]>(['HMGET', stats, ...keys]);
-  return { items: keys.map((id, i) => ({ id, count: Number(values[i]) || 0 })) };
+  return { items: keys.map((id, i) => ({ id, count: Number(values[i]) || 0, rule: awardRules[id] })) };
 }

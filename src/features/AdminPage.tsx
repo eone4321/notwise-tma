@@ -1,3 +1,4 @@
+import { AwardIcon } from './GuideAwards';
 import { guideAchievements, type GuideAchievement } from '../domain/guide-achievements';
 import { useEffect, useState } from 'react';
 import { guideActions, guidePages, type GuideEvent } from '../domain/guide-events';
@@ -9,7 +10,7 @@ const number = new Intl.NumberFormat('ru-RU');
 type Members = { items: GuideMember[]; total: number };
 type Daily = { day: string; active: number; events: Partial<Record<GuideEvent, number>> };
 type Report = { days: Daily[] };
-type Awards = { items: { id: GuideAchievement; count: number }[] };
+type Awards = { items: { id: GuideAchievement; count: number; rule: string }[] };
 type Tab = 'analytics' | 'admin' | 'award_stats';
 
 export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null }) {
@@ -49,9 +50,13 @@ export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null })
         <button className="secondary" onClick={() => { setError(''); setAttempt(value => value + 1); }}>Повторить</button>
       </section> : !result ? <section className="card"><p role="status">Загружаем данные…</p></section> :
         'days' in result ? <Analytics days={result.days}/> : !('total' in result) ?
-        <section className="card"><h2>Игроки с достижением</h2><dl className="analyticsRows">
-          {result.items.map(({ id, count }) => <div key={id}><dt>{guideAchievements[id]?.title}</dt><dd>{number.format(count)}</dd></div>)}
-        </dl></section> :
+        <section className="card awardCollection"><h2>Игроки с достижением</h2>
+          <ul className="compactList">{result.items.filter(({ id }) => Object.hasOwn(guideAchievements, id)).map(({ id, count, rule }) =>
+            <li className="awardRow adminAward" key={id}>
+              <AwardIcon award={id}/><div><strong>{guideAchievements[id].title}</strong><small>{rule}</small></div>
+              <span aria-label={`Игроков: ${number.format(count)}`}>{number.format(count)}</span>
+            </li>)}</ul>
+        </section> :
         <section className="card">
           <h2>Пользователи · {number.format(result.total)}</h2>
           <ul className="compactList">{result.items.map(member => <li className="mediaRow" key={member.id}>

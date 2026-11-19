@@ -1,4 +1,5 @@
 import { itemMarket } from './marketData';
+import publishing from '../domain/game-publishing.json';
 import mintableItems from './mintable-items.json';
 import { Link, useLocation } from 'react-router';
 import { GameGlyph } from '../ui/GameGlyph';
@@ -28,11 +29,11 @@ const eggOffers: Partial<Record<typeof eggs[number]['slug'], string>> = {
   red: 'golden-egg',
 };
 const marketEggs = marketCollections.find(item => item.id === 'eggs')!;
+const itemsMarketUrl = `https://getgems.io/collection/${marketCollections.find(item => item.id === 'items')!.address}`;
 
 export function OwlPage() {
   const { pathname } = useLocation();
   const egg = eggs.find(item => pathname === '/owl/' + item.slug);
-  const care = pathname === '/owl/care';
   const drops = egg ? dropsFor(egg.id) : [];
   const unknownChance = drops.reduce((sum, [id, chance]) => sum + (itemNames[id] ? 0 : chance), 0);
   const isEggIndex = ['/owl', '/owl/shop', '/owl/loot'].includes(pathname);
@@ -40,17 +41,14 @@ export function OwlPage() {
     <nav className="choiceBar profileTabs owlTabs" aria-label="Яйца и скины">
       <Link to="/owl" replace aria-current={isEggIndex || egg ? 'page' : undefined}><GameArt path="/game/items/egg.webp" size={16}/>Яйца</Link>
       <Link to="/owl/skins" replace aria-current={pathname === '/owl/skins' ? 'page' : undefined}><GameGlyph name="skin"/>Скины и жетоны</Link>
-      <Link to="/owl/care" replace aria-current={care ? 'page' : undefined}><GameGlyph name="leaf"/>Кормление</Link>
     </nav>
     {isEggIndex && <>
       <section className="card leanList eggSources">
         <h2>Лавка, капсулы и награды сезона</h2>
-        <p className="caption">Открой карточку яйца, чтобы увидеть награды и шансы.</p>
         {eggs.slice(0, 3).map(item => <EggLink key={item.id} egg={item} from={pathname}/>)}
       </section>
       <section className="card leanList eggSources" id="shards">
         <h2>Крафт за скорлупу</h2>
-        <p className="caption">В игре открой осколки в инвентаре и выбери яйцо.</p>
         <Link className="mediaRow" to="/owl/season" state={{ returnTo: pathname }} aria-label="Загадочное яйцо, 3 000 осколков скорлупы">
           <GameArt path={itemPath('egg-stars.webp')} size={40}/>
           <span className="eggRowText"><strong>Загадочное яйцо</strong><small>3 000 осколков скорлупы</small></span>
@@ -123,19 +121,26 @@ export function OwlPage() {
       </details>
 
     </section>}
-    {care && <section className="card">
-      <div className="mediaHeading"><GameArt path={itemPath('croissant.webp')} size={52}/>
-        <div><h2>Как избежать голода</h2><p>Покорми сову хотя бы раз в три дня.</p></div>
+  </>;
+}
+
+export function CarePage() {
+  return <>
+    <section className="card feedingCard">
+      <div className="mediaHeading"><GameArt path={itemPath('croissant.webp')} size={48}/>
+        <div><h2>Сытость</h2><p>Покорми сову хотя бы раз в три дня.</p></div>
       </div>
-      <ul className="compactList">
-        <li className="mediaRow"><span>Максимум сытости</span><strong>20</strong></li>
-        <li className="mediaRow"><span>Минимум сытости для полёта</span><strong>10</strong></li>
-        <li className="mediaRow"><span>Любимая еда</span><strong>×2 сытости</strong></li>
-        <li className="mediaRow"><span>Время штрафа</span><strong>24 ч</strong></li>
-        <li className="mediaRow"><span>Монеты, XP, восстановление HP и энергии при голоде</span><strong>−50%</strong></li>
-      </ul>
-      <Link className="textLink" to="/assets/care">Еда и лекарства</Link>
-    </section>}
+      <dl className="compactList">
+        <div className="mediaRow"><dt>Максимум</dt><dd>20</dd></div>
+        <div className="mediaRow"><dt>Для полёта</dt><dd>от 10</dd></div>
+        <div className="mediaRow"><dt>Любимая еда</dt><dd>×2 сытости</dd></div>
+      </dl>
+      <Link className="textLink" to="/assets/care" state={{ returnTo: '/care' }}>Еда и лекарства</Link>
+    </section>
+    <section className="card feedingCard">
+      <div className="mediaHeading"><GameArt path="/game/items/first-aid-kit.webp" size={38}/><h2>Голод</h2></div>
+      <p>За три дня без еды сова получает штраф на 24 ч. Монет и опыта становится вдвое меньше, а здоровье и энергия восстанавливаются вдвое медленнее.</p>
+    </section>
   </>;
 }
 
@@ -296,9 +301,9 @@ function SkinCatalog() {
 function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {
   const { data: market } = itemMarket.useSnapshot();
   const marketKey = item.file.split('.')[0];
-  const floor = market?.items.find(quote => quote.id === marketKey)?.floor;
-  const canMint = Object.hasOwn(mintableItems, marketKey);
-  const mintPrice = market?.mintQuotes?.[marketKey];
+  const listing = market?.items.find(quote => quote.id === marketKey);
+  const gameId = (mintableItems as Record<string, number>)[marketKey];
+  const mintPrice = market?.mintQuotes?.[marketKey] ?? (publishing.itemMintGram as Record<number, number>)[gameId];
   const key = ({
     'rogach.webp': 'beetle', 'big-black-clock.webp': 'clock', 'flask-empty.webp': 'flask-sp',
     'floppy-empty.webp': 'floppy-xp',
@@ -311,13 +316,17 @@ function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {
     <GameArt path={itemPath(item.file)} size={36}/>
     <div><h3>{item.name}</h3><p>{item.effect}</p>
       <small className="itemSource">{item.source}{showLevel ? ` · с ${level}-го уровня` : ''}</small>
-      {canMint && <span className="itemMarketMeta">
-        <small>{floor ? <>На Getgems от <Price value={floor} currency="gram"/></> :
-          market?.status === 'ready' ? 'Нет объявлений в GRAM' : 'Флор предмета недоступен'}</small>
-        <small>{typeof mintPrice === 'number' ? <>Минт <Price value={mintPrice} currency="gram"/></> : 'Цена минта отображается в игре'}</small>
-      </span>}
     </div>
-    {price && <Price value={price.value} currency={price.currency}/>}
+    {(price || listing || mintPrice !== undefined) && <div className="inventoryPrices">
+      {price && <Price value={price.value} currency={price.currency}/>}
+      {listing && <a className="inventoryFloor" href={listing.href ?? itemsMarketUrl} target="_blank" rel="noreferrer"
+        aria-label={`${item.name} за ${listing.floor.toLocaleString('ru-RU')} GRAM на Getgems`}>
+        <Price value={listing.floor} currency="gram"/><span aria-hidden="true" className="externalMark"/>
+      </a>}
+      {mintPrice !== undefined && <span className="inventoryMint" aria-label={`Минт ${mintPrice.toLocaleString('ru-RU')} GRAM`}>
+        Минт <Price value={mintPrice} currency="gram"/>
+      </span>}
+    </div>}
   </li>;
 }
 

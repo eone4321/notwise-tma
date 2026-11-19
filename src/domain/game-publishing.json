@@ -1,0 +1,185 @@
+{
+  "capturedOn": "2026-11-20",
+  "itemMintGram": {
+    "7": 1,
+    "11": 1,
+    "12": 5,
+    "13": 5,
+    "14": 5,
+    "15": 5,
+    "16": 5,
+    "25": 1,
+    "26": 1,
+    "27": 1,
+    "28": 1,
+    "29": 1,
+    "30": 1,
+    "31": 1,
+    "32": 1,
+    "33": 1,
+    "34": 1,
+    "35": 1,
+    "36": 1,
+    "39": 1,
+    "43": 1,
+    "44": 7,
+    "45": 1,
+    "46": 8,
+    "47": 70,
+    "48": 600,
+    "49": 5000,
+    "50": 1,
+    "52": 1,
+    "53": 1,
+    "54": 1,
+    "55": 1,
+    "72": 10,
+    "73": 1,
+    "74": 1,
+    "75": 7,
+    "76": 1,
+    "77": 1
+  },
+  "albums": [
+    {
+      "id": 1,
+      "edition": 500,
+      "remaining": 500,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 2,
+      "edition": 500,
+      "remaining": 500,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 3,
+      "edition": 500,
+      "remaining": 494,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 4,
+      "edition": 500,
+      "remaining": 498,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 5,
+      "edition": 500,
+      "remaining": 499,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 6,
+      "edition": 500,
+      "remaining": 499,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 7,
+      "edition": 500,
+      "remaining": 495,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 8,
+      "edition": 500,
+      "remaining": 500,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 9,
+      "edition": 500,
+      "remaining": 500,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 10,
+      "edition": 500,
+      "remaining": 497,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 11,
+      "edition": 500,
+      "remaining": 500,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 12,
+      "edition": 500,
+      "remaining": 500,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 13,
+      "edition": 500,
+      "remaining": 497,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 14,
+      "edition": 500,
+      "remaining": 498,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 15,
+      "edition": 500,
+      "remaining": 498,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 16,
+      "edition": 500,
+      "remaining": 499,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 17,
+      "edition": 500,
+      "remaining": 500,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 18,
+      "edition": 500,
+      "remaining": 497,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 19,
+      "edition": 500,
+      "remaining": 496,
+      "creationGram": 5,
+      "mintGram": 1
+    },
+    {
+      "id": 20,
+      "edition": 500,
+      "remaining": 497,
+      "creationGram": 5,
+      "mintGram": 1
+    }
+  ]
+}

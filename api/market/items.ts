@@ -1,4 +1,5 @@
 import mintableItems from '../../src/features/mintable-items.json';
+import publishing from '../../src/domain/game-publishing.json';
 import { itemQuotes } from '../../server/getgems-market';
 
 export const config = { runtime: 'edge' };
@@ -6,12 +7,15 @@ export const config = { runtime: 'edge' };
 export default async function handler(request: Request) {
   if (request.method !== 'GET') return new Response(null, { status: 405 });
   const snapshot = await itemQuotes().catch(() => ({ items: [], status: 'unavailable' }));
-  let mintQuotes = {};
+  const base = publishing.itemMintGram as Record<number, number>;
+  const mintQuotes = Object.fromEntries(Object.entries(mintableItems).map(([slug, id]) => [slug, base[id]]));
   try {
     const input = JSON.parse(process.env.GAME_MINT_QUOTES_JSON || '{}');
-    mintQuotes = Object.fromEntries(Object.keys(mintableItems).flatMap(id =>
-      typeof input?.[id] === 'number' && Number.isFinite(input[id]) && input[id] >= 0 ? [[id, input[id]]] : []));
-  } catch { /* A missing game quote stays unavailable. */ }
+    for (const slug of Object.keys(mintQuotes)) {
+      const value = input?.[slug];
+      if (typeof value === 'number' && Number.isFinite(value) && value >= 0) mintQuotes[slug] = value;
+    }
+  } catch { /* The last verified standard fees are still available. */ }
   return Response.json({ ...snapshot, mintQuotes }, {
     headers: { 'Cache-Control': snapshot.status === 'ready' ? 'public, s-maxage=900, stale-while-revalidate=900' : 'public, s-maxage=45' },
   });

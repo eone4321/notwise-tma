@@ -1,22 +1,4 @@
 @font-face {
-  font-family: Mont;
-  src: url('/fonts/Mont-Regular.woff2') format('woff2');
-  font-weight: 400 500;
-  font-display: swap;
-}
-@font-face {
-  font-family: Mont;
-  src: url('/fonts/Mont-SemiBold.woff2') format('woff2');
-  font-weight: 600 650;
-  font-display: swap;
-}
-@font-face {
-  font-family: Mont;
-  src: url('/fonts/Mont-Bold.woff2') format('woff2');
-  font-weight: 700 900;
-  font-display: swap;
-}
-@font-face {
   font-family: "Not Wise Icons";
   src: url('/game/fonts/nw-icons.woff2') format('woff2');
   font-weight: 400;
@@ -127,22 +109,6 @@
   box-shadow: none;
 }
 .heroShare .gameGlyph, .heroActions .squadMark, .supportPill .gameGlyph { font-size: 16px; }
-.supportFooter {
-  display: grid;
-  grid-template-columns: repeat(2,minmax(0,1fr));
-  gap: 7px;
-  margin-block: 16px 4px;
-}
-.supportFooter > :last-child { grid-column: 1 / -1; }
-.supportFooter .supportPill {
-  justify-content: center;
-  white-space: normal;
-  padding-inline: 6px;
-  text-align: center;
-  font-size: 12px;
-  min-height: 44px;
-}
-
 .owlMarket.card {
   padding: 12px;
   border-radius: 12px;
@@ -279,18 +245,6 @@
   backdrop-filter: none;
 }
 .stickerShelf .albumGrid > a:active, .stickerShelf .albumGrid > a:focus-visible { background: var(--game-tile); border-color: var(--game-panel-line); }
-.stickerShelf .albumCornerBadge {
-  top: auto;
-  inset-block-end: 0;
-  inset-inline: 0;
-  margin-inline: auto;
-  width: max-content;
-  padding: 1px 5px;
-  font-size: 9px;
-  background: var(--game-tile);
-  color: var(--game-tab-quiet);
-}
-.stickerShelf .albumCornerBadge.isComplete { color: #241a16; background: #ffce91; }
 .stickerShelf .stickerHelp > summary { gap: 7px; min-height: 42px; font-size: 12px; }
 .stickerProgress { margin-block-end: 8px; }
 .gameProgress {
@@ -373,4 +327,161 @@
 @media (max-width: 365px) {
   .homeShell .brand { gap: 6px; font-size: 12px; }
   .homeShell:has(.tokenTicker) .brand i { display: inline; }
+}
+
+.homeGameActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-block: 10px 13px;
+}
+.homeGameActions a {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 7px;
+  gap: 7px;
+  align-items: center;
+  padding: 6px 9px;
+  min-height: 52px;
+  border: 1px solid var(--game-panel-line);
+  border-radius: 10px;
+  background: var(--game-panel);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.homeGameActions a:active, .inventoryFloor:active { background: var(--game-tile); }
+.homeGameActions .rowChevron { width: 6px; height: 6px; }
+@media (max-width: 350px) {
+  .homeGameActions a { font-size: 12px; gap: 5px; padding-inline: 6px; }
+}
+.feedingCard dl .mediaRow { justify-content: space-between; }
+.feedingCard dl dd { margin: 0; color: var(--gold); font-weight: 700; text-align: right; }
+.feedingCard dl + .textLink { margin-block-start: 2px; }
+.feedingCard .mediaHeading { margin-bottom: 8px; }
+.modesCard .mediaDetails + .mediaDetails { border-top: 1px solid var(--game-panel-line); }
+
+.inventoryPrices {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  min-width: 57px;
+}
+.inventoryPrices > .priceBadge { padding-inline: 3px; min-height: 25px; }
+.inventoryFloor, .inventoryMint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  white-space: nowrap;
+}
+.inventoryFloor {
+  min-height: 34px;
+  border-radius: 5px;
+  padding-inline: 3px;
+  color: var(--text);
+}
+.inventoryMint { color: var(--muted); font-size: 10px; padding-inline: 3px; }
+:is(.inventoryFloor, .inventoryMint) .priceBadge {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  font-size: 12px;
+}
+.inventoryMint .priceBadge { font-size: 11px; }
+.externalMark {
+  position: relative;
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border: solid currentColor;
+  border-width: 1.5px 1.5px 0 0;
+  border-radius: 0 1px 0 0;
+}
+.externalMark::after {
+  content: "";
+  position: absolute;
+  width: 9px;
+  height: 1.5px;
+  inset: 3px -1px auto auto;
+  background: currentColor;
+  rotate: -45deg;
+}
+
+.stickerShelf .stickerMintTotal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  margin: 0 0 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.stickerMintTotal strong { margin-inline-start: auto; color: var(--gold); }
+.albumTileMeta { display: flex; justify-content: center; gap: 3px; white-space: nowrap; font-size: 9px; line-height: 1.4; }
+.albumTileMeta span { padding: 1px 3px; border-radius: 4px; background: var(--game-tile); color: var(--muted); }
+.albumTileMeta span.isComplete { color: #211812; background: #ffce91; }
+.albumPublishing { display: grid; gap: 2px; margin-block: 9px; padding: 9px 10px 2px; border-radius: 8px; background: var(--game-tile); }
+.albumPublishing dl { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 10px; font-size: 11px; }
+.albumPublishing dt { color: var(--muted); }
+.albumPublishing dd { margin: 0; font-size: 14px; font-weight: 700; }
+.albumPublishing .priceBadge { padding: 0; border: 0; background: none; box-shadow: none; }
+.albumPublishing .textLink { justify-content: space-between; min-height: 38px; font-size: 12px; }
+
+.awardPortrait {
+  display: grid;
+  width: max-content;
+  place-items: center;
+  border-radius: 50%;
+  background: #393025;
+}
+.awardPortrait .gameArt { border-radius: 50%; }
+.awardPortrait[data-award="explorer"] { background: #1c3546; }
+.awardPortrait[data-award="referral"] { background: #283c35; }
+.awardPortrait[data-award="shared"] { background: #493330; }
+.awardPortrait[data-award="five"] { background: #433451; }
+.awardPortrait[data-award="community"] { background: #303d55; }
+.awardPortrait[data-award="squad"] { background: #58412b; }
+.adminAward { grid-template-columns: 34px minmax(0,1fr) auto; align-items: start; }
+.adminAward > span:last-child { color: var(--gold); font-weight: 700; }
+
+.awardNoticeHost {
+  position: fixed;
+  z-index: 70;
+  inset: calc(var(--system-top-inset) + var(--telegram-top-inset) + 88px) 12px auto;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.awardToast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: min(100%, 350px);
+  min-height: 45px;
+  padding: 6px 13px 6px 7px;
+  border-radius: 30px;
+  background: #090e1df2;
+  color: #fff;
+  border: 1px solid #ffffff18;
+  box-shadow: 0 6px 20px #0005;
+}
+.awardToast > .awardPortrait { flex: none; }
+.awardToast > div { min-width: 0; }
+.awardToast small { color: #c3cbdb; font-size: 10px; line-height: 1.2; }
+.awardToast strong { display: block; font-size: 13px; line-height: 1.25; overflow-wrap: anywhere; }
+.awardPortrait { position: relative; }
+.awardPortraitMark {
+  position: absolute;
+  inset: auto -1px -1px auto;
+  display: grid;
+  place-items: center;
+  width: 13px;
+  height: 13px;
+  font-size: 8px;
+  color: #f4deae;
+  background: #1b1b20;
+  border-radius: 50%;
 }

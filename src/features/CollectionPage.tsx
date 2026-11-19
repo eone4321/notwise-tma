@@ -1,3 +1,5 @@
+import publishing from '../domain/game-publishing.json';
+import { Price } from './Price';
 import { collectionMarket } from './marketData';
 import { Link, useLocation } from 'react-router';
 import stickers from '../../public/data/all_100_stickers.json';
@@ -40,6 +42,15 @@ export function CollectionPage() {
 
   const matches = album === null ? [] : stickers.filter(item => stickerAlbum(item.id) === album);
   const count = album === null ? stickers.filter(item => isDone(item.id)).length : matches.filter(item => isDone(item.id)).length;
+  const quotesById = new Map(market?.items.map(quote => [quote.id, quote]));
+  const editionFor = (id: number) => {
+    const entry = publishing.albums[id - 1];
+    return { ...entry, created: entry.edition - (market?.albumIssue?.[id] ?? entry.remaining) };
+  };
+  const supplyFor = (id: number) => quotesById.get('album-' + id)?.supply;
+  const knownSupplies = publishing.albums.map(item => supplyFor(item.id));
+  const totalMinted = knownSupplies.every((supply): supply is number => typeof supply === 'number')
+    ? knownSupplies.reduce((sum, supply) => sum + supply, 0) : undefined;
   const title = album === null ? '' : albums[album - 1];
   const theme = themes[title] ?? marketPacks.packs.find(pack => pack.name === 'NOT Wise: ' + title)?.theme;
   const total = album === null ? stickers.length : matches.length;
@@ -50,7 +61,7 @@ export function CollectionPage() {
     </nav>}
     {marketView ? <section className="card marketCollections" aria-busy={!market && pending}>
       {marketCollections.map(item => {
-        const quote = market?.items.find(row => row.id === item.id);
+        const quote = quotesById.get(item.id);
         const floor = quote?.floor;
         return <details className="mediaDetails marketCollection" key={item.id} id={item.id} open={hash === "#" + item.id || undefined}>
           <summary>
@@ -69,15 +80,13 @@ export function CollectionPage() {
       <h2 className="albumMarketHeading">NFT-наборы стикеров</h2>
       {albums.map((title, index) => {
         const id = index + 1;
-        const quote = market?.items.find(item => item.id === 'album-' + id);
+        const quote = quotesById.get('album-' + id);
+        const published = editionFor(id);
         return <details className="mediaDetails marketCollection" key={id} id={'album-' + id} open={hash === '#album-' + id || undefined}>
           <summary><AlbumLogo id={id} size={48}/>
-            <span><strong>{title}</strong><small>{quote?.floor ? `от ${format.format(quote.floor)} GRAM` : 'Флор недоступен'}</small></span>
+            <span><strong>{title}</strong><small>{typeof quote?.supply === 'number' ? `Сминчено ${format.format(quote.supply)}` : 'Выпуск NFT'}{quote?.floor ? ` · от ${format.format(quote.floor)} GRAM` : ''}</small></span>
           </summary>
-          {typeof quote?.supply === 'number' && <p>Выпущено в TON · {format.format(quote.supply)}</p>}
-          <p className="caption">{typeof market?.albumIssue?.[id] === 'number'
-            ? `Доступно к выпуску в игре · ${format.format(market.albumIssue[id])}`
-            : 'Остаток выпуска можно проверить в игре.'}</p>
+          <p>Создано в игре {format.format(published.created)} из {format.format(published.edition)}.</p>
           <a className="textLink" href={`https://getgems.io/collection/${stickerData.collectionByAlbum[id]}`} target="_blank" rel="noreferrer">Открыть на Getgems</a>
         </details>;
       })}
@@ -86,18 +95,23 @@ export function CollectionPage() {
         <section className="card stickerShelf">
           <ProgressCount count={count} total={total}/>
           <ProgressStatus/>
+          <p className="stickerMintTotal"><GameGlyph name="treasure"/> Сминчено наборов <strong>{totalMinted === undefined ? '—' : format.format(totalMinted)}</strong></p>
           <details className="mediaDetails stickerHelp">
             <summary><GameGlyph name="info"/><strong>Как собираются наборы</strong></summary>
             <p>Стикерпак даёт 1–3 стикера. Повторки возможны. Часть карточек выдаётся за секреты и достижения.</p>
-            <p>Собери все 5 карточек набора, чтобы открыть его выпуск. Доступность и цену создания набора показывает игра.</p>
+            <p>Собери все пять карточек альбома, чтобы создать набор. Созданный набор можно выпустить в TON.</p>
           </details>
           <div className="albumGrid">{albums.map((label, index) => {
             const pack = index + 1;
+            const minted = supplyFor(pack);
             const found = stickers.filter(item => stickerAlbum(item.id) === pack && isDone(item.id)).length;
             return <Link key={label} to={`/collections/albums/${pack}`}>
               <AlbumLogo id={pack}/>
-              <span className="sr-only">{label}, собрано {found} из 5</span>
-              <span aria-hidden="true" className={`albumCornerBadge${found === 5 ? ' isComplete' : ''}`}>{found}/5</span>
+              <span className="sr-only">{label}, собрано {found} из 5{typeof minted === 'number' ? `, сминчено ${minted}` : ''}</span>
+              <span className="albumTileMeta" aria-hidden="true">
+                <span className={found === 5 ? 'isComplete' : undefined}>{found}/5</span>
+                {typeof minted === 'number' && <span>{format.format(minted)} NFT</span>}
+              </span>
             </Link>;
           })}</div>
         </section>
@@ -107,6 +121,7 @@ export function CollectionPage() {
         </div></div>
         <ProgressCount count={count} total={total}/>
         <ProgressStatus/>
+        <AlbumPublishing edition={editionFor(album)} minted={supplyFor(album)} floor={quotesById.get('album-' + album)?.floor}/>
         {matches.map(item => <div className="stickerProgressRow" key={item.id}>
           <details className="mediaDetails" open={state?.stickerId === item.id || undefined}><summary>
             <GameArt path={`/game/stickers/${item.id}.webp`} size={34}/>
@@ -124,22 +139,6 @@ export function CollectionPage() {
             onChange={event => setMark('collected', item.id, event.target.checked)}/>
             <span className="sr-only">Собран: {item.name}</span></label>
         </div>)}
-        <details className="mediaDetails guideDisclosure" open={state?.mintOpen || undefined}>
-          <summary>
-            <GameArt path="/brand/collections/classics.png" size={34}/>
-            <span><strong>Выпуск NFT-набора</strong><small>Пять карточек · проверка тиража в игре</small></span>
-          </summary>
-          {(() => {
-            const quote = market?.items.find(item => item.id === 'album-' + album);
-            return quote?.available || typeof quote?.supply === 'number'
-              ? <p>{quote.floor ? `От ${format.format(quote.floor)} GRAM на Getgems. ` : ''}{typeof quote.supply === 'number' && `Выпущено в TON · ${format.format(quote.supply)}.`}</p>
-              : null;
-          })()}
-          {typeof market?.albumIssue?.[album] === 'number' && <p>Доступно к выпуску в игре · {format.format(market.albumIssue[album])}</p>}
-          <p>После сбора всех карточек открой набор в игре. Там показано, остались ли места для создания и сколько стоит выпуск. После создания набора его можно выпустить в TON, если минт доступен для твоего набора.</p>
-          <a className="textLink spacedLink" href={`https://getgems.io/collection/${stickerData.collectionByAlbum[album]}`}
-            target="_blank" rel="noreferrer">Открыть этот набор на Getgems</a>
-        </details>
       </section>}
     </>}
   </>;
@@ -149,5 +148,21 @@ function ProgressCount({ count, total }: { count: number; total: number }) {
   return <div className="stickerProgress">
     <div className="progressCounts"><strong>Собрано {count}/{total}</strong><span>Осталось {total - count}</span></div>
     <progress className="gameProgress" value={count} max={total} aria-label="Собрано стикеров"/>
+  </div>;
+}
+
+function AlbumPublishing({ edition, minted, floor }: {
+  edition: typeof publishing.albums[number] & { created: number }; minted?: number | null; floor?: number | null;
+}) {
+  return <div className="albumPublishing">
+    <dl>
+      <div><dt>Сминчено</dt><dd>{typeof minted === 'number' ? format.format(minted) : '—'}</dd></div>
+      <div><dt>Создано в игре</dt><dd>{format.format(edition.created)}/{format.format(edition.edition)}</dd></div>
+      <div><dt>Создание</dt><dd><Price value={edition.creationGram} currency="gram"/></dd></div>
+      <div><dt>Минт</dt><dd><Price value={edition.mintGram} currency="gram"/></dd></div>
+    </dl>
+    <a className="textLink" href={`https://getgems.io/collection/${stickerData.collectionByAlbum[edition.id]}`} target="_blank" rel="noreferrer">
+      Getgems {floor ? <Price value={floor} currency="gram"/> : <span className="externalMark" aria-hidden="true"/>}
+    </a>
   </div>;
 }
