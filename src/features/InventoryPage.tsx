@@ -53,7 +53,7 @@ export function OwlPage() {
         <p className="caption">В игре открой осколки в инвентаре и выбери яйцо.</p>
         <Link className="mediaRow" to="/owl/mystery" state={{ returnTo: pathname }} aria-label="Загадочное яйцо, 3 000 осколков скорлупы">
           <GameArt path={itemPath('egg-stars.webp')} size={40}/>
-          <span><strong>Загадочное яйцо</strong><small>Белое на красном фоне</small></span>
+          <span><strong>Загадочное яйцо</strong></span>
           <span className="rowEnd shardCost"><strong>3 000</strong><GameArt path={itemPath('eggshell-shards-icon.webp')} size={23}/><span className="rowChevron" aria-hidden="true"/></span>
         </Link>
         <Link className="mediaRow" to="/owl/season" state={{ returnTo: pathname }} aria-label="Сезонное загадочное яйцо, 15 000 осколков скорлупы">
@@ -198,6 +198,7 @@ const categories: Record<string, Category> = {
       { name: 'Эпическая книга исследователей', file: 'book.webp', effect: 'Открывает ежедневную загадку. На ответ 60 секунд. Верный ответ даёт монеты, опыт и +5 мудрости на сутки. Три ошибки уничтожают книгу.', source: 'Лавка или награда из яйца' },
       { name: 'Монтмориллонит', file: 'montmorillonite.webp', effect: 'С экипированным артефактом здоровье остаётся полным, а бонус к дропу $NOT растёт на 10%. Выпадает из загадочных яиц.',
         source: 'Лавка · Кристалл маны', offerId: 'mana-crystal' },
+      { name: 'Морфер', file: 'morpher.webp', offerId: 'squad-morpher', effect: 'Предмет трансформации. Позволяет изменить внешность и свойства совы при помощи пластилина.', source: 'Лавка сквада · серебро за осады' },
       { name: 'Заточка кольца', file: 'scroll-enchant-ring.webp', offerId: 'squad-scroll-ring', effect: 'Мистический свиток с поля осады. Улучшает кольцо: +1 к его атрибуту и +5% к бонусу дропа $NOT.', source: 'Лавка сквада · серебро за осады' },
       { name: 'Заточка скина', file: 'scroll-enchant-skin.webp', offerId: 'squad-scroll-skin', effect: 'Мистический свиток с поля осады. Улучшает скин, прибавляя 5% к бонусу дропа $NOT за ступень.', source: 'Лавка сквада · серебро за осады' },
       { name: 'Универсальная заточка', file: 'enchanter.webp', effect: 'Подходит для кольца и скина. За одну ступень даёт тот же бонус, что и соответствующий свиток.', source: 'Источник и цена пока не подтверждены' },
@@ -207,7 +208,7 @@ const categories: Record<string, Category> = {
     title: 'Крафт и хранение XP', icon: 'eggshell-shards-icon.webp', summary: 'Скорлупа, дискеты опыта и колбы SP',
     items: [
       { name: 'Холодильник XP', file: 'chiller.webp', effect: 'Открытая дверца замораживает опыт: капсулы продолжают давать монеты и лут, но XP не начисляется.', source: 'Управление опытом' },
-      { name: 'Осколки скорлупы', file: 'eggshell-shards-icon.webp', effect: 'Из осколков можно собрать яйца и другие награды. Загадочное яйцо (белое на красном фоне) стоит 3 000 осколков, сезонное загадочное — 15 000.', source: 'Яйца и капсулы · рецепты в инвентаре' },
+      { name: 'Осколки скорлупы', file: 'eggshell-shards-icon.webp', effect: 'Из осколков можно собрать яйца и другие награды. Загадочное яйцо стоит 3 000 осколков, сезонное загадочное — 15 000.', source: 'Яйца и капсулы · рецепты в инвентаре' },
       { name: 'Пустая дискета XP', file: 'floppy-empty.webp', effect: 'Заготовка для записи XP. Размер дискеты выбираешь при записи.', source: 'Лавка · покупка за Stars' },
       ...floppySpecs.map(([id, contents, cost]) => ({
         name: 'Дискета ' + contents + ' XP', file: 'floppy-' + id + '.webp',
@@ -272,7 +273,7 @@ function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {
     'floppy-empty.webp': 'floppy-xp',
   }[item.file] ?? item.file.split('.')[0]);
   const offer = shopItems.find(offer => offer.id === (item.offerId ?? key));
-  const level = offer?.required_level ?? (offer?.category === 'ring' ? 5 : undefined);
+  const level = offer?.required_level;
   const price = item.price ?? (offer && { value: offer.price, currency: offer.currency as Currency });
   return <li className="inventoryRow" id={id}>
     <GameArt path={itemPath(item.file)} size={36}/>

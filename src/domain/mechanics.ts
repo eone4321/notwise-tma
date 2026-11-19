@@ -1,6 +1,6 @@
 export type Tier = 'dark'|'silver'|'gold';
 export const tiers: Tier[] = ['dark','silver','gold'];
-export const tierNames: Record<Tier,string> = {dark:'Обычная',silver:'Серебряная',gold:'Золотая'};
+export const tierNames: Record<Tier,string> = {dark:'Обсидиановая',silver:'Серебряная',gold:'Золотая'};
 export const baseChance: Record<Tier,number> = {dark:1,silver:1.5,gold:5};
 export const duration: Record<Tier,number> = {dark:14_400_000,silver:28_800_000,gold:86_400_000};
 export const starPrice: Record<Tier,number> = {dark:100,silver:500,gold:2500};

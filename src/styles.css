@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: 'Gilroy', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color-scheme: dark;
   font-variant-numeric: tabular-nums;
   --background: #080d1b;
@@ -731,20 +731,48 @@ html { scrollbar-gutter: stable; }
 .marketPriceValues > :nth-child(2) { grid-row: 2; }
 
 @font-face {
-  font-family: Manrope;
-  src: url('/fonts/manrope-latin.woff2') format('woff2');
-  font-weight: 400 800;
+  font-family: 'Gilroy';
+  src: local('Gilroy-Light'), local('Gilroy Light'), url('/fonts/Gilroy-Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
   font-display: swap;
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: Manrope;
-  src: url('/fonts/manrope-cyrillic.woff2') format('woff2');
-  font-weight: 400 800;
+  font-family: 'Gilroy';
+  src: local('Gilroy-Regular'), local('Gilroy Regular'), local('Gilroy'), url('/fonts/Gilroy-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
   font-display: swap;
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
-:root { font-family: Manrope, system-ui, -apple-system, sans-serif; }
+@font-face {
+  font-family: 'Gilroy';
+  src: local('Gilroy-Medium'), local('Gilroy Medium'), url('/fonts/Gilroy-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Gilroy';
+  src: local('Gilroy-SemiBold'), local('Gilroy SemiBold'), url('/fonts/Gilroy-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Gilroy';
+  src: local('Gilroy-Bold'), local('Gilroy Bold'), url('/fonts/Gilroy-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Gilroy';
+  src: local('Gilroy-ExtraBold'), local('Gilroy ExtraBold'), url('/fonts/Gilroy-ExtraBold.woff') format('woff');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+:root { font-family: 'Gilroy', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 
 :root[data-theme="graphite"] {
   --background: #111112;

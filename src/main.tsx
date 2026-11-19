@@ -22,7 +22,7 @@ void (async () => {
   });
   await Promise.all([
     prepareArt,
-    document.fonts.load('500 16px Manrope', 'Not Wise · Яйца и скины').catch(() => []),
+    document.fonts.load('500 16px Gilroy', 'Not Wise · Яйца и скины').catch(() => []),
   ]);
   void bootTelegram();
   createRoot(document.getElementById('root')!).render(
