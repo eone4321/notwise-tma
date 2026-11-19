@@ -9,10 +9,10 @@ const icons = {
   not: '/brand/tokens/not.webp',
 };
 
-export function Price({ value, currency }: { value: number; currency: Currency }) {
+export function Price({ value, currency, from, approximate }: { value: number; currency: Currency; from?: boolean; approximate?: boolean }) {
   return <span className="priceBadge">
     <span className="sr-only">{labels[currency]}: </span>
-    <span className="priceVal">{value.toLocaleString('ru-RU')}</span>
+    <span className="priceVal">{from ? 'от ' : approximate ? '≈ ' : ''}{value.toLocaleString('ru-RU')}</span>
     {currency === 'stars' ? (
       <span className="priceIcon starIcon" aria-hidden="true">⭐</span>
     ) : (

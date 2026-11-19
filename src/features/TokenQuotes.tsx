@@ -1,7 +1,7 @@
+import { DetailLink } from '../ui/DetailLink';
 import { useModal } from '../ui/useModal';
 import { artSrc } from '../ui/warmArt';
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import tokens from '../../public/data/tokens.json';
 import { tokenMarket, type TokenQuote } from './marketData';
@@ -40,7 +40,7 @@ function useQuotes() {
   return { rows, usable, pending, stale, reload: () => tokenMarket.refresh(true) };
 }
 
-function QuoteList({ quotes, fromHome }: { quotes: ReturnType<typeof useQuotes>; fromHome?: boolean }) {
+function QuoteList({ quotes }: { quotes: ReturnType<typeof useQuotes> }) {
   const { rows, usable, pending, stale, reload } = quotes;
   const updated = usable.find(row => row.fetchedAt)?.fetchedAt;
   return <>
@@ -49,13 +49,13 @@ function QuoteList({ quotes, fromHome }: { quotes: ReturnType<typeof useQuotes>;
         const price = usable.find(row => row.symbol === symbol)?.displayPrice ?? '—';
         const cap = tokenCapitalization(rows.find(row => row.symbol === symbol));
         return <li key={symbol}>
-          <Link className="tokenRateLink" to={`/ecosystem/tokens#token-${symbol}`} state={{ returnTo: fromHome ? '/' : '/ecosystem/quotes' }}
+          <DetailLink className="tokenRateLink" to={`/ecosystem/tokens#token-${symbol}`}
             aria-label={`${symbol}, ${price}. ${cap.label} ${cap.value}. Открыть токен`}>
             <img src={artSrc(tokenIcon(symbol))} alt="" width="30" height="30"/>
             <span className="tokenRateName"><b>{symbol}</b><small>{name}</small></span>
             <span className="quoteNumbers"><strong>{price}</strong><small>{cap.label} {cap.value}</small></span>
             <span className="rowChevron" aria-hidden="true"/>
-          </Link>
+          </DetailLink>
         </li>;
       })}
     </ul>
@@ -126,7 +126,7 @@ export function TokenTicker() {
           <h2 id="ticker-rates-title" data-dialog-title tabIndex={-1}>Курсы токенов</h2>
           <button className="close" type="button" aria-label="Закрыть курсы" onClick={() => setOpened(false)}>×</button>
         </div>
-        <QuoteList quotes={quotes} fromHome/>
+        <QuoteList quotes={quotes}/>
       </div>
     </dialog>
   </>;

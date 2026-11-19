@@ -1,3 +1,4 @@
+import { DetailLink } from '../ui/DetailLink';
 import publishing from '../domain/game-publishing.json';
 import { Price } from './Price';
 import { collectionMarket } from './marketData';
@@ -32,7 +33,7 @@ const format = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
 const stickerAlbum = (id: number) => Math.ceil(id / 5);
 
 export function CollectionPage() {
-  const { pathname, hash, state } = useLocation();
+  const { pathname, hash } = useLocation();
   const { collected, completed, setMark } = useProgress();
   const isDone = (id: number) => collected.includes(id) || completed.includes(id);
   const albumNumber = Number(pathname.match(/albums\/(\d+)$/)?.[1]);
@@ -56,8 +57,8 @@ export function CollectionPage() {
   const total = album === null ? stickers.length : matches.length;
   return <>
     {album === null && <nav className="choiceBar profileTabs" aria-label="Раздел коллекций">
-      <Link to="/collections" aria-current={!marketView ? 'page' : undefined}><GameGlyph name="gift"/>Стикеры</Link>
-      <Link to="/collections/market" state={{ returnTo: state?.returnTo ?? '/collections' }} aria-current={marketView ? 'page' : undefined}><GameGlyph name="treasure"/>NFT на Getgems</Link>
+      <Link to="/collections" replace aria-current={!marketView ? 'page' : undefined}><GameGlyph name="gift"/>Стикеры</Link>
+      <Link to="/collections/market" replace aria-current={marketView ? 'page' : undefined}><GameGlyph name="treasure"/>NFT на Getgems</Link>
     </nav>}
     {marketView ? <section className="card marketCollections" aria-busy={!market && pending}>
       {marketCollections.map(item => {
@@ -68,7 +69,7 @@ export function CollectionPage() {
             <GameArt path={'/brand/collections/' + item.id + '.png'} size={42}/>
             <span><strong>{item.name}</strong>
               <small>{!market && pending ? 'Загружаем флор…' : floor && floor > 0
-                ? <span className="floorPrice" title={quote?.available === false ? 'Последняя доступная цена' : undefined}>от {format.format(floor)} TON</span>
+                ? <span className="floorPrice" title={quote?.available === false ? 'Последняя доступная цена' : undefined}><Price value={floor} currency="gram" from/></span>
                 : 'Флор недоступен'}</small></span>
           </summary>
           <p>{purpose[item.id]}</p>
@@ -84,7 +85,7 @@ export function CollectionPage() {
         const published = editionFor(id);
         return <details className="mediaDetails marketCollection" key={id} id={'album-' + id} open={hash === '#album-' + id || undefined}>
           <summary><AlbumLogo id={id} size={48}/>
-            <span><strong>{title}</strong><small>{typeof quote?.supply === 'number' ? `Сминчено ${format.format(quote.supply)}` : 'Выпуск NFT'}{quote?.floor ? ` · от ${format.format(quote.floor)} GRAM` : ''}</small></span>
+            <span><strong>{title}</strong><small>{typeof quote?.supply === 'number' ? `Сминчено ${format.format(quote.supply)}` : 'Выпуск NFT'}{quote?.floor ? <> · <Price value={quote.floor} currency="gram" from/></> : null}</small></span>
           </summary>
           <p>Создано в игре {format.format(published.created)} из {format.format(published.edition)}.</p>
           <a className="textLink" href={`https://getgems.io/collection/${stickerData.collectionByAlbum[id]}`} target="_blank" rel="noreferrer">Открыть на Getgems</a>
@@ -105,14 +106,14 @@ export function CollectionPage() {
             const pack = index + 1;
             const minted = supplyFor(pack);
             const found = stickers.filter(item => stickerAlbum(item.id) === pack && isDone(item.id)).length;
-            return <Link key={label} to={`/collections/albums/${pack}`}>
+            return <DetailLink key={label} to={`/collections/albums/${pack}`}>
               <AlbumLogo id={pack}/>
               <span className="sr-only">{label}, собрано {found} из 5{typeof minted === 'number' ? `, сминчено ${minted}` : ''}</span>
               <span className="albumTileMeta" aria-hidden="true">
                 <span className={found === 5 ? 'isComplete' : undefined}>{found}/5</span>
                 {typeof minted === 'number' && <span>{format.format(minted)} NFT</span>}
               </span>
-            </Link>;
+            </DetailLink>;
           })}</div>
         </section>
       </> : <section className="card stickerShelf stickerCollection">
@@ -123,12 +124,12 @@ export function CollectionPage() {
         <ProgressStatus/>
         <AlbumPublishing edition={editionFor(album)} minted={supplyFor(album)} floor={quotesById.get('album-' + album)?.floor}/>
         {matches.map(item => <div className="stickerProgressRow" key={item.id}>
-          <details className="mediaDetails" open={state?.stickerId === item.id || undefined}><summary>
+          <details className="mediaDetails"><summary>
             <GameArt path={`/game/stickers/${item.id}.webp`} size={34}/>
             <span><strong>{item.name}</strong><small>{item.kind === 'secret' ? 'Секрет' :
               item.kind === 'achievement' ? 'Достижение' : 'Набор стикеров'}</small></span>
           </summary>
-          {item.kind === 'secret' ? <Link className="textLink" to={`/secrets#sticker-${item.id}`} state={{ returnTo: pathname }}>Условие секрета</Link> :
+          {item.kind === 'secret' ? <DetailLink className="textLink" to={`/secrets#sticker-${item.id}`}>Условие секрета</DetailLink> :
             <p>{achievementActions[item.id] ?? (
               stickerData.oddsById[item.id] > 0
                 ? `Шанс получить из одного пака · ${chanceLabel(chancePerOpening(stickerData.oddsById[item.id], stickerData.drawCounts))}`

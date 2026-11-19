@@ -1,116 +1,146 @@
 import { useLayoutEffect } from 'react';
-import { useLocation, useNavigate, useNavigationType } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 
-const positions = new Map<string, number>();
+type View = { scroll: number; open: string[] };
+const views = new Map<string, View>();
+const viewKey = 'notwise.guide.views.v1';
+
+function readView(address: string) {
+  try {
+    if (!views.has(address)) {
+      const value: unknown = JSON.parse(sessionStorage.getItem(viewKey + address) ?? 'null');
+      if (value && typeof value === 'object' && 'scroll' in value && typeof value.scroll === 'number' &&
+          Number.isFinite(value.scroll) && 'open' in value && Array.isArray(value.open)) {
+        views.set(address, { scroll: Math.max(0, value.scroll), open: value.open.filter(key => typeof key === 'string') });
+      }
+    }
+  } catch { /* The in-memory view works when browser storage is disabled. */ }
+  return views.get(address);
+}
 
 export function useGuideScroll() {
-  const { key, hash, pathname, state } = useLocation();
-  const navigationType = useNavigationType();
+  const { key, hash, pathname } = useLocation();
   const address = pathname + hash;
-  const restore = state?.restoreGuideScroll || navigationType === 'POP';
 
   useLayoutEffect(() => {
-    const previousPosition = restore ? positions.get(address) : undefined;
-    let pending = previousPosition;
+    const main = document.querySelector('main');
+    if (!main) return;
+    const saved = readView(address);
+    main.dataset.restored = String(Boolean(saved));
+    const disclosures = () => Array.from(main.querySelectorAll('details'));
+    const detailKey = (details: HTMLDetailsElement, index: number) => details.id || String(index);
+    const anchor = hash && document.getElementById(hash.slice(1));
+    let pending = saved?.scroll;
     let observer: ResizeObserver | undefined;
-    let frame = 0;
 
-    function save() {
-      if (pending === undefined && document.body.style.position !== 'fixed') {
-        positions.set(address, window.scrollY);
+    if (saved) {
+      for (const [index, details] of disclosures().entries()) {
+        details.open = details === anchor || saved.open.includes(detailKey(details, index));
+        if (details.open) details.dataset.restoredOpen = '';
       }
     }
-    function finish() {
-      pending = undefined;
-      observer?.disconnect();
-      cancelAnimationFrame(frame);
-      save();
+    if (anchor) {
+      for (let parent = anchor.parentElement; parent && parent !== main; parent = parent.parentElement) {
+        if (parent instanceof HTMLDetailsElement) parent.open = true;
+      }
     }
-    function apply() {
+
+    const freezeView = (scroll = window.scrollY) => {
+      if (document.body.style.position === 'fixed') scroll = views.get(address)?.scroll ?? pending ?? scroll;
+      return { scroll, open: disclosures().flatMap((details, i) => details.open ? [detailKey(details, i)] : []) };
+    };
+    const save = () => {
+      if (pending === undefined) views.set(address, freezeView());
+    };
+    const persist = () => {
+      save();
+      const view = views.get(address);
+      if (!view) return;
+      try { sessionStorage.setItem(viewKey + address, JSON.stringify(view)); } catch { /* Optional. */ }
+    };
+    const restore = () => {
       if (pending === undefined || document.body.style.position === 'fixed') return;
       window.scrollTo({ top: pending, behavior: 'instant' });
-      if (Math.abs(window.scrollY - pending) <= 1) finish();
-    }
-    if (previousPosition !== undefined) {
-      apply();
-      if (pending !== undefined) {
-        observer = new ResizeObserver(apply);
-        const shell = document.querySelector('.shell');
-        if (shell) observer.observe(shell);
-        frame = requestAnimationFrame(apply);
+      if (Math.abs(window.scrollY - pending) <= 1) {
+        pending = undefined;
+        observer?.disconnect();
       }
+    };
+
+    if (pending !== undefined) {
+      restore();
+      if (pending !== undefined) {
+        observer = new ResizeObserver(restore);
+        observer.observe(main);
+      }
+    } else if (anchor) {
+      anchor.scrollIntoView({ block: 'start' });
     } else {
-      const anchor = hash && document.getElementById(hash.slice(1));
-      if (anchor) anchor.scrollIntoView();
-      else window.scrollTo({ top: 0, behavior: 'instant' });
-      save();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+    save();
+
+    function interrupt() {
+      pending = undefined;
+      observer?.disconnect();
+      persist();
     }
 
-    const interrupt = () => {
-      if (pending !== undefined) finish();
-      else save();
-    };
-    window.addEventListener('scroll', save, { passive: true });
-    document.addEventListener('pointerdown', interrupt, true);
-    document.addEventListener('wheel', interrupt, { passive: true, capture: true });
-    document.addEventListener('click', interrupt, true);
     const browserSetting = history.scrollRestoration;
     history.scrollRestoration = 'manual';
+    window.addEventListener('scroll', save, { passive: true });
+    window.addEventListener('pagehide', persist);
+    window.addEventListener('popstate', persist);
+    const clearDisclosureMarker = (event: Event) => {
+      if (event.target instanceof Element) event.target.closest('summary')?.parentElement?.removeAttribute('data-restored-open');
+    };
+    document.addEventListener('click', persist, true);
+    main.addEventListener('click', clearDisclosureMarker);
+    document.addEventListener('pointerdown', interrupt, true);
+    document.addEventListener('wheel', interrupt, { capture: true, passive: true });
+    main.addEventListener('toggle', save, true);
+
     return () => {
       observer?.disconnect();
-      cancelAnimationFrame(frame);
       window.removeEventListener('scroll', save);
+      window.removeEventListener('pagehide', persist);
+      window.removeEventListener('popstate', persist);
+      document.removeEventListener('click', persist, true);
       document.removeEventListener('pointerdown', interrupt, true);
       document.removeEventListener('wheel', interrupt, true);
-      document.removeEventListener('click', interrupt, true);
+      main.removeEventListener('toggle', save, true);
+      main.removeEventListener('click', clearDisclosureMarker);
       history.scrollRestoration = browserSetting;
     };
-  }, [address, hash, key, restore]);
+  }, [address, hash, key]);
+}
+
+const rootTabs = new Set([
+  '/owl/shop', '/owl/loot', '/owl/skins', '/combat/stats', '/ecosystem/quotes',
+  '/ecosystem/tokens', '/collections/market', '/support/settings', '/support/achievements', '/secrets/achievements',
+]);
+
+export function parentPath(path: string) {
+  if (rootTabs.has(path)) return '/';
+  const parts = path.split('/').filter(Boolean);
+  if (parts[0] === 'collections' && parts[1] === 'albums') return '/collections';
+  if (parts[0] === 'combat' && parts[1] === 'skills' && parts.length === 3) return '/combat';
+  if (parts[0] === 'assets' && parts[1] === 'item') return '/assets';
+  return parts.length > 1 ? '/' + parts.slice(0, -1).join('/') : '/';
 }
 
 export function useGuideNavigation() {
   const { pathname, hash, state } = useLocation();
   const navigate = useNavigate();
-  const sections = pathname.split('/').filter(Boolean);
-  const skipGrouping = (sections[0] === 'collections' && sections[1] === 'albums') ||
-    (sections[0] === 'combat' && sections[1] === 'skills' && sections.length === 3);
-  const isEgg = sections[0] === 'owl' && ['mystery','red','season','referral','green','gold'].includes(sections[1]);
-  const returnTo = state?.returnTo;
-  const rootPages = ['/owl', '/owl/shop', '/owl/loot', '/owl/skins', '/care', '/modes'];
-  const ecosystemTab = sections[0] === 'ecosystem' && (sections.length === 2 || hash.startsWith('#token-'));
-  const ecosystemReturn = ecosystemTab && hash.startsWith('#token-') &&
-    ['/', '/ecosystem', '/ecosystem/quotes'].includes(returnTo);
-  const market = pathname === '/collections/market';
-  const marketSource = market && typeof returnTo === 'string' &&
-    (/^\/collections(?:\/albums\/(?:[1-9]|1\d|20))?$/.test(returnTo) || ['/', '/owl', '/owl/shop', '/owl/loot'].includes(returnTo));
-  const fromEgg = pathname.startsWith('/assets/item/') || pathname === '/owl/skins';
-  const fromAlbum = pathname === '/secrets' && /^#sticker-\d+$/.test(hash) &&
-    typeof returnTo === 'string' && /^\/collections\/albums\/(?:[1-9]|1\d|20)$/.test(returnTo);
-  const hasReturn = typeof returnTo === 'string' && (
-    fromAlbum || marketSource ||
-    (pathname === '/assets/care' && returnTo === '/care') ||
-    (isEgg && returnTo === '/modes') ||
-    ecosystemReturn ||
-    (fromEgg && /^\/owl\/(mystery|red|season|referral|green|gold)$/.test(returnTo)) ||
-    (isEgg && ['/owl', '/owl/loot', '/owl/shop'].includes(returnTo))
-  );
-  const parent = hasReturn ? returnTo : market ? '/collections' : rootPages.includes(pathname) || ecosystemTab ? '/' : isEgg ? '/owl' : hash ? pathname : sections.length > 1
-    ? '/' + sections.slice(0, skipGrouping ? 1 : -1).join('/')
-    : '/';
-
   return {
     back: () => {
-      if (parent === pathname && !hash) return;
-      positions.set(pathname + hash, window.scrollY);
-      navigate(parent, { replace: true, state: {
-        restoreGuideScroll: true,
-        ...(marketSource && state?.mintOpen === true && { mintOpen: true }),
-        ...(fromAlbum && { stickerId: Number(hash.slice('#sticker-'.length)) }),
-      } });
+      if (state?.guideDetail === true && history.state?.idx > 0) {
+        navigate(-1);
+        return;
+      }
+      const parent = parentPath(pathname);
+      if (parent !== pathname || hash) navigate(parent, { replace: true });
     },
-    home: () => {
-      positions.set(pathname + hash, window.scrollY);
-      navigate('/', { replace: true });
-    },
+    home: () => navigate('/', { replace: true }),
   };
 }

@@ -1,5 +1,5 @@
+import { DetailLink } from '../ui/DetailLink';
 import { trackGuide } from './guideAnalytics';
-import { Link } from 'react-router';
 import { channelInvite } from '../domain/guide-links';
 import { artSrc } from '../ui/warmArt';
 import { useRef, useState } from 'react';
@@ -150,7 +150,7 @@ export function SupportPage({ isAdmin }: { isAdmin: boolean }) {
     <section className="card">
       <h2>Статистика гайда</h2>
       <p>В Telegram считаем открытия разделов и нажатия на ссылки в сводной статистике. Содержимое сообщений и личные ссылки в отчёт не попадают.</p>
-      {isAdmin && <Link to="/admin" className="textLink">Открыть админку</Link>}
+      {isAdmin && <DetailLink to="/admin" className="textLink">Открыть админку</DetailLink>}
     </section>
     <details className="card" id="game-settings">
       <summary><strong>Настройки игры NOT Wise</strong></summary>

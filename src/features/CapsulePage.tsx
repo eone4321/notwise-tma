@@ -1,3 +1,4 @@
+import { DetailLink } from '../ui/DetailLink';
 import { CapsulePrices } from './CapsulePrices';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
@@ -5,7 +6,6 @@ import xp from '../../public/data/xp_levels.json';
 import { chanceLabel, coinReward, duration, notOdds, tierNames, tiers, xpReward } from '../domain/mechanics';
 import { GameGlyph } from '../ui/GameGlyph';
 import { GameArt } from '../ui/GameArt';
-import { artSrc } from '../ui/warmArt';
 import { SkinFarmCalculator } from './SkinFarmCalculator';
 
 const capsuleNames = ['Obsidian', 'Moonlight Silver', 'Golden'];
@@ -13,26 +13,26 @@ const eggChances = ['3% (≈ 1 из 33)', '4,5% (≈ 1 из 22)', '15% (≈ 1 и
 const stickerChances = ['30%', '45%', '100%'];
 
 export function CapsulePage() {
-  const { hash, pathname } = useLocation();
+  const { hash, pathname, state } = useLocation();
   const currentTier = tiers.find(tier => pathname === '/capsules/' + tier || hash === '#' + tier);
   if (!currentTier) return <>
     <p className="intro">Выбери капсулу, чтобы посмотреть её награды и цену открытия.</p>
     <section className="card leanList capsuleList">
-      {tiers.map((tier, index) => <Link className="mediaRow capsuleChoice" key={tier} to={'/capsules/' + tier}>
-        <CapsuleSlot tier={tier}/>
+      {tiers.map((tier, index) => <DetailLink className="mediaRow capsuleChoice" key={tier} to={'/capsules/' + tier}>
+        <GameArt path={`/game/capsules/${tier}.webp`} size={46}/>
         <span><strong>{tierNames[tier]}</strong><small>Шанс яйца · {eggChances[index]}</small></span>
         <span className="rowEnd"><b>{duration[tier] / 3_600_000} ч</b><span className="rowChevron" aria-hidden="true"/></span>
-      </Link>)}
+      </DetailLink>)}
     </section>
     <CapsuleDropGuide/>
     <SlotGuide/>
   </>;
   return <>
-    <CapsuleDetail tier={currentTier}/>
+    <CapsuleDetail tier={currentTier} keepParent={state?.guideDetail === true}/>
   </>;
 }
 
-function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
+function CapsuleDetail({ tier: currentTier, keepParent }: { tier: typeof tiers[number]; keepParent: boolean }) {
   const index = tiers.indexOf(currentTier);
   const hours = duration[currentTier] / 3_600_000;
   const [level, setLevel] = useState('');
@@ -41,9 +41,9 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
   const odds = notOdds(currentTier, capsuleLevel);
   return <>
     <nav className="choiceBar profileTabs capsuleTabs" aria-label="Тип капсулы">
-      {tiers.map(tier => <Link key={tier} aria-current={tier === currentTier ? 'page' : undefined} to={'/capsules/' + tier}><GameArt path={`/game/capsules/${tier}.webp`} size={18}/>{tierNames[tier]}</Link>)}
+      {tiers.map(tier => <Link key={tier} replace state={keepParent ? { guideDetail: true } : undefined} aria-current={tier === currentTier ? 'page' : undefined} to={'/capsules/' + tier}><GameArt path={`/game/capsules/${tier}.webp`} size={18}/>{tierNames[tier]}</Link>)}
     </nav>
-    <div className="card mediaHeading capsuleHeading"><CapsuleSlot tier={currentTier}/><div>
+    <div className="card mediaHeading capsuleHeading guideReward"><GameArt path={`/game/capsules/${currentTier}.webp`} size={58}/><div>
       <h2>{tierNames[currentTier]} капсула</h2><p>{capsuleNames[index]} · бесплатно через {hours} ч</p>
     </div></div>
     <CapsulePrices key={currentTier} tier={currentTier}/>
@@ -57,8 +57,8 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
     </details>
     <section className="card">
       <h2>Дополнительные награды</h2>
-      <div className="mediaRow"><GameArt path="/game/items/egg.webp" size={40}/><Link className="textLink" to="/owl/mystery">Загадочное яйцо</Link><strong>{eggChances[index]}</strong></div>
-      <div className="mediaRow"><GameArt path="/game/items/sticker-pack.webp" size={40}/><Link className="textLink" to="/collections">Набор стикеров</Link><strong>{stickerChances[index]}</strong></div>
+      <div className="mediaRow"><GameArt path="/game/items/egg.webp" size={40}/><DetailLink className="textLink" to="/owl/mystery">Загадочное яйцо</DetailLink><strong>{eggChances[index]}</strong></div>
+      <div className="mediaRow"><GameArt path="/game/items/sticker-pack.webp" size={40}/><DetailLink className="textLink" to="/collections">Набор стикеров</DetailLink><strong>{stickerChances[index]}</strong></div>
     </section>
     <section className="card notDrop">
       <div className="mediaHeading notDropHeader">
@@ -90,16 +90,9 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
         </summary>
         <SkinFarmCalculator showTitle={false} />
       </details>
-      <Link className="textLink" to="/owl/skins">Как работают скины и жетоны</Link>
+      <DetailLink className="textLink" to="/owl/skins">Как работают скины и жетоны</DetailLink>
     </section>
   </>;
-}
-
-function CapsuleSlot({ tier }: { tier: typeof tiers[number] }) {
-  const background = artSrc('/game/ui/capsule-slot.webp');
-  return <span className="capsuleSlot" style={{ backgroundImage: `url("${background}")` }}>
-    <GameArt path={`/game/capsules/${tier}.webp`} size={43}/>
-  </span>;
 }
 
 function SlotGuide() {

@@ -1,3 +1,4 @@
+import { DetailLink } from '../ui/DetailLink';
 import { trackGuide } from './guideAnalytics';
 import { SquadMap } from './SquadMap';
 import { Price } from './Price';
@@ -26,7 +27,7 @@ export function SquadPage({ gameEntry }: { gameEntry: string }) {
       <li>После раунда награду получает сквад, который удержал территорию.</li>
       <li>В день празднования забери свою долю за раунды, в которых ты атаковал. Усиление действует 24 часа после получения.</li>
     </ol>
-    <Link to="/squads/shop" className="textLink">Магазин за серебро сквада</Link>
+    <DetailLink to="/squads/shop" className="textLink">Магазин за серебро сквада</DetailLink>
   </section></>;
   if (pathname === '/squads/shop') return <section className="card">
     <div className="mediaHeading"><span className="silverCoin"><GameArt path="/game/items/wise-coin.webp" size={40}/></span>

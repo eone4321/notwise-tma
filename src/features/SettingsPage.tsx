@@ -30,7 +30,7 @@ export function SettingsPage({ profile, earned }: { profile: GuideProfile | null
   return <>
     <h1 className="pageTitle">{en ? 'Settings' : 'Настройки'}</h1>
     <nav className="choiceBar profileTabs settingsTabs" aria-label={en ? 'Guide settings' : 'Настройки гайда'}>
-      {tabs.map(([to, label, glyph]) => <NavLink key={to} end to={to}><GameGlyph name={glyph}/>{label}</NavLink>)}
+      {tabs.map(([to, label, glyph]) => <NavLink key={to} end replace to={to}><GameGlyph name={glyph}/>{label}</NavLink>)}
     </nav>
     {pathname === '/support' && <div className="settingsContent" lang="ru"><SupportPage isAdmin={profile?.isAdmin === true}/></div>}
     {pathname === '/support/settings' && <div className="settingsContent">

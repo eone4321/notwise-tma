@@ -12,13 +12,13 @@ export function SkinFarmCalculator({ showTitle = false }: { showTitle?: boolean 
   const skinBonus = state.body + state.chest + [state.hat, state.glasses, state.eyes].filter(Boolean).length * 5 + 5 * Number(state.skinEnchant);
   const gearBonus = 5 * Number(state.ringEnchant) + (state.montmorillonite ? 10 : 0);
   const total = skinBonus + gearBonus + state.league;
-  return <div className="compactFarm">
+  return <div className="compactFarm calculator farmCalculator">
     <div className="farmTotal" aria-live="polite">
       <GameArt path="/game/items/wise-coin.webp" size={30}/>
       <span>{showTitle ? 'Калькулятор фарма' : 'Фарм монет'}<small>Скин +{skinBonus}% · предметы +{gearBonus}% · лига +{state.league}%</small></span>
       <strong>+{total}%</strong>
     </div>
-    <div className="compactFarmGrid">
+    <div className="compactFarmGrid calculatorGrid">
       <label className="field">Оперение
         <select value={state.body} onChange={event => setState({ ...state, body: Number(event.target.value) })}>
           <option value={0}>Нет</option><option value={5}>Обычное +5%</option><option value={15}>Золотое +15%</option>
@@ -34,7 +34,7 @@ export function SkinFarmCalculator({ showTitle = false }: { showTitle?: boolean 
       {([['hat', 'Убор'], ['glasses', 'Очки'], ['eyes', 'Глаза']] as const).map(([key, label]) =>
         <button key={key} type="button" aria-pressed={state[key]} onClick={() => setState({ ...state, [key]: !state[key] })}>{label} <small>+5%</small></button>)}
     </div>
-    <div className="compactFarmGrid">
+    <div className="compactFarmGrid calculatorGrid">
       {([['skinEnchant', 'Заточка скина', 20], ['ringEnchant', 'Заточка колец суммарно', 60]] as const).map(([key, label, max]) =>
         <label className="field" key={key}>{label}<input value={state[key]} inputMode="numeric" maxLength={2} placeholder="0"
           onChange={event => {

@@ -1,3 +1,4 @@
+import { DetailLink } from '../ui/DetailLink';
 import { trackGuide } from './guideAnalytics';
 import { GameGlyph } from '../ui/GameGlyph';
 import { artSrc } from '../ui/warmArt';
@@ -100,7 +101,7 @@ export function EcosystemPage({ gameEntry }: { gameEntry: string }) {
             {project.links.map(({ label, href }) => (
               <a key={href} href={href} target="_blank" rel="noreferrer" aria-label={`${label} · ${project.name}`}>{label}</a>
             ))}
-            {project.token && <Link to={`/ecosystem/tokens#token-${project.token}`} state={{ returnTo: pathname }}>Токен {project.token}</Link>}
+            {project.token && <DetailLink to={`/ecosystem/tokens#token-${project.token}`}>Токен {project.token}</DetailLink>}
           </div>}
         </article>
       ))}
@@ -124,7 +125,7 @@ export function EcosystemPage({ gameEntry }: { gameEntry: string }) {
       <h2>Коллекции NOT Wise</h2>
       <p>Owlings, Eggs, Merch и домены *.notwise.ton относятся к коллекциям.</p>
       <div className="projectLinks">
-        <Link to="/collections">Каталог гайда</Link>
+        <DetailLink to="/collections">Каталог гайда</DetailLink>
         <a href="https://getgems.io/notwise" target="_blank" rel="noreferrer">Getgems</a>
         <a href="https://opensea.io/collection/notwise" target="_blank" rel="noreferrer">OpenSea</a>
       </div>

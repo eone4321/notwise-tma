@@ -1,3 +1,4 @@
+import { DetailLink } from '../ui/DetailLink';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import skills from '../../public/data/skills.json';
@@ -54,8 +55,8 @@ export function CombatPage() {
   const skill = skills.find(item => item.id === Number(skillId) && item.branch === branchId);
   return <>
     {!branch && <nav className="choiceBar profileTabs combatTabs" aria-label="Раздел боя">
-      <Link to="/combat" aria-current={!page ? 'page' : undefined}><GameGlyph name="lightning"/>Навыки</Link>
-      <Link to="/combat/stats" aria-current={isStats ? 'page' : undefined}><GameGlyph name="shield"/>Характеристики</Link>
+      <Link to="/combat" replace aria-current={!page ? 'page' : undefined}><GameGlyph name="lightning"/>Навыки</Link>
+      <Link to="/combat/stats" replace aria-current={isStats ? 'page' : undefined}><GameGlyph name="shield"/>Характеристики</Link>
     </nav>}
     {skill ? <SkillDetail key={skill.id} skill={skill}/> :
       branch ? <>
@@ -63,19 +64,19 @@ export function CombatPage() {
         <section className="card skillShelf">
           <p className="caption">С уровня 2 открой дерево навыков. В характеристиках вложи свободное очко атрибута в эту ветку, затем изучи навык за полученное очко ветки. Очки <SpBadge/> из Додзе нужны для улучшений.</p>
           {skills.filter(item => item.branch === branch[0]).sort((a, b) => a.tier - b.tier).map(item =>
-            <Link to={'/combat/skills/' + branch[0] + '/' + item.id} className="mediaRow skillRow" key={item.id}>
+            <DetailLink to={'/combat/skills/' + branch[0] + '/' + item.id} className="mediaRow skillRow" key={item.id}>
               <span className="skillTile"><GameArt path={skillArt(item.id)} size={38}/><b aria-hidden="true">{item.tier}</b></span>
               <span><strong>{skillCopy[item.id - 1][0]}</strong><small>{unlockCondition(item)}</small></span>
               <span className="rowChevron" aria-hidden="true"/>
-            </Link>)}
+            </DetailLink>)}
         </section>
       </> : isStats ? <CombatStats/> : <>
         <p className="intro">Ветки навыков открываются на 2-м уровне. В бой можно взять до трёх навыков.</p>
         <div className="card combatBranches">
           {branches.map(([id, title, purpose]) =>
-            <Link className="mediaRow" to={'/combat/skills/' + id} key={id}>
+            <DetailLink className="mediaRow" to={'/combat/skills/' + id} key={id}>
               <GameAttribute name={id}/><span><strong>{title}</strong><small>{purpose}</small></span><span className="rowChevron" aria-hidden="true"/>
-            </Link>
+            </DetailLink>
           )}
         </div>
         <section className="card"><h2>Как прокачивать</h2><p>Вложи очко в нужный атрибут и открой следующий навык ветки. Затем прокачивай его за <SpBadge/>. Очки <SpBadge/> дают тренировки в Додзе и применение навыков в бою.</p></section>
@@ -99,7 +100,7 @@ export function ModesPage() {
         <details className="mediaDetails"><summary><GameSymbol name="trophy"/><span><strong>Призы сезона</strong><small>Первые 100 мест</small></span></summary>
         <p>Пример распределения фонда в 1 млн $NOT. 1-е место получает 400 000, 2-е — 350 000, 3-е — 250 000 $NOT. Топ-10 получает золотое загадочное яйцо, места 11–100 — белое загадочное яйцо на красном фоне.</p>
         <p>Призы приходят автоматически. Фонд зависит от сезона.</p>
-        <Link className="textLink" to="/owl/season" state={{ returnTo: '/modes' }}>Что выпадает из белого загадочного яйца</Link>
+        <DetailLink className="textLink" to="/owl/season">Что выпадает из белого загадочного яйца</DetailLink>
       </details>
       <details className="mediaDetails" id="leagues" open={hash === "#leagues" || undefined}><summary><GameSymbol name="shield"/><span><strong>Боевые лиги</strong><small>Пороги рейтинга и бонус к фарму</small></span></summary>
         <table className="priceTable">
@@ -220,16 +221,16 @@ function BattleStatsCalculator() {
   const [input, setInput] = useState({ level: '20', strength: '', agility: '', wisdom: '', endurance: '' });
   const stats = battleStats(Number(input.level), Number(input.strength), Number(input.agility), Number(input.wisdom), Number(input.endurance));
 
-  return <details className="card" id="battle-calculator">
-    <summary><strong>Калькулятор боевых характеристик</strong></summary>
+  return <details className="card mediaDetails calculator battleCalculator" id="battle-calculator">
+    <summary><GameGlyph name="fight"/><span><strong>Боевой калькулятор</strong><small>Здоровье, мана и урон</small></span></summary>
     <p className="caption">Введи итоговые атрибуты из профиля совы с учётом экипировки и усилений.</p>
-    <div className="quoteInputs">
-      {statInputs.map(([key, label]) => <label className="field" key={key}>{label}
+    <div className="calculatorGrid">
+      {statInputs.map(([key, label]) => <label className="field" key={key}><span>{key !== 'level' && <GameAttribute name={key}/>} {label}</span>
         <input inputMode="numeric" value={input[key]} placeholder="0" maxLength={4}
           onChange={event => setInput({ ...input, [key]: event.target.value.replace(/\D/g, '') })}/>
       </label>)}
     </div>
-    <dl className="analyticsRows" aria-live="polite">
+    <dl className="battleResults" aria-live="polite">
       <div><dt>Здоровье</dt><dd>{precise.format(stats.health)} HP</dd></div>
       <div><dt>Мана</dt><dd>{precise.format(stats.mana)}</dd></div>
       <div><dt>Базовый урон удара</dt><dd>{precise.format(stats.hit)} HP</dd></div>

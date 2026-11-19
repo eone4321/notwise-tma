@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { duration, speedupPrice, starPrice, type Tier } from '../domain/mechanics';
+import { Price } from './Price';
 import { GameArt } from '../ui/GameArt';
 
 const decimal = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
@@ -20,26 +21,25 @@ export function CapsulePrices({ tier }: { tier: Tier }) {
   const step = Math.min(remaining, 15);
   const saving = (stars - starsAt(remaining - step)) / starPrice[tier] * 100;
 
-  return <details className="card mediaDetails guideDisclosure">
+  return <details className="card mediaDetails guideDisclosure calculator timeCalculator">
     <summary><GameArt path="/brand/tokens/gram.png" size={36}/>
       <span><strong>Цена открытия</strong><small>Stars и GRAM по остатку таймера</small></span>
     </summary>
-    <div className="quoteInputs capsuleTimeInputs">
-      <label className="field">Осталось часов<input inputMode="numeric" value={inputHours} maxLength={2} placeholder="0"
+    <div className="calculatorGrid capsuleTimeInputs">
+      <label className="field">Часы<input inputMode="numeric" value={inputHours} maxLength={2} placeholder="0"
         onChange={event => setInputHours(event.target.value.replace(/\D/g, ''))}/></label>
-      <label className="field">Осталось минут<input inputMode="numeric" value={inputMinutes} maxLength={2} placeholder="0"
+      <label className="field">Минуты<input inputMode="numeric" value={inputMinutes} maxLength={2} placeholder="0"
         onChange={event => setInputMinutes(event.target.value.replace(/\D/g, ''))}/></label>
     </div>
     <div className="capsuleResult" aria-live="polite">
       {blank ? <p>Введи время с игрового таймера.</p> : !valid ? <p>Введи остаток до {hours} ч. В поле минут — от 0 до 59.</p> :
         remaining === 0 ? <strong>Можно открыть бесплатно</strong> : <>
-          <div><small>Telegram Stars</small><strong>{decimal.format(stars)} ⭐</strong></div>
-          <div><small>GRAM · ориентир</small><strong>≈ {decimal.format(gram)} <GameArt path="/brand/tokens/gram.png" size={18}/></strong></div>
+          <div><small>Stars</small><Price value={stars} currency="stars"/></div>
+          <div><small>GRAM · оценка</small><Price value={gram} currency="gram" approximate/></div>
         </>}
     </div>
-    {valid && !blank && remaining > 0 && <p className="caption">
-      Через {step} мин цена снизится на {decimal.format(saving)}% от полной цены с учётом округления Stars.
-      Точную цену в GRAM игра показывает при оплате.
+    {valid && !blank && remaining > 0 && <p className="caption calculatorNote">
+      Через {step} мин −{decimal.format(saving)}% от полной цены в Stars.
     </p>}
   </details>;
 }

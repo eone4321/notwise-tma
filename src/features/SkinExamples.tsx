@@ -1,6 +1,7 @@
-import { Link } from 'react-router';
+import { DetailLink } from '../ui/DetailLink';
 import { artSrc } from '../ui/warmArt';
 import { GameArt } from '../ui/GameArt';
+import { Link, useLocation } from 'react-router';
 
 export const skinExamples = [
   { id: 701, rarity: 'Эпический', features: 'Тёмное оперение, цепь NOT, голубые глаза, авиаторы и праздничный колпак', bonus: 30 },
@@ -10,11 +11,12 @@ export const skinExamples = [
 ] as const;
 
 export function SkinExamples() {
+  const { state } = useLocation();
   return <>
     <section className="card skinGuide">
       <h2>Скины совы</h2>
       <p>Детали скина и заточка увеличивают награду в монетах за победы и полёты.</p>
-      <a href="#skin-calculator" className="textLink">Посчитать свой бонус</a>
+      <Link to="#skin-calculator" replace state={state} className="textLink">Посчитать свой бонус</Link>
       <div className="skinGallery">{skinExamples.map(skin => <figure key={skin.id}>
         <div className="skinPreview">
           <img src={artSrc(`/game/skins/${skin.id}.svg`)} width="512" height="512" alt=""/>
@@ -32,7 +34,7 @@ export function SkinExamples() {
         <div><dt><GameArt path="/game/items/scroll-enchant-skin.webp" size={26}/> За уровень заточки</dt><dd>+5%</dd></div>
       </dl>
       <p>Золотое оперение, цепь NOT и один обычный аксессуар дают +30%. С заточкой +1 получится +35%. У скина №5405 заточка +1 поднимает бонус с +35% до +40%. Без заточки +40% дают золотое оперение, цепь NOT, глаза, очки и головной убор.</p>
-      <Link to="/assets/gear" className="textLink">Как заточить скин</Link>
+      <DetailLink to="/assets/gear" className="textLink">Как заточить скин</DetailLink>
     </section>
   </>;
 }
