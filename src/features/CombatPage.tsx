@@ -56,6 +56,7 @@ export function CombatPage() {
             <Link to={'/combat/skills/' + branch[0] + '/' + item.id} className="mediaRow skillRow" key={item.id}>
               <GameArt path={skillArt(item.id)} size={42}/>
               <span><strong>{skillCopy[item.id - 1][0]}</strong><small>{unlockCondition(item)}</small></span>
+              <span className="rowChevron" aria-hidden="true"/>
             </Link>)}
         </section>
       </> : isModes ? <section className="card">
