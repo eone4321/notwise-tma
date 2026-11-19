@@ -2,6 +2,7 @@
 
 :root {
   font-family: 'Gilroy', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 500;
   color-scheme: dark;
   font-variant-numeric: tabular-nums;
   --background: #080d1b;
@@ -739,7 +740,7 @@ html { scrollbar-gutter: stable; }
 }
 @font-face {
   font-family: 'Gilroy';
-  src: local('Gilroy-Regular'), local('Gilroy Regular'), local('Gilroy'), url('/fonts/Gilroy-Regular.woff') format('woff');
+  src: local('Gilroy-Medium'), local('Gilroy Medium'), url('/fonts/Gilroy-Medium.woff') format('woff');
   font-weight: 400;
   font-style: normal;
   font-display: block;
@@ -772,7 +773,8 @@ html { scrollbar-gutter: stable; }
   font-style: normal;
   font-display: block;
 }
-:root { font-family: 'Gilroy', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+:root { font-family: 'Gilroy', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; }
+body { font-weight: 500; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
 :root[data-theme="graphite"] {
   --background: #111112;
@@ -823,6 +825,18 @@ html { scrollbar-gutter: stable; }
   background: #ffffff12;
 }
 [data-theme="graphite"] .skinGallery figure { background: var(--raised); }
+[data-theme="graphite"] :is(.textLink, .back, .marketAll, .inlineAction, .copyFeedback) {
+  color: var(--gold);
+}
+[data-theme="graphite"] :is(.rowChevron, .mediaDetails > summary::after, .inventorySection > summary::after) {
+  border-color: var(--gold);
+}
+[data-theme="graphite"] .capsulePricingDetails > summary::after {
+  color: var(--gold);
+}
+[data-theme="graphite"] details > summary:active {
+  color: var(--gold);
+}
 
 .themeChoices { margin: 9px 0 0; }
 .themeChoices > * { flex: 0 1 128px; }
