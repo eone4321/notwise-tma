@@ -17,8 +17,8 @@ import { SkinFarmCalculator } from './SkinFarmCalculator';
 
 const eggs = [
   { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное яйцо', note: 'Также выпадает из капсул', source: 'Лавка или капсулы', reward: 'Еда, лекарства, оформление, обычный жетон скина и чиллер.' },
-  { id: 56, slug: 'season', file: 'egg-stars.webp', name: 'Загадочное яйцо', note: 'Может дать свитки заточки', source: 'Лавка, крафт или награда сезона', reward: 'В пуле есть свитки заточки кольца и скина. По базовым правилам сезона яйцо дают за 11–100-е места.', shards: 3000 },
-  { id: 19, slug: 'red', file: 'golden-egg.webp', name: 'Золотое загадочное яйцо', note: 'Может дать эпический жетон', source: 'Лавка, крафт или награда сезона', reward: 'В пуле есть обычный и эпический жетоны скина и свитки заточки. По базовым правилам сезона яйцо дают за 1–10-е места.', shards: 15000 },
+  { id: 56, slug: 'season', file: 'egg-stars.webp', name: 'Загадочное яйцо', note: 'Может дать свитки заточки', source: 'Лавка, крафт или награда сезона', reward: 'Из яйца могут выпасть свитки заточки кольца и скина. По базовым правилам сезона его получают игроки с 11-го по 100-е место.', shards: 3000 },
+  { id: 19, slug: 'red', file: 'golden-egg.webp', name: 'Золотое загадочное яйцо', note: 'Может дать эпический жетон', source: 'Лавка, крафт или награда сезона', reward: 'Из яйца могут выпасть обычный и эпический жетоны скина и свитки заточки. По базовым правилам сезона его получают игроки из первой десятки.', shards: 15000 },
   { id: 61, slug: 'referral', file: 'referral-egg.webp', name: 'Реферальное яйцо', note: 'За вход по ссылке друга', source: 'Вход по ссылке друга', reward: 'Приглашённый получает яйцо и 5 000 монет. У яйца тот же набор наград и шансов, что у загадочного за монеты.' },
   { id: 18, slug: 'green', file: '18.png', name: 'Особое загадочное яйцо', note: 'Свитки и эпический жетон', source: 'Способ получения сейчас неизвестен', reward: 'Может дать оформление, свитки заточки и эпический жетон скина.' },
   { id: 20, slug: 'gold', file: '20.png', name: 'Особое золотое яйцо', note: 'Свитки и золотой жетон', source: 'Способ получения сейчас неизвестен', reward: 'Может дать оформление, свитки заточки и золотой жетон скина.' },
@@ -76,7 +76,7 @@ export function OwlPage() {
     {pathname === '/owl/skins' && <SkinCatalog/>}
     {egg && <section className="card">
       <div className="mediaHeading"><GameArt path={itemPath(egg.file)} size={64}/>
-        <div><h2>{egg.name} яйцо</h2><p>{egg.source}</p></div>
+        <div><h2>{egg.name}</h2><p>{egg.source}</p></div>
       </div>
       {shopPrice && <div className="eggDetailPrices">
         <span>В Лавке <Price value={shopPrice.value} currency={shopPrice.currency}/></span>
