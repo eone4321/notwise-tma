@@ -59,7 +59,7 @@ export default async function handler(req: Request) {
         const caption =
           '🦉 **NOT Wise Guide** — интерактивная база знаний и аналитика по игре **NOT Wise: The GAME** на TON\n\n' +
           'Гайды по прокачке, шансы дропа из капсул, механика сов и яиц, боевые билды, актуальные цены Getgems и котировки токенов в реальном времени\n\n' +
-          'From CryptoOne | MEDIA & PRO ХОМЯКИ';
+          'CryptoOne | MEDIA & PRO ХОМЯКИ';
 
         await callTelegram('sendPhoto', {
           chat_id: chatId,
