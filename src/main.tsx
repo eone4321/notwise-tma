@@ -20,9 +20,17 @@ void (async () => {
     }
     if (percent && total) percent.textContent = Math.floor(loaded / total * 100) + '%';
   });
+  const fontLoads = [
+    document.fonts.load('400 16px Gilroy', 'Not Wise · Яйца и скины'),
+    document.fonts.load('500 16px Gilroy', 'Not Wise · Яйца и скины'),
+    document.fonts.load('600 16px Gilroy', 'Not Wise · Яйца и скины'),
+    document.fonts.load('700 16px Gilroy', 'Not Wise · Яйца и скины'),
+    document.fonts.load('800 16px Gilroy', 'Not Wise · Яйца и скины'),
+  ];
   await Promise.all([
     prepareArt,
-    document.fonts.load('500 16px Gilroy', 'Not Wise · Яйца и скины').catch(() => []),
+    Promise.allSettled(fontLoads),
+    document.fonts.ready.catch(() => null),
   ]);
   void bootTelegram();
   createRoot(document.getElementById('root')!).render(
