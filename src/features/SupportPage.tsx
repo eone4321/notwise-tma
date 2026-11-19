@@ -133,7 +133,7 @@ export function SupportPage({ isAdmin }: { isAdmin: boolean }) {
       {order && <button className="secondary" onClick={check} disabled={busy}>Проверить оплату</button>}
     </section>
     <section className="card">
-      <div className="walletHeading"><img src="/brand/tokens/gram.png" alt="" width="30" height="30"/><h2>Перевод в GRAM</h2></div>
+      <div className="walletHeading"><img src={artSrc('/brand/tokens/gram.png')} alt="" width="30" height="30"/><h2>Перевод в GRAM</h2></div>
       <p>Скопируй адрес и отправь любую сумму GRAM через свой кошелёк в сети TON.</p>
       <label className="field">Адрес кошелька
         <textarea className="walletAddress" ref={walletField} rows={2} readOnly value={wallet} onFocus={event => event.currentTarget.select()}/>
