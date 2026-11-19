@@ -66,3 +66,16 @@ Saving an in-game referral link requires membership in `@cryptoeone`.
 Give the Mini App bot administrator access in that channel so Telegram's
 `getChatMember` can verify membership. Previously saved links become active
 after their owners save them again with a verified subscription.
+
+## NOT Wise owl sale alerts
+
+The private Vercel schedule `owl-sales` runs every ten minutes. Private chat
+users opt in via `/owlsales` or the bot's subscription link and can stop with
+`/stopowlsales`. Redis stores the feed checkpoint, pending sales and delivery
+receipts. The bot checks sales from the moment subscriptions first opened.
+
+With `GETGEMS_READ_TOKEN`, the worker reads `sold` results from Getgems Read API.
+With the default environment, TON Center identifies transfers in the Genesis
+collection, and TonAPI verifies successful Getgems purchases and their amounts.
+The alert includes the NFT link and an estimated USD equivalent at the time
+of notification.

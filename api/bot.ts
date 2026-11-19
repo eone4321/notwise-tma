@@ -1,3 +1,4 @@
+import { setOwlSaleSubscription } from '../server/owl-sale-alerts';
 import { answerCheckout, recordPayment, validWebhook } from '../server/donations';
 
 export const config = {
@@ -49,6 +50,19 @@ export default async function handler(req: Request) {
     if (message?.text && message.chat?.id) {
       const chatId = message.chat.id;
       const text = message.text.trim();
+      const privateChat = message.chat.type === 'private' && chatId === message.from?.id;
+      const enableSales = /^(?:\/owlsales(?:@NotWiseGuideBot)?|\/start(?:@NotWiseGuideBot)? owl_sales)$/i.test(text);
+      const disableSales = /^\/stopowlsales(?:@NotWiseGuideBot)?$/i.test(text);
+      if (privateChat && (enableSales || disableSales)) {
+        await setOwlSaleSubscription(chatId, enableSales);
+        await callTelegram('sendMessage', {
+          chat_id: chatId,
+          text: enableSales
+            ? 'Уведомления включены. Пришлю новые продажи сов основной коллекции NOT Wise с ценой и ссылкой на Getgems. Отключить — /stopowlsales.'
+            : 'Уведомления о продажах выключены. Включить — /owlsales.',
+        });
+        return Response.json({ ok: true });
+      }
 
       if (text === '/paysupport' || text === '/paysupport@NotWiseGuideBot') {
         await callTelegram('sendMessage', {
@@ -86,6 +100,7 @@ export default async function handler(req: Request) {
                   web_app: { url: TMA_URL },
                 },
               ],
+              [{ text: 'Уведомления о продажах сов', url: 'https://t.me/NotWiseGuideBot?start=owl_sales' }],
             ],
           },
         });

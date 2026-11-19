@@ -4,5 +4,22 @@
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "schedules": {
+    "owl-sales": {
+      "schedule": "*/10 * * * *",
+      "function": "api/owl-sales-scheduled.ts",
+      "timezone": "UTC"
+    }
+  },
+  "functions": {
+    "api/owl-sales-scheduled.ts": {
+      "maxDuration": 60,
+      "experimentalTriggers": [
+        {
+          "type": "schedule/v1beta"
+        }
+      ]
+    }
+  }
 }
