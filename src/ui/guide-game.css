@@ -349,7 +349,7 @@
   font-weight: 700;
   line-height: 1.2;
 }
-.homeGameActions a:active, .inventoryFloor:active { background: var(--game-tile); }
+.homeGameActions a:active, a.inventoryFloor:active { background: var(--game-tile); }
 .homeGameActions .rowChevron { width: 6px; height: 6px; }
 @media (max-width: 350px) {
   .homeGameActions a { font-size: 12px; gap: 5px; padding-inline: 6px; }
@@ -484,4 +484,17 @@
   color: #f4deae;
   background: #1b1b20;
   border-radius: 50%;
+}
+
+
+.card .skinMintFee {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-block-start: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--game-panel-line);
+  color: var(--muted);
+  font-size: 12px;
 }

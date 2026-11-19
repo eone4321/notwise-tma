@@ -29,7 +29,7 @@ const eggOffers: Partial<Record<typeof eggs[number]['slug'], string>> = {
   red: 'golden-egg',
 };
 const marketEggs = marketCollections.find(item => item.id === 'eggs')!;
-const itemsMarketUrl = `https://getgems.io/collection/${marketCollections.find(item => item.id === 'items')!.address}`;
+const itemMintGram: Readonly<Partial<Record<number, number>>> = publishing.itemMintGram;
 
 export function OwlPage() {
   const { pathname } = useLocation();
@@ -278,10 +278,13 @@ function lootDestination(id: number, file: string) {
 }
 
 function SkinCatalog() {
+  const { data: market } = itemMarket.useSnapshot();
+  const mint = market?.mintQuotes?.['owl-skin'] ?? itemMintGram[mintableItems['owl-skin']];
   return <>
     <SkinExamples/>
     <section className="card" id="skin-calculator">
       <SkinFarmCalculator showTitle />
+      {mint !== undefined && <p className="skinMintFee">Минт скина <Price value={mint} currency="gram"/></p>}
     </section>
     <section className="card">
     <h2>Жетоны скинов</h2>
@@ -303,7 +306,7 @@ function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {
   const marketKey = item.file.split('.')[0];
   const listing = market?.items.find(quote => quote.id === marketKey);
   const gameId = (mintableItems as Record<string, number>)[marketKey];
-  const mintPrice = market?.mintQuotes?.[marketKey] ?? (publishing.itemMintGram as Record<number, number>)[gameId];
+  const mintPrice = market?.mintQuotes?.[marketKey] ?? itemMintGram[gameId];
   const key = ({
     'rogach.webp': 'beetle', 'big-black-clock.webp': 'clock', 'flask-empty.webp': 'flask-sp',
     'floppy-empty.webp': 'floppy-xp',
@@ -319,10 +322,12 @@ function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {
     </div>
     {(price || listing || mintPrice !== undefined) && <div className="inventoryPrices">
       {price && <Price value={price.value} currency={price.currency}/>}
-      {listing && <a className="inventoryFloor" href={listing.href ?? itemsMarketUrl} target="_blank" rel="noreferrer"
-        aria-label={`${item.name} за ${listing.floor.toLocaleString('ru-RU')} GRAM на Getgems`}>
-        <Price value={listing.floor} currency="gram"/><span aria-hidden="true" className="externalMark"/>
-      </a>}
+      {listing && (listing.href
+        ? <a className="inventoryFloor" href={listing.href} target="_blank" rel="noreferrer"
+          aria-label={`${item.name} за ${listing.floor.toLocaleString('ru-RU')} GRAM на Getgems`}>
+          <Price value={listing.floor} currency="gram"/><span aria-hidden="true" className="externalMark"/>
+        </a>
+        : <span className="inventoryFloor"><Price value={listing.floor} currency="gram"/></span>)}
       {mintPrice !== undefined && <span className="inventoryMint" aria-label={`Минт ${mintPrice.toLocaleString('ru-RU')} GRAM`}>
         Минт <Price value={mintPrice} currency="gram"/>
       </span>}

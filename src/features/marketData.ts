@@ -95,7 +95,7 @@ export const itemMarket = resource<{
   items: { id: string; floor: number; href?: string }[];
   status: 'ready' | 'unavailable';
   mintQuotes?: Record<string, number>;
-}>('/api/market/items', 120_000, (_, next) => next);
+}>('/api/market/items?schema=3', 120_000, (_, next) => next);
 
 export function startMarketUpdates() {
   const refresh = () => {
