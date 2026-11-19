@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router';
 import xp from '../../public/data/xp_levels.json';
 import { chanceLabel, coinReward, duration, notOdds, tierNames, tiers, xpReward } from '../domain/mechanics';
 import { GameArt } from '../ui/GameArt';
-import { SkinFarmCalculator, FarmInfoModal } from './SkinFarmCalculator';
+import { SkinFarmCalculator } from './SkinFarmCalculator';
 
 const capsuleNames = ['Obsidian', 'Moonlight Silver', 'Golden'];
 const eggChances = ['3% (≈ 1 из 33)', '4,5% (≈ 1 из 22)', '15% (≈ 1 из 7)'];
@@ -35,9 +35,9 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
   const index = tiers.indexOf(currentTier);
   const hours = duration[currentTier] / 3_600_000;
   const [level, setLevel] = useState('');
-  const [isInfoOpen, setIsInfoOpen] = useState(false);
 
   const capsuleLevel = Math.min(xp.length - 1, Math.max(1, Number(level) || 1));
+  const odds = notOdds(currentTier, capsuleLevel);
   return <>
     <nav className="choiceBar capsuleTabs" aria-label="Тип капсулы">
       {tiers.map(tier => <Link key={tier} aria-current={tier === currentTier ? 'page' : undefined} to={'/capsules/' + tier}>{tierNames[tier]}</Link>)}
@@ -63,45 +63,34 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
       <div className="mediaHeading notDropHeader">
         <GameArt path="/brand/tokens/not.webp" size={38}/>
         <div>
-          <div className="headingWithAction">
-            <h2>Шансы на Notcoin ($NOT)</h2>
-            <button
-              type="button"
-              className="infoCircleBtn"
-              onClick={() => setIsInfoOpen(true)}
-              aria-label="Как рассчитываются шансы на Notcoin"
-              title="Как работает формула дропа Notcoin"
-            >
-              i
-            </button>
-          </div>
-          <p>Зависят от уровня совы и типа капсулы</p>
+          <h2>Шансы на Notcoin ($NOT)</h2>
+          <p>Уровень указан на карточке капсулы в игре</p>
         </div>
       </div>
-      <div className="bonusBreakdown">
-        <span>Множитель от уровня совы ({capsuleLevel} ур.):</span>
-        <strong>+{capsuleLevel}% (×{(1 + capsuleLevel / 100).toFixed(2)})</strong>
+      <label className="field">Уровень капсулы
+        <input inputMode="numeric" value={level} placeholder="1" maxLength={2}
+          onChange={event => setLevel(event.target.value.replace(/\D/g, ''))}/>
+      </label>
+      <div className="bonusBreakdown"><span>Шанс на любую сумму $NOT</span>
+        <strong>{chanceLabel(Math.min(100, odds.reduce((total, row) => total + row.chance, 0)))}</strong>
       </div>
       <ul className="compactList oddsList">
-        {notOdds(currentTier, capsuleLevel).map(row => <li className="mediaRow" key={row.amount}>
+        {odds.map(row => <li className="mediaRow" key={row.amount}>
           <span>{row.amount.toLocaleString('ru-RU')} $NOT</span><strong>{chanceLabel(row.chance)}</strong>
         </li>)}
       </ul>
-      <p className="caption">
-        В коде игры (функция <code>Km</code> в <code>main.js</code>) вероятность выпадения $NOT масштабируется <strong>уровнем совы</strong> (+1% за каждый уровень) и типом капсулы (Серебряная ×1.5, Золотая ×5). Заточка колец и скин дают показатель «Фарм» для монет в боях и полётах, но не влияют на дроп Notcoin из капсул.
-      </p>
+      <p className="caption">Каждый уровень капсулы добавляет 1% к множителю базовых шансов. Сначала учитываются крупные суммы. Если их шансы заполняют часть таблицы, частым наградам остаётся меньше места.</p>
       <details className="mediaDetails farmCalcDisclosure">
         <summary>
           <span>
             <strong>Калькулятор бонуса к фарму монет</strong>
-            <small>Скины, кольца и лига для farmCoins в боях и полётах</small>
+            <small>Скины, кольца и лига Дополнительные монеты в боях и полётах</small>
           </span>
         </summary>
         <SkinFarmCalculator showTitle={false} showEffects={true} />
       </details>
       <Link className="textLink" to="/owl/skins">Как работают скины и жетоны</Link>
     </section>
-    <FarmInfoModal isOpen={isInfoOpen} onClose={() => setIsInfoOpen(false)} />
   </>;
 }
 
@@ -130,14 +119,14 @@ function CapsuleDropGuide() {
         <span className="ruleNumber">2</span>
         <div className="ruleContent">
           <strong>Победа в рейтинговом PvP (Бои)</strong>
-          <p>При каждой победе в рейтинговом поединке есть шанс выбить капсулу. Шанс редких капсул (Серебряная и Золотая) масштабируется с ростом рейтинга (MMR). Поражения, ничьи и тренировки в Додзе капсул не приносят.</p>
+          <p>При каждой победе в рейтинговом поединке есть шанс выбить капсулу. Точные шансы получить капсулу каждого вида игра не показывает. Поражения, ничьи и тренировки в Додзе капсул не приносят.</p>
         </div>
       </li>
       <li>
         <span className="ruleNumber">3</span>
         <div className="ruleContent">
           <strong>Полёты на ракетах (Flights)</strong>
-          <p>Капсулы также выпадают на финише полёта (серверный ответ <code>/flights/{'{id}'}/finish</code> в массиве <code>items</code>). При наличии свободного слота капсула падает в слот и начинает обратный отсчёт. На экране финиша полёта также появляется экспресс-оффер (<code>flight_capsule_offer</code>) со скидкой за Stars или TON.</p>
+          <p>Капсулы также выпадают на финише полёта (серверный ответ <code>/flights/{'{id}'}/finish</code> в массиве <code>items</code>). При наличии свободного слота капсула падает в слот и начинает обратный отсчёт. На финише может появиться отдельное предложение за Stars или GRAM.</p>
         </div>
       </li>
       <li>
@@ -146,8 +135,8 @@ function CapsuleDropGuide() {
           <strong>Градация редкости и таймеры</strong>
           <p>
             🖤 <strong>Обсидиановая (4 ч / 100 ⭐)</strong> — базовая и самая частая капсула.<br/>
-            🤍 <strong>Лунное серебро (8 ч / 500 ⭐)</strong> — редкая капсула с увеличенными наградами (шансы на $NOT в 1.5× выше).<br/>
-            💛 <strong>Золотая (24 ч / 2500 ⭐)</strong> — главный трофей: максимум монет и опыта, гарантированный стикерпак (100%), 15% на Загадочное яйцо и в 5× выше шанс дропа Notcoin ($NOT).
+            🤍 <strong>Лунное серебро (8 ч / 500 ⭐)</strong> — редкая капсула с увеличенными наградами (базовый вес $NOT ×1,5).<br/>
+            💛 <strong>Золотая (24 ч / 2500 ⭐)</strong> — главный трофей: максимум монет и опыта, гарантированный стикерпак (100%), 15% на Загадочное яйцо и базовый вес $NOT ×5.
           </p>
         </div>
       </li>

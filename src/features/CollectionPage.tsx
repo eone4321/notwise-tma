@@ -6,6 +6,8 @@ import { GameArt } from '../ui/GameArt';
 import { achievementActions } from './inventory';
 import { ProgressStatus, useProgress } from './GuideProgress';
 import marketCollections from './market-collections.json';
+import stickerData from './sticker-data.json';
+import { chanceLabel, chancePerOpening } from '../domain/mechanics';
 
 const albums = ['Wonderland','Flying Saucer','Cosmo Zone','Summer Vibes','Wild Fortune','Hellborn','Mimizuku','Showtime','Power Mode','Naughty Mood','Hustle Pack','Spellbound','Wanted Sheriff','Internet Moments','Laa-Laa Land','Fine Art','The Family','GG Pack','Golden Scarab','Back to School'];
 const themes: Record<string, string> = { Showtime: 'Сцена и иллюзии' };
@@ -18,7 +20,7 @@ const purpose: Record<string, string> = {
   domains: 'Имена третьего уровня на TON, привязанные к домену notwise.ton.',
   merch: 'NFT, которые выпустили для обмена на физический мерч NOT Wise.',
   items: 'Кольца, артефакты и расходники, выпущенные как NFT из инвентаря игры.',
-  skins: 'NFT-скины для сов. Экипированные детали добавляют бонус к дропу $NOT.',
+  skins: 'NFT-скины для сов. Экипированные детали дают бонус к фарму монет.',
   family: 'Отдельная коллекция Not Wise Family на TON.',
 };
 
@@ -66,25 +68,10 @@ export function CollectionPage() {
       {album === null ? <>
         <ProgressCount count={count} total={total}/>
         <ProgressStatus/>
-        <details className="albumNoticeCard card guideDisclosure">
-          <summary className="albumNoticeSummary">
-            <span className="albumNoticeIcon" aria-hidden="true">💎</span>
-            <span className="albumNoticeSummaryText">
-              <strong>Ончейн-мониторинг минта</strong>
-              <small>Отслеживаем подтверждённые NFT в TON</small>
-            </span>
-            <span className="albumNoticeInfoBtn" aria-hidden="true">i</span>
-          </summary>
-          <div className="albumNoticeBody">
-            <p className="albumNoticeDesc">
-              В игре у некоторых альбомов может быть уже 498/500, но на блокчейне они появляются с задержкой:
-              покупка за Telegram Stars накладывает <strong>21-дневный кулдаун</strong> (холд платежных систем) на минт,
-              после чего требуется выпустить пак в Telegram перед отправкой транзакции.
-            </p>
-            <p className="albumNoticeDesc" style={{ marginTop: 6 }}>
-              Как только NFT подтверждается в сети TON (Getgems), наш парсер автоматически вычитает её из остатка (например, станет 499/500).
-            </p>
-          </div>
+        <details className="card guideDisclosure">
+          <summary><strong>Как собираются наборы</strong></summary>
+          <p>Стикерпак даёт 1–3 стикера. Повторки возможны. Часть карточек выдаётся за секреты и достижения.</p>
+          <p>Собери все 5 карточек набора, чтобы открыть его выпуск. Доступность и цену создания набора показывает игра.</p>
         </details>
         <div className="albumGrid">{albums.map((label, index) => {
           const pack = index + 1;
@@ -93,7 +80,6 @@ export function CollectionPage() {
             <span className={`albumCornerBadge${found === 5 ? ' isComplete' : ''}`}>{found}/5</span>
             <GameArt path={`/game/albums/${pack}.webp`} size={45}/>
             <strong>{label}</strong>
-            <span className="albumMintBadge">500/500 NFT</span>
           </Link>;
         })}</div>
       </> : <section className="card stickerCollection">
@@ -109,7 +95,11 @@ export function CollectionPage() {
               item.kind === 'achievement' ? 'Достижение' : 'Набор стикеров'}</small></span>
           </summary>
           {item.kind === 'secret' ? <Link className="textLink" to={`/secrets#sticker-${item.id}`} state={{ returnTo: pathname }}>Условие секрета</Link> :
-            <p>{achievementActions[item.id] ?? 'Может выпасть при открытии набора стикеров.'}</p>}
+            <p>{achievementActions[item.id] ?? (
+              stickerData.oddsById[item.id] > 0
+                ? `Шанс получить из одного пака · ${chanceLabel(chancePerOpening(stickerData.oddsById[item.id], stickerData.drawCounts))}. Снимок от 20 ноября.`
+                : 'В снимке шансов на 20 ноября эта карточка в паке не выпадает.'
+            )}</p>}
           </details>
           <label className="secretCheck"><input type="checkbox" checked={isDone(item.id)}
             onChange={event => setMark('collected', item.id, event.target.checked)}/>
@@ -118,29 +108,11 @@ export function CollectionPage() {
         <details className="mediaDetails guideDisclosure" open={state?.mintOpen || undefined}>
           <summary>
             <GameArt path="/brand/collections/classics.png" size={34}/>
-            <span><strong>Ончейн-минт NFT альбома</strong><small>Лимит 500 шт. · 500/500 доступно</small></span>
+            <span><strong>Выпуск NFT-набора</strong><small>Пять карточек · проверка тиража в игре</small></span>
           </summary>
-          <div className="albumMintInfo">
-            <p>
-              Сбор всех 5 стикеров альбома даёт право выпустить официальный NFT-стикерпак на блокчейне TON.
-              Лимит каждого альбома строго ограничен <strong>500 NFT</strong>.
-            </p>
-            <div className="albumCooldownAlert">
-              <strong>⏳ Кулдаун 21 день и ончейн-статус:</strong>
-              <p>
-                Мы парсим <strong>фактически сминченные NFT</strong> в сети TON на Getgems. В игре у альбома может отображаться меньше 500 доступных копий (например, 498/500), если игроки собрали пак, но ещё не сминтили его на блокчейне.
-              </p>
-              <p>
-                Причина — <strong>21-дневный кулдаун</strong>: компоненты, полученные или купленные за Telegram Stars, заморожены для ончейн-минта на 21 день (<em>«a purchase for Telegram Stars holds it for 21 days»</em>). Также перед минтом требуется создать пак в Telegram.
-              </p>
-              <p>
-                Как только NFT подтверждается в блокчейне TON, парсер автоматически фиксирует её и счётчик уменьшается (например, 499/500).
-              </p>
-            </div>
-            <a className="textLink spacedLink" href="https://getgems.io/collection/EQAh0jRY7l_jw7o2lI8N5Bl0bFo-5eOKYinsZ56ZRcKABnup" target="_blank" rel="noreferrer">
-              Коллекция стикерпаков на Getgems
-            </a>
-          </div>
+          <p>После сбора всех карточек открой набор в игре. Там показано, остались ли места для создания и сколько стоит выпуск. После создания набора его можно выпустить в TON, если минт доступен для твоего набора.</p>
+          <a className="textLink spacedLink" href={`https://getgems.io/collection/${stickerData.collectionByAlbum[album]}`}
+            target="_blank" rel="noreferrer">Открыть этот набор на Getgems</a>
         </details>
       </section>}
     </>}

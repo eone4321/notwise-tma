@@ -5,10 +5,14 @@ export const baseChance: Record<Tier,number> = {dark:1,silver:1.5,gold:5};
 export const duration: Record<Tier,number> = {dark:14_400_000,silver:28_800_000,gold:86_400_000};
 export const starPrice: Record<Tier,number> = {dark:100,silver:500,gold:2500};
 export function speedupPrice(tier:Tier,elapsed:number){return Math.max(1,starPrice[tier]-Math.floor(Math.min(duration[tier],Math.max(0,elapsed))*starPrice[tier]/duration[tier]));}
-export function notOdds(tier:Tier,owlLevel=0){
+export function notOdds(tier:Tier,capsuleLevel=0){
  const amounts=[1,5,10,100,1000,5000,10000,100000,1000000,10000000];
- const raw=amounts.map(amount=>({amount,scaled:Math.min(100,(100/amount/3/(amount>5000?10:amount>100?3:1))*(1+Math.max(0,owlLevel)/100)*baseChance[tier])}));
+ const raw=amounts.map(amount=>({amount,scaled:Math.min(100,(100/amount/3/(amount>5000?10:amount>100?3:1))*(1+Math.max(0,capsuleLevel)/100)*baseChance[tier])}));
  let larger=0;return raw.reverse().map(({amount,scaled})=>{const chance=Math.min(scaled,Math.max(0,100-larger));larger+=scaled;return{amount,chance}}).reverse();
+}
+export function chancePerOpening(chancePerDraw: number, drawCounts: readonly number[]) {
+  const miss = 1 - chancePerDraw / 100;
+  return drawCounts.reduce((total, weight, index) => total + weight * (1 - miss ** (index + 1)), 0);
 }
 const percent = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
 const whole = new Intl.NumberFormat('ru-RU');

@@ -7,6 +7,7 @@ import { GameArt } from '../ui/GameArt';
 import { skillCopy } from './skill-copy';
 import skillLevels from './skill-levels.json';
 import { battleLeagues } from './battle-leagues';
+import { battleStats, skillHpMultiplier } from '../domain/combat';
 
 export function SpBadge({ value }: { value?: number | string }) {
   return <span className="spBadge">
@@ -32,6 +33,8 @@ const modes = [
   ['trophy', 'Сезон', '14 дней', 'В каждом сезоне одна цель: лайки, победы, безупречные победы, монеты или дистанция в полёте, лучший полёт, загадки или удары в Додзе. Учитывается активность за текущий сезон.'],
 ] as const;
 const format = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
+const precise = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 4 });
+const hpEffects = new Set(['strike', 'heal', 'chill', 'desperate', 'meteor', 'poison', 'burn']);
 const branchName = (branch: string) => branches.find(([id]) => id === branch)?.[1] ?? '';
 function unlockCondition(skill: Skill) {
   const previous = skills.find(item => item.branch === skill.branch && item.tier === skill.tier - 1);
@@ -74,6 +77,8 @@ export function CombatPage() {
               icon === 'boxing' ? <span className="energyBadge">Со 2-го уровня · 2 <GameSymbol name="bolt" size={13}/> / удар</span> : when}</small></span>
           </summary>
           {icon === 'rocket' ? <FlightDetails/> : <p>{description}</p>}
+          {icon === 'swords' && <p>Зон три: голова, корпус и живот. Попадание в выбранную соперником зону блока не наносит урона. Базовый откат атаки в клиенте — 1,5 с, смены блока — 1 с. Перезарядку и итог рейтингового боя показывает игра.</p>}
+          {icon === 'target' && <p>Ориентир расхода энергии — 20 на 5–9-м уровне, 30 на 10–14-м. Стоимость растёт на 10 каждые пять уровней, начиная с 10 энергии на уровнях 1–4.</p>}
         </details>)}
         <details className="mediaDetails"><summary><GameSymbol name="trophy"/><span><strong>Призы сезона</strong><small>Первые 100 мест</small></span></summary>
         <p>Базовый фонд клиента — 1 млн $NOT. 1-е место получает 400 000, 2-е — 350 000, 3-е — 250 000 $NOT. Топ-10 получает золотое загадочное яйцо, места 11–100 — белое загадочное яйцо на красном фоне.</p>
@@ -104,16 +109,20 @@ export function CombatPage() {
 
 function SkillDetail({ skill }: { skill: Skill }) {
   const [level, setLevel] = useState(1);
+  const [owlLevel, setOwlLevel] = useState(20);
   const [title, description] = skillCopy[skill.id - 1];
   const cooldown = [8, 10, 12, 15, 20][skill.tier - 1];
   const levels = skillLevels[String(skill.id) as keyof typeof skillLevels];
   const { type, dur, value } = levels;
   const amount = value[level - 1];
   const seconds = dur[level - 1];
-  const effect = ['strike','heal','chill','desperate','meteor','poison','burn'].includes(type)
-    ? format.format(amount) + ' HP'
-    : ['evade','flurry'].includes(type) ? Math.floor(amount) + (amount % 1 ? '–' + Math.ceil(amount) : '')
-    : amount ? Math.trunc(amount) + '%' : '';
+  const scalesWithLevel = hpEffects.has(type);
+  const multiplier = skillHpMultiplier(owlLevel);
+  const floor = Math.floor(amount);
+  const effect = scalesWithLevel ? precise.format(amount * multiplier) + ' HP'
+    : type === 'evade' || type === 'flurry'
+      ? (amount - floor < 0.05 ? String(floor) : amount - floor > 0.95 ? String(floor + 1) : `${floor}–${floor + 1}`)
+      : amount ? Math.trunc(amount) + '%' : '';
   const effectTitle: Partial<Record<string, string>> = {
     heal: 'Лечение', poison: 'Урон за атаку врага', reflect: 'Отражение', empower: 'Усиление удара',
     shield: 'Снижение урона', evade: 'Уклонений', flurry: 'Ударов', cleanse: 'Ослабление эффектов',
@@ -130,17 +139,23 @@ function SkillDetail({ skill }: { skill: Skill }) {
         {Array.from({ length: 21 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
       </select>
     </label>
+    {scalesWithLevel && <label className="field">Уровень совы
+      <select value={owlLevel} onChange={event => setOwlLevel(Number(event.target.value))}>
+        {progression.current.slice(1).map((_, index) => <option key={index} value={index + 1}>{index + 1}</option>)}
+      </select>
+    </label>}
     <ul className="compactList">
       {effect && <li className="mediaRow"><span>{effectTitle[type] ?? 'Базовый урон'}</span><strong>{effect}</strong></li>}
-      {type === 'burn' && 'dps' in levels && <li className="mediaRow"><span>Поджог</span><strong>{format.format(levels.dps[level - 1])} HP/с</strong></li>}
+      {type === 'burn' && 'dps' in levels && <li className="mediaRow"><span>Поджог</span><strong>{precise.format(levels.dps[level - 1] * multiplier)} HP/с</strong></li>}
       {seconds > 0 && <li className="mediaRow"><span>{type === 'poison' ? 'Срабатываний' : 'Длительность'}</span><strong>{type === 'poison' ? Math.round(seconds) : format.format(seconds) + ' с'}</strong></li>}
       <li className="mediaRow"><span>{skill.type === 'active' ? 'Мана за применение' : 'Мана за срабатывание'}</span>
         <strong>{skill.type === 'active' ? 25 * skill.tier : type === 'reveal' ? 20 : 2 * skill.tier}</strong></li>
+      <li className="mediaRow"><span>Тренировка в Додзе</span><strong className="energyBadge">{skill.dojoEnergy} <GameSymbol name="bolt" size={15}/></strong></li>
       {skill.type === 'active' && <li className="mediaRow"><span>Перезарядка</span><strong>{cooldown} с</strong></li>}
       <li className="mediaRow"><span>{level === 21 ? 'Прокачка' : `Улучшение до ${level + 1}-го уровня`}</span>
         <strong>{level === 21 ? 'Максимум' : <SpBadge value={format.format(100 * 2 ** (level - 1))}/>}</strong></li>
     </ul>
-    {effect.endsWith(' HP') && <p className="caption">Показан базовый эффект без прибавки за выносливость.</p>}
+    {scalesWithLevel && <p className="caption">Множитель от уровня совы ×{precise.format(multiplier)}. Показан исходный эффект до защиты цели и других боевых модификаторов.</p>}
   </section>;
 }
 
@@ -148,7 +163,7 @@ const attributes = [
   ['muscle', 'Сила', '+0,065 урона за очко', 'Повышает урон обычных ударов.'],
   ['target', 'Ловкость', '+0,7% к шансу уклонения за очко', 'Шанс складывается. Например, с 20% он вырастет до 20,7%. Предел — 70%.'],
   ['bolt', 'Мудрость', '+0,7% к шансу крита и +20 маны за очко', 'Например, шанс крита 20% вырастет до 20,7%. Предел — 70%. Базовая мана — 200.'],
-  ['heart', 'Выносливость', '+2 HP дома, +3 HP в бою за очко', 'Базовое боевое здоровье — 20 HP.'],
+  ['heart', 'Выносливость', '+2 HP за очко', 'К базовым 20 HP прибавляются 3 HP за каждый уровень совы и 2 HP за каждое очко выносливости.'],
 ] as const;
 
 function CombatStats() {
@@ -162,6 +177,7 @@ function CombatStats() {
         <p>{detail}</p>
       </details>)}
     </section>
+    <BattleStatsCalculator/>
     <section className="card"><h2>Улучшения совы</h2>
       <p>Перки — постоянные улучшения совы за <SpBadge/> (очки навыков). У каждого улучшения свой уровень.</p>
       <ul className="compactList owlUpgrades">
@@ -190,6 +206,34 @@ function CombatStats() {
   </>;
 }
 
+const statInputs = [
+  ['level', 'Уровень совы'], ['strength', 'Сила'], ['agility', 'Ловкость'],
+  ['wisdom', 'Мудрость'], ['endurance', 'Выносливость'],
+] as const;
+
+function BattleStatsCalculator() {
+  const [input, setInput] = useState({ level: '20', strength: '', agility: '', wisdom: '', endurance: '' });
+  const stats = battleStats(Number(input.level), Number(input.strength), Number(input.agility), Number(input.wisdom), Number(input.endurance));
+
+  return <details className="card" id="battle-calculator">
+    <summary><strong>Калькулятор боевых характеристик</strong></summary>
+    <p className="caption">Введи итоговые атрибуты из профиля совы с учётом экипировки и усилений.</p>
+    <div className="quoteInputs">
+      {statInputs.map(([key, label]) => <label className="field" key={key}>{label}
+        <input inputMode="numeric" value={input[key]} placeholder="0" maxLength={4}
+          onChange={event => setInput({ ...input, [key]: event.target.value.replace(/\D/g, '') })}/>
+      </label>)}
+    </div>
+    <dl className="analyticsRows" aria-live="polite">
+      <div><dt>Здоровье</dt><dd>{precise.format(stats.health)} HP</dd></div>
+      <div><dt>Мана</dt><dd>{precise.format(stats.mana)}</dd></div>
+      <div><dt>Базовый урон удара</dt><dd>{precise.format(stats.hit)} HP</dd></div>
+      <div><dt>Шанс уклонения</dt><dd>{precise.format(stats.dodge)}%</dd></div>
+      <div><dt>Шанс крита</dt><dd>{precise.format(stats.crit)}%</dd></div>
+    </dl>
+  </details>;
+}
+
 function FlightDetails() {
   return <div className="flightDetails">
     <h4>Расход энергии на старт</h4>
@@ -212,7 +256,7 @@ function FlightDetails() {
       </li>
       <li>
         <span className="flightItemHead"><span className="emojiIcon">🍣</span><strong>Суши (Механика риска)</strong></span>
-        <p>1-я и 2-я пойманная суши штрафуют на <strong>−20% монет</strong>! Ровно 3-я суши даёт <strong>+20% монет</strong> и открывает секретный стикер <strong>#042 Sushi Master</strong>.</p>
+        <p>Каждая пойманная суши отнимает <strong>20% текущего счёта</strong>, кроме третьей. Она прибавляет <strong>20%</strong> к оставшимся монетам и открывает секретный стикер <strong>#042 Sushi Master</strong>.</p>
       </li>
     </ul>
 
@@ -232,8 +276,8 @@ function FlightDetails() {
     <ul className="compactList flightRules">
       <li><span>Минимум сытости</span><strong>10 единиц</strong></li>
       <li><span>Награды за полёт</span><strong>Монеты, XP и дроп капсул (при свободном слоте)</strong></li>
-      <li><span>Экспресс-оффер</span><strong>flight_capsule_offer (Stars / TON)</strong></li>
-      <li><span>Бонус фарма</span><strong>+farmCoins от прокачки скина и колец</strong></li>
+      <li><span>Платное предложение на финише</span><strong>Может появиться за Stars или GRAM</strong></li>
+      <li><span>Бонус фарма</span><strong>Дополнительные монеты от экипировки и лиги</strong></li>
     </ul>
   </div>;
 }

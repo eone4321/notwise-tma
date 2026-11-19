@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router';
 import { GameArt } from '../ui/GameArt';
-import { chanceLabel } from '../domain/mechanics';
+import { chanceLabel, chancePerOpening } from '../domain/mechanics';
 import { dropsFor, eggDrawCounts, itemNames } from './inventory';
 import marketCollections from './market-collections.json';
 import { OwlPrices } from './OwlPrices';
@@ -25,12 +25,6 @@ const eggOffers: Partial<Record<typeof eggs[number]['slug'], string>> = {
   red: 'golden-egg',
 };
 const marketEggs = marketCollections.find(item => item.id === 'eggs')!;
-
-// Mirrors the base 80/15/5 draw counts and Z6() in the game's public client.
-function openingChance(chance: number) {
-  const miss = 1 - chance / 100;
-  return eggDrawCounts.reduce((total, weight, index) => total + weight * (1 - miss ** (index + 1)), 0);
-}
 
 export function OwlPage() {
   const { pathname } = useLocation();
@@ -108,7 +102,7 @@ export function OwlPage() {
               <GameArt path={itemPath(file)} size={36}/>
               <span className="lootItemName">{name}</span>
               <span className="rowEnd lootRowEnd">
-                <strong className="lootChancePercent">{chanceLabel(openingChance(chance))}</strong>
+                <strong className="lootChancePercent">{chanceLabel(chancePerOpening(chance, eggDrawCounts))}</strong>
                 {target && <span className="rowChevron" aria-hidden="true"/>}
               </span>
             </>
@@ -118,7 +112,7 @@ export function OwlPage() {
             : <div className="mediaRow">{row}</div>}</li>;
         })}
         {unknownChance > 0 && <li className="mediaRow">
-          <span>Другие редкие награды</span><strong>{chanceLabel(openingChance(unknownChance))}</strong>
+          <span>Другие редкие награды</span><strong>{chanceLabel(chancePerOpening(unknownChance, eggDrawCounts))}</strong>
         </li>}
       </ul>
       <details><summary>Почему шанс не гарантирует награду?</summary>
