@@ -11,6 +11,7 @@ import { dropsFor, eggDrawCounts, itemNames } from './inventory';
 import marketCollections from './market-collections.json';
 import { OwlPrices } from './OwlPrices';
 import { Price, type Currency } from './Price';
+import { MintUsdEstimate, StarsAndGram } from './GamePrice';
 import { SkinExamples } from './SkinExamples';
 import shopItems from './shop-data.json';
 import skinParts from './skin-parts.json';
@@ -81,7 +82,7 @@ export function OwlPage() {
         <div><h2>{egg.name}</h2><p>{egg.source}</p></div>
       </div>
       {shopPrice && <div className="eggDetailPrices">
-        <span>В Лавке <Price value={shopPrice.value} currency={shopPrice.currency}/></span>
+        <span>В Лавке {shopPrice.currency === 'stars' ? <StarsAndGram stars={shopPrice.value}/> : <Price value={shopPrice.value} currency={shopPrice.currency}/>}</span>
         {'shards' in egg && <span>За скорлупу <Price value={egg.shards} currency="shards"/></span>}
       </div>}
       <p>{egg.reward}</p>
@@ -151,7 +152,10 @@ function EggLink({ egg, method }: { egg: Egg; method?: 'shop' | 'craft' }) {
   return <DetailLink to={'/owl/' + egg.slug} className="mediaRow eggLink" data-method={method}>
     <GameArt path={itemPath(egg.file)} size={38}/>
     <span className="eggRowText"><strong>{egg.name}</strong>{method !== 'craft' && <small>{egg.note}</small>}</span>
-    <span className="rowEnd">{price && <Price value={price.value} currency={price.currency}/>}<span className="rowChevron" aria-hidden="true"/></span>
+    <span className="rowEnd">
+      {price && (price.currency === 'stars' ? <StarsAndGram stars={price.value}/> : <Price value={price.value} currency={price.currency}/>)}
+      <span className="rowChevron" aria-hidden="true"/>
+    </span>
   </DetailLink>;
 }
 
@@ -336,7 +340,8 @@ function InventoryRow({ item, id, collectionFloor }: { item: CatalogItem; id?: s
     <span className="inventoryIcon"><GameArt path={item.art ?? itemPath(item.file)} size={33}/></span>
     <h3>{item.name}</h3>
     {(price || floor || marketUrl) && <div className="inventoryPrices">
-      {price && <span className="inventoryShopPrice"><Price value={price.value} currency={price.currency}/></span>}
+      {price && <span className="inventoryShopPrice">{price.currency === 'stars'
+        ? <StarsAndGram stars={price.value}/> : <Price value={price.value} currency={price.currency}/>}</span>}
       {marketUrl ? <a className="inventoryFloor" href={marketUrl} target="_blank" rel="noreferrer"
           aria-label={floor ? `${item.name} за ${collectionFloor !== undefined ? 'сумму от ' : ''}${floor.toLocaleString('ru-RU')} GRAM на Getgems` : `Открыть коллекцию для «${item.name}» на Getgems`}>
           {floor ? <Price value={floor} currency="gram" from={collectionFloor !== undefined}/> : <span className="inventoryMarketLabel">Getgems</span>}
@@ -347,7 +352,7 @@ function InventoryRow({ item, id, collectionFloor }: { item: CatalogItem; id?: s
     <p>{item.effect}</p>
     <div className="inventoryMeta">
       <small className="itemSource">{item.source}{level ? ` · с ${level}-го ур.` : ''}</small>
-      {mintPrice !== undefined && <span className="inventoryMint">Минт NFT <Price value={mintPrice} currency="gram"/></span>}
+      {mintPrice !== undefined && <span className="inventoryMint">Минт NFT <Price value={mintPrice} currency="gram"/><MintUsdEstimate gram={mintPrice}/></span>}
     </div>
   </li>;
 }

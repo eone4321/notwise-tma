@@ -1,6 +1,7 @@
 import { DetailLink } from '../ui/DetailLink';
 import publishing from '../domain/game-publishing.json';
 import { Price } from './Price';
+import { MintUsdEstimate } from './GamePrice';
 import { collectionMarket } from './marketData';
 import { Link, useLocation } from 'react-router';
 import stickers from '../../public/data/all_100_stickers.json';
@@ -159,8 +160,8 @@ function AlbumPublishing({ edition, minted, floor }: {
     <dl>
       <div><dt>Сминчено</dt><dd>{typeof minted === 'number' ? format.format(minted) : '—'}</dd></div>
       <div><dt>Создано в игре</dt><dd>{format.format(edition.created)}/{format.format(edition.edition)}</dd></div>
-      <div><dt>Создание</dt><dd><Price value={edition.creationGram} currency="gram"/></dd></div>
-      <div><dt>Минт</dt><dd><Price value={edition.mintGram} currency="gram"/></dd></div>
+      <div><dt>Создание</dt><dd><Price value={edition.creationGram} currency="gram"/><MintUsdEstimate gram={edition.creationGram}/></dd></div>
+      <div><dt>Минт</dt><dd><Price value={edition.mintGram} currency="gram"/><MintUsdEstimate gram={edition.mintGram}/></dd></div>
     </dl>
     <a className="textLink" href={`https://getgems.io/collection/${stickerData.collectionByAlbum[edition.id]}`} target="_blank" rel="noreferrer">
       Getgems {floor ? <Price value={floor} currency="gram"/> : <span className="externalMark" aria-hidden="true"/>}

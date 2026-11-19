@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { duration, estimatedGramForStars, speedupPrice, starPrice, type Tier } from '../domain/mechanics';
+import { duration, speedupPrice, starPrice, type Tier } from '../domain/mechanics';
 import { Price } from './Price';
+import { GramEstimate } from './GamePrice';
 import { GameArt } from '../ui/GameArt';
 
 const decimal = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
@@ -16,7 +17,6 @@ export function CapsulePrices({ tier }: { tier: Tier }) {
   const starsAt = (minutes: number) => minutes === 0 ? 0 :
     speedupPrice(tier, duration[tier] - minutes * 60_000);
   const stars = starsAt(remaining);
-  const gram = estimatedGramForStars(stars);
   const step = Math.min(remaining, 15);
   const saving = (stars - starsAt(remaining - step)) / starPrice[tier] * 100;
 
@@ -34,7 +34,7 @@ export function CapsulePrices({ tier }: { tier: Tier }) {
       {blank ? <p>Введи время с игрового таймера.</p> : !valid ? <p>Введи остаток до {hours} ч. В поле минут — от 0 до 59.</p> :
         remaining === 0 ? <strong>Можно открыть бесплатно</strong> : <>
           <div><small>Stars</small><Price value={stars} currency="stars"/></div>
-          <div><small>GRAM · оценка</small><Price value={gram} currency="gram" approximate/></div>
+          <div><small>GRAM · оценка</small><GramEstimate stars={stars} showUnavailable/></div>
         </>}
     </div>
     {valid && !blank && remaining > 0 && <p className="caption calculatorNote">

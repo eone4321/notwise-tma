@@ -3,10 +3,11 @@ import { CapsulePrices } from './CapsulePrices';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import xp from '../../public/data/xp_levels.json';
-import { chanceLabel, coinReward, duration, estimatedGramForStars, notOdds, tierNames, tiers, xpReward } from '../domain/mechanics';
+import { chanceLabel, coinReward, duration, notOdds, tierNames, tiers, xpReward } from '../domain/mechanics';
 import { GameGlyph } from '../ui/GameGlyph';
 import { GameArt } from '../ui/GameArt';
 import { Price } from './Price';
+import { GramEstimate } from './GamePrice';
 
 const capsuleNames = ['Obsidian', 'Moonlight Silver', 'Golden'];
 const eggChances = ['3% (≈ 1 из 33)', '4,5% (≈ 1 из 22)', '15% (≈ 1 из 7)'];
@@ -100,10 +101,10 @@ function SlotGuide() {
         <tbody>{slots.map(({ number, level, stars }) => <tr key={number}>
           <th scope="row">{number}</th><td>{level ?? '—'}</td>
           <td><Price value={stars} currency="stars"/></td>
-          <td><Price value={estimatedGramForStars(stars)} currency="gram" approximate/></td>
+          <td><GramEstimate stars={stars} showUnavailable/></td>
         </tr>)}</tbody>
       </table>
-      <p className="caption">Курс GRAM меняется. Точную сумму показывает игра перед оплатой.</p>
+      <p className="caption">Оценка по 0,015 $ за Star и курсу GRAM. Точную сумму показывает игра перед оплатой.</p>
     </details>
   </section>;
 }

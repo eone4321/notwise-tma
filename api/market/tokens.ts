@@ -21,7 +21,7 @@ export default async function handler() {
   const jettons = tokens.tokens.flatMap(token => token.master_address ? [token.master_address] : []);
   const [rates, native, market] = await Promise.all([
     tonRates(['ton', ...jettons]).catch(() => null),
-    json<Record<string, {usd_market_cap?: number}>>(
+    json<Record<string, {usd?: number; usd_market_cap?: number}>>(
       'https://api.coingecko.com/api/v3/simple/price?ids=the-open-network,notcoin&vs_currencies=usd&include_market_cap=true',
     ),
     json<{data: { attributes: { address: string; market_cap_usd: string | null; fdv_usd: string | null } }[]}>(
@@ -34,14 +34,15 @@ export default async function handler() {
 
   const now = new Date().toISOString();
   const items = tokens.tokens.map(({ symbol, master_address }) => {
-    const price = positive(rates?.[master_address ?? 'TON']?.prices?.USD);
     const metrics = market?.data?.find(row => row.attributes.address === master_address)?.attributes;
     const coingeckoId = symbol === 'GRAM' ? 'the-open-network' : symbol === 'NOT' ? 'notcoin' : '';
+    const tonapiUsd = positive(rates?.[master_address ?? 'TON']?.prices?.USD);
+    const price = tonapiUsd ?? positive(native?.[coingeckoId]?.usd);
     return {
       symbol, priceUsd: price ? String(price) : null,
       marketCapUsd: positive(native?.[coingeckoId]?.usd_market_cap) ?? positive(metrics?.market_cap_usd),
       fdvUsd: positive(metrics?.fdv_usd),
-      fetchedAt: now, source: 'tonapi', status: price ? 'fresh' : 'unavailable',
+      fetchedAt: now, source: tonapiUsd ? 'tonapi' : price ? 'coingecko' : null, status: price ? 'fresh' : 'unavailable',
     };
   });
   return Response.json({ items }, {

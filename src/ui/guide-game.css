@@ -694,6 +694,15 @@
 .inventoryMarketLabel { color: var(--muted); font-size: 11px; font-weight: 650; }
 .inventoryPanel .inventoryRow p { text-wrap: wrap; }
 
+.starsAndGram { display: inline-flex; align-items: center; gap: 7px; }
+.eggLink .starsAndGram, .inventoryShopPrice .starsAndGram { display: grid; justify-items: end; gap: 4px; }
+.inventoryShopPrice:has(.starsAndGram) { padding-block: 4px; }
+.rateEstimate { display: inline-flex; align-items: center; white-space: nowrap; }
+.rateEstimate[data-stale] { opacity: .8; }
+.nativeUsdEstimate, .gramUnavailable { color: var(--muted); font-size: 11px; font-weight: 500; white-space: nowrap; }
+.albumPublishing dd:has(.nativeUsdEstimate) { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.card .donationEquivalent { display: flex; align-items: center; gap: 7px; margin-block: 0 9px; }
+
 .eggSources .eggLink {
   display: grid;
   grid-template-columns: 38px minmax(0, 1fr) auto;

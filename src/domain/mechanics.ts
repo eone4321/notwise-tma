@@ -4,10 +4,6 @@ export const tierNames: Record<Tier,string> = {dark:'Обсидиановая',s
 export const baseChance: Record<Tier,number> = {dark:1,silver:1.5,gold:5};
 export const duration: Record<Tier,number> = {dark:14_400_000,silver:28_800_000,gold:86_400_000};
 export const starPrice: Record<Tier,number> = {dark:100,silver:500,gold:2500};
-// The observed game quote was 1.4 GRAM per 100 Stars. The quote rounds up to hundredths.
-export function estimatedGramForStars(stars: number) {
-  return Math.ceil(stars * 14 / 10) / 100;
-}
 export function speedupPrice(tier:Tier,elapsed:number){return Math.max(1,starPrice[tier]-Math.floor(Math.min(duration[tier],Math.max(0,elapsed))*starPrice[tier]/duration[tier]));}
 export function notOdds(tier:Tier,capsuleLevel=0){
  const amounts=[1,5,10,100,1000,5000,10000,100000,1000000,10000000];

@@ -2,6 +2,7 @@ import { DetailLink } from '../ui/DetailLink';
 import { trackGuide } from './guideAnalytics';
 import { channelInvite } from '../domain/guide-links';
 import { artSrc } from '../ui/warmArt';
+import { GramEstimate } from './GamePrice';
 import { useRef, useState } from 'react';
 import { openTelegramInvoice, telegramPopup } from '../telegram/client';
 
@@ -128,6 +129,7 @@ export function SupportPage({ isAdmin }: { isAdmin: boolean }) {
         {presets.map(value => <button className="amount" aria-pressed={amount === value} disabled={busy}
           key={value} onClick={() => setAmount(value)}>{stars.format(value)} ⭐</button>)}
       </div>
+      <p className="caption donationEquivalent">Эквивалент в GRAM <GramEstimate stars={amount} showUnavailable/></p>
       <button className="primary" onClick={donate} disabled={busy}>Поддержать на {stars.format(amount)} ⭐</button>
       {message && <p className="supportStatus" role="status">{message}</p>}
       {order && <button className="secondary" onClick={check} disabled={busy}>Проверить оплату</button>}
