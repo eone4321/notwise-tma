@@ -4,6 +4,7 @@ import { Price } from './Price';
 import squadShop from './squad-shop.json';
 import { artSrc } from '../ui/warmArt';
 import { Link, useLocation } from 'react-router';
+import { GameGlyph } from '../ui/GameGlyph';
 import { GameArt } from '../ui/GameArt';
 import { shopPrice } from './shop';
 
@@ -38,9 +39,9 @@ export function SquadPage({ gameEntry }: { gameEntry: string }) {
     <a className="textLink" href={gameEntry} onClick={() => trackGuide('action:game')}>Посмотреть магазин в игре</a>
   </section>;
   return <>
-    <nav className="choiceBar squadNav" aria-label="Сквады">
-      <Link to="/squads/war">Карта и осада</Link>
-      <Link to="/squads/shop">Магазин сквада</Link>
+    <nav className="choiceBar profileTabs squadNav" aria-label="Сквады">
+      <Link to="/squads/war"><GameGlyph name="fight"/>Карта и осада</Link>
+      <Link to="/squads/shop"><GameGlyph name="shop"/>Магазин сквада</Link>
     </nav>
     <section className="card squadIntro">
       <img src={artSrc('/game/war/siege-header.webp')} alt="" />

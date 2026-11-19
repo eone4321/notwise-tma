@@ -1,0 +1,376 @@
+@font-face {
+  font-family: Mont;
+  src: url('/fonts/Mont-Regular.woff2') format('woff2');
+  font-weight: 400 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: Mont;
+  src: url('/fonts/Mont-SemiBold.woff2') format('woff2');
+  font-weight: 600 650;
+  font-display: swap;
+}
+@font-face {
+  font-family: Mont;
+  src: url('/fonts/Mont-Bold.woff2') format('woff2');
+  font-weight: 700 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Not Wise Icons";
+  src: url('/game/fonts/nw-icons.woff2') format('woff2');
+  font-weight: 400;
+  font-display: block;
+  unicode-range: U+E900-E954;
+}
+
+:root {
+  --game-panel: #0f152a;
+  --game-panel-line: #303a54;
+  --game-tab-quiet: #b7c1d7;
+  --game-tile: #192138;
+  --game-xp: linear-gradient(90deg, #ff983f, #ffce91);
+  --hero-ground: #0c1221;
+  --hero-text: #fff8ed;
+}
+:root[data-theme="graphite"] {
+  --game-panel: #19191b;
+  --game-panel-line: #353539;
+  --game-tab-quiet: #c0bfc2;
+  --game-tile: #242427;
+  --hero-ground: #17191c;
+}
+.gameGlyph, .gameAttribute {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: 1em;
+  block-size: 1em;
+  font: 400 1em/1 "Not Wise Icons";
+  color: inherit;
+}
+.gameAttribute { font-size: 30px; }
+.gameAttribute > span { grid-area: 1 / 1; font: inherit; }
+
+.gameHero {
+  --hero-image-height: clamp(164px, 44vw, 218px);
+  position: relative;
+  gap: 9px;
+  padding: 14px;
+  border-color: var(--game-panel-line);
+  background: var(--hero-ground);
+  border-radius: 16px;
+}
+.gameHero .heroImage {
+  inset: 8px 0 auto auto;
+  object-position: 54% top;
+  height: calc(var(--hero-image-height) + 39px);
+  width: 77%;
+  max-width: none;
+  filter: saturate(.94);
+  mask-image: linear-gradient(to bottom, #000 64%, transparent), linear-gradient(to right, transparent, #000 36%);
+  mask-composite: intersect;
+}
+.gameHero::after, [data-theme="graphite"] .gameHero::after {
+  background: linear-gradient(90deg, var(--hero-ground) 4%, color-mix(in srgb, var(--hero-ground) 94%, transparent) 26%, transparent 76%);
+}
+.gameHero .heroCopy {
+  width: min(62%, 290px);
+  min-height: calc(var(--hero-image-height) - 14px);
+  align-content: center;
+  color: var(--hero-text);
+}
+.heroCopy h1 {
+  font-size: clamp(29px, 8.1vw, 43px);
+  line-height: 1.03;
+  letter-spacing: -.05em;
+  margin-block-end: 9px;
+}
+.heroCopy h1 > span { display: block; }
+.heroCopy .heroSub {
+  font-size: 13px;
+  line-height: 1.45;
+  color: #d5dae4;
+  max-width: 18ch;
+}
+.heroActions { gap: 7px; }
+.heroActions > :is(a, button) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding-inline: 6px;
+  white-space: normal;
+}
+.heroActions .openGame, [data-theme="graphite"] .heroActions .openGame {
+  background: #ffe6b7;
+  color: #1d1511;
+  min-height: 53px;
+  border: 1px solid #fff0d2;
+  border-radius: 12px;
+  box-shadow: inset 0 1px #fff7e4, 0 8px 14px #0a070946;
+}
+.launchMark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #241a16;
+  flex: none;
+}
+.launchMark img { display: block; }
+.heroActions .secondary {
+  background: var(--game-tile);
+  color: var(--text);
+  border-radius: 10px;
+  box-shadow: none;
+}
+.heroShare .gameGlyph, .heroActions .squadMark, .supportPill .gameGlyph { font-size: 16px; }
+.supportFooter {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 7px;
+  margin-block: 16px 4px;
+}
+.supportFooter > :last-child { grid-column: 1 / -1; }
+.supportFooter .supportPill {
+  justify-content: center;
+  white-space: normal;
+  padding-inline: 6px;
+  text-align: center;
+  font-size: 12px;
+  min-height: 44px;
+}
+
+.owlMarket.card {
+  padding: 12px;
+  border-radius: 12px;
+}
+.owlMarket .marketHeading {
+  margin-block-end: 5px;
+  min-height: 36px;
+}
+.marketHeading h2 { font-size: clamp(15px, 4.4vw, 18px); }
+.marketHeading .marketAll { white-space: nowrap; }
+.owlMarketList { gap: 0; }
+.owlMarketList .marketPriceRow {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) max-content;
+  gap: 9px;
+  min-height: 60px;
+  padding: 6px 1px;
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+}
+.owlMarketList .marketPriceRow + .marketPriceRow { border-top: 1px solid var(--game-panel-line); }
+.owlMarketList .marketPriceRow:active { background: var(--game-tile); }
+.owlMarketList .marketRowArt {
+  position: static;
+  z-index: auto;
+  translate: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  opacity: 1;
+  mask-image: none;
+  object-fit: cover;
+}
+.marketPriceRow .marketCollectionLabel b { font-size: 13px; line-height: 1.22; }
+.marketPriceRow .marketCollectionLabel small { font-size: 11px; }
+.marketPriceRow .marketPriceValues { gap: 1px; }
+.marketPriceRow .marketPriceValues small { font-size: 10px; }
+.marketPriceRow .marketPriceValues strong { font-size: 11px; }
+
+.homeShell .sectionHeading { margin: 19px 0 9px; }
+.homeShell .sectionHeading h2 { font-size: 18px; }
+.guideGrid .guideTile {
+  min-height: 112px;
+  padding: 10px;
+  gap: 5px;
+  border-radius: 10px;
+  border-color: var(--game-panel-line);
+  background: var(--game-panel);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.guideTile .tileText { min-width: 0; }
+.guideTile .tileText b { font-size: 13px; line-height: 1.2; }
+.guideTile .tileText small { font-size: 11px; line-height: 1.35; margin-top: 3px; max-width: 23ch; }
+.guideTileIcon { height: 40px; display: inline-flex; align-items: center; justify-self: start; }
+.guideTile .guideTileArt {
+  opacity: .31;
+  right: -8px;
+  top: -9px;
+  width: min(98px, 67%);
+  height: 94px;
+  mask-image: radial-gradient(ellipse at 63% 42%, #000 25%, transparent 73%);
+}
+.guideGrid > :last-child { grid-column: 1 / -1; min-height: 65px; display: grid; grid-template-columns: 46px minmax(0, 1fr); align-items: center; align-content: center; }
+.guideGrid > :last-child .guideTileArt { right: 7px; }
+
+.choiceBar.profileTabs {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: stretch;
+  gap: 3px;
+  margin: 0 0 10px;
+  border-bottom: 1px solid var(--game-panel-line);
+}
+.profileTabs > :is(a, button) {
+  flex: 1 1 0;
+  min-width: 0;
+  align-content: center;
+  gap: 4px;
+  min-height: 45px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  padding: 5px 3px;
+  font-size: 11px;
+  line-height: 1.22;
+  color: var(--game-tab-quiet);
+  text-align: center;
+}
+.profileTabs > :is(a, button):is([aria-current], [aria-pressed="true"]),
+[data-theme="graphite"] .profileTabs > :is(a, button):is([aria-current], [aria-pressed="true"]) {
+  background: var(--game-panel);
+  color: var(--text);
+  border-color: var(--game-panel-line);
+}
+[data-theme="graphite"] .choiceBar.profileTabs > :is(a, button):not([aria-current], [aria-pressed="true"]) {
+  background: transparent;
+  border-color: transparent;
+}
+.profileTabs .gameGlyph { font-size: 13px; }
+@media (max-width: 365px) {
+  .profileTabs .gameGlyph { font-size: 11px; }
+  .profileTabs > :is(a, button) { font-size: 10px; }
+}
+
+.albumLogo {
+  display: inline-block;
+  inline-size: 100%;
+  aspect-ratio: 1;
+  flex: none;
+  background-size: 500% 400%;
+  background-repeat: no-repeat;
+}
+.stickerShelf.card, .combatBranches.card, .skillShelf.card, .awardCollection.card {
+  border-radius: 10px;
+  background: var(--game-panel);
+  border-color: var(--game-panel-line);
+  box-shadow: none;
+}
+.stickerShelf .albumGrid { grid-template-columns: repeat(4, minmax(0,1fr)); gap: 5px; }
+.stickerShelf .albumGrid > a {
+  display: block;
+  position: relative;
+  padding: 0 2px 7px;
+  min-height: 52px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.stickerShelf .albumGrid > a:active, .stickerShelf .albumGrid > a:focus-visible { background: var(--game-tile); border-color: var(--game-panel-line); }
+.stickerShelf .albumCornerBadge {
+  top: auto;
+  inset-block-end: 0;
+  inset-inline: 0;
+  margin-inline: auto;
+  width: max-content;
+  padding: 1px 5px;
+  font-size: 9px;
+  background: var(--game-tile);
+  color: var(--game-tab-quiet);
+}
+.stickerShelf .albumCornerBadge.isComplete { color: #241a16; background: #ffce91; }
+.stickerShelf .stickerHelp > summary { gap: 7px; min-height: 42px; font-size: 12px; }
+.stickerProgress { margin-block-end: 8px; }
+.gameProgress {
+  display: block;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  margin-block-end: 7px;
+  border: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--game-tile);
+}
+.gameProgress::-webkit-progress-bar { background: var(--game-tile); }
+.gameProgress::-webkit-progress-value { background: var(--game-xp); border-radius: 8px; }
+.gameProgress::-moz-progress-bar { background: var(--game-xp); border-radius: 8px; }
+
+.combatBranches .mediaRow { gap: 10px; min-height: 60px; }
+.combatBranches .mediaRow > span:nth-child(2) { min-width: 0; }
+.combatBranches .mediaRow > span:nth-child(2) small { display: block; }
+.combatBranches .rowChevron { margin-inline-start: auto; }
+.skillShelf .skillTile { position: relative; width: 40px; }
+.skillTile b {
+  position: absolute;
+  inset: auto 0 0 auto;
+  padding: 1px 4px;
+  border-radius: 5px;
+  color: #f6f1ff;
+  background: #6949a2;
+  font-size: 10px;
+  line-height: 1.15;
+}
+.gameActionTile, .awardTile {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border: 1px solid var(--game-panel-line);
+  border-radius: 8px;
+  background: var(--game-tile);
+  color: var(--game-tab-quiet);
+  font-size: 19px;
+}
+.awardRow { grid-template-columns: 40px minmax(0, 1fr) 18px; gap: 10px; align-items: center; }
+.awardRow[data-earned="true"] .awardTile { border-color: #c6995e; }
+.awardRow[data-earned="true"] .awardMark { color: #ffce91; }
+.awardCollection .progressCounts h2 { font-size: 17px; }
+.awardCollection .progressCounts span { color: var(--gold); }
+
+
+.capsuleSlot {
+  display: grid;
+  place-items: center;
+  width: 57px;
+  height: 57px;
+  flex: none;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.capsuleHeading .capsuleSlot { width: 66px; height: 66px; }
+.capsuleList .capsuleChoice { gap: 9px; }
+.capsuleList .capsuleChoice small { margin-top: 3px; }
+.inventorySection.card {
+  border-radius: 10px;
+  background: var(--game-panel);
+  border-color: var(--game-panel-line);
+  box-shadow: none;
+}
+.inventorySection > summary > .gameArt {
+  box-sizing: content-box;
+  padding: 2px;
+  border: 1px solid var(--game-panel-line);
+  border-radius: 8px;
+  background: var(--game-tile);
+}
+
+.settingsContent .themeChoices > button { flex: 1 1 0; min-width: 0; padding-inline: 5px; }
+@media (max-width: 365px) {
+  .homeShell .brand { gap: 6px; font-size: 12px; }
+  .homeShell:has(.tokenTicker) .brand i { display: inline; }
+}

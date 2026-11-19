@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import skills from '../../public/data/skills.json';
 import progression from './owl-progression.json';
+import { GameAttribute, GameGlyph } from '../ui/GameGlyph';
 import { GameSymbol } from '../ui/GameSymbol';
 import { GameArt } from '../ui/GameArt';
 import { skillCopy } from './skill-copy';
@@ -17,10 +18,10 @@ export function SpBadge({ value }: { value?: number | string }) {
 }
 
 const branches = [
-  ['wisdom', 'Мудрость', 'Критический удар и мана', 1],
-  ['strength', 'Сила', 'Урон по противнику', 11],
-  ['agility', 'Ловкость', 'Уклонение и контроль', 6],
-  ['endurance', 'Выносливость', 'Здоровье и защита', 16],
+  ['wisdom', 'Мудрость', 'Критический удар и мана'],
+  ['strength', 'Сила', 'Урон по противнику'],
+  ['agility', 'Ловкость', 'Уклонение и контроль'],
+  ['endurance', 'Выносливость', 'Здоровье и защита'],
 ] as const;
 const modes = [
   ['swords', 'Рейтинговый бой', 'Рейтинг и капсулы', 'Атакуй зоны, которые соперник не блокирует, и переключай свой блок. Победа может дать капсулу при наличии свободного слота.'],
@@ -52,19 +53,19 @@ export function CombatPage() {
   const branch = branches.find(item => item[0] === branchId);
   const skill = skills.find(item => item.id === Number(skillId) && item.branch === branchId);
   return <>
-    {!branch && <nav className="choiceBar" aria-label="Раздел боя">
-      <Link to="/combat" aria-current={!page ? 'page' : undefined}>Навыки</Link>
-      <Link to="/combat/stats" aria-current={isStats ? 'page' : undefined}>Характеристики</Link>
-      <Link to="/combat/modes" aria-current={isModes ? 'page' : undefined}>Режимы</Link>
+    {!branch && <nav className="choiceBar profileTabs combatTabs" aria-label="Раздел боя">
+      <Link to="/combat" aria-current={!page ? 'page' : undefined}><GameGlyph name="lightning"/>Навыки</Link>
+      <Link to="/combat/stats" aria-current={isStats ? 'page' : undefined}><GameGlyph name="shield"/>Характеристики</Link>
+      <Link to="/combat/modes" aria-current={isModes ? 'page' : undefined}><GameGlyph name="fight"/>Режимы</Link>
     </nav>}
     {skill ? <SkillDetail key={skill.id} skill={skill}/> :
       branch ? <>
         <h2 className="subTitle">{branch[1]}</h2>
-        <section className="card">
+        <section className="card skillShelf">
           <p className="caption">С уровня 2 открой дерево навыков. В характеристиках вложи свободное очко атрибута в эту ветку, затем изучи навык за полученное очко ветки. Очки <SpBadge/> из Додзе нужны для улучшений.</p>
           {skills.filter(item => item.branch === branch[0]).sort((a, b) => a.tier - b.tier).map(item =>
             <Link to={'/combat/skills/' + branch[0] + '/' + item.id} className="mediaRow skillRow" key={item.id}>
-              <GameArt path={skillArt(item.id)} size={42}/>
+              <span className="skillTile"><GameArt path={skillArt(item.id)} size={38}/><b aria-hidden="true">{item.tier}</b></span>
               <span><strong>{skillCopy[item.id - 1][0]}</strong><small>{unlockCondition(item)}</small></span>
               <span className="rowChevron" aria-hidden="true"/>
             </Link>)}
@@ -72,7 +73,7 @@ export function CombatPage() {
       </> : isModes ? <section className="card">
         {modes.map(([icon, title, when, description]) => <details className="mediaDetails" key={title}
           id={icon === 'rocket' ? 'flight' : undefined} open={icon === 'rocket' && hash === '#flight' || undefined}>
-          <summary><GameSymbol name={icon}/><span><strong>{title}</strong>
+          <summary>{icon === 'swords' ? <GameArt path="/game/ui/fight-vs.png" size={36}/> : <GameSymbol name={icon}/>}<span><strong>{title}</strong>
             <small>{icon === 'rocket' ? <span className="energyBadge">С 5-го уровня · от 250 <GameSymbol name="bolt" size={13}/></span> :
               icon === 'boxing' ? <span className="energyBadge">Со 2-го уровня · 2 <GameSymbol name="bolt" size={13}/> / удар</span> : when}</small></span>
           </summary>
@@ -95,10 +96,10 @@ export function CombatPage() {
       </details>
     </section> : isStats ? <CombatStats/> : <>
         <p className="intro">Ветки навыков открываются на 2-м уровне. В бой можно взять до трёх навыков.</p>
-        <div className="catalogGrid">
-          {branches.map(([id, title, purpose, icon]) =>
-            <Link className="catalogTile" to={'/combat/skills/' + id} key={id}>
-              <GameArt path={skillArt(icon)} size={48}/><strong>{title}</strong><small>{purpose}</small>
+        <div className="card combatBranches">
+          {branches.map(([id, title, purpose]) =>
+            <Link className="mediaRow" to={'/combat/skills/' + id} key={id}>
+              <GameAttribute name={id}/><span><strong>{title}</strong><small>{purpose}</small></span><span className="rowChevron" aria-hidden="true"/>
             </Link>
           )}
         </div>
@@ -160,10 +161,10 @@ function SkillDetail({ skill }: { skill: Skill }) {
 }
 
 const attributes = [
-  ['muscle', 'Сила', '+0,065 урона за очко', 'Повышает урон обычных ударов.'],
-  ['target', 'Ловкость', '+0,7% к шансу уклонения за очко', 'Шанс складывается. Например, с 20% он вырастет до 20,7%. Предел — 70%.'],
-  ['bolt', 'Мудрость', '+0,7% к шансу крита и +20 маны за очко', 'Например, шанс крита 20% вырастет до 20,7%. Предел — 70%. Базовая мана — 200.'],
-  ['heart', 'Выносливость', '+2 HP за очко', 'К базовым 20 HP прибавляются 3 HP за каждый уровень совы и 2 HP за каждое очко выносливости.'],
+  ['strength', 'Сила', '+0,065 урона за очко', 'Повышает урон обычных ударов.'],
+  ['agility', 'Ловкость', '+0,7% к шансу уклонения за очко', 'Шанс складывается. Например, с 20% он вырастет до 20,7%. Предел — 70%.'],
+  ['wisdom', 'Мудрость', '+0,7% к шансу крита и +20 маны за очко', 'Например, шанс крита 20% вырастет до 20,7%. Предел — 70%. Базовая мана — 200.'],
+  ['endurance', 'Выносливость', '+2 HP за очко', 'К базовым 20 HP прибавляются 3 HP за каждый уровень совы и 2 HP за каждое очко выносливости.'],
 ] as const;
 
 function CombatStats() {
@@ -173,7 +174,7 @@ function CombatStats() {
   return <>
     <section className="card"><h2>Эффект одного очка атрибута</h2>
       {attributes.map(([icon, name, effect, detail]) => <details className="mediaDetails" key={name}>
-        <summary><GameSymbol name={icon}/><span><strong>{name}</strong><small>{effect}</small></span></summary>
+        <summary><GameAttribute name={icon}/><span><strong>{name}</strong><small>{effect}</small></span></summary>
         <p>{detail}</p>
       </details>)}
     </section>

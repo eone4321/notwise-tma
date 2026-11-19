@@ -4,10 +4,10 @@ import { Link } from 'react-router';
 import collections from './market-collections.json';
 
 const featured = [
-  { id: 'eggs', name: 'Яйца', description: 'Исторический выпуск NOT Wise' },
-  { id: 'genesis', name: 'Совы Genesis', description: 'Первая коллекция NOT Wise' },
-  { id: 'skins', name: 'Скины', description: 'Облик и бонус к фарму' },
-  { id: 'items', name: 'NFT-предметы', description: 'Рынок Getgems' },
+  { id: 'eggs', description: 'Коллекционные яйца' },
+  { id: 'genesis', description: 'Первая коллекция сов' },
+  { id: 'skins', description: 'Скины сов' },
+  { id: 'items', description: 'Игровые предметы' },
 ];
 const gram = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
 const usdt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
@@ -15,10 +15,10 @@ const usdt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
 export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}) {
   const { data: market, pending } = collectionMarket.useSnapshot();
 
-  return <section className="card" aria-labelledby="owl-market">
+  return <section className="card owlMarket" aria-labelledby="owl-market">
     <div className="marketHeading"><h2 id="owl-market">{only === 'eggs' ? 'Цена NFT-яйца' : only === 'items' ? 'Цена NFT-предметов' : 'Цены на NFT в Not Wise'}</h2>
     {!only && <Link className="marketAll" to="/collections/market" state={{ returnTo: '/' }}>См. все<span className="sr-only"> коллекции</span></Link>}</div>
-    <p className="caption">От минимальной цены на Getgems. USDT — эквивалент.</p>
+
     <div className="owlMarketList" aria-busy={!market && pending}>
       {featured.filter(item => only ? item.id === only : item.id !== 'eggs').map(item => {
         const collection = collections.find(({ id }) => id === item.id);
@@ -29,8 +29,8 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
         const rate = market?.gramToUsdt;
         return <a className="marketPriceRow" key={item.id}
           href={`https://getgems.io/collection/${collection.address}`} target="_blank" rel="noreferrer">
-          <img className="marketRowArt" src={artSrc(item.id === 'items' ? '/game/items/ring-wit-3.webp' : `/brand/collections/${item.id}.png`)} alt="" width="96" height="96"/>
-          <span><b>{item.name}</b><small>{item.description}</small></span>
+          <img className="marketRowArt" src={artSrc(`/brand/collections/${item.id}.png`)} alt="" width="40" height="40"/>
+          <span className="marketCollectionLabel"><b>{collection.name}</b><small>{item.description}</small></span>
           <span className="marketPriceValues" title={quote?.available === false && hasPrice ? 'Последняя доступная цена' : undefined}>
             {hasPrice ? <>
               <strong><img src={artSrc('/brand/tokens/gram.png')} alt="" width="15" height="15"/>от {gram.format(floor)} GRAM</strong>

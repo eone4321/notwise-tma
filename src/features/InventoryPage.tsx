@@ -1,6 +1,7 @@
 import { itemMarket } from './marketData';
 import mintableItems from './mintable-items.json';
 import { Link, useLocation } from 'react-router';
+import { GameGlyph } from '../ui/GameGlyph';
 import { GameArt } from '../ui/GameArt';
 import { chanceLabel, chancePerOpening } from '../domain/mechanics';
 import { dropsFor, eggDrawCounts, itemNames } from './inventory';
@@ -36,10 +37,10 @@ export function OwlPage() {
   const unknownChance = drops.reduce((sum, [id, chance]) => sum + (itemNames[id] ? 0 : chance), 0);
   const isEggIndex = ['/owl', '/owl/shop', '/owl/loot'].includes(pathname);
   return <>
-    <nav className="choiceBar owlTabs" aria-label="Яйца и скины">
-      <Link to="/owl" replace aria-current={isEggIndex || egg ? 'page' : undefined}>Яйца</Link>
-      <Link to="/owl/skins" replace aria-current={pathname === '/owl/skins' ? 'page' : undefined}>Скины и жетоны</Link>
-      <Link to="/owl/care" replace aria-current={care ? 'page' : undefined}>Кормление</Link>
+    <nav className="choiceBar profileTabs owlTabs" aria-label="Яйца и скины">
+      <Link to="/owl" replace aria-current={isEggIndex || egg ? 'page' : undefined}><GameArt path="/game/items/egg.webp" size={16}/>Яйца</Link>
+      <Link to="/owl/skins" replace aria-current={pathname === '/owl/skins' ? 'page' : undefined}><GameGlyph name="skin"/>Скины и жетоны</Link>
+      <Link to="/owl/care" replace aria-current={care ? 'page' : undefined}><GameGlyph name="leaf"/>Кормление</Link>
     </nav>
     {isEggIndex && <>
       <section className="card leanList eggSources">

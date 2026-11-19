@@ -1,4 +1,5 @@
 import { trackGuide } from './guideAnalytics';
+import { GameGlyph } from '../ui/GameGlyph';
 import { artSrc } from '../ui/warmArt';
 import { Link, useLocation } from 'react-router';
 import { TokenQuotes } from './TokenQuotes';
@@ -75,10 +76,10 @@ export function EcosystemPage({ gameEntry }: { gameEntry: string }) {
   const tab = pathname === '/ecosystem/quotes' ? 'quotes' :
     pathname === '/ecosystem/tokens' || hash.startsWith('#token-') ? 'tokens' : 'projects';
   return <>
-    <nav className="choiceBar ecosystemTabs" aria-label="Экосистема">
-      {([['projects', '/ecosystem', 'Проекты'], ['quotes', '/ecosystem/quotes', 'Курсы'],
-        ['tokens', '/ecosystem/tokens', 'Токены']] as const).map(([key, path, label]) =>
-        <Link key={key} to={path} replace aria-current={key === tab ? 'page' : undefined}>{label}</Link>)}
+    <nav className="choiceBar profileTabs ecosystemTabs" aria-label="Экосистема">
+      {([['projects', '/ecosystem', 'Проекты', 'sparkles'], ['quotes', '/ecosystem/quotes', 'Курсы', 'treasure'],
+        ['tokens', '/ecosystem/tokens', 'Токены', 'inventory']] as const).map(([key, path, label, icon]) =>
+        <Link key={key} to={path} replace aria-current={key === tab ? 'page' : undefined}><GameGlyph name={icon}/>{label}</Link>)}
     </nav>
     {tab === 'projects' && <section className="projectSection" aria-labelledby="ecosystem-projects">
       <h2 id="ecosystem-projects">Проекты экосистемы</h2>

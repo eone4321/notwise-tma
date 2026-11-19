@@ -3,6 +3,8 @@ import { Link, useLocation } from 'react-router';
 import stickers from '../../public/data/all_100_stickers.json';
 import marketPacks from '../../public/data/stickers.json';
 import { GameArt } from '../ui/GameArt';
+import { GameGlyph } from '../ui/GameGlyph';
+import { AlbumLogo } from '../ui/AlbumLogo';
 import { achievementActions } from './inventory';
 import { ProgressStatus, useProgress } from './GuideProgress';
 import marketCollections from './market-collections.json';
@@ -42,9 +44,9 @@ export function CollectionPage() {
   const theme = themes[title] ?? marketPacks.packs.find(pack => pack.name === 'NOT Wise: ' + title)?.theme;
   const total = album === null ? stickers.length : matches.length;
   return <>
-    {album === null && <nav className="choiceBar" aria-label="Раздел коллекций">
-      <Link to="/collections" aria-current={!marketView ? 'page' : undefined}>Стикеры</Link>
-      <Link to="/collections/market" state={{ returnTo: state?.returnTo ?? '/collections' }} aria-current={marketView ? 'page' : undefined}>NFT на Getgems</Link>
+    {album === null && <nav className="choiceBar profileTabs" aria-label="Раздел коллекций">
+      <Link to="/collections" aria-current={!marketView ? 'page' : undefined}><GameGlyph name="gift"/>Стикеры</Link>
+      <Link to="/collections/market" state={{ returnTo: state?.returnTo ?? '/collections' }} aria-current={marketView ? 'page' : undefined}><GameGlyph name="treasure"/>NFT на Getgems</Link>
     </nav>}
     {marketView ? <section className="card marketCollections" aria-busy={!market && pending}>
       {marketCollections.map(item => {
@@ -69,7 +71,7 @@ export function CollectionPage() {
         const id = index + 1;
         const quote = market?.items.find(item => item.id === 'album-' + id);
         return <details className="mediaDetails marketCollection" key={id} id={'album-' + id} open={hash === '#album-' + id || undefined}>
-          <summary><GameArt path={`/game/albums/${id}.webp`} size={40}/>
+          <summary><AlbumLogo id={id} size={48}/>
             <span><strong>{title}</strong><small>{quote?.floor ? `от ${format.format(quote.floor)} GRAM` : 'Флор недоступен'}</small></span>
           </summary>
           {typeof quote?.supply === 'number' && <p>Выпущено в TON · {format.format(quote.supply)}</p>}
@@ -81,24 +83,26 @@ export function CollectionPage() {
       })}
     </section> : <>
       {album === null ? <>
-        <ProgressCount count={count} total={total}/>
-        <ProgressStatus/>
-        <details className="card guideDisclosure">
-          <summary><strong>Как собираются наборы</strong></summary>
-          <p>Стикерпак даёт 1–3 стикера. Повторки возможны. Часть карточек выдаётся за секреты и достижения.</p>
-          <p>Собери все 5 карточек набора, чтобы открыть его выпуск. Доступность и цену создания набора показывает игра.</p>
-        </details>
-        <div className="albumGrid">{albums.map((label, index) => {
-          const pack = index + 1;
-          const found = stickers.filter(item => stickerAlbum(item.id) === pack && isDone(item.id)).length;
-          return <Link key={label} to={`/collections/albums/${pack}`}>
-            <span className={`albumCornerBadge${found === 5 ? ' isComplete' : ''}`}>{found}/5</span>
-            <GameArt path={`/game/albums/${pack}.webp`} size={45}/>
-            <strong>{label}</strong>
-          </Link>;
-        })}</div>
-      </> : <section className="card stickerCollection">
-        <div className="mediaHeading"><GameArt path={`/game/albums/${album}.webp`} size={46}/><div>
+        <section className="card stickerShelf">
+          <ProgressCount count={count} total={total}/>
+          <ProgressStatus/>
+          <details className="mediaDetails stickerHelp">
+            <summary><GameGlyph name="info"/><strong>Как собираются наборы</strong></summary>
+            <p>Стикерпак даёт 1–3 стикера. Повторки возможны. Часть карточек выдаётся за секреты и достижения.</p>
+            <p>Собери все 5 карточек набора, чтобы открыть его выпуск. Доступность и цену создания набора показывает игра.</p>
+          </details>
+          <div className="albumGrid">{albums.map((label, index) => {
+            const pack = index + 1;
+            const found = stickers.filter(item => stickerAlbum(item.id) === pack && isDone(item.id)).length;
+            return <Link key={label} to={`/collections/albums/${pack}`}>
+              <AlbumLogo id={pack}/>
+              <span className="sr-only">{label}, собрано {found} из 5</span>
+              <span aria-hidden="true" className={`albumCornerBadge${found === 5 ? ' isComplete' : ''}`}>{found}/5</span>
+            </Link>;
+          })}</div>
+        </section>
+      </> : <section className="card stickerShelf stickerCollection">
+        <div className="mediaHeading"><AlbumLogo id={album} size={67}/><div>
           <h2>{title}</h2>{theme && <p>{theme}</p>}
         </div></div>
         <ProgressCount count={count} total={total}/>
@@ -142,7 +146,8 @@ export function CollectionPage() {
 }
 
 function ProgressCount({ count, total }: { count: number; total: number }) {
-  return <div className="progressCounts">
-    <strong>Собрано {count}/{total}</strong><span>Осталось {total - count}</span>
+  return <div className="stickerProgress">
+    <div className="progressCounts"><strong>Собрано {count}/{total}</strong><span>Осталось {total - count}</span></div>
+    <progress className="gameProgress" value={count} max={total} aria-label="Собрано стикеров"/>
   </div>;
 }

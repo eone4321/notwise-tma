@@ -28,11 +28,28 @@ export function useGuideAwards(user?: string) {
     return result;
   }, []);
 
+  const chatPending = useRef(false);
+  function noteChatVisit() {
+    chatPending.current = true;
+    if (authData()) sessionStorage.setItem('notwise.guide.chat-visit', '1');
+  }
+
   useEffect(() => {
     if (!user) return;
     const refresh = () => { void update().catch(() => {}); };
-    const visible = () => { if (document.visibilityState === 'visible') refresh(); };
-    refresh();
+    const visible = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (seen.current.has('community') || (!chatPending.current && !sessionStorage.getItem('notwise.guide.chat-visit'))) {
+        refresh();
+        return;
+      }
+      void update('check_chat').then(result => {
+        if (!result?.joined) return;
+        chatPending.current = false;
+        sessionStorage.removeItem('notwise.guide.chat-visit');
+      }).catch(refresh);
+    };
+    visible();
     window.addEventListener('guide-awards-refresh', refresh);
     document.addEventListener('visibilitychange', visible);
     return () => {
@@ -42,7 +59,7 @@ export function useGuideAwards(user?: string) {
     };
   }, [update, user]);
 
-  return { earned, toast, update };
+  return { earned, toast, update, noteChatVisit };
 }
 
 export function AwardToast({ award }: { award?: GuideAchievement }) {

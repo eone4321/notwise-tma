@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router';
-import { communityChat, squadLink } from '../domain/guide-links';
 import { guideAchievements, type GuideAchievement } from '../domain/guide-achievements';
 import { GameArt } from '../ui/GameArt';
+import { GameGlyph } from '../ui/GameGlyph';
 import { Appearance } from './Appearance';
 import { SupportPage } from './SupportPage';
 import { authData, profileRequest, type GuideProfile } from './guideProfile';
@@ -18,22 +18,19 @@ type Scope = keyof typeof scopeLabels;
 type Notifications = { ready: boolean; extraAvailable: boolean; enabled: Record<Scope, boolean> };
 const bot = 'https://t.me/NotWiseGuideBot';
 
-export function SettingsPage({ profile, earned, checkChat }: {
-  profile: GuideProfile | null; earned: GuideAchievement[];
-  checkChat: () => Promise<{ joined?: boolean } | undefined>;
-}) {
+export function SettingsPage({ profile, earned }: { profile: GuideProfile | null; earned: GuideAchievement[] }) {
   const { pathname } = useLocation();
   const language = useGuideLocale(profile?.language);
   const en = language.locale === 'en';
   const tabs = [
-    ['/support', en ? 'About' : 'О проекте'],
-    ['/support/settings', en ? 'Settings' : 'Настройки'],
-    ['/support/achievements', en ? 'Achievements' : 'Достижения'],
-  ];
+    ['/support', en ? 'About' : 'О проекте', 'info'],
+    ['/support/settings', en ? 'Settings' : 'Настройки', 'settings'],
+    ['/support/achievements', en ? 'Achievements' : 'Достижения', 'treasure'],
+  ] as const;
   return <>
     <h1 className="pageTitle">{en ? 'Settings' : 'Настройки'}</h1>
-    <nav className="choiceBar settingsTabs" aria-label={en ? 'Guide settings' : 'Настройки гайда'}>
-      {tabs.map(([to, label]) => <NavLink key={to} end to={to}>{label}</NavLink>)}
+    <nav className="choiceBar profileTabs settingsTabs" aria-label={en ? 'Guide settings' : 'Настройки гайда'}>
+      {tabs.map(([to, label, glyph]) => <NavLink key={to} end to={to}><GameGlyph name={glyph}/>{label}</NavLink>)}
     </nav>
     {pathname === '/support' && <div className="settingsContent" lang="ru"><SupportPage isAdmin={profile?.isAdmin === true}/></div>}
     {pathname === '/support/settings' && <div className="settingsContent">
@@ -51,7 +48,7 @@ export function SettingsPage({ profile, earned, checkChat }: {
       </section>
       <NotificationSettings english={en}/>
     </div>}
-    {pathname === '/support/achievements' && <Achievements earned={earned} checkChat={checkChat}/>}
+    {pathname === '/support/achievements' && <Achievements earned={earned}/>}
   </>;
 }
 
@@ -96,35 +93,20 @@ function NotificationSettings({ english: en }: { english: boolean }) {
   </section>;
 }
 
-function Achievements({ earned, checkChat }: {
-  earned: GuideAchievement[]; checkChat: () => Promise<{ joined?: boolean } | undefined>;
-}) {
-  const [chatStatus, setChatStatus] = useState('');
-  const [busy, setBusy] = useState(false);
-  async function confirm() {
-    setBusy(true);
-    try {
-      const result = await checkChat();
-      setChatStatus(result?.joined ? 'Участие подтверждено.' : 'Telegram пока не подтвердил участие.');
-    } catch { setChatStatus('Проверка участия временно недоступна.'); }
-    finally { setBusy(false); }
-  }
-  return <section className="card" lang="ru">
-    <div className="progressCounts"><h2>Достижения гайда</h2><span>{earned.length}/{Object.keys(guideAchievements).length}</span></div>
+function Achievements({ earned }: { earned: GuideAchievement[] }) {
+  const total = Object.keys(guideAchievements).length;
+  return <section className="card awardCollection" lang="ru">
+    <div className="progressCounts"><h2>Достижения гайда</h2><span>{earned.length}/{total}</span></div>
+    <progress className="gameProgress" value={earned.length} max={total} aria-label="Открыто достижений"/>
     {!authData() && <p className="caption">Открой гайд в Telegram, чтобы сохранять достижения.</p>}
     <ul className="compactList">{Object.entries(guideAchievements).map(([id, item]) => {
       const done = earned.includes(id as GuideAchievement);
       return <li className="awardRow" key={id} data-earned={done}>
-        <GameArt path={item.icon} size={38}/>
-        <div><strong>{item.title}</strong><small>{item.description}</small>
-          {!done && id === 'community' && <div className="awardActions"><a href={communityChat} className="textLink">Вступить</a>
-            {authData() && <button type="button" className="secondary" onClick={() => void confirm()} disabled={busy}>Проверить</button>}</div>}
-          {!done && id === 'squad' && <div><a href={squadLink} className="textLink">Открыть сквад</a>
-            <small>Подтверждение участия пока недоступно.</small></div>}
-        </div>
-        <span className="awardMark" aria-label={done ? 'Открыто' : 'Закрыто'}>{done ? '✓' : '○'}</span>
+        <span className="awardTile">{done ? <GameArt path={item.icon} size={28}/> : <GameGlyph name="lock"/>}</span>
+        <div><strong>{item.title}</strong><small>{item.description}</small></div>
+        {done && <span className="awardMark" aria-label="Открыто">✓</span>}
+        {!done && <span className="sr-only">Скрытое достижение</span>}
       </li>;
     })}</ul>
-    {chatStatus && <p role="status">{chatStatus}</p>}
   </section>;
 }

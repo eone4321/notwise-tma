@@ -27,6 +27,6 @@ export async function warmArt(onProgress: (loaded: number, total: number) => voi
       }
     }
   };
-  const font = document.fonts.load('34px "Not Wise Frens"', '\ue905').catch(() => []);
+  const font = document.fonts.load('20px "Not Wise Icons"', '\ue905\ue922\ue937').catch(() => []);
   await Promise.all([font, ...Array.from({ length: 12 }, load)]);
 }

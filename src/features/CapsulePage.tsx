@@ -3,7 +3,9 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import xp from '../../public/data/xp_levels.json';
 import { chanceLabel, coinReward, duration, notOdds, tierNames, tiers, xpReward } from '../domain/mechanics';
+import { GameGlyph } from '../ui/GameGlyph';
 import { GameArt } from '../ui/GameArt';
+import { artSrc } from '../ui/warmArt';
 import { SkinFarmCalculator } from './SkinFarmCalculator';
 
 const capsuleNames = ['Obsidian', 'Moonlight Silver', 'Golden'];
@@ -17,7 +19,7 @@ export function CapsulePage() {
     <p className="intro">Выбери капсулу, чтобы посмотреть её награды и цену открытия.</p>
     <section className="card leanList capsuleList">
       {tiers.map((tier, index) => <Link className="mediaRow capsuleChoice" key={tier} to={'/capsules/' + tier}>
-        <GameArt path={`/game/capsules/${tier}.webp`} size={46}/>
+        <CapsuleSlot tier={tier}/>
         <span><strong>{tierNames[tier]}</strong><small>Шанс яйца · {eggChances[index]}</small></span>
         <span className="rowEnd"><b>{duration[tier] / 3_600_000} ч</b><span className="rowChevron" aria-hidden="true"/></span>
       </Link>)}
@@ -38,15 +40,15 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
   const capsuleLevel = Math.min(xp.length - 1, Math.max(1, Number(level) || 1));
   const odds = notOdds(currentTier, capsuleLevel);
   return <>
-    <nav className="choiceBar capsuleTabs" aria-label="Тип капсулы">
-      {tiers.map(tier => <Link key={tier} aria-current={tier === currentTier ? 'page' : undefined} to={'/capsules/' + tier}>{tierNames[tier]}</Link>)}
+    <nav className="choiceBar profileTabs capsuleTabs" aria-label="Тип капсулы">
+      {tiers.map(tier => <Link key={tier} aria-current={tier === currentTier ? 'page' : undefined} to={'/capsules/' + tier}><GameArt path={`/game/capsules/${tier}.webp`} size={18}/>{tierNames[tier]}</Link>)}
     </nav>
-    <div className="card mediaHeading capsuleHeading"><GameArt path={`/game/capsules/${currentTier}.webp`} size={56}/><div>
+    <div className="card mediaHeading capsuleHeading"><CapsuleSlot tier={currentTier}/><div>
       <h2>{tierNames[currentTier]} капсула</h2><p>{capsuleNames[index]} · бесплатно через {hours} ч</p>
     </div></div>
     <CapsulePrices key={currentTier} tier={currentTier}/>
     <details className="card mediaDetails guideDisclosure">
-      <summary><GameArt path="/game/items/wise-coin.webp" size={36}/>
+      <summary><GameArt path="/game/ui/coin.webp" size={36}/>
         <span><strong>Гарантированные награды</strong><small>Монеты и опыт по уровню капсулы</small></span>
       </summary>
       <label className="field">Уровень капсулы <input type="number" min="1" max={xp.length - 1} value={level} placeholder="1" inputMode="numeric" onChange={event => setLevel(event.target.value.replace(/\D/g, '').slice(0, 3))} /></label>
@@ -56,7 +58,7 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
     <section className="card">
       <h2>Дополнительные награды</h2>
       <div className="mediaRow"><GameArt path="/game/items/egg.webp" size={40}/><Link className="textLink" to="/owl/mystery">Загадочное яйцо</Link><strong>{eggChances[index]}</strong></div>
-      <div className="mediaRow"><GameArt path="/game/albums/1.webp" size={40}/><Link className="textLink" to="/collections">Набор стикеров</Link><strong>{stickerChances[index]}</strong></div>
+      <div className="mediaRow"><GameArt path="/game/items/sticker-pack.webp" size={40}/><Link className="textLink" to="/collections">Набор стикеров</Link><strong>{stickerChances[index]}</strong></div>
     </section>
     <section className="card notDrop">
       <div className="mediaHeading notDropHeader">
@@ -93,10 +95,17 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
   </>;
 }
 
+function CapsuleSlot({ tier }: { tier: typeof tiers[number] }) {
+  const background = artSrc('/game/ui/capsule-slot.webp');
+  return <span className="capsuleSlot" style={{ backgroundImage: `url("${background}")` }}>
+    <GameArt path={`/game/capsules/${tier}.webp`} size={43}/>
+  </span>;
+}
+
 function SlotGuide() {
   return <section className="card"><h2>Как открыть больше слотов</h2>
       <p>Первые три слота доступны сразу. Слоты 4–11 открываются за уровень или Stars. Слот 12 открывается за 200 ⭐.</p>
-      <details><summary>Требования к каждому слоту</summary>
+      <details><summary><GameGlyph name="lock"/> Требования к каждому слоту</summary>
         {Array.from({length:8}, (_,i) => <div className="mediaRow" key={i}><span>Слот {i+4}</span><strong>{(i+1)*10} ур. или {(500*2**i).toLocaleString('ru-RU')} ⭐</strong></div>)}
       </details>
     </section>;

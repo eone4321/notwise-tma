@@ -2,6 +2,7 @@ import { trackGuide } from './guideAnalytics';
 import { channelInvite } from '../domain/guide-links';
 import { copyLink } from '../ui/copyLink';
 import { useEffect, useState, useRef, type FormEvent } from 'react';
+import { GameGlyph } from '../ui/GameGlyph';
 import { GameArt } from '../ui/GameArt';
 import { authData, defaultGameLink, guideShareUrl, profileRequest, shareGuide, type GuideProfile } from './guideProfile';
 
@@ -93,7 +94,7 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
 
   return <>
     <section className="card">
-      <div className="mediaHeading"><GameArt path="/game/items/wise-coin.webp" size={56}/><div>
+      <div className="mediaHeading"><span className="gameActionTile"><GameGlyph name="chat"/></span><div>
         <h2>Приглашай друзей в Not Wise</h2>
         <p>{profile?.gameLinkVerified
           ? 'Поделись персональной ссылкой. У приглашённого кнопка «Открыть игру» поведёт по твоей игровой рефке.'
@@ -106,7 +107,7 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
       <p role="status" className="copyFeedback">{copyStatus}</p>
       <label className="field">Ссылка на гайд<input ref={linkInput} type="url" readOnly value={url} onFocus={event => event.currentTarget.select()}/></label></>}
       <button type="button" className="secondary plainGuideShare" onClick={() => { trackGuide('action:share_send'); shareGuide(guideShareUrl()); }}>
-        Поделиться гайдом без рефки
+        <GameGlyph name="share"/> Поделиться гайдом без рефки
       </button>
       {!authData() && <p className="caption">Открой гайд в Telegram, чтобы получить персональную ссылку.</p>}
       {authData() && !profile && <p className="caption">{failed ? <>Профиль недоступен. <button className="inlineAction" onClick={onRetry}>Повторить</button></> : 'Загружаем персональную ссылку…'}</p>}

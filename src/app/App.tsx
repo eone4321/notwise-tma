@@ -14,6 +14,8 @@ import { OwlPrices } from '../features/OwlPrices';
 import { EcosystemPage } from '../features/EcosystemPage';
 import { TokenTicker } from '../features/TokenQuotes';
 import { GameArt } from '../ui/GameArt';
+import { GameGlyph } from '../ui/GameGlyph';
+import { AlbumLogo } from '../ui/AlbumLogo';
 import { InventoryPage, OwlPage } from '../features/InventoryPage';
 import { CombatPage } from '../features/CombatPage';
 import { CollectionPage } from '../features/CollectionPage';
@@ -87,10 +89,10 @@ useEffect(() => {
   window.addEventListener('keydown', close);
   return () => window.removeEventListener('keydown', close);
 }, [hamster, hamsterLocked]);useEffect(()=>{telegramPopup()?.ready();const key='notwise.guide.startapp.v1';if(sessionStorage.getItem(key))return;const start=new URLSearchParams(location.search).get('startapp')??telegramPopup()?.initDataUnsafe?.start_param;const routes:Record<string,string>={capsules_gold:'/capsules/gold',eggs:'/owl',secrets:'/secrets',market:'/collections/market'};if(start&&Object.hasOwn(routes,start)){sessionStorage.setItem(key,'1');nav(routes[start],{replace:true})}},[nav]);const ask=()=>{lightHaptic();const tg=telegramPopup();if(tg?.showPopup){try { tg.showPopup({title:'Секреты Not Wise',message:'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты',buttons:[{id:'pay',text:'Заплатить',type:'default'},{id:'back',text:'Назад',type:'default'}]},()=>reveal()); return; } catch { /* Older Telegram clients use the local dialog. */ }}setPopup(true)};function reveal(){setPopup(false);setJoke(true);setShowJoke(true);localStorage.setItem('notwise.guide.secrets.v1','1')}
-return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach !== null}><Link to="/" className="brand"><img src="/brand/notwise.svg" alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main key={loc.pathname} inert={hamster || coach !== null}>{loc.pathname === '/' ? <Home english={english} profile={profile} profileFailed={profileFailed} retryProfile={() => {
+return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach !== null}><Link to="/" className="brand"><img src="/brand/notwise.svg" alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main key={loc.pathname} inert={hamster || coach !== null}>{loc.pathname === '/' ? <Home onChatVisit={awards.noteChatVisit} english={english} profile={profile} profileFailed={profileFailed} retryProfile={() => {
   setProfileFailed(false); setProfileAttempt(value => value + 1);
 }}/> : loc.pathname === '/admin' ? <AdminPage profile={profile}/> : loc.pathname === '/support' || loc.pathname.startsWith('/support/') ?
-  <SettingsPage profile={profile} earned={awards.earned} checkChat={() => awards.update('check_chat')}/> : <div lang="ru"><Page profile={profile} ask={ask} joke={joke} popup={popup} reveal={reveal}
+  <SettingsPage profile={profile} earned={awards.earned}/> : <div lang="ru"><Page profile={profile} ask={ask} joke={joke} popup={popup} reveal={reveal}
   referrals={<ReferralsPage profile={profile} failed={profileFailed} onSave={next => { setProfile(next); void awards.update().catch(() => {}); }} onRetry={() => {
     setProfileFailed(false);
     setProfileAttempt(value => value + 1);
@@ -182,8 +184,8 @@ function Dock({ hamster, locked, onHamster, onGesture }: { hamster: boolean; loc
     </button>
   </nav>;
 }
-function Home({ profile, profileFailed, retryProfile, english: en }: {
-  english: boolean; profile: GuideProfile | null; profileFailed: boolean; retryProfile: () => void;
+function Home({ profile, profileFailed, retryProfile, onChatVisit, english: en }: {
+  english: boolean; profile: GuideProfile | null; profileFailed: boolean; retryProfile: () => void; onChatVisit: () => void;
 }) {
  const [share, setShare] = useState(false);
  const fromInvite = authData() && /^g_[a-f0-9]{32}$/.test(telegramPopup()?.initDataUnsafe?.start_param ?? '');
@@ -207,16 +209,16 @@ function Home({ profile, profileFailed, retryProfile, english: en }: {
  ] as const;
  return <>
   <section className="gameHero">
-    <div className="heroCopy"><h1>{en ? 'NOT Wise Guide' : 'Гайд по Not Wise'}</h1><p className="heroSub">{en ? 'Loot, combat and owl care.' : 'Награды, бои и уход за совой.'}</p></div>
+    <div className="heroCopy"><h1>{en ? <>NOT Wise <span>Guide</span></> : <>Гайд по <span>NOT Wise</span></>}</h1><p className="heroSub">{en ? 'Loot, combat and owl care.' : 'Награды, бои и уход за совой.'}</p></div>
     <img className="heroImage" src={artSrc('/brand/notwise-home.jpg')} width="1170" height="1200" alt=""/>
     <div className="heroActions">
-      {fromInvite && !profile ? <button className="primary" disabled={!profileFailed} onClick={retryProfile}>
+      {fromInvite && !profile ? <button className="primary openGame" disabled={!profileFailed} onClick={retryProfile}>
         {profileFailed ? en ? 'Retry' : 'Повторить проверку' : en ? 'Checking invitation…' : 'Проверяем приглашение…'}
-      </button> : <a className="primary" href={profile?.gameEntry ?? defaultGameLink} onClick={() => trackGuide('action:game')}><img className="heroIcon" src={artSrc('/brand/notwise.svg')} alt="" width="21" height="21"/>{en ? 'Open the game' : 'Открыть игру'}</a>}
+      </button> : <a className="primary openGame" href={profile?.gameEntry ?? defaultGameLink} onClick={() => trackGuide('action:game')}><span className="launchMark"><img src={artSrc('/brand/notwise.svg')} alt="" width="21" height="21"/></span>{en ? 'Open the game' : 'Открыть игру'}</a>}
       <a className="secondary" href={squadLink} onClick={() => trackGuide('action:squad')}>
         <span className="squadMark" aria-hidden="true"/>{en ? 'Our squad' : 'Наш сквад'}
       </a>
-    <button className="heroShare secondary" aria-haspopup="dialog" onClick={() => { lightHaptic(); setShare(true); }}><svg className="heroIcon" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V3m-4 4 4-4 4 4M6 11H4v9h16v-9h-2"/></svg>{en ? 'Share guide' : 'Поделиться гайдом'}</button>
+    <button className="heroShare secondary" aria-haspopup="dialog" onClick={() => { lightHaptic(); setShare(true); }}><GameGlyph name="share"/>{en ? 'Share guide' : 'Поделиться гайдом'}</button>
     </div>
   </section>
   {share && <ShareDialog english={en} close={() => setShare(false)}/>}
@@ -225,11 +227,11 @@ function Home({ profile, profileFailed, retryProfile, english: en }: {
   <div className="guideGrid">{tiles.map(([name, path, icon, description, art], index) =>
     <Link to={path} className="guideTile" key={path}>
       <img className="guideTileArt" src={artSrc(art)} alt="" width="108" height="108"/>
-      {icon ? <GameArt path={icon} size={48}/> : <span className="guideFrensIcon" aria-hidden="true"/>}
+      <span className="guideTileIcon">{path === '/collections' ? <AlbumLogo id={1} size={44}/> : <GameArt path={icon} size={40}/>}</span>
       <span className="tileText"><b>{en ? titles[index][0] : name}</b><small>{en ? titles[index][1] : description}</small></span>
     </Link>
   )}</div>
-  <div className="supportFooter"><a className="supportPill" href={channelInvite} onClick={() => trackGuide('action:channel')}><img className="channelLogo" src="/brand/cryptoone-channel.jpg" alt="" width="24" height="24"/>{en ? 'CryptoOne channel' : 'Канал CryptoOne'}</a><a className="supportPill" href={communityChat} onClick={() => trackGuide('action:chat')}>{en ? 'Join the chat' : 'Присоединиться к чату'}</a><Link className="supportPill" to="/support"><img src="/brand/cryptoone.svg" alt="" width="18" height="19"/>{en ? 'Settings' : 'Настройки'}</Link></div>
+  <div className="supportFooter"><a className="supportPill" href={channelInvite} onClick={() => trackGuide('action:channel')}><img className="channelLogo" src="/brand/cryptoone-channel.jpg" alt="" width="24" height="24"/>{en ? 'CryptoOne channel' : 'Канал CryptoOne'}</a><a className="supportPill" href={communityChat} onClick={() => { onChatVisit(); trackGuide('action:chat'); }}><GameGlyph name="chat"/>{en ? 'Join the chat' : 'Присоединиться к чату'}</a><Link className="supportPill" to="/support"><GameGlyph name="settings"/>{en ? 'Settings' : 'Настройки'}</Link></div>
   {profile?.isAdmin && <Link className="textLink" to="/admin">Управление гайдом</Link>}
  </>;
 }
@@ -307,9 +309,9 @@ function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean;
   }, [joke, selected]);
   return <>
     <p className="intro">Скрытые действия и обычные достижения открывают стикеры для альбомов.</p>
-    <div className="choiceBar" aria-label="Способ получения">
-      <button aria-pressed={tab === 'secret'} onClick={() => setTab('secret')}>Секреты</button>
-      <button aria-pressed={tab === 'achievement'} onClick={() => setTab('achievement')}>Достижения</button>
+    <div className="choiceBar profileTabs" aria-label="Способ получения">
+      <button aria-pressed={tab === 'secret'} onClick={() => setTab('secret')}><GameGlyph name="lock"/>Секреты</button>
+      <button aria-pressed={tab === 'achievement'} onClick={() => setTab('achievement')}><GameGlyph name="treasure"/>Достижения</button>
     </div>
     {tab === 'secret' && !joke ? <Card>
       <h2>20 скрытых заданий</h2>

@@ -5,6 +5,7 @@ import { MotionConfig } from 'motion/react';
 import { collectionMarket, tokenMarket } from './features/marketData';
 import { App } from './app/App';
 import './styles.css';
+import './ui/guide-game.css';
 import { bootTelegram } from './telegram/client';
 import { warmArt } from './ui/warmArt';
 
@@ -20,13 +21,8 @@ void (async () => {
     }
     if (percent && total) percent.textContent = Math.floor(loaded / total * 100) + '%';
   });
-  const fontLoads = [
-    document.fonts.load('400 16px Gilroy', 'Not Wise · Яйца и скины'),
-    document.fonts.load('500 16px Gilroy', 'Not Wise · Яйца и скины'),
-    document.fonts.load('600 16px Gilroy', 'Not Wise · Яйца и скины'),
-    document.fonts.load('700 16px Gilroy', 'Not Wise · Яйца и скины'),
-    document.fonts.load('800 16px Gilroy', 'Not Wise · Яйца и скины'),
-  ];
+  const fontLoads = [400, 600, 700].map(weight =>
+    document.fonts.load(`${weight} 16px Mont`, 'NOT Wise · Яйца и скины'));
   await Promise.all([
     prepareArt,
     Promise.allSettled(fontLoads),
