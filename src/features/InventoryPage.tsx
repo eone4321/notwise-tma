@@ -311,12 +311,7 @@ function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {
   const showLevel = level && !item.source.includes('уровн');
   return <li className="inventoryRow" id={id}>
     <span className="inventoryIcon"><GameArt path={itemPath(item.file)} size={33}/></span>
-    <div className="inventoryCopy"><h3>{item.name}</h3><p>{item.effect}</p>
-      <div className="inventoryMeta">
-        <small className="itemSource">{item.source}{showLevel ? ` · с ${level}-го ур.` : ''}</small>
-        {mintPrice !== undefined && <span className="inventoryMint">Минт NFT <Price value={mintPrice} currency="gram"/></span>}
-      </div>
-    </div>
+    <h3>{item.name}</h3>
     {(price || listing) && <div className="inventoryPrices">
       {price && <span className="inventoryShopPrice"><Price value={price.value} currency={price.currency}/></span>}
       {listing && (listing.href
@@ -326,6 +321,11 @@ function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {
         </a>
         : <span className="inventoryFloor"><Price value={listing.floor} currency="gram"/></span>)}
     </div>}
+    <p>{item.effect}</p>
+    <div className="inventoryMeta">
+      <small className="itemSource">{item.source}{showLevel ? ` · с ${level}-го ур.` : ''}</small>
+      {mintPrice !== undefined && <span className="inventoryMint">Минт NFT <Price value={mintPrice} currency="gram"/></span>}
+    </div>
   </li>;
 }
 

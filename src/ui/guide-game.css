@@ -372,18 +372,27 @@
 .inventoryPanel .inventoryRow {
   grid-template-columns: 38px minmax(0, 1fr) auto;
   align-items: start;
-  gap: 9px;
+  gap: 2px 9px;
   padding: 10px 0;
 }
-.inventoryCopy { padding-block-start: 2px; }
+.inventoryRow > .inventoryIcon { grid-area: 1 / 1 / span 2; }
+.inventoryPanel .inventoryRow h3 {
+  grid-area: 1 / 2;
+  padding-block-start: 3px;
+}
+.inventoryRow:not(:has(.inventoryPrices)) > h3 { grid-column-end: -1; }
+.inventoryPanel .inventoryRow p {
+  grid-area: 2 / 2 / auto / -1;
+  margin: 0;
+}
 .inventoryPanel .inventoryRow h3, .inventoryPanel .inventoryRow p {
   overflow-wrap: break-word;
 }
 .inventoryPrices {
+  grid-area: 1 / 3;
   display: grid;
   justify-items: end;
-  gap: 3px;
-  align-self: start;
+  gap: 0;
   font-variant-numeric: tabular-nums;
 }
 .inventoryShopPrice, .inventoryFloor {
@@ -533,6 +542,7 @@
 :is(.primary, .secondary, .supportPill) > .gameGlyph { line-height: 1; }
 
 .inventoryMeta {
+  grid-area: 3 / 2 / auto / -1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -665,6 +675,7 @@
   grid-template-columns: 1fr 1fr;
   align-items: center;
   min-height: 155px;
+  aspect-ratio: 1.82;
   overflow: hidden;
   border: 1px solid var(--game-panel-line);
   border-radius: 11px;
