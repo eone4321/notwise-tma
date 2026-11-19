@@ -924,3 +924,601 @@ body { font-weight: 500; -webkit-font-smoothing: antialiased; -moz-osx-font-smoo
 .skinGallery figcaption { gap: 4px; padding: 8px; }
 .skinGallery small { font-size: 12px; }
 .shardCost { gap: 5px; }
+
+/* ==========================================================================
+   Skin & Farm Calculator, Info Modal, Loot Odds & Enchant Guide
+   ========================================================================== */
+
+/* Info circle button (i) */
+.infoCircleBtn {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  flex: none;
+  transition: transform 0.15s, background 0.15s, border-color 0.15s;
+}
+.infoCircleBtn:active {
+  transform: scale(0.92);
+  border-color: var(--gold);
+}
+
+.headingWithAction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.headingWithAction h2, .headingWithAction h3 {
+  margin: 0;
+}
+
+/* Farm Info Modal */
+.farmModalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  animation: fadeIn 0.2s ease-out;
+}
+@media (min-width: 480px) {
+  .farmModalBackdrop {
+    align-items: center;
+    padding: 16px;
+  }
+}
+.farmModalContent {
+  width: 100%;
+  max-width: 440px;
+  max-height: 85vh;
+  overflow-y: auto;
+  border-radius: 20px 20px 0 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  padding: 20px 18px 24px;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (min-width: 480px) {
+  .farmModalContent {
+    border-radius: 20px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  }
+}
+.farmModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.farmModalHeading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.farmInfoBadge {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #deb86a24;
+  color: var(--gold);
+  font-weight: 800;
+  font-size: 14px;
+}
+.farmModalHeading h3 {
+  margin: 0;
+  font-size: 17px;
+  color: var(--text);
+}
+.farmModalClose {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font-size: 26px;
+  line-height: 1;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.farmModalBody {
+  display: grid;
+  gap: 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.farmModalSection h4 {
+  font-size: 14px;
+  margin: 0 0 8px;
+  color: var(--gold);
+}
+.farmModalList {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+.farmModalList li {
+  padding: 8px 10px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.farmModalList code {
+  color: var(--gold);
+  font-size: 12px;
+}
+.farmModalGrid {
+  display: grid;
+  gap: 8px;
+}
+.farmModalTile {
+  padding: 8px 10px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  display: grid;
+  gap: 3px;
+}
+.farmModalTile strong {
+  color: var(--gold);
+  font-size: 13px;
+}
+.farmModalTile span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.farmModalButton {
+  margin-top: 18px;
+  width: 100%;
+  min-height: 44px;
+  border-radius: 12px;
+  background: var(--gold);
+  color: #121212;
+  font-weight: 700;
+  font-size: 15px;
+  border: none;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
+}
+.farmModalButton:active {
+  transform: scale(0.98);
+  filter: brightness(0.95);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* Skin Farm Calculator */
+.skinFarmCalc {
+  display: grid;
+  gap: 12px;
+  margin: 8px 0;
+}
+.calcHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.calcTitle h3 {
+  margin: 0 0 2px;
+  font-size: 16px;
+}
+.slotsContainer {
+  display: grid;
+  gap: 8px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
+.slotsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.slotsBonusBadge {
+  color: var(--gold);
+  font-size: 13px;
+}
+.bodySlotsGrid {
+  display: grid;
+  gap: 8px;
+}
+.slotBox {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  min-height: 44px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+.slotBox.active {
+  border-color: var(--gold);
+  background: #deb86a14;
+}
+.slotBoxCheck {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  color: var(--gold);
+  font-weight: 800;
+  transition: all 0.15s;
+}
+.slotBox.active .slotBoxCheck {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: #121212;
+}
+.slotBoxInfo {
+  display: grid;
+  min-width: 0;
+}
+.slotBoxName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.slotBoxSub {
+  font-size: 11px;
+  color: var(--muted);
+}
+.slotBoxValue {
+  font-size: 13px;
+  color: var(--gold);
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.slotChoiceBlock {
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  display: grid;
+  gap: 8px;
+}
+.slotChoiceLabel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+.slotChoiceLabel strong {
+  color: var(--gold);
+}
+.slotChoicePills {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.slotChoicePills button {
+  padding: 7px 4px;
+  min-height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  transition: all 0.15s;
+}
+.slotChoicePills button[aria-pressed="true"] {
+  border-color: var(--gold);
+  background: #deb86a1a;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.stepperRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+}
+.stepperTitle {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.stepperDesc {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+.stepperControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stepperBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.15s;
+}
+.stepperBtn:active:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.stepperBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.stepperVal {
+  min-width: 38px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 750;
+  color: var(--gold);
+}
+
+.chipPresets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.chipPreset {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.chipPreset.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: #deb86a18;
+}
+
+.toggleAdvancedBtn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.toggleAdvancedBtn:hover {
+  border-color: var(--gold);
+  color: var(--text);
+}
+.advancedSummaryBadge {
+  color: var(--gold);
+  font-weight: 700;
+}
+.advancedBlock {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  animation: fadeIn 0.2s ease-out;
+}
+.artifactBox {
+  background: var(--card);
+}
+.leagueSelectBlock {
+  display: grid;
+  gap: 6px;
+}
+.leagueSelect {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.calcTotalBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #deb86a1a;
+  border: 1px solid #deb86a40;
+}
+.calcTotalBreakdown {
+  font-size: 12px;
+  color: var(--muted);
+}
+.calcTotalResult {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.calcTotalResult small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.calcTotalResult strong {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.calcEffectsCard {
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+}
+.calcEffectsCard h4 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--gold);
+}
+.calcEffectsList {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+}
+
+/* Capsule detail tweaks */
+.notDropHeader .headingWithAction {
+  margin-bottom: 2px;
+}
+.notSkinExampleText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.exampleBonusBadge {
+  font-size: 12px;
+  color: var(--gold);
+}
+
+/* Loot row odds */
+.lootItemName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lootOddsCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.lootRatioBadge {
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--gold);
+}
+.lootChancePercent {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Enchanting Guide */
+.enchantGuideCard {
+  display: grid;
+  gap: 12px;
+}
+.enchantBurnAlert {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #e651001a;
+  border: 1px solid #ff98004d;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.enchantBurnIcon {
+  font-size: 22px;
+  line-height: 1;
+}
+.enchantBurnAlert strong {
+  display: block;
+  font-size: 13px;
+  color: #ffb74d;
+  margin-bottom: 4px;
+}
+.enchantBurnAlert p {
+  margin: 0 0 6px;
+}
+.enchantBurnAlert p:last-child {
+  margin-bottom: 0;
+}
+.enchantTable th, .enchantTable td {
+  padding: 6px 8px;
+  font-size: 12px;
+  text-align: center;
+}
+.enchantTable th:first-child, .enchantTable td:first-child {
+  text-align: left;
+}
+.enchantTable .burnHeader {
+  color: #ff8a80;
+}
+.enchantTable .rowDanger {
+  background: rgba(255, 82, 82, 0.04);
+}
+.enchantTable .dangerText {
+  color: #ff8a80;
+  font-weight: 700;
+}
+.enchantTable .safeText {
+  color: var(--muted);
+}
+.enchantTable .successVal {
+  font-weight: 600;
+}
+.enchantTable .farmVal {
+  color: var(--gold);
+  font-weight: 600;
+}

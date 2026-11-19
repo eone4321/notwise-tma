@@ -8,6 +8,7 @@ import { Price, type Currency } from './Price';
 import { SkinExamples } from './SkinExamples';
 import shopItems from './shop-data.json';
 import skinParts from './skin-parts.json';
+import { SkinFarmCalculator } from './SkinFarmCalculator';
 
 const eggs = [
   { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное', source: 'Из капсул или в Лавке', details: 'У варианта за монеты и яйца из капсул тот же набор наград: еда, лекарства, оформление и жетон скина.' },
@@ -97,11 +98,20 @@ export function OwlPage() {
       <h3>Шанс за открытие</h3>
       <p className="caption">Шанс получить награду хотя бы раз. За открытие выпадает 1 предмет в 80% случаев, 2 — в 15%, 3 — в 5%.</p>
       <ul className="compactList lootList">
-        {drops.filter(([id]) => itemNames[id]).map(([id, chance]) => {
+        {drops.filter(([id]) => itemNames[id]).map(([id, chance, ratio]) => {
           const [name, file] = itemNames[id];
           const target = lootDestination(id, file);
-          const row = <><GameArt path={itemPath(file)} size={36}/><span>{name}</span>
-            <span className="rowEnd"><strong>{chanceLabel(openingChance(chance))}</strong>{target && <span className="rowChevron" aria-hidden="true"/>}</span></>;
+          const row = (
+            <>
+              <GameArt path={itemPath(file)} size={36}/>
+              <span className="lootItemName">{name}</span>
+              <span className="rowEnd lootOddsCol">
+                {ratio && <strong className="lootRatioBadge">{ratio}</strong>}
+                <small className="lootChancePercent">{chanceLabel(openingChance(chance))}</small>
+                {target && <span className="rowChevron" aria-hidden="true"/>}
+              </span>
+            </>
+          );
           return <li key={id}>{target
             ? <Link className="mediaRow" to={target} state={{ returnTo: pathname }}>{row}</Link>
             : <div className="mediaRow">{row}</div>}</li>;
@@ -170,7 +180,14 @@ const rings = shopItems.filter(offer => offer.category === 'ring').map(offer => 
   const attribute = offer.stat === 'strength' ? 'силе' : offer.stat === 'agility' ? 'ловкости' : 'мудрости';
   const effect = offer.stat === 'strength' ? 'Усиливает обычные удары.' :
     offer.stat === 'agility' ? 'Повышает шанс уклониться.' : 'Повышает шанс крита и запас маны.';
-  return { name: offer.name_ru, file: offer.id + '.webp', effect: `+${[2, 5, 10][(offer.tier ?? 1) - 1]} к ${attribute}. ${effect}`, source: 'Лавка' };
+  const tier = offer.tier ?? 1;
+  const levelText = tier === 1 ? 'с 1-го уровня (без ограничений)' : `с ${offer.required_level}-го уровня`;
+  return {
+    name: offer.name_ru,
+    file: offer.id + '.webp',
+    effect: `+${[2, 5, 10][tier - 1]} к ${attribute}. ${effect}`,
+    source: `Лавка Wise Plaza · ${levelText}`,
+  };
 });
 
 const categories: Record<string, Category> = {
@@ -267,6 +284,9 @@ function SkinCatalog() {
   return <>
     <SkinExamples/>
     <section className="card">
+      <SkinFarmCalculator showTitle showEffects />
+    </section>
+    <section className="card">
     <h2>Жетоны скинов</h2>
     <p className="caption">Переверни жетон в инвентаре, чтобы получить скин. После этого его можно надеть на сову.</p>
     <ul className="compactList">{jettons.map(item =>
@@ -289,10 +309,11 @@ function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {
   const offer = shopItems.find(offer => offer.id === (item.offerId ?? key));
   const level = offer?.required_level;
   const price = item.price ?? (offer && { value: offer.price, currency: offer.currency as Currency });
+  const showLevel = level && !item.source.includes('уровн');
   return <li className="inventoryRow" id={id}>
     <GameArt path={itemPath(item.file)} size={36}/>
     <div><h3>{item.name}</h3><p>{item.effect}</p>
-      <small className="itemSource">{item.source}{level ? ` · с ${level}-го уровня` : ''}</small>
+      <small className="itemSource">{item.source}{showLevel ? ` · с ${level}-го уровня` : ''}</small>
     </div>
     {price && <Price value={price.value} currency={price.currency}/>}
   </li>;
@@ -327,13 +348,60 @@ export function InventoryPage() {
 }
 
 function EnchantGuide() {
-  return <section className="card">
-    <h2>Шансы заточки</h2><p>Улучшение до +3 гарантировано. Шанс заточки до +4 — 95%, до +5 — 90%. Каждая следующая ступень уменьшает шанс ещё на 5 из 100.</p>
-    <details><summary>Шанс на каждой ступени</summary><table className="priceTable">
-      <thead><tr><th scope="col">Целевая заточка</th><th scope="col">Шанс</th><th scope="col">Бонус к фарму</th></tr></thead>
-      <tbody>{Array.from({ length: 20 }, (_, i) => <tr key={i}>
-        <th scope="row">+{i + 1}</th><td>{100 - Math.max(0, i - 2) * 5}%</td><td>+{(i + 1) * 5}%</td>
-      </tr>)}</tbody>
-    </table></details>
+  return <section className="card enchantGuideCard">
+    <div className="mediaHeading">
+      <GameArt path={itemPath('scroll-enchant-skin.webp')} size={44}/>
+      <div>
+        <h2>Шансы и риск заточки</h2>
+        <p>Для скинов и колец · свитки из Лавки сквада</p>
+      </div>
+    </div>
+
+    <div className="enchantBurnAlert">
+      <span className="enchantBurnIcon" aria-hidden="true">🔥</span>
+      <div>
+        <strong>Внимание: предмет может сгореть навсегда!</strong>
+        <p>
+          При неудачной заточке предмет не сохраняется и не откатывается, а <strong>полностью уничтожается</strong> —
+          в игре появляется сообщение: <em>«Предмет рассыпался на осколки»</em> (игрок получает лишь горстку осколков скорлупы).
+        </p>
+        <p>
+          Первые 3 ступени <strong>(+1, +2, +3)</strong> гарантированы на <strong>100%</strong> (риск 0%).
+          Ступень <strong>+4</strong> имеет шанс успеха <strong>95%</strong> (5% риск безвозвратно сжечь скин или кольцо!).
+          Далее шанс успеха падает на 5% за каждый уровень.
+        </p>
+      </div>
+    </div>
+
+    <details className="plainDisclosure" open>
+      <summary>Таблица шансов на каждой ступени (+1..+20)</summary>
+      <table className="priceTable enchantTable">
+        <thead>
+          <tr>
+            <th scope="col">Цель</th>
+            <th scope="col">Успех</th>
+            <th scope="col" className="burnHeader">Сгорание</th>
+            <th scope="col">Фарм</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 20 }, (_, i) => {
+            const target = i + 1;
+            const success = 100 - Math.max(0, i - 2) * 5;
+            const burn = 100 - success;
+            return (
+              <tr key={i} className={burn > 0 ? 'rowDanger' : 'rowSafe'}>
+                <th scope="row">+{target}</th>
+                <td className="successVal">{success}%</td>
+                <td className={burn > 0 ? 'burnVal dangerText' : 'burnVal safeText'}>
+                  {burn > 0 ? `${burn}% 🔥` : '0%'}
+                </td>
+                <td className="farmVal">+{target * 5}%</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </details>
   </section>;
 }
