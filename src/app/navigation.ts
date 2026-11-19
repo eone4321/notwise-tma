@@ -35,8 +35,8 @@ export function useGuideScroll() {
 
     if (saved) {
       for (const [index, details] of disclosures().entries()) {
+        details.removeAttribute('data-user-open');
         details.open = details === anchor || saved.open.includes(detailKey(details, index));
-        if (details.open) details.dataset.restoredOpen = '';
       }
     }
     if (anchor) {
@@ -91,11 +91,13 @@ export function useGuideScroll() {
     window.addEventListener('scroll', save, { passive: true });
     window.addEventListener('pagehide', persist);
     window.addEventListener('popstate', persist);
-    const clearDisclosureMarker = (event: Event) => {
-      if (event.target instanceof Element) event.target.closest('summary')?.parentElement?.removeAttribute('data-restored-open');
+    const markDisclosure = (event: Event) => {
+      if (!(event.target instanceof Element) || event.target.closest('a, button, input')) return;
+      const details = event.target.closest('summary')?.parentElement;
+      if (details instanceof HTMLDetailsElement) details.toggleAttribute('data-user-open', !details.open);
     };
     document.addEventListener('click', persist, true);
-    main.addEventListener('click', clearDisclosureMarker);
+    main.addEventListener('click', markDisclosure);
     document.addEventListener('pointerdown', interrupt, true);
     document.addEventListener('wheel', interrupt, { capture: true, passive: true });
     main.addEventListener('toggle', save, true);
@@ -109,7 +111,7 @@ export function useGuideScroll() {
       document.removeEventListener('pointerdown', interrupt, true);
       document.removeEventListener('wheel', interrupt, true);
       main.removeEventListener('toggle', save, true);
-      main.removeEventListener('click', clearDisclosureMarker);
+      main.removeEventListener('click', markDisclosure);
       history.scrollRestoration = browserSetting;
     };
   }, [address, hash, key]);

@@ -28,7 +28,7 @@
   - Начисления и награды — `battleBarDrain`, `battlePopIn`, `battlePopOut`, `battle-super-pulse`, `egg-loot-glow`, `egg-loot-pop`, `coin-spin`, `round-label`, `vital-flash-in`, `statPlusRing`, `float-up-fade`, `leaderbirdBadgeContainerAppear`, `leaderbirdBadgeWingsAppearLeft`, `leaderbirdBadgeWingsAppearRight`.
   - Контролы и ожидание — `answerBlink`, `animateGlow`, `btn-shine`, `bubble-in`, `bubble-pop`, `cdPieA`, `cdPieB`, `container-pop`, `details-pop`, `dots`, `fadeInProgressBtn`, `guide-hand`, `guide-hand-tap`, `loader-pop`, `nw-spin`, `ping`, `pointerPop`, `progress`, `progress-bar-rotate`, `pulse`, `spin`.
 - В сохранённых моделях 49 клипов. Сова содержит 32 клипа сна, пробуждения, реакции на кормление, болезни, полёта, атаки и получения урона. Манекен Додзе содержит 15 дорожек спокойствия и попаданий, ещё по одной есть у яйца и дерева. Остальные 8 моделей из набора статические, игровые открытия приводятся в движение кодом, а эффекты дополняют атласы, Lottie и частицы.
-- В гайде `uiSlideUp` используется при появлении карточек и диалогов, `animateFadeInBottom` у заголовков, `pagerInNext` у иконки активной вкладки, `details-pop` при раскрытии блока и `egg-loot-pop` у изображения выбранной капсулы. При возврате на просмотренный экран его раскрытия и прокрутка восстанавливаются сразу. CSS учитывает настройку уменьшенного движения.
+- Гайд использует короткое затухание при первом входе на экран, раскрытии блока по тапу, смене облика совы и появлении капсулы. Диалог поднимается на несколько пикселей. При возврате прокрутка и раскрытия восстанавливаются сразу. Системная настройка уменьшенного движения отключает эти анимации.
 
 ## Откуда берутся цены и число выпусков
 

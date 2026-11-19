@@ -98,9 +98,9 @@ export function ModesPage() {
           {icon === 'target' && <p>Ориентир расхода энергии — 20 на 5–9-м уровне, 30 на 10–14-м. Стоимость растёт на 10 каждые пять уровней, начиная с 10 энергии на уровнях 1–4.</p>}
         </details>)}
         <details className="mediaDetails"><summary><GameSymbol name="trophy"/><span><strong>Призы сезона</strong><small>Первые 100 мест</small></span></summary>
-        <p>Пример распределения фонда в 1 млн $NOT. 1-е место получает 400 000, 2-е — 350 000, 3-е — 250 000 $NOT. Топ-10 получает золотое загадочное яйцо, места 11–100 — белое загадочное яйцо на красном фоне.</p>
+        <p>Пример распределения фонда в 1 млн $NOT. 1-е место получает 400 000, 2-е — 350 000, 3-е — 250 000 $NOT. Топ-10 получает золотое загадочное яйцо, места 11–100 — загадочное яйцо за 100 Stars из Лавки.</p>
         <p>Призы приходят автоматически. Фонд зависит от сезона.</p>
-        <DetailLink className="textLink" to="/owl/season">Что выпадает из белого загадочного яйца</DetailLink>
+        <DetailLink className="textLink" to="/owl/season">Что выпадает из загадочного яйца</DetailLink>
       </details>
       <details className="mediaDetails" id="leagues" open={hash === "#leagues" || undefined}><summary><GameSymbol name="shield"/><span><strong>Боевые лиги</strong><small>Пороги рейтинга и бонус к фарму</small></span></summary>
         <table className="priceTable">

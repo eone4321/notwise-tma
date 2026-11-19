@@ -171,43 +171,36 @@
   height: 94px;
   mask-image: radial-gradient(ellipse at 63% 42%, #000 25%, transparent 73%);
 }
-.guideGrid .inviteTile .guideTileArt {
-  inset: 6px 6px auto auto;
-  width: min(74px, 51%);
-  height: 74px;
-  object-fit: contain;
-  mask-image: none;
-  opacity: .27;
-}
 .choiceBar.profileTabs {
   display: flex;
   flex-flow: row nowrap;
   align-items: stretch;
-  gap: 3px;
-  margin: 0 0 10px;
-  border-bottom: 1px solid var(--game-panel-line);
+  gap: 4px;
+  margin: 0 0 14px;
+  padding: 4px;
+  border: 1px solid var(--game-panel-line);
+  border-radius: 12px;
+  background: var(--game-panel);
 }
 .profileTabs > :is(a, button) {
   flex: 1 1 0;
   min-width: 0;
-  align-content: center;
-  gap: 4px;
-  min-height: 45px;
+  gap: 6px;
+  min-height: 44px;
   border: 1px solid transparent;
-  border-bottom: 0;
-  border-radius: 8px 8px 0 0;
+  border-radius: 8px;
   background: transparent;
   box-shadow: none;
   backdrop-filter: none;
-  padding: 5px 3px;
-  font-size: 11px;
-  line-height: 1.22;
+  padding: 5px 4px;
+  font-size: 12px;
+  line-height: 1.2;
   color: var(--game-tab-quiet);
   text-align: center;
 }
 .profileTabs > :is(a, button):is([aria-current], [aria-pressed="true"]),
 [data-theme="graphite"] .profileTabs > :is(a, button):is([aria-current], [aria-pressed="true"]) {
-  background: var(--game-panel);
+  background: var(--game-tile);
   color: var(--text);
   border-color: var(--game-panel-line);
 }
@@ -215,10 +208,10 @@
   background: transparent;
   border-color: transparent;
 }
-.profileTabs .gameGlyph { font-size: 13px; }
+.profileTabs .gameGlyph { font-size: 14px; }
 @media (max-width: 365px) {
-  .profileTabs .gameGlyph { font-size: 11px; }
-  .profileTabs > :is(a, button) { font-size: 10px; }
+  .profileTabs .gameGlyph { font-size: 12px; }
+  .profileTabs > :is(a, button) { font-size: 11px; gap: 4px; }
 }
 
 .albumLogo {
@@ -229,12 +222,13 @@
   background-size: 500% 400%;
   background-repeat: no-repeat;
 }
-.stickerShelf.card, .combatBranches.card, .skillShelf.card, .awardCollection.card {
-  border-radius: 10px;
+.stickerShelf.card, .marketCollections.card, .combatBranches.card, .skillShelf.card, .awardCollection.card {
+  border-radius: 12px;
   background: var(--game-panel);
   border-color: var(--game-panel-line);
   box-shadow: none;
 }
+.marketCollections > .marketCollection:first-child { border-top: 0; }
 .stickerShelf .albumGrid { grid-template-columns: repeat(4, minmax(0,1fr)); gap: 5px; }
 .stickerShelf .albumGrid > a {
   display: block;
@@ -301,19 +295,42 @@
 
 .capsuleList .capsuleChoice { gap: 9px; }
 .capsuleList .capsuleChoice small { margin-top: 3px; }
-.inventorySection.card {
-  border-radius: 10px;
+.inventoryPanel[data-category="consumables"] { --item-tone: #e8978e; }
+.inventoryPanel[data-category="squad"] { --item-tone: #8acbdc; }
+.inventoryPanel[data-category="gear"] { --item-tone: #edc479; }
+.inventoryPanel[data-category="care"] { --item-tone: #a6ce94; }
+.inventoryPanel[data-category="craft"] { --item-tone: #b9a7e6; }
+.inventoryPanel[data-category="decor"] { --item-tone: #e2aadb; }
+.inventoryPanel[data-category="skins"] { --item-tone: #e3b675; }
+.inventoryPanel.card {
+  --item-accent: var(--item-tone, var(--gold));
+  border-radius: 12px;
   background: var(--game-panel);
   border-color: var(--game-panel-line);
   box-shadow: none;
 }
-.inventorySection > summary > .gameArt {
-  box-sizing: content-box;
-  padding: 2px;
-  border: 1px solid var(--game-panel-line);
-  border-radius: 8px;
-  background: var(--game-tile);
+.inventoryPanel > summary {
+  min-height: 58px;
+  padding-block: 7px;
+  gap: 10px;
+  cursor: pointer;
 }
+.inventoryPanel > summary strong, .inventoryCategoryLabel {
+  color: var(--item-accent);
+}
+.inventoryPanel > summary > .gameArt, .inventoryIcon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border: 1px solid color-mix(in srgb, var(--item-accent) 24%, var(--game-panel-line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--item-accent) 10%, var(--game-tile));
+}
+.inventoryPanel > summary > .gameArt { box-sizing: content-box; padding: 1px; }
+.inventoryPanel > summary > span:nth-child(2) { min-width: 0; }
+.inventoryCategoryLabel { font-size: 13px; margin-block-end: 3px; }
 
 .settingsContent .themeChoices > button { flex: 1 1 0; min-width: 0; padding-inline: 5px; }
 @media (max-width: 365px) {
@@ -352,36 +369,50 @@
 .feedingCard .mediaHeading { margin-bottom: 8px; }
 .modesCard .mediaDetails + .mediaDetails { border-top: 1px solid var(--game-panel-line); }
 
+.inventoryPanel .inventoryRow {
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 9px;
+  padding: 10px 0;
+}
+.inventoryCopy { padding-block-start: 2px; }
+.inventoryPanel .inventoryRow h3, .inventoryPanel .inventoryRow p {
+  overflow-wrap: break-word;
+}
 .inventoryPrices {
   display: grid;
   justify-items: end;
-  gap: 2px;
-  min-width: 57px;
+  gap: 3px;
+  align-self: start;
+  font-variant-numeric: tabular-nums;
 }
-.inventoryPrices > .priceBadge { padding-inline: 3px; min-height: 25px; }
-.inventoryFloor, .inventoryMint {
-  display: inline-flex;
+.inventoryShopPrice, .inventoryFloor {
+  position: relative;
+  display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
-  white-space: nowrap;
+  padding-inline-end: 12px;
 }
+.inventoryShopPrice { min-height: 23px; }
 .inventoryFloor {
-  min-height: 34px;
+  min-height: 28px;
   border-radius: 5px;
-  padding-inline: 3px;
   color: var(--text);
 }
-.inventoryMint { color: var(--muted); font-size: 10px; padding-inline: 3px; }
-:is(.inventoryFloor, .inventoryMint) .priceBadge {
-  padding: 0;
-  border: 0;
-  background: none;
-  box-shadow: none;
-  color: inherit;
-  font-size: 12px;
+.inventoryFloor .rowChevron {
+  position: absolute;
+  inset-inline-end: 2px;
+  width: 6px;
+  height: 6px;
+  opacity: .85;
 }
+.inventoryMint { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.inventoryPanel .priceBadge { padding: 0; border: 0; background: none; box-shadow: none; }
+.inventoryFloor .priceBadge { color: inherit; }
+.inventoryPanel .priceIcon { width: 16px; height: 16px; }
+.inventoryPanel [data-currency="gram"] .priceIcon img { width: 13px; height: 13px; }
 .inventoryMint .priceBadge { font-size: 11px; }
+
 .externalMark {
   position: relative;
   width: 9px;
@@ -508,7 +539,7 @@
   gap: 3px 9px;
   margin-top: 4px;
 }
-.inventoryMeta .itemSource { margin: 0; color: var(--muted); }
+.inventoryPanel .inventoryMeta .itemSource { margin: 0; color: var(--item-accent, var(--muted)); }
 .inventoryMeta .inventoryMint {
   padding: 0;
   color: var(--muted);
@@ -597,39 +628,131 @@
 .calculator .compactFarmParts button { background: var(--game-tile); }
 .calculator .farmArtifact { font-size: 11px; padding: 5px 1px; }
 
-/* The client's UI slide, short HUD reveal, drawer reveal and loot pop. */
-@keyframes guideSceneUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
+.eggSources .eggLink {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 57px;
+  gap: 8px;
 }
-@keyframes guideHudIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.eggLink .rowEnd { gap: 8px; }
+.eggLink .rowChevron { margin-inline-end: 2px; }
+.eggLink .eggRowText strong { font-size: 13px; line-height: 1.24; }
+.eggLink .eggRowText small { color: var(--muted); font-size: 11px; margin-block-start: 3px; }
+.eggLink .priceBadge, .eggDetailPrices .priceBadge { font-variant-numeric: tabular-nums; }
+.eggDetailPrices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 7px;
+  margin-block: 9px 12px;
 }
-@keyframes guideDetailIn {
-  from { opacity: 0; }
+.eggDetailPrices > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--game-tile);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.skinShowcase > h2 { margin-block-end: 9px; }
+.skinStage {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  min-height: 155px;
+  overflow: hidden;
+  border: 1px solid var(--game-panel-line);
+  border-radius: 11px;
+  background: radial-gradient(ellipse at 83% 59%, #3c254c, transparent 62%), var(--game-tile);
+}
+.skinStage[data-rarity="Золотой"] {
+  background: radial-gradient(ellipse at 83% 59%, #52412d, transparent 64%), var(--game-tile);
+}
+.skinStageCopy { z-index: 1; padding: 12px 0 12px 12px; }
+.skinStageCopy > span { color: var(--muted); font-size: 11px; }
+.skinStageCopy h3 { font-size: 17px; line-height: 1.14; margin-block: 3px 9px; text-wrap: wrap; }
+.skinStageCopy p { display: grid; gap: 3px; margin: 0; }
+.skinStageCopy p strong { color: var(--gold); font-size: 29px; line-height: 1; }
+.skinStageCopy p small { font-size: 11px; }
+.skinStageArt {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: block;
+  width: 55%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center bottom;
+  mask-image: linear-gradient(to right, transparent, #000 27%);
+}
+.skinPicker {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-block: 7px 12px;
+}
+.skinPicker > button {
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  padding: 2px;
+  border-radius: 8px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+}
+.skinPicker > button[aria-pressed="true"] {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 12%, var(--game-tile));
+}
+.skinPicker img { width: 43px; height: 43px; object-fit: contain; border-radius: 5px; }
+.skinPartValues { display: grid; gap: 0; margin-block: 0 10px; }
+.skinPartValues > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 30px;
+  padding-block: 5px;
+  font-size: 12px;
+}
+.skinPartValues > div + div { border-block-start: 1px solid var(--game-panel-line); }
+.skinPartValues dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.skinShowcase .skinCalcLink { display: flex; width: 100%; margin: 0 0 6px; min-height: 44px; }
+.skinRuleDisclosure { border-block-start: 1px solid var(--game-panel-line); }
+.skinRuleDisclosure > summary, .skinPartsList > summary { min-height: 44px; cursor: pointer; }
+.skinRuleDisclosure > summary strong, .skinPartsList > summary strong { font-size: 13px; }
+.skinPartsReference { display: grid; gap: 8px; margin-block-end: 0; }
+.skinPartsReference dt { font-weight: 700; }
+.skinPartsReference dd { margin: 1px 0 0; color: var(--muted); font-size: 12px; }
+.skinJettons .caption { margin-block: 6px 8px; }
+
+@keyframes guideContentIn {
+  from { opacity: .83; }
   to { opacity: 1; }
 }
-@keyframes guidePagerIn {
-  from { opacity: 0; transform: translateX(16px); }
-  to { opacity: 1; transform: translateX(0); }
+@keyframes guideArtIn {
+  from { opacity: .78; scale: .97; }
+  to { opacity: 1; scale: 1; }
 }
-@keyframes guideRewardPop {
-  0% { opacity: 0; transform: scale(.25) translateY(16px) rotate(-8deg); }
-  60% { opacity: 1; transform: scale(1.12) translateY(-3px) rotate(2deg); }
-  80% { opacity: 1; transform: scale(.96) translateY(1px) rotate(-1deg); }
-  100% { opacity: 1; transform: none; }
+@keyframes guideDialogIn {
+  from { opacity: .8; translate: 0 8px; }
+  to { opacity: 1; translate: 0 0; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .profileTabs > a[aria-current="page"] { animation: guideDetailIn 160ms ease-out both; }
-  .profileTabs > a[aria-current="page"] :is(.gameGlyph, .gameArt) { animation: guidePagerIn 200ms ease-out both; }
-  .guideScreen[data-restored="false"] .pageTitle { animation: guideHudIn 220ms ease-out both; }
-  .guideScreen[data-restored="false"] > div > :is(.card, .catalogGrid, .projectSection):nth-child(-n+4) {
-    animation: guideSceneUp 250ms cubic-bezier(.2,.65,.3,1) both;
+  .guideScreen[data-restored="false"] > .guidePageContent {
+    animation: guideContentIn 160ms ease-out;
   }
-  .guideScreen[data-restored="false"] .guideReward > .gameArt img {
-    animation: guideRewardPop 420ms cubic-bezier(.2,.65,.3,1) both;
+  .guideScreen[data-restored="false"] .guideReward > .gameArt img,
+  .skinStageArt {
+    animation: guideArtIn 185ms cubic-bezier(.16,1,.3,1);
   }
-  details[open]:not([data-restored-open]) > :not(summary) { animation: guideDetailIn 220ms ease-out both; }
-  dialog.modal[open] { animation: guideSceneUp 250ms cubic-bezier(.2,.65,.3,1) both; }
+  .guideScreen details[data-user-open][open] > :not(summary) {
+    animation: guideContentIn 130ms ease-out;
+  }
+  .guideScreen .mediaDetails > summary::after { transition: transform 160ms ease-out; }
+  dialog.modal[open] { animation: guideDialogIn 180ms cubic-bezier(.16,1,.3,1); }
 }

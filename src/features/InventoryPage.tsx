@@ -16,19 +16,16 @@ import skinParts from './skin-parts.json';
 import { SkinFarmCalculator } from './SkinFarmCalculator';
 
 const eggs = [
-  { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное', badge: 'Капсулы · Лавка за монеты', source: 'Из капсул или за 9 999 монет', details: 'В наградах есть еда, лекарства, оформление, обычный жетон скина и чиллер. У реферального яйца те же шансы.' },
-  { id: 56, slug: 'season', file: 'egg-stars.webp', name: 'Загадочное', badge: 'Белое на красном фоне · Stars · Крафт', source: 'За 100 Stars или за 3 000 осколков скорлупы', details: 'В этом варианте могут выпасть свитки заточки кольца и скина. По базовым правилам сезона его выдают за 11–100-е места.' },
-  { id: 19, slug: 'red', file: 'golden-egg.webp', name: 'Золотое загадочное', badge: 'Золотое на зелёном фоне · Stars · Крафт', source: 'За 500 Stars или за 15 000 осколков скорлупы', details: 'В пуле есть обычный и эпический жетоны скина. По базовым правилам сезона его выдают за 1–10-е места.' },
-  { id: 61, slug: 'referral', file: 'referral-egg.webp', name: 'Реферальное', badge: 'Приглашение друга', source: 'За вход в игру по ссылке друга (+5 000 монет)', details: 'У этого яйца такие же награды и шансы, как у загадочного яйца за монеты.' },
-  { id: 18, slug: 'green', file: '18.png', name: 'Специальное загадочное', badge: 'Редкое · бежевое', source: 'Способ получения не подтверждён', details: 'В пуле есть оформление, свитки заточки и эпический жетон скина.' },
-  { id: 20, slug: 'gold', file: '20.png', name: 'Специальное золотое загадочное', badge: 'Редкое · белое на жёлтом фоне', source: 'Способ получения не подтверждён', details: 'В пуле есть оформление, свитки заточки и золотой жетон скина.' },
+  { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное яйцо', note: 'Также выпадает из капсул', source: 'Лавка или капсулы', reward: 'Еда, лекарства, оформление, обычный жетон скина и чиллер.' },
+  { id: 56, slug: 'season', file: 'egg-stars.webp', name: 'Загадочное яйцо', note: 'Может дать свитки заточки', source: 'Лавка, крафт или награда сезона', reward: 'В пуле есть свитки заточки кольца и скина. По базовым правилам сезона яйцо дают за 11–100-е места.', shards: 3000 },
+  { id: 19, slug: 'red', file: 'golden-egg.webp', name: 'Золотое загадочное яйцо', note: 'Может дать эпический жетон', source: 'Лавка, крафт или награда сезона', reward: 'В пуле есть обычный и эпический жетоны скина и свитки заточки. По базовым правилам сезона яйцо дают за 1–10-е места.', shards: 15000 },
+  { id: 61, slug: 'referral', file: 'referral-egg.webp', name: 'Реферальное яйцо', note: 'За вход по ссылке друга', source: 'Вход по ссылке друга', reward: 'Приглашённый получает яйцо и 5 000 монет. У яйца тот же набор наград и шансов, что у загадочного за монеты.' },
+  { id: 18, slug: 'green', file: '18.png', name: 'Особое загадочное яйцо', note: 'Свитки и эпический жетон', source: 'Способ получения сейчас неизвестен', reward: 'Может дать оформление, свитки заточки и эпический жетон скина.' },
+  { id: 20, slug: 'gold', file: '20.png', name: 'Особое золотое яйцо', note: 'Свитки и золотой жетон', source: 'Способ получения сейчас неизвестен', reward: 'Может дать оформление, свитки заточки и золотой жетон скина.' },
 ] as const;
 
-const eggOffers: Partial<Record<typeof eggs[number]['slug'], string>> = {
-  mystery: 'egg',
-  season: 'egg-stars',
-  red: 'golden-egg',
-};
+type Egg = typeof eggs[number];
+
 const marketEggs = marketCollections.find(item => item.id === 'eggs')!;
 const itemMintGram: Readonly<Partial<Record<number, number>>> = publishing.itemMintGram;
 
@@ -36,6 +33,7 @@ export function OwlPage() {
   const { pathname } = useLocation();
   const egg = eggs.find(item => pathname === '/owl/' + item.slug);
   const drops = egg ? dropsFor(egg.id) : [];
+  const shopPrice = egg && eggPrice(egg, 'shop');
   const unknownChance = drops.reduce((sum, [id, chance]) => sum + (itemNames[id] ? 0 : chance), 0);
   const isEggIndex = ['/owl', '/owl/shop', '/owl/loot'].includes(pathname);
   return <>
@@ -45,38 +43,30 @@ export function OwlPage() {
     </nav>
     {isEggIndex && <>
       <section className="card leanList eggSources">
-        <h2>Лавка, капсулы и награды сезона</h2>
-        {eggs.slice(0, 3).map(item => <EggLink key={item.id} egg={item}/>)}
+        <h2>Лавка</h2>
+        {eggs.slice(0, 3).map(egg => <EggLink key={egg.id} egg={egg} method="shop"/>)}
       </section>
       <section className="card leanList eggSources" id="shards">
         <h2>Крафт за скорлупу</h2>
-        <DetailLink className="mediaRow" to="/owl/season" aria-label="Загадочное яйцо, 3 000 осколков скорлупы">
-          <GameArt path={itemPath('egg-stars.webp')} size={40}/>
-          <span className="eggRowText"><strong>Загадочное яйцо</strong><small>3 000 осколков скорлупы</small></span>
-          <span className="rowEnd shardCost"><strong>3 000</strong><GameArt path={itemPath('eggshell-shards-icon.webp')} size={23}/><span className="rowChevron" aria-hidden="true"/></span>
-        </DetailLink>
-        <DetailLink className="mediaRow" to="/owl/red" aria-label="Золотое загадочное яйцо, 15 000 осколков скорлупы">
-          <GameArt path={itemPath('golden-egg.webp')} size={40}/>
-          <span className="eggRowText"><strong>Золотое загадочное яйцо</strong><small>15 000 осколков скорлупы</small></span>
-          <span className="rowEnd shardCost"><strong>15 000</strong><GameArt path={itemPath('eggshell-shards-icon.webp')} size={23}/><span className="rowChevron" aria-hidden="true"/></span>
-        </DetailLink>
+        <p className="caption">Крафт и покупка одного яйца дают одинаковый дроп.</p>
+        {eggs.filter(egg => 'shards' in egg).map(egg => <EggLink key={egg.id} egg={egg} method="craft"/>)}
       </section>
       <section className="card leanList eggSources">
         <h2>За приглашение</h2>
-        <EggLink egg={eggs.find(item => item.slug === 'referral')!}/>
+        <EggLink egg={eggs[3]}/>
       </section>
       <section className="card eggSources">
-        <h2>Редкие яйца и NFT</h2>
+        <h2>Другие яйца</h2>
         <details className="mediaDetails guideDisclosure">
           <summary><GameArt path={itemPath('18.png')} size={34}/>
-            <span><strong>Бежевое и белое яйца</strong><small>Награды двух редких видов</small></span></summary>
-          <p>Список наград известен для обоих яиц. Где их получить сейчас, пока не подтверждено.</p>
-          {eggs.slice(4).map(item => <EggLink key={item.id} egg={item}/>)}
+            <span><strong>Особые яйца</strong><small>Эпический и золотой жетоны</small></span></summary>
+          <p>Для обоих яиц известны награды. Способ получения в текущем сезоне пока не подтверждён.</p>
+          {eggs.slice(4).map(egg => <EggLink key={egg.id} egg={egg}/>)}
         </details>
         <details className="mediaDetails guideDisclosure">
           <summary><GameArt path="/brand/collections/eggs.png" size={34}/>
             <span><strong>NFT-яйца и лотки Lottoque</strong><small>Коллекции на Getgems</small></span></summary>
-          <p>Ранее NFT из коллекции NOT Wise Eggs сжигали за яйца в игре. В 2024 году за NFT-лоток Lottoque обещали 10 специальных золотых яиц. Доступность обмена сейчас не подтверждена.</p>
+          <p>Раньше NFT из NOT Wise Eggs можно было обменять на яйца в игре, сжигая NFT. В 2024 году за лоток Lottoque обещали 10 особых золотых яиц. Доступность обмена сейчас не подтверждена.</p>
           <DetailLink className="textLink" to="/collections/market#eggs">Флор NFT-яиц</DetailLink>
           <a className="textLink spacedLink" href={`https://getgems.io/collection/${marketEggs.address}`} target="_blank" rel="noreferrer">NFT-яйца</a>
           <a className="textLink spacedLink" href="https://getgems.io/lottoque" target="_blank" rel="noreferrer">Lottoque</a>
@@ -88,11 +78,14 @@ export function OwlPage() {
       <div className="mediaHeading"><GameArt path={itemPath(egg.file)} size={64}/>
         <div><h2>{egg.name} яйцо</h2><p>{egg.source}</p></div>
       </div>
-      <p>{egg.details}</p>
+      {shopPrice && <div className="eggDetailPrices">
+        <span>В Лавке <Price value={shopPrice.value} currency={shopPrice.currency}/></span>
+        {'shards' in egg && <span>За скорлупу <Price value={egg.shards} currency="shards"/></span>}
+      </div>}
+      <p>{egg.reward}</p>
       {egg.slug === 'referral' && (
         <p><DetailLink className="textLink" to="/referrals">Как пригласить друзей и получить награды</DetailLink></p>
       )}
-      <EggShopPrices slug={egg.slug}/>
       <h3>Шанс за открытие</h3>
       <p className="caption">Шанс получить награду хотя бы раз. За открытие выпадает 1 предмет в 80% случаев, 2 — в 15%, 3 — в 5%.</p>
       <ul className="compactList lootList">
@@ -145,20 +138,19 @@ export function CarePage() {
   </>;
 }
 
-function EggLink({ egg }: { egg: typeof eggs[number] }) {
-  return <DetailLink to={'/owl/' + egg.slug} className="mediaRow">
-    <GameArt path={itemPath(egg.file)} size={38}/>
-    <span className="eggRowText"><strong>{egg.name} яйцо</strong><small className="eggBadgeSubtitle">{egg.badge}</small></span>
-    <span className="rowChevron" aria-hidden="true"/>
-  </DetailLink>;
+function eggPrice(egg: Egg, method: 'shop' | 'craft'): CatalogItem['price'] {
+  if (method === 'craft') return 'shards' in egg ? { value: egg.shards, currency: 'shards' } : undefined;
+  const offer = shopItems.find(item => item.item_id === egg.id && item.category === 'egg');
+  if (offer) return { value: offer.price, currency: offer.currency === 'stars' ? 'stars' : 'coins' };
 }
 
-function EggShopPrices({ slug }: { slug: typeof eggs[number]['slug'] }) {
-  const offer = shopItems.find(item => item.id === eggOffers[slug]);
-  if (!offer) return null;
-  return <span className="eggPrices" aria-label="Цена в Лавке">
-    <Price value={offer.price} currency={offer.currency === 'stars' ? 'stars' : 'coins'}/>
-  </span>;
+function EggLink({ egg, method }: { egg: Egg; method?: 'shop' | 'craft' }) {
+  const price = method && eggPrice(egg, method);
+  return <DetailLink to={'/owl/' + egg.slug} className="mediaRow eggLink" data-method={method}>
+    <GameArt path={itemPath(egg.file)} size={38}/>
+    <span className="eggRowText"><strong>{egg.name}</strong>{method !== 'craft' && <small>{egg.note}</small>}</span>
+    <span className="rowEnd">{price && <Price value={price.value} currency={price.currency}/>}<span className="rowChevron" aria-hidden="true"/></span>
+  </DetailLink>;
 }
 
 const itemPath = (file: string) => '/game/items/' + file;
@@ -283,21 +275,22 @@ function SkinCatalog() {
   const mint = market?.mintQuotes?.['owl-skin'] ?? itemMintGram[mintableItems['owl-skin']];
   return <>
     <SkinExamples/>
-    <section className="card" id="skin-calculator">
+    <section className="card skinCalculatorPanel" id="skin-calculator">
       <SkinFarmCalculator showTitle />
       {mint !== undefined && <p className="skinMintFee">Минт скина <Price value={mint} currency="gram"/></p>}
     </section>
-    <section className="card">
-    <h2>Жетоны скинов</h2>
-    <p className="caption">Переверни жетон в инвентаре, чтобы получить скин. После этого его можно надеть на сову.</p>
-    <ul className="compactList">{jettons.map(item =>
-      <InventoryRow item={item} key={item.file} id={'jetton-' + item.id}/>)}</ul>
+    <section className="card inventoryPanel skinJettons" data-category="skins">
+      <h2>Как получить скин</h2>
+      <p className="caption">Открой жетон в инвентаре и надень выпавший скин на сову.</p>
+      <ul className="compactList">{jettons.map(item =>
+        <InventoryRow item={item} key={item.file} id={'jetton-' + item.id}/>)}</ul>
     </section>
-    <details className="card plainDisclosure"><summary>Все детали скинов</summary>
-      {([
+    <details className="card mediaDetails skinPartsList" id="skin-parts">
+      <summary><GameGlyph name="skin"/><strong>Все детали скинов</strong></summary>
+      <dl className="skinPartsReference">{([
         ['body', 'Оперение'], ['hat', 'Головные уборы'], ['glasses', 'Очки'],
         ['chest', 'Украшения на груди'], ['eyes', 'Глаза'],
-      ] as const).map(([slot, label]) => <p key={slot}><strong>{label} · </strong>{skinParts[slot].join(', ')}</p>)}
+      ] as const).map(([slot, label]) => <div key={slot}><dt>{label}</dt><dd>{skinParts[slot].join(', ')}</dd></div>)}</dl>
     </details>
   </>;
 }
@@ -317,19 +310,19 @@ function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {
   const price = item.price ?? (offer && { value: offer.price, currency: offer.currency as Currency });
   const showLevel = level && !item.source.includes('уровн');
   return <li className="inventoryRow" id={id}>
-    <GameArt path={itemPath(item.file)} size={36}/>
-    <div><h3>{item.name}</h3><p>{item.effect}</p>
+    <span className="inventoryIcon"><GameArt path={itemPath(item.file)} size={33}/></span>
+    <div className="inventoryCopy"><h3>{item.name}</h3><p>{item.effect}</p>
       <div className="inventoryMeta">
         <small className="itemSource">{item.source}{showLevel ? ` · с ${level}-го ур.` : ''}</small>
         {mintPrice !== undefined && <span className="inventoryMint">Минт NFT <Price value={mintPrice} currency="gram"/></span>}
       </div>
     </div>
     {(price || listing) && <div className="inventoryPrices">
-      {price && <Price value={price.value} currency={price.currency}/>}
+      {price && <span className="inventoryShopPrice"><Price value={price.value} currency={price.currency}/></span>}
       {listing && (listing.href
         ? <a className="inventoryFloor" href={listing.href} target="_blank" rel="noreferrer"
           aria-label={`${item.name} за ${listing.floor.toLocaleString('ru-RU')} GRAM на Getgems`}>
-          <Price value={listing.floor} currency="gram"/><span aria-hidden="true" className="externalMark"/>
+          <Price value={listing.floor} currency="gram"/><span aria-hidden="true" className="rowChevron"/>
         </a>
         : <span className="inventoryFloor"><Price value={listing.floor} currency="gram"/></span>)}
     </div>}
@@ -340,16 +333,19 @@ export function InventoryPage() {
   const { pathname } = useLocation();
   const [, , slug, file] = pathname.split('/');
   const category = Object.hasOwn(categories, slug) ? categories[slug] : undefined;
-  const item = slug === 'item' ? Object.values(categories).flatMap(entry => entry.items)
-    .find(value => value.file.split('.')[0] === file) : undefined;
+  const itemCategory = slug === 'item' ? Object.entries(categories).find(([, entry]) =>
+    entry.items.some(value => value.file.split('.')[0] === file)) : undefined;
+  const item = itemCategory?.[1].items.find(value => value.file.split('.')[0] === file);
   if (slug === 'skins') return <SkinCatalog/>;
-  if (slug === 'item') return <section className="card">
-    {item ? <ul className="compactList singleItem"><InventoryRow item={item}/></ul> : <p>Предмет не найден.</p>}
+  if (slug === 'item') return <section className="card inventoryPanel" data-category={itemCategory?.[0]}>
+    {item ? <><h2 className="inventoryCategoryLabel">{itemCategory?.[1].title}</h2>
+      <ul className="compactList singleItem"><InventoryRow item={item}/></ul></> : <p>Предмет не найден.</p>}
   </section>;
 
   return <>
     {(category ? [[slug, category] as const] : Object.entries(categories)).map(([id, entry]) =>
-      <details className="card inventorySection" key={id} open={category !== undefined || undefined}>
+      <details className="card mediaDetails inventoryPanel inventorySection" key={id} id={'inventory-' + id}
+        data-category={id} open={category !== undefined || undefined}>
         <summary><GameArt path={itemPath(entry.icon)} size={34}/><span><strong>{entry.title}</strong><small>{entry.summary}</small></span></summary>
         <ul className="compactList">{entry.items.map(item => <InventoryRow item={item} key={item.file}/>)}</ul>
         {id === 'gear' && !category && <DetailLink className="textLink" to="/assets/gear">Шансы заточки и NFT</DetailLink>}
