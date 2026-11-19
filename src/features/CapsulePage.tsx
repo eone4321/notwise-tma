@@ -1,4 +1,3 @@
-import { skinExamples } from './SkinExamples';
 import { CapsulePrices } from './CapsulePrices';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
@@ -15,7 +14,7 @@ export function CapsulePage() {
   const { hash, pathname } = useLocation();
   const currentTier = tiers.find(tier => pathname === '/capsules/' + tier || hash === '#' + tier);
   if (!currentTier) return <>
-    <p className="intro">Победа в рейтинговом бою может дать капсулу, если есть свободный слот.</p>
+    <p className="intro">Капсулы выпадают при победе в рейтинговом бою (PvP) и при успешном завершении полёта, если свободен хотя бы один слот под капсулу.</p>
     <section className="card leanList capsuleList">
       {tiers.map((tier, index) => <Link className="mediaRow capsuleChoice" key={tier} to={'/capsules/' + tier}>
         <GameArt path={`/game/capsules/${tier}.webp`} size={46}/>
@@ -36,15 +35,7 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
   const index = tiers.indexOf(currentTier);
   const hours = duration[currentTier] / 3_600_000;
   const [level, setLevel] = useState('');
-  const [skinMode, setSkinMode] = useState<'none' | 'example' | 'custom'>('none');
-  const [customTotalBonus, setCustomTotalBonus] = useState(5); // default 1 regular body part
   const [isInfoOpen, setIsInfoOpen] = useState(false);
-
-  const totalBonus = skinMode === 'custom'
-    ? customTotalBonus
-    : skinMode === 'example'
-    ? skinExamples[0].bonus
-    : 0;
 
   const capsuleLevel = Math.min(xp.length - 1, Math.max(1, Number(level) || 1));
   return <>
@@ -73,45 +64,41 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
         <GameArt path="/brand/tokens/not.webp" size={38}/>
         <div>
           <div className="headingWithAction">
-            <h2>Шансы на Notcoin</h2>
+            <h2>Шансы на Notcoin ($NOT)</h2>
             <button
               type="button"
               className="infoCircleBtn"
               onClick={() => setIsInfoOpen(true)}
               aria-label="Как рассчитываются шансы на Notcoin"
-              title="Как работает бонус к фарму"
+              title="Как работает формула дропа Notcoin"
             >
               i
             </button>
           </div>
-          <p>Учитывают бонус к дропу $NOT</p>
+          <p>Зависят от уровня совы и типа капсулы</p>
         </div>
       </div>
-      <div className="choiceBar" aria-label="Скин">
-        {([['none', 'Без скина'], ['example', 'Пример скина'], ['custom', 'Свои детали']] as const).map(([value, label]) =>
-          <button key={value} aria-pressed={skinMode === value} onClick={() => setSkinMode(value)}>{label}</button>)}
-      </div>
-      {skinMode === 'example' && <div className="mediaRow notSkinExample">
-        <GameArt path={`/game/skins/${skinExamples[0].id}.svg`} size={50}/>
-        <div className="notSkinExampleText">
-          <span>{skinExamples[0].features}</span>
-          <strong className="exampleBonusBadge">+{skinExamples[0].bonus}% к фарму</strong>
-        </div>
-      </div>}
-      {skinMode === 'custom' && (
-        <SkinFarmCalculator
-          onChange={total => setCustomTotalBonus(total)}
-        />
-      )}
       <div className="bonusBreakdown">
-        <span>Бонус к дропу $NOT:</span>
-        <strong>+{totalBonus.toLocaleString('ru-RU')}%{totalBonus > 0 ? ` (×${(1 + totalBonus / 100).toFixed(2)})` : ''}</strong>
+        <span>Множитель от уровня совы ({capsuleLevel} ур.):</span>
+        <strong>+{capsuleLevel}% (×{(1 + capsuleLevel / 100).toFixed(2)})</strong>
       </div>
       <ul className="compactList oddsList">
-        {notOdds(currentTier, totalBonus).map(row => <li className="mediaRow" key={row.amount}>
+        {notOdds(currentTier, capsuleLevel).map(row => <li className="mediaRow" key={row.amount}>
           <span>{row.amount.toLocaleString('ru-RU')} $NOT</span><strong>{chanceLabel(row.chance)}</strong>
         </li>)}
       </ul>
+      <p className="caption">
+        В коде игры (функция <code>Km</code> в <code>main.js</code>) вероятность выпадения $NOT масштабируется <strong>уровнем совы</strong> (+1% за каждый уровень) и типом капсулы (Серебряная ×1.5, Золотая ×5). Заточка колец и скин дают показатель «Фарм» для монет в боях и полётах, но не влияют на дроп Notcoin из капсул.
+      </p>
+      <details className="mediaDetails farmCalcDisclosure">
+        <summary>
+          <span>
+            <strong>Калькулятор бонуса к фарму монет</strong>
+            <small>Скины, кольца и лига для farmCoins в боях и полётах</small>
+          </span>
+        </summary>
+        <SkinFarmCalculator showTitle={false} showEffects={true} />
+      </details>
       <Link className="textLink" to="/owl/skins">Как работают скины и жетоны</Link>
     </section>
     <FarmInfoModal isOpen={isInfoOpen} onClose={() => setIsInfoOpen(false)} />
@@ -129,28 +116,28 @@ function SlotGuide() {
 
 function CapsuleDropGuide() {
   return <section className="card capsuleDropGuide">
-    <h2>От чего зависит выпадение капсул</h2>
-    <p className="caption">Механика получения капсул в боях Not Wise: The Game</p>
+    <h2>Откуда берутся и как выпадают капсулы</h2>
+    <p className="caption">Два подтверждённых источника капсул в коде Not Wise: The Game</p>
     <ul className="capsuleRulesList">
       <li>
         <span className="ruleNumber">1</span>
         <div className="ruleContent">
-          <strong>Свободный слот для капсулы</strong>
-          <p>Капсула занимает слот, пока не закончится таймер или пока её не откроют. Если все слоты заняты — капсула <strong>не выпадет вовсе</strong> (<em>«No free slot — no capsule»</em>).</p>
+          <strong>Свободный слот (Обязательное условие)</strong>
+          <p>Капсула занимает слот, пока тикает таймер или пока её не откроют за Stars/GRAM. Если все слоты заняты — капсула <strong>не выпадет вовсе</strong> (железное правило <em>«No free slot — no capsule»</em>).</p>
         </div>
       </li>
       <li>
         <span className="ruleNumber">2</span>
         <div className="ruleContent">
-          <strong>Победа в рейтинговом PvP</strong>
-          <p>Капсулы выпадают <strong>только при победе</strong> в рейтинговом бою. Тренировки в Додзе, ничьи и поражения капсул не приносят.</p>
+          <strong>Победа в рейтинговом PvP (Бои)</strong>
+          <p>При каждой победе в рейтинговом поединке есть шанс выбить капсулу. Шанс редких капсул (Серебряная и Золотая) масштабируется с ростом рейтинга (MMR). Поражения, ничьи и тренировки в Додзе капсул не приносят.</p>
         </div>
       </li>
       <li>
         <span className="ruleNumber">3</span>
         <div className="ruleContent">
-          <strong>Боевая лига и рейтинг MMR</strong>
-          <p>Шанс выпадения редких капсул масштабируется с ростом рейтинга (MMR). Чем выше лига, тем вероятнее получить Серебряную или Золотую капсулу вместо Обсидиановой.</p>
+          <strong>Полёты на ракетах (Flights)</strong>
+          <p>Капсулы также выпадают на финише полёта (серверный ответ <code>/flights/{'{id}'}/finish</code> в массиве <code>items</code>). При наличии свободного слота капсула падает в слот и начинает обратный отсчёт. На экране финиша полёта также появляется экспресс-оффер (<code>flight_capsule_offer</code>) со скидкой за Stars или TON.</p>
         </div>
       </li>
       <li>
@@ -158,9 +145,9 @@ function CapsuleDropGuide() {
         <div className="ruleContent">
           <strong>Градация редкости и таймеры</strong>
           <p>
-            <strong>Обсидиановая (4 ч)</strong> — базовая и самая частая капсула.<br/>
-            <strong>Лунное серебро (8 ч)</strong> — редкая капсула с увеличенными наградами.<br/>
-            <strong>Золотая (24 ч)</strong> — главный трофей: максимум монет и опыта, гарантированный стикерпак (100%) и повышенный шанс яйца (15%).
+            🖤 <strong>Обсидиановая (4 ч / 100 ⭐)</strong> — базовая и самая частая капсула.<br/>
+            🤍 <strong>Лунное серебро (8 ч / 500 ⭐)</strong> — редкая капсула с увеличенными наградами (шансы на $NOT в 1.5× выше).<br/>
+            💛 <strong>Золотая (24 ч / 2500 ⭐)</strong> — главный трофей: максимум монет и опыта, гарантированный стикерпак (100%), 15% на Загадочное яйцо и в 5× выше шанс дропа Notcoin ($NOT).
           </p>
         </div>
       </li>

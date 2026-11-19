@@ -81,34 +81,55 @@ export function FarmInfoModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
 
         <div className="farmModalBody">
           <section className="farmModalSection">
-            <h4>На что влияет показатель фарма?</h4>
+            <h4>На что влияет показатель фарма (Farm / farmPct)?</h4>
             <ul className="farmModalList">
               <li>
-                <strong>💎 Дроп Notcoin ($NOT) из капсул:</strong> базовая вероятность выпадения каждой пачки $NOT умножается на <code>(1 + Бонус / 100)</code>. Например, при бонусе +100% шанс удваивается.
+                <strong>🪙 Бонусные монеты в боях и полётах:</strong> за каждую победу в рейтинговом бою (PvP) и за успешный полёт игра начисляет дополнительные монеты (<code>farmCoins</code>), пропорциональные показателю фарма (строка <code>farm x{'{множитель}'}: +{'{монеты}'}</code> на экране победы).
               </li>
               <li>
-                <strong>🪙 Бонусные монеты в боях и рейдах:</strong> за каждую победу сова получает дополнительные монеты (<code>farmCoins</code>), пропорциональные показателю фарма.
+                <strong>🦉 Статус и фарм в профиле:</strong> процент фарма виден в профиле совы (строка «Farm 100+X%») и рассчитывается напрямую игровым клиентом по формуле <code>Um = Hm(equipped, items) + Ga(mmr)</code>.
               </li>
               <li>
-                <strong>🦉 Статус и фарм в профиле:</strong> процент фарма виден в профиле совы и учитывается в расчётах игрового баланса.
+                <strong>💎 Внимание: дроп Notcoin ($NOT) из капсул:</strong> шанс выпадения $NOT из капсул рассчитывается отдельной функцией <code>Km</code> в <code>main.js</code>. Он зависит от <strong>уровня совы</strong> (+1% за уровень) и типа капсулы (dark ×1, silver ×1.5, gold ×5). Заточка колец и скин на дроп $NOT из капсул не влияют — они умножают монеты!
               </li>
             </ul>
           </section>
 
           <section className="farmModalSection">
-            <h4>Из чего складывается бонус?</h4>
+            <h4>Влияет ли заточка колец и уровень совы?</h4>
+            <p className="farmModalText">
+              Точный расклад из декомпилированного кода клиента (функции <code>Hm</code>, <code>Um</code> и <code>Km</code> в <code>main.js</code>):
+            </p>
+            <ul className="farmModalList">
+              <li>
+                <strong>💍 Заточка колец — ДА, НАПРЯМУЮ К ФАРМУ МОНЕТ:</strong> каждое экипированное кольцо даёт боевой атрибут, а каждый уровень его заточки свитком даёт ровно <strong>+5% к показателю Farm</strong> (<code>n += um(r, e)</code>, затем <code>n * 5</code>). В инспекторе предметов <code>E8</code> на любом кольце с заточкой прямо указано <code>Farm: +X%</code>. При 3 надетых кольцах с заточкой +20 бонус к фарму монет составляет <strong>до +300%</strong>!
+              </li>
+              <li>
+                <strong>🪶 Скин совы — ДА:</strong> 5 слотов деталей дают от +25% до +40% (Золотое тело +15%, цепь NOT +10%), плюс заточка скина свитками даёт <strong>+5%</strong> за каждый уровень (+1..+20, до +100%).
+              </li>
+              <li>
+                <strong>💎 Артефакт и Лига — ДА:</strong> «Монтмориллонит» добавляет <strong>+10%</strong>, а боевая лига MMR — <strong>от +1% до +13%</strong>.
+              </li>
+              <li>
+                <strong>🦉 Уровень самой совы — масштаб $NOT, но НЕ farmPct:</strong> уровень совы не входит в расчёт множителя монет <code>farmPct</code> (поэтому заточка скина и колец так важна для монет). Но именно уровень совы входит в формулу <code>Km</code> для шанса выпадения Notcoin из капсул (+1% за каждый уровень совы) и открывает слоты под капсулы.
+              </li>
+            </ul>
+          </section>
+
+          <section className="farmModalSection">
+            <h4>Сводная таблица множителей</h4>
             <div className="farmModalGrid">
               <div className="farmModalTile">
                 <strong>Детали скина</strong>
-                <span>+5% за обычную деталь (убор, очки, глаза, тело, грудь). Золотое тело даёт сразу <strong>+15%</strong>, цепь NOT — <strong>+10%</strong>. Максимум деталей: <strong>+40%</strong>.</span>
+                <span>+5% за деталь. Золотое тело: <strong>+15%</strong>, цепь NOT: <strong>+10%</strong>. Максимум: <strong>+40%</strong>.</span>
               </div>
               <div className="farmModalTile">
                 <strong>Заточка скина</strong>
-                <span>Свитки заточки скина дают <strong>+5%</strong> за каждый уровень (+1..+20 = до <strong>+100%</strong>).</span>
+                <span>Свитки заточки скина: <strong>+5%</strong> за уровень (+1..+20 = до <strong>+100%</strong>).</span>
               </div>
               <div className="farmModalTile">
                 <strong>Заточка колец</strong>
-                <span>Каждый уровень заточки каждого надетого кольца даёт <strong>+5%</strong> (до 3 колец по +20 = до <strong>+300%</strong>).</span>
+                <span>Свитки заточки колец: <strong>+5%</strong> за уровень каждого надетого кольца (до 3 колец по +20 = до <strong>+300%</strong>).</span>
               </div>
               <div className="farmModalTile">
                 <strong>Артефакт</strong>
@@ -116,7 +137,7 @@ export function FarmInfoModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
               </div>
               <div className="farmModalTile">
                 <strong>Лига в PvP</strong>
-                <span>Лига по боевому MMR даёт <strong>от +1% до +13%</strong> ко всем расчётам фарма.</span>
+                <span>Боевой MMR даёт <strong>от +1% до +13%</strong> ко всем расчётам фарма.</span>
               </div>
             </div>
           </section>
@@ -128,6 +149,83 @@ export function FarmInfoModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
       </div>
     </div>,
     document.body
+  );
+}
+
+function EnchantStepper({
+  value,
+  min = 0,
+  max,
+  onChange,
+  label,
+}: {
+  value: number;
+  min?: number;
+  max: number;
+  onChange: (val: number) => void;
+  label: string;
+}) {
+  const [text, setText] = useState(String(value));
+
+  useEffect(() => {
+    setText(String(value));
+  }, [value]);
+
+  const commit = (raw: string) => {
+    const num = parseInt(raw.replace(/\D/g, ''), 10);
+    const clamped = isNaN(num) ? min : Math.max(min, Math.min(max, num));
+    setText(String(clamped));
+    onChange(clamped);
+  };
+
+  return (
+    <div className="stepperControls">
+      <button
+        type="button"
+        className="stepperBtn"
+        onClick={() => onChange(Math.max(min, value - 1))}
+        disabled={value <= min}
+        aria-label={`Уменьшить ${label} на 1`}
+      >
+        −
+      </button>
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        className="stepperInput"
+        value={text}
+        onFocus={e => e.target.select()}
+        onChange={e => {
+          const raw = e.target.value.replace(/\D/g, '');
+          setText(raw);
+          if (raw !== '') {
+            const num = parseInt(raw, 10);
+            if (!isNaN(num)) {
+              onChange(Math.max(min, Math.min(max, num)));
+            }
+          }
+        }}
+        onBlur={() => commit(text)}
+        onKeyDown={e => {
+          if (e.key === 'Enter') {
+            commit(text);
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
+        aria-label={label}
+      />
+      <button
+        type="button"
+        className="stepperBtn"
+        onClick={() => onChange(Math.min(max, value + 1))}
+        disabled={value >= max}
+        aria-label={`Увеличить ${label} на 1`}
+      >
+        +
+      </button>
+      <span className="stepperBonus">+{value * 5}%</span>
+    </div>
   );
 }
 
@@ -316,41 +414,15 @@ export function SkinFarmCalculator({
         <div className="stepperRow">
           <div>
             <span className="stepperTitle">Заточка скина</span>
-            <small className="stepperDesc">+5% к фарму за каждую ступень (+1..+20)</small>
+            <small className="stepperDesc">+5% к фарму за каждый уровень (+1..+20)</small>
           </div>
-          <div className="stepperControls">
-            <button
-              type="button"
-              className="stepperBtn"
-              onClick={() => updateState(s => ({ ...s, skinEnchant: Math.max(0, s.skinEnchant - 1) }))}
-              disabled={state.skinEnchant <= 0}
-              aria-label="Уменьшить заточку скина"
-            >
-              −
-            </button>
-            <span className="stepperVal">+{state.skinEnchant}</span>
-            <button
-              type="button"
-              className="stepperBtn"
-              onClick={() => updateState(s => ({ ...s, skinEnchant: Math.min(20, s.skinEnchant + 1) }))}
-              disabled={state.skinEnchant >= 20}
-              aria-label="Увеличить заточку скина"
-            >
-              +
-            </button>
-          </div>
-        </div>
-        <div className="chipPresets">
-          {[0, 1, 3, 5, 10, 20].map(lvl => (
-            <button
-              key={lvl}
-              type="button"
-              className={`chipPreset ${state.skinEnchant === lvl ? 'active' : ''}`}
-              onClick={() => updateState(s => ({ ...s, skinEnchant: lvl }))}
-            >
-              +{lvl} ({lvl * 5}%)
-            </button>
-          ))}
+          <EnchantStepper
+            value={state.skinEnchant}
+            min={0}
+            max={20}
+            onChange={val => updateState(s => ({ ...s, skinEnchant: val }))}
+            label="заточку скина"
+          />
         </div>
       </div>
 
@@ -375,41 +447,15 @@ export function SkinFarmCalculator({
           <div className="stepperRow">
             <div>
               <span className="stepperTitle">Заточка колец (суммарно)</span>
-              <small className="stepperDesc">+5% за каждый уровень каждого кольца (до 3 колец)</small>
+              <small className="stepperDesc">+5% за каждый уровень надетых колец (до 3 колец, макс +60)</small>
             </div>
-            <div className="stepperControls">
-              <button
-                type="button"
-                className="stepperBtn"
-                onClick={() => updateState(s => ({ ...s, ringEnchant: Math.max(0, s.ringEnchant - 1) }))}
-                disabled={state.ringEnchant <= 0}
-                aria-label="Уменьшить заточку колец"
-              >
-                −
-              </button>
-              <span className="stepperVal">+{state.ringEnchant}</span>
-              <button
-                type="button"
-                className="stepperBtn"
-                onClick={() => updateState(s => ({ ...s, ringEnchant: Math.min(60, s.ringEnchant + 1) }))}
-                disabled={state.ringEnchant >= 60}
-                aria-label="Увеличить заточку колец"
-              >
-                +
-              </button>
-            </div>
-          </div>
-          <div className="chipPresets">
-            {[0, 3, 6, 15, 30, 60].map(lvl => (
-              <button
-                key={lvl}
-                type="button"
-                className={`chipPreset ${state.ringEnchant === lvl ? 'active' : ''}`}
-                onClick={() => updateState(s => ({ ...s, ringEnchant: lvl }))}
-              >
-                +{lvl} ({lvl * 5}%)
-              </button>
-            ))}
+            <EnchantStepper
+              value={state.ringEnchant}
+              min={0}
+              max={60}
+              onChange={val => updateState(s => ({ ...s, ringEnchant: val }))}
+              label="заточку колец"
+            />
           </div>
 
           {/* Монтмориллонит */}
@@ -458,7 +504,7 @@ export function SkinFarmCalculator({
           )}
         </div>
         <div className="calcTotalResult">
-          <small>Итого к фарму:</small>
+          <small>Итого к фарму монет:</small>
           <strong>+{calc.totalBonus}%</strong>
         </div>
       </div>
@@ -468,11 +514,13 @@ export function SkinFarmCalculator({
           <h4>Что даёт этот бонус (+{calc.totalBonus}%):</h4>
           <ul className="calcEffectsList">
             <li>
-              <strong>Шансы на Notcoin:</strong> дроп $NOT из всех капсул увеличен в{' '}
-              <strong>{(1 + calc.totalBonus / 100).toFixed(2)}×</strong> раз.
+              <strong>Бонусные монеты в боях и полётах:</strong> множитель <code>farmCoins</code> за победы в боях и финиш полётов равен <strong>{((100 + calc.totalBonus) / 100).toFixed(2)}×</strong>.
             </li>
             <li>
-              <strong>Монеты в боях:</strong> повышенная награда за победы в боях и рейдах (<code>farmCoins</code>).
+              <strong>Показатель «Фарм» в профиле:</strong> строка Farm отображает <strong>{100 + calc.totalBonus}%</strong> (базовые 100% + {calc.totalBonus}% бонуса).
+            </li>
+            <li>
+              <strong>Важно о Notcoin ($NOT):</strong> заточка скина и колец даёт фарм монет, но не увеличивает шанс дропа $NOT из капсул. Шанс $NOT в коде (функция <code>Km</code>) зависит исключительно от <strong>уровня совы</strong> (+1% за уровень) и редкости капсулы.
             </li>
           </ul>
         </div>
