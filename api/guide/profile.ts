@@ -1,6 +1,8 @@
 import { telegramUser } from '../../server/telegram-auth';
 import { redis } from '../../server/redis';
 import { readGuideAnalytics, recordGuideEvent } from '../../server/guide-analytics';
+import { awardGuide, awardStats, trackExplorer, userAwards } from '../../server/guide-achievements';
+import { notificationSettings, setSalePreference, scopes } from '../../server/guide-notifications';
 import { guideProgress } from '../../server/guide-progress';
 
 export const config = { runtime: 'edge' };
@@ -22,11 +24,11 @@ function gameLink(input: unknown) {
   }
 }
 
-async function channelStatus(id: string, token: string) {
+async function channelStatus(id: string, token: string, chatId: string | number = '@cryptoeone') {
   const response = await fetch(`https://api.telegram.org/bot${token}/getChatMember`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: '@cryptoeone', user_id: Number(id) }),
+    body: JSON.stringify({ chat_id: chatId, user_id: Number(id) }),
     signal: AbortSignal.timeout(3500),
   });
   const data = await response.json();
@@ -124,13 +126,76 @@ export default async function handler(request: Request) {
 
   try {
     if (action === 'track') {
-      return await recordGuideEvent(id, token, input.event)
-        ? new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } })
-        : json({ error: 'invalid_request' }, 400);
+      if (!await recordGuideEvent(id, token, input.event)) return json({ error: 'invalid_request' }, 400);
+      await trackExplorer(id, input.event);
+      return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
     }
-    if (action === 'admin' || action === 'analytics') {
+    if (action === 'achievements') {
+      const [raw, invited] = await Promise.all([
+        redis<string | null>(['HGET', accountsKey, id]), redis<number>(['ZCARD', invitedPrefix + id]),
+      ]);
+      if (raw && (JSON.parse(raw) as Account).gameLinkVerified) await awardGuide(id, 'referral');
+      if (invited >= 5) await awardGuide(id, 'five');
+      return json({ earned: await userAwards(id) });
+    }
+    if (action === 'mascot' || action === 'shared') {
+      if (action === 'shared' && !await redis(['GETDEL', namespace + 'pending-share:' + id])) {
+        return json({ error: 'share_unavailable' }, 409);
+      }
+      await awardGuide(id, action);
+      return json({ earned: await userAwards(id) });
+    }
+    if (action === 'check_chat') {
+      if (!await redis(['SET', namespace + 'chat-check:' + id, '1', 'NX', 'EX', 3])) {
+        return json({ error: 'chat_unavailable' }, 429);
+      }
+      let chatId: string | number = process.env.GUIDE_CHAT_ID || '';
+      if (!chatId) {
+        const channel = await fetch(`https://api.telegram.org/bot${token}/getChat`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: '@cryptoeone' }), signal: AbortSignal.timeout(3500),
+        }).then(response => response.json());
+        chatId = channel.result?.linked_chat_id;
+      }
+      if (!chatId) return json({ error: 'chat_unavailable' }, 503);
+      const status = await channelStatus(id, token, chatId);
+      const joined = ['creator', 'administrator', 'member'].includes(status.status) || status.is_member === true;
+      if (joined) await awardGuide(id, 'community');
+      return json({ joined, earned: await userAwards(id) });
+    }
+    if (action === 'prepare_share') {
+      if (!await redis(['SET', namespace + 'prepare-share:' + id, '1', 'NX', 'EX', 3])) {
+        return json({ error: 'share_unavailable' }, 429);
+      }
+      const raw = input.personal === true ? await redis<string | null>(['HGET', accountsKey, id]) : null;
+      const account = raw ? JSON.parse(raw) as Account : null;
+      const code = account?.gameLinkVerified ? account.referralCode : '';
+      const url = 'https://t.me/NotWiseGuideBot?startapp' + (code ? '=' + code : '');
+      const result = await fetch(`https://api.telegram.org/bot${token}/savePreparedInlineMessage`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(3500),
+        body: JSON.stringify({
+          user_id: Number(id), allow_user_chats: true, allow_group_chats: true,
+          result: { type: 'article', id: 'guide', title: 'NOT Wise Guide',
+            input_message_content: { message_text: 'Гайд по NOT Wise 🦉\n' + url } },
+        }),
+      }).then(response => response.json());
+      if (!result.ok || typeof result.result?.id !== 'string') return json({ error: 'share_unavailable' }, 503);
+      await redis(['SET', namespace + 'pending-share:' + id, '1', 'EX', 600]);
+      return json({ messageId: result.result.id });
+    }
+    if (action === 'notifications') {
+      if (input.scope !== undefined) {
+        const scope = scopes.find(value => value === input.scope);
+        if (!scope || typeof input.enabled !== 'boolean' || (scope !== 'genesis' && !process.env.GETGEMS_READ_TOKEN)){
+          return json({ error: 'invalid_request' }, 400);
+        }
+        await setSalePreference(id, scope, input.enabled);
+      }
+      return json(await notificationSettings(id));
+    }
+    if (action === 'admin' || action === 'analytics' || action === 'award_stats') {
       if (!await guideAdmin(id, token)) return json({ error: 'forbidden' }, 403);
-      return json(action === 'admin' ? await members(membersKey, offset) : await readGuideAnalytics());
+      return json(action === 'admin' ? await members(membersKey, offset) : action === 'award_stats' ? await awardStats() : await readGuideAnalytics());
     }
     if (action === 'progress' || action === 'mark') {
       const progress = await guideProgress(redis, namespace, id, input);
@@ -176,6 +241,7 @@ export default async function handler(request: Request) {
       invitedCount: total,
       referralCode: account.referralCode,
       isAdmin: await admin,
+      language: user.language,
     });
   } catch {
     return json({ error: 'unavailable' }, 503);

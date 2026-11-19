@@ -1,3 +1,5 @@
+import { itemMarket } from './marketData';
+import mintableItems from './mintable-items.json';
 import { Link, useLocation } from 'react-router';
 import { GameArt } from '../ui/GameArt';
 import { chanceLabel, chancePerOpening } from '../domain/mechanics';
@@ -272,8 +274,8 @@ function lootDestination(id: number, file: string) {
 function SkinCatalog() {
   return <>
     <SkinExamples/>
-    <section className="card">
-      <SkinFarmCalculator showTitle showEffects />
+    <section className="card" id="skin-calculator">
+      <SkinFarmCalculator showTitle />
     </section>
     <section className="card">
     <h2>Жетоны скинов</h2>
@@ -291,6 +293,11 @@ function SkinCatalog() {
 }
 
 function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {
+  const { data: market } = itemMarket.useSnapshot();
+  const marketKey = item.file.split('.')[0];
+  const floor = market?.items.find(quote => quote.id === marketKey)?.floor;
+  const canMint = Object.hasOwn(mintableItems, marketKey);
+  const mintPrice = market?.mintQuotes?.[marketKey];
   const key = ({
     'rogach.webp': 'beetle', 'big-black-clock.webp': 'clock', 'flask-empty.webp': 'flask-sp',
     'floppy-empty.webp': 'floppy-xp',
@@ -303,6 +310,11 @@ function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {
     <GameArt path={itemPath(item.file)} size={36}/>
     <div><h3>{item.name}</h3><p>{item.effect}</p>
       <small className="itemSource">{item.source}{showLevel ? ` · с ${level}-го уровня` : ''}</small>
+      {canMint && <span className="itemMarketMeta">
+        <small>{floor ? <>На Getgems от <Price value={floor} currency="gram"/></> :
+          market?.status === 'ready' ? 'Нет объявлений в GRAM' : 'Флор предмета недоступен'}</small>
+        <small>{typeof mintPrice === 'number' ? <>Минт <Price value={mintPrice} currency="gram"/></> : 'Цена минта отображается в игре'}</small>
+      </span>}
     </div>
     {price && <Price value={price.value} currency={price.currency}/>}
   </li>;

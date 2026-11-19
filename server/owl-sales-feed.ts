@@ -1,23 +1,24 @@
+import type { SaleScope } from './guide-notifications.js';
 import { usdtAddress } from './ton-rates.js';
 
-const collection = 'EQA5HalN4asamSjufbmXF_Wr3jyapCEYcYN0igfBDe5Nmbm7';
+export const owlCollection = 'EQA5HalN4asamSjufbmXF_Wr3jyapCEYcYN0igfBDe5Nmbm7';
 const friendly = /^[A-Za-z0-9_-]{48}$/;
 const raw = /^0:[0-9a-f]{64}$/i;
 const hex = (bytes: string) => Array.from(bytes, char => char.charCodeAt(0).toString(16).padStart(2, '0')).join('');
 const rawAddress = (address: string) => friendly.test(address)
   ? '0:' + hex(atob(address.replaceAll('-', '+').replaceAll('_', '/')).slice(2, 34))
   : raw.test(address) ? address.toLowerCase() : '';
-const rawCollection = rawAddress(collection);
+const rawCollection = rawAddress(owlCollection);
 export const notAddress = 'EQAvlWFDxGF2lXm67y4yzC17wYKD9A0guwPkMs1gOsM__NOT';
 export type SaleCurrency = 'GRAM' | 'USDT' | 'NOT';
-export type OwlSale = { id: string; at: number; nft: string; name: string; amount: number; currency: SaleCurrency };
+export type OwlSale = { id: string; at: number; nft: string; name: string; amount: number; currency: SaleCurrency; scope?: SaleScope; collection?: string };
 
-function sale(nft: string, name: unknown, at: number, amount: number, currency: SaleCurrency): OwlSale | null {
+function sale(nft: string, name: unknown, at: number, amount: number, currency: SaleCurrency, collection = owlCollection, scope: SaleScope = 'genesis'): OwlSale | null {
   const address = rawAddress(nft);
   if (!address || !Number.isSafeInteger(at) || at <= 0 || !Number.isFinite(amount) || amount <= 0) return null;
-  const title = typeof name === 'string' && /^NOT Wise #[0-9]{1,8}$/i.test(name)
+  const title = scope !== 'genesis' ? (typeof name === 'string' && name.trim().slice(0, 100) || 'NOT Wise NFT') : typeof name === 'string' && /^NOT Wise #[0-9]{1,8}$/i.test(name)
     ? 'NOT Wise #' + name.split('#')[1] : 'NOT Wise';
-  return { id: [address, at, amount, currency].join(':'), at, nft: friendly.test(nft) ? nft : address, name: title, amount, currency };
+  return { id: [address, at, amount, currency].join(':'), at, nft: friendly.test(nft) ? nft : address, name: title, amount, currency, scope, collection };
 }
 
 const currencyForAddress = (address: string): SaleCurrency | null => {
@@ -62,13 +63,15 @@ type HistoryRow = {
   typeData: { type: string; currency?: string; price?: string | null };
 };
 
-export function parseGetgemsSales(items: HistoryRow[]) {
+export function parseGetgemsSales(items: HistoryRow[], collection = owlCollection, scope: SaleScope = 'genesis') {
+  const expected = rawAddress(collection);
+  if (!expected) return [];
   return items.flatMap(item => {
     const row = item.typeData;
-    if (row?.type !== 'sold' || rawAddress(item.collectionAddress ?? '') !== rawCollection) return [];
+    if (row?.type !== 'sold' || rawAddress(item.collectionAddress ?? '') !== expected) return [];
     const currency = !row.currency || row.currency === 'TON' ? 'GRAM' : row.currency;
     if (currency !== 'GRAM' && currency !== 'USDT' && currency !== 'NOT') return [];
-    const normalized = sale(item.address, item.name, Math.floor(Date.parse(item.time) / 1000), Number(row.price), currency);
+    const normalized = sale(item.address, item.name, Math.floor(Date.parse(item.time) / 1000), Number(row.price), currency, collection, scope);
     return normalized ? [normalized] : [];
   });
 }
@@ -79,7 +82,7 @@ async function read(url: string, headers?: HeadersInit) {
   return response.json();
 }
 
-export async function getgemsHistory(token: string, since: number, until: number, after: string) {
+export async function getgemsHistory(token: string, since: number, until: number, after: string, collection = owlCollection, scope: SaleScope = 'genesis') {
   const query = new URLSearchParams({
     minTime: String(since * 1000), maxTime: String(until * 1000 + 999), limit: '100', types: 'sold',
   });
@@ -87,12 +90,12 @@ export async function getgemsHistory(token: string, since: number, until: number
   const data = await read(`https://api.getgems.io/public-api/v1/collection/history/${collection}?` + query,
     { Authorization: token });
   if (!Array.isArray(data?.response?.items)) throw new Error('Unexpected Getgems response');
-  return { sales: parseGetgemsSales(data.response.items), cursor: data.response.cursor as string | null };
+  return { sales: parseGetgemsSales(data.response.items, collection, scope), cursor: data.response.cursor as string | null };
 }
 
 export async function tonTransfers(since: number, until: number, lt: string) {
   const query = new URLSearchParams({
-    collection_address: collection, start_utime: String(since), end_utime: String(until), sort: 'asc', limit: '30',
+    collection_address: owlCollection, start_utime: String(since), end_utime: String(until), sort: 'asc', limit: '30',
   });
   if (lt) query.set('start_lt', String(BigInt(lt) + 1n));
   const data = await read('https://toncenter.com/api/v3/nft/transfers?' + query);
@@ -117,7 +120,7 @@ export async function salesFromTrace(trace: string, addresses: Map<string, strin
   return parseTonSales(event, addresses);
 }
 
-export function getgemsItemLink(address: string) {
+export function getgemsItemLink(address: string, collection = owlCollection) {
   if (friendly.test(address)) return `https://getgems.io/collection/${collection}/${address}`;
   // Encode a raw workchain-0 NFT address to the bounceable TON format.
   const body = new Uint8Array(36);

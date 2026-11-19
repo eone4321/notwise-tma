@@ -1,3 +1,4 @@
+import { guideAchievements, type GuideAchievement } from '../domain/guide-achievements';
 import { useEffect, useState } from 'react';
 import { guideActions, guidePages, type GuideEvent } from '../domain/guide-events';
 import { authData, profileRequest, type GuideMember } from './guideProfile';
@@ -8,11 +9,12 @@ const number = new Intl.NumberFormat('ru-RU');
 type Members = { items: GuideMember[]; total: number };
 type Daily = { day: string; active: number; events: Partial<Record<GuideEvent, number>> };
 type Report = { days: Daily[] };
-type Tab = 'analytics' | 'admin';
+type Awards = { items: { id: GuideAchievement; count: number }[] };
+type Tab = 'analytics' | 'admin' | 'award_stats';
 
 export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null }) {
   const [tab, setTab] = useState<Tab>('analytics');
-  const [result, setResult] = useState<Members | Report | null>(null);
+  const [result, setResult] = useState<Members | Report | Awards | null>(null);
   const [offset, setOffset] = useState(0);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -21,7 +23,7 @@ export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null })
   useEffect(() => {
     if (!canAccess) return;
     const abort = new AbortController();
-    profileRequest<Members | Report>({ action: tab, offset }, abort.signal).then(setResult).catch(reason => {
+    profileRequest<Members | Report | Awards>({ action: tab, offset }, abort.signal).then(setResult).catch(reason => {
       if (!abort.signal.aborted) setError(reason.message);
     });
     return () => abort.abort();
@@ -40,12 +42,16 @@ export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null })
     {!canAccess || error === 'forbidden' ? <section className="card"><p>Раздел доступен владельцу проекта в Telegram.</p></section> : <>
       <nav className="choiceBar" aria-label="Управление гайдом">
         <button aria-pressed={tab === 'analytics'} onClick={() => open('analytics')}>Аналитика</button>
+        <button aria-pressed={tab === 'award_stats'} onClick={() => open('award_stats')}>Достижения</button>
         <button aria-pressed={tab === 'admin'} onClick={() => open('admin')}>Пользователи</button>
       </nav>
       {error ? <section className="card"><p>Не удалось загрузить данные.</p>
         <button className="secondary" onClick={() => { setError(''); setAttempt(value => value + 1); }}>Повторить</button>
       </section> : !result ? <section className="card"><p role="status">Загружаем данные…</p></section> :
-        'days' in result ? <Analytics days={result.days}/> :
+        'days' in result ? <Analytics days={result.days}/> : !('total' in result) ?
+        <section className="card"><h2>Игроки с достижением</h2><dl className="analyticsRows">
+          {result.items.map(({ id, count }) => <div key={id}><dt>{guideAchievements[id]?.title}</dt><dd>{number.format(count)}</dd></div>)}
+        </dl></section> :
         <section className="card">
           <h2>Пользователи · {number.format(result.total)}</h2>
           <ul className="compactList">{result.items.map(member => <li className="mediaRow" key={member.id}>

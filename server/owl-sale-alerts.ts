@@ -1,5 +1,8 @@
 import { redis } from './redis.js';
-import { getgemsHistory, getgemsItemLink, notAddress, salesFromTrace, tonTransfers, type OwlSale } from './owl-sales-feed.js';
+import { getgemsHistory, getgemsItemLink, notAddress, owlCollection, salesFromTrace, tonTransfers, type OwlSale } from './owl-sales-feed.js';
+import { disableBotDelivery, saleSubscribers, salesStart, type SaleScope } from './guide-notifications.js';
+import markets from '../src/features/market-collections.json';
+import stickers from '../src/features/sticker-data.json';
 import { tonRates, usdtAddress } from './ton-rates.js';
 
 const prefix = 'notwise:owl-sales:v1:';
@@ -33,24 +36,53 @@ async function remember(sales: OwlSale[]) {
   }
 }
 
+async function collectGetgems(key: string, start: number, until: number, collection: string, scope: SaleScope) {
+  if (until < start) return;
+  const cache = prefix + 'getgems:' + collection;
+  const [last, checkpoint] = await Promise.all([
+    redis<string | null>(['GET', cache + ':time']), redis<string | null>(['GET', cache + ':page']),
+  ]);
+  // Keep the pre-collection Genesis cursor during the first run after rollout.
+  const previous = last ?? (scope === 'genesis' ? await redis<string | null>(['GET', prefix + 'getgems-time']) : null);
+  const time = Math.max(Number(previous) || start, start, until - keepSeconds);
+  if (time > until) return;
+  const page = checkpoint ? JSON.parse(checkpoint) as { until: number; cursor: string } : { until, cursor: '' };
+  const { sales, cursor } = await getgemsHistory(key, time, page.until, page.cursor, collection, scope);
+  await remember(sales);
+  if (cursor) {
+    await redis(['SET', cache + ':page', JSON.stringify({ until: page.until, cursor }), 'EX', keepSeconds]);
+  } else {
+    await redis(['SET', cache + ':time', page.until + 1]);
+    await redis(['DEL', cache + ':page']);
+  }
+}
+
+const otherCollections: { collection: string; scope: SaleScope }[] = [
+  ...markets.flatMap(row => row.id === 'skins' || row.id === 'items' ? [{ collection: row.address, scope: row.id as 'skins' | 'items' }] : []),
+  ...stickers.collectionByAlbum.flatMap(collection => collection ? [{ collection, scope: 'albums' as const }] : []),
+];
+
+async function collectExtra(key: string, until: number) {
+  const groups = ['skins', 'items', 'albums'] as const;
+  const enabled = new Map<SaleScope, number>();
+  await Promise.all(groups.map(async scope => {
+    if (await redis<number>(['ZCARD', saleSubscribers(scope)])) {
+      enabled.set(scope, Number(await redis<string | null>(['GET', salesStart(scope)])));
+    }
+  }));
+  const active = otherCollections.filter(row => enabled.get(row.scope));
+  if (!active.length) return;
+  const position = await redis<number>(['INCRBY', prefix + 'getgems-rotation', 6]);
+  const batch = active.length <= 6 ? active : Array.from({ length: 6 }, (_, index) => active[(position - 6 + index) % active.length]);
+  const result = await Promise.allSettled(batch.map(({ collection, scope }) =>
+    collectGetgems(key, enabled.get(scope)!, until, collection, scope)));
+  if (result.some(row => row.status === 'rejected')) throw new Error('Extra Getgems feed unavailable');
+}
+
 async function collectSales(start: number, until: number) {
   if (until < start) return;
   const key = process.env.GETGEMS_READ_TOKEN;
-  if (key) {
-    const time = Number(await redis<string | null>(['GET', prefix + 'getgems-time'])) || start;
-    const checkpoint = await redis<string | null>(['GET', prefix + 'getgems-page']);
-    const page = checkpoint ? JSON.parse(checkpoint) as { until: number; cursor: string } : { until, cursor: '' };
-    const { sales, cursor } = await getgemsHistory(key, time, page.until, page.cursor);
-    await remember(sales);
-    if (cursor) {
-      await redis(['SET', prefix + 'getgems-page', JSON.stringify({ until: page.until, cursor })]);
-    } else {
-      await redis(['SET', prefix + 'getgems-time', page.until + 1]);
-      await redis(['DEL', prefix + 'getgems-page']);
-    }
-    return;
-  }
-
+  if (key) return collectGetgems(key, start, until, owlCollection, 'genesis');
   const lt = await redis<string | null>(['GET', prefix + 'ton-lt']);
   const { transfers, addresses } = await tonTransfers(start, until, lt ?? '');
   const checked = new Set<string>();
@@ -84,13 +116,13 @@ async function notify(token: string, sale: OwlSale, chatId: string, priceUsd: nu
     body: JSON.stringify({
       chat_id: chatId,
       text: saleMessage(sale, priceUsd),
-      reply_markup: { inline_keyboard: [[{ text: 'Посмотреть на Getgems', url: getgemsItemLink(sale.nft) }]] },
+      reply_markup: { inline_keyboard: [[{ text: 'Посмотреть на Getgems', url: getgemsItemLink(sale.nft, sale.collection) }]] },
     }),
     signal: AbortSignal.timeout(3500),
   });
   const data = await response.json();
   if (data.error_code === 403) {
-    await redis(['ZREM', subscribers, chatId]);
+    await disableBotDelivery(chatId);
     return;
   }
   if (!response.ok || !data.ok) throw new Error('Sale alert retry needed');
@@ -119,15 +151,16 @@ async function deliver(token: string, deadline: number) {
     const rate = rates[sale.currency === 'GRAM' ? 'TON' : sale.currency === 'USDT' ? usdtAddress : notAddress]?.prices?.USD;
     if (!rate || rate <= 0) continue;
     const receipt = prefix + 'sent:' + id;
+    const group = saleSubscribers(sale.scope ?? 'genesis');
     const [chats, delivered] = await Promise.all([
-      redis<string[]>(['ZRANGEBYSCORE', subscribers, '-inf', sale.at]),
+      redis<string[]>(['ZRANGEBYSCORE', group, '-inf', sale.at]),
       redis<string[]>(['SMEMBERS', receipt]),
     ]);
     const alreadySent = new Set(delivered);
     for (const chat of chats) {
       if (alreadySent.has(chat)) continue;
       if (Date.now() >= deadline || sent >= 24) return sent;
-      const current = await redis<string | null>(['ZSCORE', subscribers, chat]);
+      const current = await redis<string | null>(['ZSCORE', group, chat]);
       if (current === null || Number(current) > sale.at) continue;
       await notify(token, sale, chat, rate);
       await redis(['SADD', receipt, chat]);
@@ -146,16 +179,17 @@ export async function pollOwlSales() {
   if (!await redis<string | null>(['SET', lock, run, 'EX', 70, 'NX'])) return { status: 'busy' };
   const deadline = Date.now() + 42_000;
   try {
-    if (!await redis<number>(['ZCARD', subscribers])) return { status: 'no-subscribers' };
-    const start = Number(await redis<string | null>(['GET', startKey]));
-    let feedDown = false;
-    try {
-      if (start) await collectSales(start, Math.floor(Date.now() / 1000) - 120);
-    } catch {
-      feedDown = true;
+    const until = Math.floor(Date.now() / 1000) - 120;
+    const key = process.env.GETGEMS_READ_TOKEN;
+    const feeds = [];
+    if (await redis<number>(['ZCARD', subscribers])) {
+      const start = Number(await redis<string | null>(['GET', startKey]));
+      if (start) feeds.push(collectSales(start, until));
     }
+    if (key) feeds.push(collectExtra(key, until));
+    const result = await Promise.allSettled(feeds);
     const sent = await deliver(token, deadline);
-    if (feedDown) throw new Error('Sale feed retry needed');
+    if (result.some(feed => feed.status === 'rejected')) throw new Error('Sale feed retry needed');
     return { status: 'checked', sent };
   } finally {
     await redis(['EVAL', "if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) end", 1, lock, run]);

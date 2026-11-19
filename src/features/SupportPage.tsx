@@ -1,6 +1,5 @@
 import { trackGuide } from './guideAnalytics';
 import { Link } from 'react-router';
-import { Appearance } from './Appearance';
 import { channelInvite } from '../domain/guide-links';
 import { artSrc } from '../ui/warmArt';
 import { useRef, useState } from 'react';
@@ -164,6 +163,5 @@ export function SupportPage({ isAdmin }: { isAdmin: boolean }) {
       <p>Живая погода использует разрешение геолокации в Telegram. Наклон управляет камерой вокруг совы дома и в Додзе. Музыка и эффекты регулируются отдельно.</p>
       <p>Язык меняется кнопкой в верхней части настроек игры. Изменения графики, мира и звука подтверждаются кнопкой «Сохранить».</p>
     </details>
-    <Appearance/>
   </>;
 }

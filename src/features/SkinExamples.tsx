@@ -13,7 +13,8 @@ export function SkinExamples() {
   return <>
     <section className="card skinGuide">
       <h2>Скины совы</h2>
-      <p>Бонус фарма с экипированного скина и заточки даёт дополнительный множитель монет (<code>farmCoins</code>) в боях и полётах. Посмотри, сколько дают детали и заточка.</p>
+      <p>Детали скина и заточка увеличивают награду в монетах за победы и полёты.</p>
+      <a href="#skin-calculator" className="textLink">Посчитать свой бонус</a>
       <div className="skinGallery">{skinExamples.map(skin => <figure key={skin.id}>
         <div className="skinPreview">
           <img src={artSrc(`/game/skins/${skin.id}.svg`)} width="512" height="512" alt=""/>

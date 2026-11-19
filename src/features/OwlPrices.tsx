@@ -20,7 +20,7 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
     {!only && <Link className="marketAll" to="/collections/market" state={{ returnTo: '/' }}>См. все<span className="sr-only"> коллекции</span></Link>}</div>
     <p className="caption">От минимальной цены на Getgems. USDT — эквивалент.</p>
     <div className="owlMarketList" aria-busy={!market && pending}>
-      {featured.filter(item => only ? item.id === only : item.id !== 'items').map(item => {
+      {featured.filter(item => only ? item.id === only : item.id !== 'eggs').map(item => {
         const collection = collections.find(({ id }) => id === item.id);
         if (!collection) return null;
         const quote = market?.items.find(({ id }) => id === item.id);

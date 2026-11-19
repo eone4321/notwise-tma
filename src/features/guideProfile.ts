@@ -10,6 +10,7 @@ export type GuideProfile = {
   invitedCount: number;
   referralCode: string;
   isAdmin: boolean;
+  language?: string;
 };
 
 export { defaultGameLink } from '../domain/guide-links';
@@ -19,9 +20,21 @@ export function guideShareUrl(referralCode?: string) {
   return referralCode ? guideUrl.split('?')[0] + '?startapp=' + referralCode : guideUrl;
 }
 
-export function shareGuide(url: string, text = 'Гайд по NOT Wise') {
+export async function shareGuide(url: string, text = 'Гайд по NOT Wise') {
   const shareUrl = 'https://t.me/share/url?' + new URLSearchParams({ url, text });
   const telegram = telegramPopup();
+  if (telegram?.initData && typeof telegram.shareMessage === 'function' && telegram.isVersionAtLeast?.('8.0')) {
+    try {
+      const { messageId } = await profileRequest<{ messageId: string }>({
+        action: 'prepare_share', personal: /[?&]startapp=g_[a-f0-9]{32}$/.test(url),
+      });
+      telegram.shareMessage(messageId, (sent: boolean) => {
+        if (sent) void profileRequest({ action: 'shared' })
+          .then(() => window.dispatchEvent(new Event('guide-awards-refresh'))).catch(() => {});
+      });
+      return;
+    } catch { /* Use Telegram’s regular link picker if prepared sharing is unavailable. */ }
+  }
   if (telegram?.initData && telegram.openTelegramLink) telegram.openTelegramLink(shareUrl);
   else window.open(shareUrl, '_blank', 'noopener,noreferrer');
 }

@@ -4,7 +4,7 @@ export function DockCoach({ step, onContinue }: { step: 'dock' | 'theme'; onCont
     {step === 'dock' ? <dl>
       <div><dt>Один тап</dt><dd>На уровень выше</dd></div>
       <div><dt>Удержание</dt><dd>Сразу на главную</dd></div>
-    </dl> : <p role="status">Тему можно поменять внизу раздела <strong>«О проекте»</strong>.</p>}
+    </dl> : <p role="status">Тему можно поменять в разделе <strong>«Настройки» → «Оформление»</strong>.</p>}
     <button className="secondary" onClick={onContinue}>{step === 'dock' ? 'Дальше' : 'Понятно'}</button>
   </aside>;
 }

@@ -15,7 +15,10 @@ export function trackGuide(event: GuideEvent) {
     headers: { 'Content-Type': 'application/json', Authorization: 'tma ' + initData },
     body: JSON.stringify({ action: 'track', event }),
   }).then(response => {
-    if (response.ok) sent.set(event, now);
+    if (response.ok) {
+      sent.set(event, now);
+      if (event.startsWith('view:')) window.dispatchEvent(new Event('guide-awards-refresh'));
+    }
   }).catch(() => {}).finally(() => pending.delete(event));
 }
 

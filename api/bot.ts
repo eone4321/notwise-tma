@@ -1,5 +1,5 @@
 import { channelInvite } from '../src/domain/guide-links';
-import { setOwlSaleSubscription } from '../server/owl-sale-alerts';
+import { enableBotDelivery, setSalePreference } from '../server/guide-notifications';
 import { answerCheckout, recordPayment, validWebhook } from '../server/donations';
 
 export const config = {
@@ -46,6 +46,9 @@ export default async function handler(req: Request) {
     const update = await req.json();
     const message = update?.message;
     if (update?.pre_checkout_query) await answerCheckout(BOT_TOKEN, update.pre_checkout_query);
+    if (message?.write_access_allowed && message.chat?.type === 'private' && Number.isSafeInteger(message.chat.id)) {
+      await enableBotDelivery(String(message.chat.id));
+    }
     if (message?.successful_payment) await recordPayment(message.successful_payment, message.from?.id);
 
     if (message?.text && message.chat?.id) {
@@ -55,7 +58,8 @@ export default async function handler(req: Request) {
       const enableSales = /^(?:\/owlsales(?:@NotWiseGuideBot)?|\/start(?:@NotWiseGuideBot)? owl_sales)$/i.test(text);
       const disableSales = /^\/stopowlsales(?:@NotWiseGuideBot)?$/i.test(text);
       if (privateChat && (enableSales || disableSales)) {
-        await setOwlSaleSubscription(chatId, enableSales);
+        if (enableSales) await enableBotDelivery(String(chatId));
+        await setSalePreference(String(chatId), 'genesis', enableSales);
         await callTelegram('sendMessage', {
           chat_id: chatId,
           text: enableSales
@@ -71,7 +75,8 @@ export default async function handler(req: Request) {
           text: `По вопросам платежей напиши в CryptoOne: ${channelInvite}. Укажи время платежа и сумму в Stars.`,
         });
       }
-      if (text.startsWith('/start')) {
+      if (privateChat && /^\/start(?:@NotWiseGuideBot)?(?: |$)/i.test(text)) {
+        await enableBotDelivery(String(chatId));
         // 1. Устанавливаем системную кнопку Menu WebApp слева от поля ввода
         void callTelegram('setChatMenuButton', {
           chat_id: chatId,

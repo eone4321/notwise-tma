@@ -14,7 +14,7 @@ export function CapsulePage() {
   const { hash, pathname } = useLocation();
   const currentTier = tiers.find(tier => pathname === '/capsules/' + tier || hash === '#' + tier);
   if (!currentTier) return <>
-    <p className="intro">Капсулы выпадают при победе в рейтинговом бою (PvP) и при успешном завершении полёта, если свободен хотя бы один слот под капсулу.</p>
+    <p className="intro">Выбери капсулу, чтобы посмотреть её награды и цену открытия.</p>
     <section className="card leanList capsuleList">
       {tiers.map((tier, index) => <Link className="mediaRow capsuleChoice" key={tier} to={'/capsules/' + tier}>
         <GameArt path={`/game/capsules/${tier}.webp`} size={46}/>
@@ -27,7 +27,6 @@ export function CapsulePage() {
   </>;
   return <>
     <CapsuleDetail tier={currentTier}/>
-    <CapsuleDropGuide/>
   </>;
 }
 
@@ -84,10 +83,10 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
         <summary>
           <span>
             <strong>Калькулятор бонуса к фарму монет</strong>
-            <small>Скины, кольца и лига Дополнительные монеты в боях и полётах</small>
+            <small>Дополнительные монеты в боях и полётах</small>
           </span>
         </summary>
-        <SkinFarmCalculator showTitle={false} showEffects={true} />
+        <SkinFarmCalculator showTitle={false} />
       </details>
       <Link className="textLink" to="/owl/skins">Как работают скины и жетоны</Link>
     </section>
@@ -104,42 +103,9 @@ function SlotGuide() {
 }
 
 function CapsuleDropGuide() {
-  return <section className="card capsuleDropGuide">
-    <h2>Откуда берутся и как выпадают капсулы</h2>
-    <p className="caption">Два подтверждённых источника капсул в коде Not Wise: The Game</p>
-    <ul className="capsuleRulesList">
-      <li>
-        <span className="ruleNumber">1</span>
-        <div className="ruleContent">
-          <strong>Свободный слот (Обязательное условие)</strong>
-          <p>Капсула занимает слот, пока тикает таймер или пока её не откроют за Stars/GRAM. Если все слоты заняты — капсула <strong>не выпадет вовсе</strong> (железное правило <em>«No free slot — no capsule»</em>).</p>
-        </div>
-      </li>
-      <li>
-        <span className="ruleNumber">2</span>
-        <div className="ruleContent">
-          <strong>Победа в рейтинговом PvP (Бои)</strong>
-          <p>При каждой победе в рейтинговом поединке есть шанс выбить капсулу. Точные шансы получить капсулу каждого вида игра не показывает. Поражения, ничьи и тренировки в Додзе капсул не приносят.</p>
-        </div>
-      </li>
-      <li>
-        <span className="ruleNumber">3</span>
-        <div className="ruleContent">
-          <strong>Полёты на ракетах (Flights)</strong>
-          <p>Капсулы также выпадают на финише полёта (серверный ответ <code>/flights/{'{id}'}/finish</code> в массиве <code>items</code>). При наличии свободного слота капсула падает в слот и начинает обратный отсчёт. На финише может появиться отдельное предложение за Stars или GRAM.</p>
-        </div>
-      </li>
-      <li>
-        <span className="ruleNumber">4</span>
-        <div className="ruleContent">
-          <strong>Градация редкости и таймеры</strong>
-          <p>
-            🖤 <strong>Обсидиановая (4 ч / 100 ⭐)</strong> — базовая и самая частая капсула.<br/>
-            🤍 <strong>Лунное серебро (8 ч / 500 ⭐)</strong> — редкая капсула с увеличенными наградами (базовый вес $NOT ×1,5).<br/>
-            💛 <strong>Золотая (24 ч / 2500 ⭐)</strong> — главный трофей: максимум монет и опыта, гарантированный стикерпак (100%), 15% на Загадочное яйцо и базовый вес $NOT ×5.
-          </p>
-        </div>
-      </li>
-    </ul>
+  return <section className="card">
+    <h2>Как получить капсулу</h2>
+    <p>Капсула может выпасть за победу в рейтинговом бою или на финише полёта. Оставь хотя бы один свободный слот.</p>
+    <p>В наградах за полёт также может появиться предложение за Stars или GRAM.</p>
   </section>;
 }

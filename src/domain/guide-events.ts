@@ -1,13 +1,15 @@
 export const guidePages = {
   home: 'Главная', squads: 'Сквады и войны', secrets: 'Секреты', capsules: 'Капсулы',
   owl: 'Яйца и скины', collections: 'Коллекции', combat: 'Бои и навыки',
-  assets: 'Предметы', ecosystem: 'Экосистема', referrals: 'Пригласить друзей', support: 'О проекте',
+  assets: 'Предметы', ecosystem: 'Экосистема', referrals: 'Пригласить друзей', support: 'Настройки',
 } as const;
 
 export const guideActions = {
   game: 'Открыли ссылку на игру',
   channel: 'Открыли ссылку на канал',
   share_copy: 'Скопировали ссылку на гайд',
+  chat: 'Открыли ссылку на чат',
+  squad: 'Открыли ссылку на сквад',
   share_send: 'Открыли выбор получателя',
 } as const;
 

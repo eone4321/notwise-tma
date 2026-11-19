@@ -28,5 +28,5 @@ export async function telegramUser(request: Request, token: string) {
   const name = [user.first_name, user.last_name].filter(value => typeof value === 'string').join(' ').trim().slice(0, 120) || 'Игрок';
   const avatar = typeof user.photo_url === 'string' && /^https:\/\/t\.me\/i\/userpic\/[\w./-]{1,400}\.(?:jpg|jpeg|png|webp)$/i.test(user.photo_url)
     ? user.photo_url : '';
-  return { id: String(user.id), name, avatar, start: params.get('start_param') ?? '' };
+  return { id: String(user.id), name, avatar, language: typeof user.language_code === 'string' && /^[a-zA-Z-]{2,15}$/.test(user.language_code) ? user.language_code : null, start: params.get('start_param') ?? '' };
 }

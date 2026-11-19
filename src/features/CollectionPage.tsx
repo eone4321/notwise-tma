@@ -64,6 +64,21 @@ export function CollectionPage() {
           {item.id === 'genesis' && <a className="textLink" href="https://t.me/NotWiseGuideBot?start=owl_sales">Уведомления о продажах</a>}
         </details>;
       })}
+      <h2 className="albumMarketHeading">NFT-наборы стикеров</h2>
+      {albums.map((title, index) => {
+        const id = index + 1;
+        const quote = market?.items.find(item => item.id === 'album-' + id);
+        return <details className="mediaDetails marketCollection" key={id} id={'album-' + id} open={hash === '#album-' + id || undefined}>
+          <summary><GameArt path={`/game/albums/${id}.webp`} size={40}/>
+            <span><strong>{title}</strong><small>{quote?.floor ? `от ${format.format(quote.floor)} GRAM` : 'Флор недоступен'}</small></span>
+          </summary>
+          {typeof quote?.supply === 'number' && <p>Выпущено в TON · {format.format(quote.supply)}</p>}
+          <p className="caption">{typeof market?.albumIssue?.[id] === 'number'
+            ? `Доступно к выпуску в игре · ${format.format(market.albumIssue[id])}`
+            : 'Остаток выпуска можно проверить в игре.'}</p>
+          <a className="textLink" href={`https://getgems.io/collection/${stickerData.collectionByAlbum[id]}`} target="_blank" rel="noreferrer">Открыть на Getgems</a>
+        </details>;
+      })}
     </section> : <>
       {album === null ? <>
         <ProgressCount count={count} total={total}/>
@@ -97,8 +112,8 @@ export function CollectionPage() {
           {item.kind === 'secret' ? <Link className="textLink" to={`/secrets#sticker-${item.id}`} state={{ returnTo: pathname }}>Условие секрета</Link> :
             <p>{achievementActions[item.id] ?? (
               stickerData.oddsById[item.id] > 0
-                ? `Шанс получить из одного пака · ${chanceLabel(chancePerOpening(stickerData.oddsById[item.id], stickerData.drawCounts))}. Снимок от 20 ноября.`
-                : 'В снимке шансов на 20 ноября эта карточка в паке не выпадает.'
+                ? `Шанс получить из одного пака · ${chanceLabel(chancePerOpening(stickerData.oddsById[item.id], stickerData.drawCounts))}`
+                : 'Способ получения указан в игре.'
             )}</p>}
           </details>
           <label className="secretCheck"><input type="checkbox" checked={isDone(item.id)}
@@ -110,6 +125,13 @@ export function CollectionPage() {
             <GameArt path="/brand/collections/classics.png" size={34}/>
             <span><strong>Выпуск NFT-набора</strong><small>Пять карточек · проверка тиража в игре</small></span>
           </summary>
+          {(() => {
+            const quote = market?.items.find(item => item.id === 'album-' + album);
+            return quote?.available || typeof quote?.supply === 'number'
+              ? <p>{quote.floor ? `От ${format.format(quote.floor)} GRAM на Getgems. ` : ''}{typeof quote.supply === 'number' && `Выпущено в TON · ${format.format(quote.supply)}.`}</p>
+              : null;
+          })()}
+          {typeof market?.albumIssue?.[album] === 'number' && <p>Доступно к выпуску в игре · {format.format(market.albumIssue[album])}</p>}
           <p>После сбора всех карточек открой набор в игре. Там показано, остались ли места для создания и сколько стоит выпуск. После создания набора его можно выпустить в TON, если минт доступен для твоего набора.</p>
           <a className="textLink spacedLink" href={`https://getgems.io/collection/${stickerData.collectionByAlbum[album]}`}
             target="_blank" rel="noreferrer">Открыть этот набор на Getgems</a>

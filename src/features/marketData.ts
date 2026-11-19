@@ -9,7 +9,7 @@ export type TokenQuote = {
   status: 'fresh' | 'stale' | 'unavailable';
 };
 type CollectionQuote = { id: string; floor: number | null; supply: number | null; available?: boolean };
-type Collections = { items: CollectionQuote[]; gramToUsdt: number | null };
+type Collections = { items: CollectionQuote[]; gramToUsdt: number | null; albumIssue?: Record<number, number> };
 
 const storageAge = 24 * 60 * 60_000;
 
@@ -39,7 +39,7 @@ function resource<T extends { items: unknown[] }>(
         const response = await fetch(endpoint, { signal: AbortSignal.timeout(6500) });
         if (!response.ok) throw new Error('market unavailable');
         const quote = await response.json();
-        if (!Array.isArray(quote?.items) || !quote.items.length) throw new Error('empty market');
+        if (!Array.isArray(quote?.items)) throw new Error('empty market');
         cached = merge(cached, quote);
         timestamp = Date.now();
         update({ data: cached, pending: false, stale: false });
@@ -85,16 +85,24 @@ export const collectionMarket = resource<Collections>('/api/market/collections',
   items: next.items.map(item => {
     const previous = old?.items.find(row => row.id === item.id);
     if (item.available !== false) return item;
-    return { ...item, floor: previous?.floor ?? null, supply: previous?.supply ?? null };
+    return { ...item, floor: item.floor ?? previous?.floor ?? null, supply: item.supply ?? previous?.supply ?? null };
   }),
+  albumIssue: next.albumIssue,
   gramToUsdt: next.gramToUsdt ?? old?.gramToUsdt ?? null,
 }));
+
+export const itemMarket = resource<{
+  items: { id: string; floor: number }[];
+  status: 'ready' | 'unavailable';
+  mintQuotes?: Record<string, number>;
+}>('/api/market/items', 120_000, (_, next) => next);
 
 export function startMarketUpdates() {
   const refresh = () => {
     if (document.hidden) return;
     tokenMarket.refresh();
     collectionMarket.refresh();
+    itemMarket.refresh();
   };
   refresh();
   const timer = window.setInterval(refresh, 60_000);

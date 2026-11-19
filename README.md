@@ -89,3 +89,30 @@ With the default environment, TON Center identifies transfers in the Genesis
 collection, and TonAPI verifies successful Getgems purchases and their amounts.
 The alert includes the NFT link and an estimated USD equivalent at the time
 of notification.
+
+## Settings and Getgems
+
+A private `/start` or Telegram write-access grant enables Genesis notifications
+by default. The user's switch in Settings or `/stopowlsales` takes precedence.
+With `GETGEMS_READ_TOKEN` configured the poller supports opt-in completed sales
+for skins, items and sticker albums. Bot messages require Telegram permission
+to contact the user.
+
+Collection floor and issued supply use public Getgems collection stats. Item
+floor groups fixed-price native-currency listings by game asset slug. It uses
+the Getgems API when a read token is configured and identifies Getgems listings
+in the public TON index otherwise. Prices are only published after a complete
+scan. Optional verified game data can be supplied via `GAME_MINT_QUOTES_JSON`
+(asset slug to price in GRAM) and `GAME_ALBUM_ISSUE_JSON` (album ID to in-game
+remaining issue count).
+
+`GUIDE_CHAT_ID` may override the discussion chat attached to `@cryptoeone`.
+The bot needs administrator access in the discussion chat to check membership.
+Squad achievements can be delivered by the game backend using a POST to
+`/api/guide/squad-member` with a JSON body
+`{"telegramUserId":"123456","squadId":575801}` after a successful membership change.
+Configure a shared secret of at least 32 characters in `GUIDE_SQUAD_WEBHOOK_KEY`.
+Send the Unix timestamp in seconds in `X-Notwise-Timestamp` and lowercase
+hex HMAC-SHA256 of `timestamp.rawBody` in `X-Notwise-Signature`.
+The caller sets the content length and the signature covers the exact body.
+The event can be retried safely within the five-minute signature window.

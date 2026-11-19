@@ -92,7 +92,7 @@ export function useGuideNavigation() {
     (fromEgg && /^\/owl\/(mystery|red|season|referral|green|gold)$/.test(returnTo)) ||
     (isEgg && ['/owl', '/owl/loot', '/owl/shop'].includes(returnTo))
   );
-  const parent = hasReturn ? returnTo : market || pathname === '/owl' || owlTabs.includes(pathname) || ecosystemTab ? '/' : isEgg ? '/owl' : hash ? pathname : sections.length > 1
+  const parent = hasReturn ? returnTo : market ? '/collections' : pathname === '/owl' || owlTabs.includes(pathname) || ecosystemTab ? '/' : isEgg ? '/owl' : hash ? pathname : sections.length > 1
     ? '/' + sections.slice(0, skipGrouping ? 1 : -1).join('/')
     : '/';
 
