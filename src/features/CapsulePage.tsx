@@ -104,7 +104,7 @@ function SlotGuide() {
           <td><GramEstimate stars={stars} showUnavailable/></td>
         </tr>)}</tbody>
       </table>
-      <p className="caption">Оценка по 0,015 $ за Star и курсу GRAM. Точную сумму показывает игра перед оплатой.</p>
+      <p className="caption">Оценка обновляется с курсом GRAM. Точную сумму показывает игра перед оплатой.</p>
     </details>
   </section>;
 }

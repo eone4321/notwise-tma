@@ -1,5 +1,5 @@
 import { DetailLink } from '../ui/DetailLink';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { collectionMarket, itemMarket } from './marketData';
 import publishing from '../domain/game-publishing.json';
 import mintableItems from './mintable-items.json';
@@ -322,6 +322,7 @@ function SkinCollectionRow() {
 }
 
 function InventoryRow({ item, id, collectionFloor }: { item: CatalogItem; id?: string; collectionFloor?: number }) {
+  const titleId = useId();
   const { data: market } = itemMarket.useSnapshot();
   const marketKey = item.file.split('.')[0];
   const listing = market?.items.find(quote => quote.id === marketKey);
@@ -336,23 +337,25 @@ function InventoryRow({ item, id, collectionFloor }: { item: CatalogItem; id?: s
   const price = item.price ?? (offer && { value: offer.price, currency: offer.currency as Currency });
   const floor = collectionFloor ?? listing?.floor;
   const marketUrl = listing?.href ?? (item.marketAddress ? 'https://getgems.io/collection/' + item.marketAddress : undefined);
-  return <li className="inventoryRow" id={id}>
+  return <li className="inventoryRow" id={id} aria-labelledby={titleId}>
     <span className="inventoryIcon"><GameArt path={item.art ?? itemPath(item.file)} size={33}/></span>
-    <h3>{item.name}</h3>
-    {(price || floor || marketUrl) && <div className="inventoryPrices">
-      {price && <span className="inventoryShopPrice">{price.currency === 'stars'
-        ? <StarsAndGram stars={price.value}/> : <Price value={price.value} currency={price.currency}/>}</span>}
-      {marketUrl ? <a className="inventoryFloor" href={marketUrl} target="_blank" rel="noreferrer"
-          aria-label={floor ? `${item.name} за ${collectionFloor !== undefined ? 'сумму от ' : ''}${floor.toLocaleString('ru-RU')} GRAM на Getgems` : `Открыть коллекцию для «${item.name}» на Getgems`}>
-          {floor ? <Price value={floor} currency="gram" from={collectionFloor !== undefined}/> : <span className="inventoryMarketLabel">Getgems</span>}
-          <span aria-hidden="true" className="rowChevron"/>
-        </a>
-        : floor ? <span className="inventoryFloor"><Price value={floor} currency="gram"/></span> : null}
-    </div>}
-    <p>{item.effect}</p>
-    <div className="inventoryMeta">
-      <small className="itemSource">{item.source}{level ? ` · с ${level}-го ур.` : ''}</small>
-      {mintPrice !== undefined && <span className="inventoryMint">Минт NFT <Price value={mintPrice} currency="gram"/><MintUsdEstimate gram={mintPrice}/></span>}
+    <div className="inventoryCopy">
+      {(price || floor || marketUrl) && <div className="inventoryPrices">
+        {price && <span className="inventoryShopPrice">{price.currency === 'stars'
+          ? <StarsAndGram stars={price.value}/> : <Price value={price.value} currency={price.currency}/>}</span>}
+        {marketUrl ? <a className="inventoryFloor" href={marketUrl} target="_blank" rel="noreferrer"
+            aria-label={floor ? `${item.name} за ${collectionFloor !== undefined ? 'сумму от ' : ''}${floor.toLocaleString('ru-RU')} GRAM на Getgems` : `Открыть коллекцию для «${item.name}» на Getgems`}>
+            {floor ? <Price value={floor} currency="gram" from={collectionFloor !== undefined}/> : <span className="inventoryMarketLabel">Getgems</span>}
+            <span aria-hidden="true" className="rowChevron"/>
+          </a>
+          : floor ? <span className="inventoryFloor"><Price value={floor} currency="gram"/></span> : null}
+      </div>}
+      <h3 id={titleId}>{item.name}</h3>
+      <p>{item.effect}</p>
+      <div className="inventoryMeta">
+        <small className="itemSource">{item.source}{level ? ` · с ${level}-го ур.` : ''}</small>
+        {mintPrice !== undefined && <span className="inventoryMint">Минт NFT <Price value={mintPrice} currency="gram"/><MintUsdEstimate gram={mintPrice}/></span>}
+      </div>
     </div>
   </li>;
 }

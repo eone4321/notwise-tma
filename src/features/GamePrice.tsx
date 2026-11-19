@@ -23,9 +23,9 @@ function RateEstimate({ stale, children }: { stale: boolean; children: ReactNode
   </span>;
 }
 
-export function GramEstimate({ stars, showUnavailable }: { stars: number; showUnavailable?: boolean }) {
+export function GramEstimate({ stars, showUnavailable, purpose }: { stars: number; showUnavailable?: boolean; purpose?: 'game' | 'support' }) {
   const { usd, pending, stale } = useGramRate();
-  const value = usd === null ? null : estimateGramForStars(stars, usd);
+  const value = usd === null ? null : estimateGramForStars(stars, usd, purpose);
   if (value === null) return showUnavailable ? <span className="gramUnavailable"
     aria-label={pending ? 'Курс GRAM загружается' : 'Курс GRAM недоступен'}>—</span> : null;
   return <RateEstimate stale={stale}><Price value={value} currency="gram" approximate/></RateEstimate>;

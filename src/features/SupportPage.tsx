@@ -129,7 +129,7 @@ export function SupportPage({ isAdmin }: { isAdmin: boolean }) {
         {presets.map(value => <button className="amount" aria-pressed={amount === value} disabled={busy}
           key={value} onClick={() => setAmount(value)}>{stars.format(value)} ⭐</button>)}
       </div>
-      <p className="caption donationEquivalent">Эквивалент в GRAM <GramEstimate stars={amount} showUnavailable/></p>
+      <p className="caption donationEquivalent">Эквивалент в GRAM <GramEstimate stars={amount} purpose="support" showUnavailable/></p>
       <button className="primary" onClick={donate} disabled={busy}>Поддержать на {stars.format(amount)} ⭐</button>
       {message && <p className="supportStatus" role="status">{message}</p>}
       {order && <button className="secondary" onClick={check} disabled={busy}>Проверить оплату</button>}

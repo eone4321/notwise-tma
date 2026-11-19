@@ -370,29 +370,29 @@
 .modesCard .mediaDetails + .mediaDetails { border-top: 1px solid var(--game-panel-line); }
 
 .inventoryPanel .inventoryRow {
-  grid-template-columns: 38px minmax(0, 1fr) auto;
+  grid-template-columns: 38px minmax(0, 1fr);
   align-items: start;
-  gap: 2px 9px;
+  gap: 9px;
   padding: 10px 0;
 }
-.inventoryRow > .inventoryIcon { grid-area: 1 / 1 / span 2; }
+.inventoryCopy { display: flow-root; }
 .inventoryPanel .inventoryRow h3 {
-  grid-area: 1 / 2;
   padding-block-start: 3px;
 }
-.inventoryRow:not(:has(.inventoryPrices)) > h3 { grid-column-end: -1; }
 .inventoryPanel .inventoryRow p {
-  grid-area: 2 / 2 / auto / -1;
-  margin: 0;
+  margin: 3px 0 0;
 }
 .inventoryPanel .inventoryRow h3, .inventoryPanel .inventoryRow p {
   overflow-wrap: break-word;
+  text-wrap: wrap;
 }
 .inventoryPrices {
-  grid-area: 1 / 3;
+  float: right;
+  float: inline-end;
   display: grid;
   justify-items: end;
   gap: 0;
+  margin-inline-start: 9px;
   font-variant-numeric: tabular-nums;
 }
 .inventoryShopPrice, .inventoryFloor {
@@ -415,7 +415,7 @@
   height: 6px;
   opacity: .85;
 }
-.inventoryMint { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.inventoryMint { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 2px 4px; max-width: 100%; }
 .inventoryPanel .priceBadge { padding: 0; border: 0; background: none; box-shadow: none; }
 .inventoryFloor .priceBadge { color: inherit; }
 .inventoryPanel .priceIcon { width: 16px; height: 16px; }
@@ -530,14 +530,15 @@
 :is(.primary, .secondary, .supportPill) > .gameGlyph { line-height: 1; }
 
 .inventoryMeta {
-  grid-area: 3 / 2 / auto / -1;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 3px 9px;
-  margin-top: 4px;
+  margin-block-start: 4px;
+  line-height: 1.45;
 }
-.inventoryPanel .inventoryMeta .itemSource { margin: 0; color: var(--item-accent, var(--muted)); }
+.inventoryPanel .inventoryMeta .itemSource {
+  display: inline;
+  margin: 0;
+  margin-inline-end: 8px;
+  color: var(--item-accent, var(--muted));
+}
 .inventoryMeta .inventoryMint {
   padding: 0;
   color: var(--muted);
@@ -692,7 +693,6 @@
 .slotTable thead th { color: var(--muted); font-weight: 600; }
 .slotTable tbody td:nth-child(2) { color: var(--text); }
 .inventoryMarketLabel { color: var(--muted); font-size: 11px; font-weight: 650; }
-.inventoryPanel .inventoryRow p { text-wrap: wrap; }
 
 .starsAndGram { display: inline-flex; align-items: center; gap: 7px; }
 .eggLink .starsAndGram, .inventoryShopPrice .starsAndGram { display: grid; justify-items: end; gap: 4px; }
