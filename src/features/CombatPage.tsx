@@ -62,10 +62,10 @@ export function CombatPage() {
       </> : isModes ? <section className="card">
         {modes.map(([icon, title, when, description]) => <details className="mediaDetails" key={title}
           id={icon === 'rocket' ? 'flight' : undefined} open={icon === 'rocket' && hash === '#flight' || undefined}>
-          <summary><GameSymbol name={icon}/><span><strong>{title}</strong><small>{when}</small></span></summary>
-          {icon === 'rocket' && <p><strong>Цена старта в энергии</strong><br/>
-            250 на уровнях 5–9, 300 на 10–14 и 350 на 15–19. Дальше ещё +50 энергии каждые пять уровней.</p>}
-          <p>{description}</p>
+          <summary><GameSymbol name={icon}/><span><strong>{title}</strong>
+            <small>{icon === 'rocket' ? <span className="energyBadge">С 5-го уровня · от 250 <GameSymbol name="bolt" size={13}/></span> : when}</small></span>
+          </summary>
+          {icon === 'rocket' ? <FlightDetails/> : <p>{description}</p>}
         </details>)}
         <details className="mediaDetails"><summary><GameSymbol name="trophy"/><span><strong>Призы сезона</strong><small>Первые 100 мест</small></span></summary>
         <p>Базовый фонд клиента — 1 млн $NOT. 1-е место получает 400 000, 2-е — 350 000, 3-е — 250 000 $NOT. Топ-10 получает золотое загадочное яйцо, места 11–100 — сезонное загадочное яйцо.</p>
@@ -187,4 +187,23 @@ function CombatStats() {
       </details>
     </section>
   </>;
+}
+
+function FlightDetails() {
+  return <div className="flightDetails">
+    <h4>Расход энергии на старт</h4>
+    <div className="flightEnergyGrid">
+      <div><span>Уровни 5–9</span><strong>250 <GameSymbol name="bolt" size={15}/></strong></div>
+      <div><span>Уровни 10–14</span><strong>300 <GameSymbol name="bolt" size={15}/></strong></div>
+      <div><span>Уровни 15–19</span><strong>350 <GameSymbol name="bolt" size={15}/></strong></div>
+      <div><span>Каждые +5 ур.</span><strong>+50 <GameSymbol name="bolt" size={15}/></strong></div>
+    </div>
+    <h4>Правила и механика полёта</h4>
+    <ul className="compactList flightRules">
+      <li><span>Минимум сытости</span><strong>10 сытости</strong></li>
+      <li><span>Награды в полёте</span><strong>Монеты и опыт (XP)</strong></li>
+      <li><span>Бесплатные ракеты</span><strong>3 в день (+ в полёте)</strong></li>
+      <li><span>Множители</span><strong>Ракета умножает · суши −20%</strong></li>
+    </ul>
+  </div>;
 }
