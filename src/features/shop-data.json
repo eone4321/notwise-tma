@@ -136,6 +136,13 @@
     "price": 20000
   },
   {
+    "id": "plasticine-coins",
+    "name_ru": "Пластилин",
+    "category": "consumable",
+    "currency": "coins",
+    "price": 20000
+  },
+  {
     "id": "ring-str-2",
     "name_ru": "Обсидиановое кольцо силы",
     "tier": 2,
@@ -215,6 +222,13 @@
     "id": "egg-stars",
     "name_ru": "Загадочное яйцо (Mystery)",
     "category": "egg",
+    "currency": "stars",
+    "price": 100
+  },
+  {
+    "id": "plasticine-stars",
+    "name_ru": "Пластилин (Stars)",
+    "category": "consumable",
     "currency": "stars",
     "price": 100
   },

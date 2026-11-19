@@ -53,7 +53,7 @@ export function CollectionPage() {
             <GameArt path={'/brand/collections/' + item.id + '.png'} size={42}/>
             <span><strong>{item.name}</strong>
               <small>{!market && pending ? 'Загружаем флор…' : floor && floor > 0
-                ? <span className="floorPrice" title={quote?.available === false ? 'Последняя доступная цена' : undefined}>от {format.format(floor)} <GameArt path="/brand/tokens/gram.png" size={15}/> GRAM</span>
+                ? <span className="floorPrice" title={quote?.available === false ? 'Последняя доступная цена' : undefined}>от {format.format(floor)} TON</span>
                 : 'Флор недоступен'}</small></span>
           </summary>
           <p>{purpose[item.id]}</p>
@@ -66,27 +66,33 @@ export function CollectionPage() {
       {album === null ? <>
         <ProgressCount count={count} total={total}/>
         <ProgressStatus/>
-        <div className="albumNoticeCard card">
-          <div className="albumNoticeHeader">
+        <details className="albumNoticeCard card guideDisclosure">
+          <summary className="albumNoticeSummary">
             <span className="albumNoticeIcon" aria-hidden="true">💎</span>
-            <div>
-              <strong>Ончейн-мониторинг минта (лимит 500 шт. на альбом)</strong>
-              <p>Парсер отслеживает фактически сминченные NFT-альбомы на блокчейне TON (Getgems).</p>
-            </div>
+            <span className="albumNoticeSummaryText">
+              <strong>Ончейн-мониторинг минта</strong>
+              <small>Отслеживаем подтверждённые NFT в TON</small>
+            </span>
+            <span className="albumNoticeInfoBtn" aria-hidden="true">i</span>
+          </summary>
+          <div className="albumNoticeBody">
+            <p className="albumNoticeDesc">
+              В игре у некоторых альбомов может быть уже 498/500, но на блокчейне они появляются с задержкой:
+              покупка за Telegram Stars накладывает <strong>21-дневный кулдаун</strong> (холд платежных систем) на минт,
+              после чего требуется выпустить пак в Telegram перед отправкой транзакции.
+            </p>
+            <p className="albumNoticeDesc" style={{ marginTop: 6 }}>
+              Как только NFT подтверждается в сети TON (Getgems), наш парсер автоматически вычитает её из остатка (например, станет 499/500).
+            </p>
           </div>
-          <p className="albumNoticeDesc">
-            В игре у некоторых альбомов может быть уже 498/500, но в блокчейне они появляются с задержкой:
-            покупка за Telegram Stars накладывает <strong>21-дневный кулдаун</strong> (холд) на минт,
-            а также требуется выпустить пак в Telegram перед отправкой транзакции. Как только NFT подтверждается в сети TON, парсер автоматически вычитает её из остатка.
-          </p>
-        </div>
+        </details>
         <div className="albumGrid">{albums.map((label, index) => {
           const pack = index + 1;
           const found = stickers.filter(item => stickerAlbum(item.id) === pack && isDone(item.id)).length;
           return <Link key={label} to={`/collections/albums/${pack}`}>
+            <span className={`albumCornerBadge${found === 5 ? ' isComplete' : ''}`}>{found}/5</span>
             <GameArt path={`/game/albums/${pack}.webp`} size={45}/>
             <strong>{label}</strong>
-            <small>{found}/5 · осталось {5 - found}</small>
             <span className="albumMintBadge">500/500 NFT</span>
           </Link>;
         })}</div>

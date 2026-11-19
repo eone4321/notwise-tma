@@ -123,7 +123,25 @@ summary { cursor: pointer; min-height: 44px; padding: 10px 0; }
 .mediaDetails summary small { display: block; }
 details > p { margin: 4px 0 8px; }
 .albumGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
-.albumGrid > a { display: grid; align-content: center; justify-items: center; gap: 4px; min-height: 124px; padding: 12px 8px; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; text-align: center; }
+.albumGrid > a { position: relative; display: grid; align-content: center; justify-items: center; gap: 4px; min-height: 124px; padding: 16px 8px 12px; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; text-align: center; }
+.albumCornerBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 11px;
+  font-weight: 750;
+  color: #deb86a;
+  background: rgba(222, 184, 106, 0.12);
+  border: 1px solid rgba(222, 184, 106, 0.25);
+  border-radius: 999px;
+  padding: 1px 7px;
+  line-height: 1.3;
+}
+.albumCornerBadge.isComplete {
+  color: #a8df8e;
+  background: rgba(76, 175, 80, 0.18);
+  border-color: rgba(76, 175, 80, 0.4);
+}
 .address { overflow-wrap: anywhere; }
 .refreshBtn { display: flex; margin-top: 12px; }
 .primary,.secondary { display: block; min-height: 48px; width: 100%; margin-top: 12px; padding: 12px; border-radius: 12px; font-weight: 750; }
@@ -1590,35 +1608,76 @@ body { font-weight: 500; -webkit-font-smoothing: antialiased; -moz-osx-font-smoo
   background: rgba(40, 48, 68, 0.45);
   border: 1px solid rgba(121, 168, 216, 0.25);
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 10px 12px;
 }
-.albumNoticeHeader {
+.albumNoticeSummary {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
-  margin-bottom: 6px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  width: 100%;
+}
+.albumNoticeSummary::-webkit-details-marker {
+  display: none;
+}
+.albumNoticeSummary::after {
+  display: none !important;
 }
 .albumNoticeIcon {
   font-size: 20px;
   line-height: 1;
   flex: none;
 }
-.albumNoticeHeader strong {
+.albumNoticeSummaryText {
+  flex: 1;
+  min-width: 0;
+}
+.albumNoticeSummaryText strong {
   display: block;
   font-size: 13px;
   color: #fff;
-  margin-bottom: 2px;
+  line-height: 1.25;
 }
-.albumNoticeHeader p {
-  font-size: 11.5px;
+.albumNoticeSummaryText small {
+  display: block;
+  font-size: 11px;
   color: var(--muted);
-  margin: 0;
+  margin-top: 1px;
+}
+.albumNoticeInfoBtn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(121, 168, 216, 0.15);
+  border: 1px solid rgba(121, 168, 216, 0.35);
+  color: #79a8d8;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  font-family: inherit;
+  font-style: normal;
+}
+.albumNoticeBody {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 .albumNoticeDesc {
   font-size: 11.5px;
   line-height: 1.45;
   color: #b0c2de;
   margin: 0;
+}
+.eggBadgeSubtitle {
+  display: inline-block;
+  font-size: 11.5px;
+  color: #deb86a;
+  margin-top: 2px;
 }
 .albumMintBadge {
   display: inline-block;

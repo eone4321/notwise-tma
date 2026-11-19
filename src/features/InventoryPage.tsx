@@ -11,12 +11,12 @@ import skinParts from './skin-parts.json';
 import { SkinFarmCalculator } from './SkinFarmCalculator';
 
 const eggs = [
-  { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное', source: 'Лавка (9 999 монет), капсулы и крафт', details: 'Базовое яйцо за монеты, капсулы и осколки (3 000 скорлупы). Содержит еду, лекарства, оформление, скин-жетон и чиллер.' },
-  { id: 56, slug: 'season', file: 'golden-egg.webp', name: 'Золотое загадочное', source: 'Крафт за 15 000 скорлупы · Лавка (500 ⭐) · Топ 11–100 сезона', details: 'Крафтится из 15 000 осколков скорлупы, продаётся в Лавке за 500 Stars или вручается за 11–100 места сезона. Содержит эпический скин-жетон, заточки скина и кольца, чиллер и монтмориллонит.' },
-  { id: 19, slug: 'red', file: 'golden-egg-special.webp', name: 'Специальное золотое', source: 'Эксклюзив за места 1–10 в сезоне', details: 'Вручается автоматически по итогам сезона лучшим игрокам (места 1–10, на красном фоне). Даёт повышенные шансы, заточки и сразу два вида жетонов скинов.' },
-  { id: 17, slug: 'referral', file: 'referral-egg.webp', name: 'Реферальное', source: 'За вход в игру по ссылке друга (+5 000 монет)', details: 'Выдаётся новому игроку вместе с 5 000 монет при старте по пригласительной ссылке. Набор наград и шансов полностью идентичен базовому загадочному яйцу.' },
-  { id: 18, slug: 'green', file: '18.png', name: 'Бежевое', source: 'Способ получения не подтверждён', details: 'Из этого яйца выпадают оформление, жетон скина и другие награды. Еды в пуле нет.' },
-  { id: 20, slug: 'gold', file: '20.png', name: 'Белое', source: 'Способ получения не подтверждён', details: 'Пул похож на бежевое яйцо, но здесь выпадает золотой жетон скина.' },
+  { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное', badge: 'Крафт · Лавка · Капсулы', source: 'Лавка (9 999 монет), капсулы и крафт (3 000 скорлупы)', details: 'Базовое яйцо за монеты, капсулы и осколки (3 000 скорлупы). Содержит еду, лекарства, оформление, скин-жетон и чиллер.' },
+  { id: 56, slug: 'season', file: 'golden-egg.webp', name: 'Золотое загадочное', badge: 'Крафт · Лавка · Сезон', source: 'Крафт за 15 000 скорлупы · Лавка (500 ⭐) · Топ 11–100 сезона', details: 'Крафтится из 15 000 осколков скорлупы, продаётся в Лавке за 500 Stars или вручается за 11–100 места сезона. Содержит заточки кольца (1/20) и скина (1/200), скин-жетон (1/440), чиллер (1/160) и монтмориллонит.' },
+  { id: 19, slug: 'red', file: 'golden-egg-special.webp', name: 'Специальное золотое', badge: 'Топ 1–10 сезона', source: 'Эксклюзивная награда за места 1–10 в сезоне', details: 'Вручается автоматически по итогам сезона топ-10 игрокам (на красном фоне). Обладает удвоенными шансами на заточки (кольцо 1/10, скин 1/100, зажигалка 1/18) и содержит сразу два вида жетонов — обычный (1/88) и Эпический скин-жетон (1/440).' },
+  { id: 17, slug: 'referral', file: 'referral-egg.webp', name: 'Реферальное', badge: 'Приглашение друга', source: 'За вход в игру по ссылке друга (+5 000 монет)', details: 'Выдаётся новому игроку вместе с 5 000 монет при старте по пригласительной ссылке. Набор наград и шансов полностью идентичен базовому загадочному яйцу.' },
+  { id: 18, slug: 'green', file: '18.png', name: 'Бежевое', badge: 'Редкое (архив)', source: 'Способ получения не подтверждён', details: 'Из этого яйца выпадают оформление, жетон скина и другие награды. Еды в пуле нет.' },
+  { id: 20, slug: 'gold', file: '20.png', name: 'Белое', badge: 'Редкое (архив)', source: 'Способ получения не подтверждён', details: 'Пул похож на бежевое яйцо, но здесь выпадает золотой жетон скина.' },
 ] as const;
 
 const eggOffers = {
@@ -55,12 +55,12 @@ export function OwlPage() {
         <p className="caption">В игре открой осколки в инвентаре и выбери яйцо.</p>
         <Link className="mediaRow" to="/owl/mystery" state={{ returnTo: pathname }} aria-label="Загадочное яйцо, 3 000 осколков скорлупы">
           <GameArt path={itemPath('egg-stars.webp')} size={40}/>
-          <span><strong>Загадочное яйцо</strong></span>
+          <span className="eggRowText"><strong>Загадочное яйцо</strong><small>3 000 осколков скорлупы</small></span>
           <span className="rowEnd shardCost"><strong>3 000</strong><GameArt path={itemPath('eggshell-shards-icon.webp')} size={23}/><span className="rowChevron" aria-hidden="true"/></span>
         </Link>
         <Link className="mediaRow" to="/owl/season" state={{ returnTo: pathname }} aria-label="Золотое загадочное яйцо, 15 000 осколков скорлупы">
           <GameArt path={itemPath('golden-egg.webp')} size={40}/>
-          <span><strong>Золотое загадочное яйцо</strong><small>15 000 скорлупы · в Лавке за 500 ⭐ или за топ 11–100 сезона</small></span>
+          <span className="eggRowText"><strong>Золотое загадочное яйцо</strong><small>15 000 осколков скорлупы</small></span>
           <span className="rowEnd shardCost"><strong>15 000</strong><GameArt path={itemPath('eggshell-shards-icon.webp')} size={23}/><span className="rowChevron" aria-hidden="true"/></span>
         </Link>
       </section>
@@ -99,7 +99,7 @@ export function OwlPage() {
       <h3>Шанс за открытие</h3>
       <p className="caption">Шанс получить награду хотя бы раз. За открытие выпадает 1 предмет в 80% случаев, 2 — в 15%, 3 — в 5%.</p>
       <ul className="compactList lootList">
-        {drops.filter(([id]) => itemNames[id]).map(([id, chance]) => {
+        {drops.filter(([id]) => itemNames[id]).sort((a, b) => b[1] - a[1]).map(([id, chance]) => {
           const [name, file] = itemNames[id];
           const target = lootDestination(id, file);
           const row = (
@@ -144,9 +144,7 @@ export function OwlPage() {
 function EggLink({ egg, from }: { egg: typeof eggs[number]; from: string }) {
   return <Link to={'/owl/' + egg.slug} className="mediaRow" state={{ returnTo: from }}>
     <GameArt path={itemPath(egg.file)} size={38}/>
-    <span className="eggRowText"><strong>{egg.name} яйцо</strong><small>{egg.source}</small>
-      <EggShopPrices slug={egg.slug}/>
-    </span>
+    <span className="eggRowText"><strong>{egg.name} яйцо</strong><small className="eggBadgeSubtitle">{egg.badge}</small></span>
     <span className="rowChevron" aria-hidden="true"/>
   </Link>;
 }

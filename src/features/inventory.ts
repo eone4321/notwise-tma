@@ -49,7 +49,9 @@ const commonMysteryPool: Drop[] = [
   [51, 20.0, '1/5'],
 ];
 
-const redEggPool: Drop[] = [
+// ID 56: Золотое загадочное яйцо (крафт за 15 000 скорлупы, в Лавке за 500 ⭐, места 11–100 сезона)
+// Подтверждено игровыми скриншотами (11:58) и кодом бандла (56: Up(...))
+const goldenMysteryPool: Drop[] = [
   [15, 0.045, '1/2.2K'],
   [16, 0.045, '1/2.2K'],
   [14, 0.091, '1/1.1K'],
@@ -70,7 +72,10 @@ const redEggPool: Drop[] = [
   [51, 50.0, '1/2'],
 ];
 
-const seasonStarsPool: Drop[] = [
+// ID 19: Специальное золотое яйцо на красном фоне (топ 1–10 сезона)
+// Имеет удвоенные шансы дропа и сразу 2 вида жетонов (включая Эпический скин-жетон)
+// Подтверждено игровыми скриншотами (11:59) и кодом бандла (19: Up(...))
+const specialGoldenPool: Drop[] = [
   [15, 0.13, '1/772'],
   [16, 0.13, '1/772'],
   [14, 0.18, '1/556'],
@@ -97,8 +102,8 @@ const treasure: Drop[] = [...rareDecor.map(([id, weight, ratio]): Drop => [id, w
 
 export const eggPools: Record<number, Drop[]> = {
   17: commonMysteryPool,
-  19: redEggPool,
-  56: seasonStarsPool,
+  56: goldenMysteryPool,
+  19: specialGoldenPool,
   18: [[26, 8.2, '1/12'], ...treasure],
   20: [[27, 8.2, '1/12'], ...treasure],
 };
