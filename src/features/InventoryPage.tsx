@@ -174,48 +174,62 @@ const rings = shopItems.filter(offer => offer.category === 'ring').map(offer => 
 });
 
 const categories: Record<string, Category> = {
+  consumables: {
+    title: 'Расходники', icon: 'seba-cola.webp', summary: 'Лавка Wise Plaza · защита, пластилин, колбы и книги',
+    items: [
+      { name: 'Seba Cola', file: 'seba-cola.webp', effect: 'Защищает сову от рейдов и подбора в соперники на 24 часа. Если сова сама нападёт, защита спадёт.', source: 'Лавка Wise Plaza', price: { value: 1500, currency: 'coins' } },
+      { name: 'Зажигалка', file: 'lighter.webp', effect: 'Один заряд позволяет благословить сквад в ежедневном ритуале. Даёт командный бонус при 50% активности сквада.', source: 'Лавка Wise Plaza', price: { value: 2000, currency: 'coins' } },
+      { name: 'Большие чёрные часы', file: 'big-black-clock.webp', effect: 'Блокируют новый штраф за голод на 30 дней. Действующий штраф закончится по своему таймеру. Каждые часы добавляют ещё 30 дней защиты.', source: 'Лавка Wise Plaza', price: { value: 10000, currency: 'coins' } },
+      { name: 'Эпическая книга исследователей', file: 'book.webp', effect: 'Открывает ежедневную загадку на 60 секунд. Верный ответ даёт монеты, опыт и +5 мудрости на сутки. Три ошибки уничтожают книгу.', source: 'Лавка Wise Plaza', price: { value: 20000, currency: 'coins' } },
+      { name: 'Пластилин', file: 'morpher.webp', effect: 'Расходный материал для Морфера. Позволяет изменить внешность и свойства совы при помощи пластилина.', source: 'Лавка Wise Plaza', price: { value: 20000, currency: 'coins' } },
+      { name: 'Холодильник XP', file: 'chiller.webp', effect: 'Открытая дверца замораживает опыт: капсулы продолжают давать монеты и лут, но XP не начисляется.', source: 'Лавка Wise Plaza', price: { value: 100000, currency: 'coins' } },
+      { name: 'Пластилин (Stars)', file: 'morpher.webp', effect: 'Набор цветного пластилина для Морфера за Telegram Stars. Изменяет внешность и свойства совы.', source: 'Лавка Wise Plaza · Stars', price: { value: 100, currency: 'stars' } },
+      { name: 'Пустая колба SP', file: 'flask-empty.webp', effect: 'Заготовка для записи SP. Для заполнения нужно вдвое больше SP, чем вмещает колба. Сгорают все свободные SP совы.', source: 'Лавка Wise Plaza · Stars', price: { value: 500, currency: 'stars' } },
+      { name: 'Пустая дискета XP', file: 'floppy-empty.webp', effect: 'Заготовка для записи XP. Запись сбрасывает весь текущий опыт, SP и навыки, сова снова становится яйцом.', source: 'Лавка Wise Plaza · Stars', price: { value: 500, currency: 'stars' } },
+      { name: 'Таблетка восстановления', file: 'recovery-pill.webp', effect: 'Снимает штраф голода и полностью восстанавливает сытость (20). Можно использовать раз в 7 дней.', source: 'Лавка Wise Plaza · Stars', price: { value: 300, currency: 'stars' } },
+    ],
+  },
+  squad: {
+    title: 'Лавка сквада', icon: 'morpher.webp', summary: 'Морфер, заточки и зажигалка за серебро осад',
+    items: [
+      { name: 'Морфер', file: 'morpher.webp', effect: 'Предмет трансформации. Позволяет изменить внешность и свойства совы при помощи пластилина.', source: 'Лавка сквада · серебро осад', price: { value: 5000, currency: 'squad_silver' } },
+      { name: 'Заточка кольца', file: 'scroll-enchant-ring.webp', effect: 'Мистический свиток с поля осады. Улучшает кольцо: +1 к его атрибуту и +5% к бонусу дропа $NOT.', source: 'Лавка сквада · серебро осад', price: { value: 500, currency: 'squad_silver' } },
+      { name: 'Заточка скина', file: 'scroll-enchant-skin.webp', effect: 'Мистический свиток с поля осады. Улучшает скин, прибавляя 5% к бонусу дропа $NOT за ступень.', source: 'Лавка сквада · серебро осад', price: { value: 5000, currency: 'squad_silver' } },
+      { name: 'Зажигалка сквада', file: 'lighter.webp', effect: 'Один заряд позволяет благословить сквад в ежедневном ритуале за командное серебро.', source: 'Лавка сквада · серебро осад', price: { value: 1000, currency: 'squad_silver' } },
+      { name: 'Холодильник XP (Сквад)', file: 'chiller.webp', effect: 'Замораживает опыт совы при открытии капсул. Покупка за валюту осад.', source: 'Лавка сквада · серебро осад', price: { value: 25000, currency: 'squad_silver' } },
+      { name: 'Универсальная заточка', file: 'enchanter.webp', effect: 'Подходит для кольца и скина. За одну ступень даёт тот же бонус, что и соответствующий свиток.', source: 'Особая награда осад' },
+    ],
+  },
+  gear: {
+    title: 'Кольца и артефакты', icon: 'ring-wit-3.webp', summary: 'Кольца атрибутов и Монтмориллонит',
+    items: [
+      ...rings,
+      { name: 'Монтмориллонит', file: 'montmorillonite.webp', effect: 'С экипированным артефактом здоровье остаётся полным, а бонус к дропу $NOT растёт на 10%. Выпадает из загадочных яиц.',
+        source: 'Лавка · Кристалл маны (999 999 монет)', price: { value: 999999, currency: 'coins' } },
+    ],
+  },
   care: {
-    title: 'Еда и лекарства', icon: 'croissant.webp', summary: 'Сытость, здоровье и снятие штрафа',
+    title: 'Еда и лекарства', icon: 'croissant.webp', summary: 'Сытость, здоровье и любимая еда',
     items: [
       ...[5, 6, 7, 8].map(id => ({
         name: itemNames[id][0], file: itemNames[id][1], effect: 'Восстанавливает сытость. Любимая еда даёт двойную сытость.',
         source: 'Добыча из яиц. Часть еды есть в Лавке за монеты.',
       })),
       { name: 'Рогач', file: 'rogach.webp', effect: 'Съедобный жук. Повышает сытость совы.', source: 'Еда' },
-      { name: 'Seba Cola', file: 'seba-cola.webp', effect: 'Защищает сову от рейдов и подбора в соперники. Если сова сама нападёт, защита спадёт. Длительность указана в игре.', source: 'Защита от атак' },
-      { name: 'Большие чёрные часы', file: 'big-black-clock.webp', effect: 'Блокируют новый штраф за голод на 30 дней. Действующий штраф закончится по своему таймеру. Каждые часы добавляют ещё 30 дней защиты.', source: 'Защита от голода' },
-      { name: 'Груша', file: 'pear.webp', effect: 'Полностью восстанавливает сытость (20).', source: 'Еда' },
-      { name: 'Круассан', file: 'croissant.webp', effect: 'Восстанавливает сытость. Может быть любимой едой совы.', source: 'Обычная Лавка · монеты' },
-      { name: 'Пластырь', file: 'patch.webp', effect: 'Восстанавливает здоровье.', source: 'Лечение · яйцо' },
-      { name: 'Аптечка', file: 'first-aid-kit.webp', effect: 'Восстанавливает 50 здоровья.', source: 'Лечение · яйцо' },
-      { name: 'Таблетка восстановления', file: 'recovery-pill.webp', effect: 'Снимает штраф голода и полностью восстанавливает сытость. Можно использовать раз в 7 дней.', source: 'Расходник' },
-    ],
-  },
-  gear: {
-    title: 'Кольца и артефакты', icon: 'ring-wit-3.webp', summary: 'Атрибуты и бонус к $NOT',
-    items: [
-      ...rings,
-      { name: 'Эпическая книга исследователей', file: 'book.webp', effect: 'Открывает ежедневную загадку. На ответ 60 секунд. Верный ответ даёт монеты, опыт и +5 мудрости на сутки. Три ошибки уничтожают книгу.', source: 'Лавка или награда из яйца' },
-      { name: 'Монтмориллонит', file: 'montmorillonite.webp', effect: 'С экипированным артефактом здоровье остаётся полным, а бонус к дропу $NOT растёт на 10%. Выпадает из загадочных яиц.',
-        source: 'Лавка · Кристалл маны', offerId: 'mana-crystal' },
-      { name: 'Морфер', file: 'morpher.webp', offerId: 'squad-morpher', effect: 'Предмет трансформации. Позволяет изменить внешность и свойства совы при помощи пластилина.', source: 'Лавка сквада · серебро за осады' },
-      { name: 'Заточка кольца', file: 'scroll-enchant-ring.webp', offerId: 'squad-scroll-ring', effect: 'Мистический свиток с поля осады. Улучшает кольцо: +1 к его атрибуту и +5% к бонусу дропа $NOT.', source: 'Лавка сквада · серебро за осады' },
-      { name: 'Заточка скина', file: 'scroll-enchant-skin.webp', offerId: 'squad-scroll-skin', effect: 'Мистический свиток с поля осады. Улучшает скин, прибавляя 5% к бонусу дропа $NOT за ступень.', source: 'Лавка сквада · серебро за осады' },
-      { name: 'Универсальная заточка', file: 'enchanter.webp', effect: 'Подходит для кольца и скина. За одну ступень даёт тот же бонус, что и соответствующий свиток.', source: 'Источник и цена пока не подтверждены' },
+      { name: 'Груша', file: 'pear.webp', effect: 'Полностью восстанавливает сытость (20).', source: 'Лавка Wise Plaza · 400 монет', price: { value: 400, currency: 'coins' } },
+      { name: 'Круассан', file: 'croissant.webp', effect: 'Восстанавливает сытость. Может быть любимой едой совы.', source: 'Лавка Wise Plaza · 400 монет', price: { value: 400, currency: 'coins' } },
+      { name: 'Пластырь', file: 'patch.webp', effect: 'Восстанавливает здоровье.', source: 'Лавка Wise Plaza · 150 монет', price: { value: 150, currency: 'coins' } },
+      { name: 'Аптечка', file: 'first-aid-kit.webp', effect: 'Восстанавливает 50 здоровья.', source: 'Лавка Wise Plaza · 400 монет', price: { value: 400, currency: 'coins' } },
     ],
   },
   craft: {
-    title: 'Крафт и хранение XP', icon: 'eggshell-shards-icon.webp', summary: 'Скорлупа, дискеты опыта и колбы SP',
+    title: 'Крафт и хранение XP', icon: 'eggshell-shards-icon.webp', summary: 'Скорлупа, дискеты опыта, колбы SP и ваучеры',
     items: [
-      { name: 'Холодильник XP', file: 'chiller.webp', effect: 'Открытая дверца замораживает опыт: капсулы продолжают давать монеты и лут, но XP не начисляется.', source: 'Управление опытом' },
       { name: 'Осколки скорлупы', file: 'eggshell-shards-icon.webp', effect: 'Из осколков можно собрать яйца и другие награды. Загадочное яйцо стоит 3 000 осколков, сезонное загадочное — 15 000.', source: 'Яйца и капсулы · рецепты в инвентаре' },
-      { name: 'Пустая дискета XP', file: 'floppy-empty.webp', effect: 'Заготовка для записи XP. Размер дискеты выбираешь при записи.', source: 'Лавка · покупка за Stars' },
       ...floppySpecs.map(([id, contents, cost]) => ({
         name: 'Дискета ' + contents + ' XP', file: 'floppy-' + id + '.webp',
         effect: `Нужна пустая дискета и минимум ${cost} XP. Запись сбрасывает весь текущий опыт, SP и навыки, сова снова становится яйцом. При чтении дискета даёт ${contents} XP.`, source: 'Создаётся из пустой дискеты',
       })),
-      { name: 'Зажигалка сквада', file: 'lighter.webp', effect: 'Один заряд позволяет благословить сквад в ежедневном ритуале. Когда ритуалы выполнят 50% сквада, участники получают бонус на 24 часа.', source: 'Добыча из яиц' },
-      { name: 'Пустая колба SP', file: 'flask-empty.webp', effect: 'Для заполнения нужно вдвое больше SP, чем вмещает колба. Сгорают все свободные SP. Очки, вложенные в навыки, сохраняются.', source: 'Лавка · покупка за Stars' },
       { name: 'Колба на 100 000 SP', file: 'flask-half.webp', effect: 'Даёт 100 000 очков навыков при использовании. Для записи нужна пустая колба и минимум 200 000 SP.', source: 'Создаётся из пустой колбы' },
       { name: 'Колба на 1 000 000 SP', file: 'flask-full.webp', effect: 'Даёт 1 000 000 очков навыков при использовании. Для записи нужна пустая колба и минимум 2 000 000 SP.', source: 'Создаётся из пустой колбы' },
       ...([['10k', 10_000], ['100k', 100_000]] as const).map(([id, value]): CatalogItem => ({

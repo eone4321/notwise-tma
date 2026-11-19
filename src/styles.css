@@ -450,6 +450,15 @@ details > p { margin: 4px 0 8px; }
 .flightRules span { color: var(--muted); font-size: 13px; }
 .flightRules strong { text-align: end; font-size: 12px; font-weight: 600; color: var(--text); }
 .energyBadge { display: inline-flex; align-items: center; gap: 3px; }
+.spBadge { display: inline-flex; align-items: center; gap: 3px; color: #c4b5fd; font-weight: 700; vertical-align: middle; line-height: 1; }
+.spBadge .spValue { line-height: 1; }
+.flightItemsList { display: grid; gap: 8px; margin-top: 6px; margin-bottom: 12px; }
+.flightItemsList li { display: flex; flex-direction: column; gap: 4px; padding: 9px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.flightItemHead { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.flightItemHead strong { color: var(--text); font-weight: 700; }
+.flightItemsList p { margin: 0; font-size: 12px; line-height: 1.35; color: var(--muted); }
+.flightDebuffs li { border-left: 3px solid #ff7b72; }
+.emojiIcon { font-size: 16px; line-height: 1; }
 .guideLoading { display: grid; min-height: 100dvh; place-content: center; justify-items: center; gap: 12px; color: var(--muted); font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 .ringVariants { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
 .ringVariants > div { display: grid; gap: 4px; }
@@ -536,13 +545,13 @@ html { scrollbar-gutter: stable; }
 .inventoryRow h3 { font-size: 13px; line-height: 1.25; }
 .inventoryRow p { font-size: 12px; line-height: 1.35; margin: 3px 0 0; color: var(--muted); }
 .inventoryRow small, .inventoryRow .itemSource { font-size: 11.5px; color: #d6b473; margin-top: 3px; display: block; font-weight: 500; }
-.eggRowText small, .shopUse { color: #d6b473; }
+.eggRowText small, .shopUse, .skillRow small { color: #d6b473; }
 .priceBadge { display: inline-flex; align-items: center; justify-content: center; gap: 4px; color: var(--gold); font-size: 12px; font-weight: 700; white-space: nowrap; line-height: 1; }
 .priceBadge .priceVal { display: inline-flex; align-items: center; line-height: 1; }
-.priceBadge .priceIcon { display: inline-flex; align-items: center; justify-content: center; line-height: 1; flex: none; }
+.priceBadge .priceIcon { display: inline-flex; align-items: center; justify-content: center; line-height: 1; flex: none; transform: translateY(-1px); }
 .priceBadge .priceIcon .gameArt { display: inline-flex; align-items: center; justify-content: center; }
 .priceBadge .priceIcon img { display: block; }
-.priceBadge .starIcon { font-size: 12px; line-height: 1; display: inline-flex; align-items: center; }
+.priceBadge .starIcon { font-size: 12px; line-height: 1; display: inline-flex; align-items: center; transform: translateY(-1px); }
 .eggShopRow .priceBadge { margin-inline-start: auto; }
 .leanList .mediaRow { min-height: 50px; padding: 7px 0; gap: 9px; }
 .leanList .mediaRow small { display: block; }
@@ -867,6 +876,8 @@ body { font-weight: 500; -webkit-font-smoothing: antialiased; -moz-osx-font-smoo
 }
 [data-theme="graphite"] .skinGallery figure { background: var(--raised); }
 [data-theme="graphite"] .flightEnergyGrid > div { background: var(--raised); }
+[data-theme="graphite"] .flightItemsList li { background: var(--raised); }
+[data-theme="graphite"] .spBadge { color: #d8b4fe; }
 [data-theme="graphite"] .skinPartToggle[aria-pressed="true"] { border-color: var(--gold); background: #2c2518; }
 [data-theme="graphite"] .bonusBreakdown { background: var(--raised); }
 [data-theme="graphite"] :is(.textLink, .back, .marketAll, .inlineAction, .copyFeedback) {

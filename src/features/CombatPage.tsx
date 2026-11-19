@@ -8,6 +8,13 @@ import { skillCopy } from './skill-copy';
 import skillLevels from './skill-levels.json';
 import { battleLeagues } from './battle-leagues';
 
+export function SpBadge({ value }: { value?: number | string }) {
+  return <span className="spBadge">
+    {value !== undefined && <span className="spValue">{typeof value === 'number' ? value.toLocaleString('ru-RU') : value}</span>}
+    <GameSymbol name="sp" size={14}/>
+  </span>;
+}
+
 const branches = [
   ['wisdom', 'Мудрость', 'Критический удар и мана', 1],
   ['strength', 'Сила', 'Урон по противнику', 11],
@@ -17,7 +24,7 @@ const branches = [
 const modes = [
   ['swords', 'Рейтинговый бой', 'Рейтинг и капсулы', 'Атакуй зоны, которые соперник не блокирует, и переключай свой блок. Победа может дать капсулу при наличии слота.'],
   ['target', 'Рейд', 'С 1-го уровня', 'Нападай на сов из рейтинга. Проигравший отдаёт победителю 3% монет. После трёх проигранных рейдов сова защищена до возвращения игрока.'],
-  ['boxing', 'Додзе', 'Навыки со 2-го уровня', 'Обычный удар по манекену тратит 2 энергии и приносит SP. Навыки тоже можно тренировать на манекене. Трать SP на улучшения, а очки атрибута — на открытие навыков его ветки.'],
+  ['boxing', 'Додзе', 'Со 2-го ур. · 2 ⚡ за удар', 'Обычный удар по манекену тратит 2 энергии и приносит SP. Навыки тоже можно тренировать на манекене. Трать SP на улучшения, а очки атрибута — на открытие навыков его ветки.'],
   ['shield', 'Сквады и осады', 'Сквады с 3-го · война с 4-го', 'Раунд длится 8 часов. Территория приносит серебро сквада, монеты или +1–2 к атрибуту. Чтобы забрать награду своего сквада за раунд, участвуй в атаке. Усиление действует 24 часа после получения.'],
   ['rocket', 'Полёт', 'С 5-го уровня · от 250 энергии', 'Для полёта нужно не меньше 10 сытости. В полёте можно собрать монеты и получить немного опыта. Игра выдаёт 3 ракеты в день, дополнительные можно подобрать в полёте. Ракета умножает монеты, суши забирает 20%.'],
   ['bolt', 'Wild Magic', 'Тренировка заклинаний', 'Три максимальные оценки открывают достижение Spell Book.'],
@@ -51,7 +58,7 @@ export function CombatPage() {
       branch ? <>
         <h2 className="subTitle">{branch[1]}</h2>
         <section className="card">
-          <p className="caption">С уровня 2 открой дерево навыков. В характеристиках вложи свободное очко атрибута в эту ветку, затем изучи навык за полученное очко ветки. SP из Додзе нужны для улучшений.</p>
+          <p className="caption">С уровня 2 открой дерево навыков. В характеристиках вложи свободное очко атрибута в эту ветку, затем изучи навык за полученное очко ветки. Очки <SpBadge/> из Додзе нужны для улучшений.</p>
           {skills.filter(item => item.branch === branch[0]).sort((a, b) => a.tier - b.tier).map(item =>
             <Link to={'/combat/skills/' + branch[0] + '/' + item.id} className="mediaRow skillRow" key={item.id}>
               <GameArt path={skillArt(item.id)} size={42}/>
@@ -63,7 +70,8 @@ export function CombatPage() {
         {modes.map(([icon, title, when, description]) => <details className="mediaDetails" key={title}
           id={icon === 'rocket' ? 'flight' : undefined} open={icon === 'rocket' && hash === '#flight' || undefined}>
           <summary><GameSymbol name={icon}/><span><strong>{title}</strong>
-            <small>{icon === 'rocket' ? <span className="energyBadge">С 5-го уровня · от 250 <GameSymbol name="bolt" size={13}/></span> : when}</small></span>
+            <small>{icon === 'rocket' ? <span className="energyBadge">С 5-го уровня · от 250 <GameSymbol name="bolt" size={13}/></span> :
+              icon === 'boxing' ? <span className="energyBadge">Со 2-го уровня · 2 <GameSymbol name="bolt" size={13}/> / удар</span> : when}</small></span>
           </summary>
           {icon === 'rocket' ? <FlightDetails/> : <p>{description}</p>}
         </details>)}
@@ -89,7 +97,7 @@ export function CombatPage() {
             </Link>
           )}
         </div>
-        <section className="card"><h2>Как прокачивать</h2><p>Вложи очко в нужный атрибут и открой следующий навык ветки. Затем прокачивай его за SP. SP дают тренировки в Додзе и применение навыков в бою.</p></section>
+        <section className="card"><h2>Как прокачивать</h2><p>Вложи очко в нужный атрибут и открой следующий навык ветки. Затем прокачивай его за <SpBadge/>. Очки <SpBadge/> дают тренировки в Додзе и применение навыков в бою.</p></section>
       </>}
   </>;
 }
@@ -130,7 +138,7 @@ function SkillDetail({ skill }: { skill: Skill }) {
         <strong>{skill.type === 'active' ? 25 * skill.tier : type === 'reveal' ? 20 : 2 * skill.tier}</strong></li>
       {skill.type === 'active' && <li className="mediaRow"><span>Перезарядка</span><strong>{cooldown} с</strong></li>}
       <li className="mediaRow"><span>{level === 21 ? 'Прокачка' : `Улучшение до ${level + 1}-го уровня`}</span>
-        <strong>{level === 21 ? 'Максимум' : format.format(100 * 2 ** (level - 1)) + ' SP'}</strong></li>
+        <strong>{level === 21 ? 'Максимум' : <SpBadge value={format.format(100 * 2 ** (level - 1))}/>}</strong></li>
     </ul>
     {effect.endsWith(' HP') && <p className="caption">Показан базовый эффект без прибавки за выносливость.</p>}
   </section>;
@@ -146,8 +154,7 @@ const attributes = [
 function CombatStats() {
   const [level, setLevel] = useState(0);
   const [owlLevel, setOwlLevel] = useState(2);
-  const [legacy, setLegacy] = useState(false);
-  const curve = legacy ? progression.previous : progression.current;
+  const curve = progression.current;
   return <>
     <section className="card"><h2>Эффект одного очка атрибута</h2>
       {attributes.map(([icon, name, effect, detail]) => <details className="mediaDetails" key={name}>
@@ -156,34 +163,28 @@ function CombatStats() {
       </details>)}
     </section>
     <section className="card"><h2>Улучшения совы</h2>
-      <p>Перки — постоянные улучшения совы за SP (очки навыков). У каждого улучшения свой уровень.</p>
+      <p>Перки — постоянные улучшения совы за <SpBadge/> (очки навыков). У каждого улучшения свой уровень.</p>
       <ul className="compactList owlUpgrades">
-        <li><GameSymbol name="bolt" size={24}/><span>Запас энергии</span><b>+100 за уровень</b></li>
+        <li><GameSymbol name="bolt" size={24}/><span>Запас энергии</span><b>+100 <GameSymbol name="bolt" size={13}/> за ур.</b></li>
         <li><GameSymbol name="rocket" size={24}/><span>Восстановление энергии</span><b>+3% за уровень</b></li>
         <li><GameSymbol name="heart" size={24}/><span>Восстановление здоровья</span><b>+3% за уровень</b></li>
       </ul>
-      <details><summary>Стоимость улучшения</summary>
-        <label className="field">Текущий уровень улучшения
+      <details><summary>Стоимость прокачки перков совы</summary>
+        <p className="caption">Каждый из трёх перков выше (Запас энергии, Восстановление энергии и Восстановление здоровья) прокачивается отдельно от 0 до 21 уровня за <SpBadge/>. Стоимость удваивается с каждым следующим уровнем: 10, 20, 40, 80… <SpBadge/>.</p>
+        <label className="field">Текущий уровень перка
           <select value={level} onChange={event => setLevel(Number(event.target.value))}>
-            {Array.from({ length: 21 }, (_, i) => <option key={i} value={i}>{i}</option>)}
+            {Array.from({ length: 21 }, (_, i) => <option key={i} value={i}>{i} → {i + 1} ур.</option>)}
           </select>
         </label>
-        <p>Следующий уровень: <strong>{format.format(10 * 2 ** level)} SP</strong>. Максимум — 21.</p>
+        <p>Стоимость улучшения: <strong><SpBadge value={format.format(10 * 2 ** level)}/></strong></p>
       </details>
       <details><summary>Опыт для уровня совы</summary>
-        <label className="field">Версия прогрессии
-          <select value={legacy ? 'legacy' : 'current'} onChange={event => {
-            const previous = event.target.value === 'legacy';
-            setLegacy(previous);
-            setOwlLevel(value => Math.min(value, (previous ? progression.previous : progression.current).length - 1));
-          }}><option value="current">Текущая</option><option value="legacy">До 14 ноября 2026</option></select>
-        </label>
-        <label className="field">Целевой уровень
+        <label className="field">Целевой уровень совы
           <select value={owlLevel} onChange={event => setOwlLevel(Number(event.target.value))}>
             {curve.slice(1).map((_, index) => <option key={index} value={index + 1}>{index + 1}</option>)}
           </select>
         </label>
-        <p>Всего <strong>{format.format(curve[owlLevel])} XP</strong>, из них {format.format(curve[owlLevel] - curve[owlLevel - 1])} XP с предыдущего уровня.</p>
+        <p>Всего: <strong>{format.format(curve[owlLevel])} XP</strong> (из них {format.format(curve[owlLevel] - curve[owlLevel - 1])} XP с предыдущего уровня).</p>
       </details>
     </section>
   </>;
@@ -198,12 +199,39 @@ function FlightDetails() {
       <div><span>Уровни 15–19</span><strong>350 <GameSymbol name="bolt" size={15}/></strong></div>
       <div><span>Каждые +5 ур.</span><strong>+50 <GameSymbol name="bolt" size={15}/></strong></div>
     </div>
-    <h4>Правила и механика полёта</h4>
+
+    <h4>Баффы и предметы на трассе</h4>
+    <ul className="compactList flightItemsList">
+      <li>
+        <span className="flightItemHead"><GameSymbol name="rocket" size={20}/><strong>Ракета</strong></span>
+        <p>Полная неуязвимость к препятствиям, ускорение и умножение монет. Даётся 3 в день (+ сбор на трассе).</p>
+      </li>
+      <li>
+        <span className="flightItemHead"><GameSymbol name="magnet" size={20}/><strong>Магнит (10 сек)</strong></span>
+        <p>Автоматически притягивает все монеты со всех трёх дорожек в течение 10 секунд.</p>
+      </li>
+      <li>
+        <span className="flightItemHead"><span className="emojiIcon">🍣</span><strong>Суши (Механика риска)</strong></span>
+        <p>1-я и 2-я пойманная суши штрафуют на <strong>−20% монет</strong>! Ровно 3-я суши даёт <strong>+20% монет</strong> и открывает секретный стикер <strong>#042 Sushi Master</strong>.</p>
+      </li>
+    </ul>
+
+    <h4>Дебаффы и ловушки на трассе</h4>
+    <ul className="compactList flightItemsList flightDebuffs">
+      <li>
+        <span className="flightItemHead"><GameSymbol name="cocktail" size={20}/><strong>Коктейль · Реверс (10 сек)</strong></span>
+        <p>Инвертирует управление на 10 секунд (влево и вправо меняются местами) и искажает звук (замедление трека и эхо).</p>
+      </li>
+      <li>
+        <span className="flightItemHead"><GameSymbol name="magnifier" size={20}/><strong>Лупа · Зум камеры (10 сек)</strong></span>
+        <p>Приближает камеру в 1.5× раза на 10 секунд, срезая обзор — сосны и препятствия появляются прямо перед носом.</p>
+      </li>
+    </ul>
+
+    <h4>Основные правила</h4>
     <ul className="compactList flightRules">
-      <li><span>Минимум сытости</span><strong>10 сытости</strong></li>
-      <li><span>Награды в полёте</span><strong>Монеты и опыт (XP)</strong></li>
-      <li><span>Бесплатные ракеты</span><strong>3 в день (+ в полёте)</strong></li>
-      <li><span>Множители</span><strong>Ракета умножает · суши −20%</strong></li>
+      <li><span>Минимум сытости</span><strong>10 единиц</strong></li>
+      <li><span>Награды в полёте</span><strong>Монеты и опыт совы (XP)</strong></li>
     </ul>
   </div>;
 }
