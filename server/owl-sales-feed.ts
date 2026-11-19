@@ -1,6 +1,6 @@
-import collections from '../src/features/market-collections.json';
-import tokens from '../public/data/tokens.json';
-import { usdtAddress } from './ton-rates';
+import collections from '../src/features/market-collections.json' with { type: 'json' };
+import tokens from '../public/data/tokens.json' with { type: 'json' };
+import { usdtAddress } from './ton-rates.js';
 
 const collection = collections.find(item => item.id === 'genesis')!.address;
 const friendly = /^[A-Za-z0-9_-]{48}$/;

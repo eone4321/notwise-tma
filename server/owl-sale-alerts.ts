@@ -1,6 +1,6 @@
-import { redis } from './redis';
-import { getgemsHistory, getgemsItemLink, notAddress, salesFromTrace, tonTransfers, type OwlSale } from './owl-sales-feed';
-import { tonRates, usdtAddress } from './ton-rates';
+import { redis } from './redis.js';
+import { getgemsHistory, getgemsItemLink, notAddress, salesFromTrace, tonTransfers, type OwlSale } from './owl-sales-feed.js';
+import { tonRates, usdtAddress } from './ton-rates.js';
 
 const prefix = 'notwise:owl-sales:v1:';
 const subscribers = prefix + 'subscribers';
