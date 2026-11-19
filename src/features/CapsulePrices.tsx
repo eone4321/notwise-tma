@@ -21,7 +21,7 @@ export function CapsulePrices({ tier }: { tier: Tier }) {
   const saving = (stars - starsAt(remaining - step)) / starPrice[tier] * 100;
 
   return <details className="card mediaDetails guideDisclosure">
-    <summary><span className="gameGlyph" aria-hidden="true">{"\ue935"}</span>
+    <summary><GameArt path="/brand/tokens/gram.png" size={36}/>
       <span><strong>Цена открытия</strong><small>Stars и GRAM по остатку таймера</small></span>
     </summary>
     <div className="quoteInputs capsuleTimeInputs">

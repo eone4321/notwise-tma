@@ -32,15 +32,17 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
   const hours = duration[currentTier] / 3_600_000;
   const [level, setLevel] = useState('');
   const [skinMode, setSkinMode] = useState('none');
-  const [regular, setRegular] = useState('');
+  const [regularCount, setRegularCount] = useState(0);
   const [goldBody, setGoldBody] = useState(false);
   const [notChain, setNotChain] = useState(false);
   const [extra, setExtra] = useState('');
-  const availableParts = 5 - Number(goldBody) - Number(notChain);
+  const maxRegular = Math.max(0, 5 - Number(goldBody) - Number(notChain));
+  const effectiveRegular = Math.min(regularCount, maxRegular);
   const skinBonus = skinMode === 'custom'
-    ? Math.min(Number(regular), availableParts) * 5 + (goldBody ? 15 : 0) + (notChain ? 10 : 0)
+    ? effectiveRegular * 5 + (goldBody ? 15 : 0) + (notChain ? 10 : 0)
     : skinMode === 'example' ? skinExamples[0].bonus : 0;
-  const totalBonus = skinBonus + (skinMode === 'custom' ? Math.max(0, Number(extra.replace(',', '.')) || 0) : 0);
+  const extraVal = skinMode === 'custom' ? Math.max(0, Number(extra.replace(',', '.')) || 0) : 0;
+  const totalBonus = skinBonus + extraVal;
   const capsuleLevel = Math.min(xp.length - 1, Math.max(1, Number(level) || 1));
   return <>
     <nav className="choiceBar capsuleTabs" aria-label="Тип капсулы">
@@ -64,7 +66,7 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
       <div className="mediaRow"><GameArt path="/game/albums/1.webp" size={40}/><Link className="textLink" to="/collections">Набор стикеров</Link><strong>{stickerChances[index]}</strong></div>
     </section>
     <section className="card notDrop">
-      <div className="mediaHeading"><span className="gameGlyph" aria-hidden="true">{"\ue909"}</span><div>
+      <div className="mediaHeading"><GameArt path="/brand/tokens/not.webp" size={38}/><div>
         <h2>Шансы на Notcoin</h2><p>Учитывают бонус к дропу $NOT</p>
       </div></div>
       <div className="choiceBar" aria-label="Скин">
@@ -75,24 +77,66 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
         <GameArt path={`/game/skins/${skinExamples[0].id}.svg`} size={50}/><span>{skinExamples[0].features}</span>
       </div>}
       {skinMode === 'custom' && <div className="customSkin">
-        <label className="field">Обычные детали
-          <input inputMode="numeric" placeholder="0" maxLength={1} value={regular}
-            onChange={event => setRegular(event.target.value.replace(/[^0-5]/g, ''))}/>
-        </label>
-        <label><input type="checkbox" checked={goldBody} onChange={event => {
-          setGoldBody(event.target.checked);
-          if (Number(regular) > 5 - Number(notChain) - Number(event.target.checked)) setRegular('');
-        }}/> Золотое оперение · +15%</label>
-        <label><input type="checkbox" checked={notChain} onChange={event => {
-          setNotChain(event.target.checked);
-          if (Number(regular) > 5 - Number(goldBody) - Number(event.target.checked)) setRegular('');
-        }}/> Цепь NOT · +10%</label>
-        <label className="field">Бонус от заточки, артефакта и лиги, %
-          <input inputMode="decimal" placeholder="0" maxLength={7} value={extra}
-            onChange={event => { if (/^\d*(?:[,.]\d*)?$/.test(event.target.value)) setExtra(event.target.value); }}/>
-        </label>
+        <div className="customSkinBlock">
+          <div className="customSkinLabel">Обычные детали (+5% за каждую): <strong>{effectiveRegular} из {maxRegular}</strong></div>
+          <div className="customSkinPills" role="radiogroup" aria-label="Количество обычных деталей">
+            {Array.from({ length: maxRegular + 1 }, (_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-pressed={effectiveRegular === i}
+                onClick={() => setRegularCount(i)}
+              >
+                {i}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="skinTogglesGrid">
+          <button
+            type="button"
+            className="skinPartToggle"
+            aria-pressed={goldBody}
+            onClick={() => setGoldBody(v => !v)}
+          >
+            <span>⭐ Золотое тело</span>
+            <strong>+15%</strong>
+          </button>
+          <button
+            type="button"
+            className="skinPartToggle"
+            aria-pressed={notChain}
+            onClick={() => setNotChain(v => !v)}
+          >
+            <span>💎 Цепь NOT</span>
+            <strong>+10%</strong>
+          </button>
+        </div>
+
+        <div className="customSkinBlock">
+          <label className="field">Бонус от заточки, артефакта и лиги, %
+            <input
+              inputMode="decimal"
+              placeholder="0"
+              maxLength={7}
+              value={extra}
+              onChange={event => {
+                if (/^\d*(?:[,.]\d*)?$/.test(event.target.value)) setExtra(event.target.value);
+              }}
+            />
+          </label>
+          <div className="bonusQuickChips">
+            <button type="button" className="bonusQuickChip" onClick={() => setExtra(v => String((Number(v.replace(',', '.')) || 0) + 10))}>+10% Артефакт</button>
+            <button type="button" className="bonusQuickChip" onClick={() => setExtra(v => String((Number(v.replace(',', '.')) || 0) + 5))}>+5% Заточка</button>
+            {extraVal > 0 && <button type="button" className="bonusQuickChip resetChip" onClick={() => setExtra('')}>Сбросить</button>}
+          </div>
+        </div>
       </div>}
-      <p className="caption">Бонус к дропу в расчёте <strong>+{totalBonus.toLocaleString('ru-RU')}%</strong></p>
+      <div className="bonusBreakdown">
+        <span>Скин: +{skinBonus}%{extraVal > 0 ? ` · Доп.: +${extraVal}%` : ''}</span>
+        <strong>Итого к дропу: +{totalBonus.toLocaleString('ru-RU')}%</strong>
+      </div>
       <ul className="compactList oddsList">
         {notOdds(currentTier, totalBonus).map(row => <li className="mediaRow" key={row.amount}>
           <span>{row.amount.toLocaleString('ru-RU')} $NOT</span><strong>{chanceLabel(row.chance)}</strong>

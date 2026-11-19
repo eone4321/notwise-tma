@@ -12,10 +12,13 @@ const icons = {
 export function Price({ value, currency }: { value: number; currency: Currency }) {
   return <span className="priceBadge">
     <span className="sr-only">{labels[currency]}: </span>
-    {value.toLocaleString('ru-RU')}
-    {currency === 'stars' ? <span aria-hidden="true">⭐</span> :
-      <span className={currency === 'squad_silver' ? 'silverCoin' : undefined}>
+    <span className="priceVal">{value.toLocaleString('ru-RU')}</span>
+    {currency === 'stars' ? (
+      <span className="priceIcon starIcon" aria-hidden="true">⭐</span>
+    ) : (
+      <span className={`priceIcon ${currency === 'squad_silver' ? 'silverCoin' : ''}`}>
         <GameArt path={icons[currency]} size={16}/>
-      </span>}
+      </span>
+    )}
   </span>;
 }

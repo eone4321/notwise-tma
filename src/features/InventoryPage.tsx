@@ -278,7 +278,7 @@ function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {
   return <li className="inventoryRow" id={id}>
     <GameArt path={itemPath(item.file)} size={36}/>
     <div><h3>{item.name}</h3><p>{item.effect}</p>
-      <small>{item.source}{level ? ` · с ${level}-го уровня` : ''}</small>
+      <small className="itemSource">{item.source}{level ? ` · с ${level}-го уровня` : ''}</small>
     </div>
     {price && <Price value={price.value} currency={price.currency}/>}
   </li>;

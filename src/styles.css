@@ -533,11 +533,16 @@ html { scrollbar-gutter: stable; }
 .inventorySection[open] > summary { margin-bottom: 2px; }
 .inventorySection[open] { padding-bottom: 6px; }
 .inventoryRow { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; align-items: start; gap: 8px; padding: 7px 0; border-top: 1px solid var(--line); }
-.inventoryRow h3 { font-size: 13px; }
+.inventoryRow h3 { font-size: 13px; line-height: 1.25; }
 .inventoryRow p { font-size: 12px; line-height: 1.35; margin: 3px 0 0; color: var(--muted); }
-.inventoryRow small { font-size: 11px; color: var(--muted); }
-.priceBadge { display: inline-flex; align-items: center; gap: 4px; color: var(--gold); font-size: 12px; font-weight: 700; white-space: nowrap; }
-.inventoryRow .priceBadge { padding-top: 1px; }
+.inventoryRow small, .inventoryRow .itemSource { font-size: 11.5px; color: #d6b473; margin-top: 3px; display: block; font-weight: 500; }
+.eggRowText small, .shopUse { color: #d6b473; }
+.priceBadge { display: inline-flex; align-items: center; justify-content: center; gap: 4px; color: var(--gold); font-size: 12px; font-weight: 700; white-space: nowrap; line-height: 1; }
+.priceBadge .priceVal { display: inline-flex; align-items: center; line-height: 1; }
+.priceBadge .priceIcon { display: inline-flex; align-items: center; justify-content: center; line-height: 1; flex: none; }
+.priceBadge .priceIcon .gameArt { display: inline-flex; align-items: center; justify-content: center; }
+.priceBadge .priceIcon img { display: block; }
+.priceBadge .starIcon { font-size: 12px; line-height: 1; display: inline-flex; align-items: center; }
 .eggShopRow .priceBadge { margin-inline-start: auto; }
 .leanList .mediaRow { min-height: 50px; padding: 7px 0; gap: 9px; }
 .leanList .mediaRow small { display: block; }
@@ -701,10 +706,24 @@ html { scrollbar-gutter: stable; }
 .gameGlyph { display: grid; place-items: center; width: 36px; height: 36px; font: 26px/1 "Not Wise Frens"; flex: none; }
 .notDrop .choiceBar { margin-block: 10px; }
 .notDrop .choiceBar button { flex: 1 1 auto; padding-inline: 5px; font-size: 12px; }
-.customSkin { display: grid; gap: 3px 10px; grid-template-columns: repeat(2, minmax(0,1fr)); }
-.customSkin .field, .customSkin > :first-child { grid-column: 1 / -1; }
-.customSkin > label:not(.field) { display: flex; align-items: center; min-height: 44px; font-size: 12px; gap: 5px; }
-.customSkin input[type=checkbox] { accent-color: var(--lavender); }
+.customSkin { display: grid; gap: 9px; margin: 10px 0 6px; }
+.customSkinBlock { display: grid; gap: 6px; }
+.customSkinLabel { font-size: 12px; color: var(--muted); }
+.customSkinLabel strong { color: var(--text); }
+.customSkinPills { display: flex; gap: 6px; }
+.customSkinPills button { flex: 1; min-height: 38px; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; }
+.customSkinPills button[aria-pressed="true"] { background: var(--text); color: var(--background); border-color: var(--text); }
+.skinTogglesGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.skinPartToggle { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; min-height: 42px; background: var(--raised); border: 1px solid var(--line); border-radius: 10px; font-size: 12px; color: var(--text); cursor: pointer; text-align: left; transition: background 0.15s, border-color 0.15s; }
+.skinPartToggle strong { color: var(--gold); font-size: 12px; font-weight: 750; }
+.skinPartToggle[aria-pressed="true"] { border-color: var(--gold); background: #deb86a1f; }
+.bonusQuickChips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.bonusQuickChip { padding: 5px 9px; font-size: 11px; font-weight: 600; background: var(--raised); border: 1px solid var(--line); border-radius: 6px; color: var(--gold); cursor: pointer; }
+.bonusQuickChip.resetChip { color: var(--muted); }
+.bonusQuickChip:active { filter: brightness(1.2); }
+.bonusBreakdown { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; font-size: 12px; margin: 6px 0 10px; }
+.bonusBreakdown span { color: var(--muted); }
+.bonusBreakdown strong { color: var(--gold); font-size: 13px; font-weight: 750; white-space: nowrap; }
 .oddsList .mediaRow { min-height: 41px; }
 .inventorySection > summary small { display: block; font-size: 12px; }
 .inventoryRow { grid-template-columns: 36px minmax(0,1fr) auto; align-items: start; }
@@ -848,6 +867,8 @@ body { font-weight: 500; -webkit-font-smoothing: antialiased; -moz-osx-font-smoo
 }
 [data-theme="graphite"] .skinGallery figure { background: var(--raised); }
 [data-theme="graphite"] .flightEnergyGrid > div { background: var(--raised); }
+[data-theme="graphite"] .skinPartToggle[aria-pressed="true"] { border-color: var(--gold); background: #2c2518; }
+[data-theme="graphite"] .bonusBreakdown { background: var(--raised); }
 [data-theme="graphite"] :is(.textLink, .back, .marketAll, .inlineAction, .copyFeedback) {
   color: var(--gold);
 }
