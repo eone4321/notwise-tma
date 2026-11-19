@@ -25,7 +25,9 @@ production Vercel project and redeploy:
 - `BOT_TOKEN` for the Telegram bot that serves the Mini App.
 - `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` for a private Redis database.
 - `GUIDE_ADMIN_IDS` set to comma-separated Telegram numeric IDs allowed to view
-  the authenticated `/admin` screen.
+  the authenticated `/admin` screen. If unset, only the owner of the CryptoOne
+  Telegram channel can open it. The guide bot must be an administrator in that
+  channel for Telegram to verify ownership.
 
 The Main Mini App link defaults to `https://t.me/NotWiseGuideBot?startapp`. Set
 `VITE_GUIDE_TMA_URL` at build time if the bot uses a different direct Mini App URL.
@@ -37,6 +39,14 @@ Telegram avatars when provided.
 Game-side referrals and the old bot's records are separate data sources.
 The new visitor log starts when the endpoint is configured. Regular guide
 content remains available if the profile service is unavailable.
+
+Analytics is available under About → Open admin or directly at `/admin`
+inside Telegram. It counts verified Telegram users per UTC day and records a
+fixed set of section views and game, channel and sharing actions. The same
+user and event count once per 15 minutes. Redis keeps aggregate totals for
+31 days and temporary keyed hashes for deduplication. It stores no personal
+links or message content in analytics. Channel taps in this report measure
+outbound clicks. The Telegram invite link measures joins.
 
 ## Progress and Stars
 

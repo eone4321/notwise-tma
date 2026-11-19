@@ -12,7 +12,7 @@ export type GuideProfile = {
   isAdmin: boolean;
 };
 
-export const defaultGameLink = 'https://t.me/notwise_bot/thegame?startapp=a51c09d4110f4f18baac577a6eec011a';
+export { defaultGameLink } from '../domain/guide-links';
 const guideUrl = import.meta.env.VITE_GUIDE_TMA_URL || 'https://t.me/NotWiseGuideBot?startapp';
 
 export function guideShareUrl(referralCode?: string) {

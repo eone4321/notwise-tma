@@ -1,7 +1,9 @@
+import { trackGuide } from './guideAnalytics';
+import { channelInvite } from '../domain/guide-links';
 import { copyLink } from '../ui/copyLink';
 import { useEffect, useState, useRef, type FormEvent } from 'react';
 import { GameArt } from '../ui/GameArt';
-import { authData, guideShareUrl, profileRequest, shareGuide, type GuideProfile } from './guideProfile';
+import { authData, defaultGameLink, guideShareUrl, profileRequest, shareGuide, type GuideProfile } from './guideProfile';
 
 type Props = {
   profile: GuideProfile | null;
@@ -70,7 +72,9 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
   const [copyStatus, setCopyStatus] = useState('');
   async function copy() {
     setCopyStatus('Копируем…');
-    setCopyStatus(await copyLink(url, linkInput.current)
+    const copied = await copyLink(url, linkInput.current);
+    if (copied) trackGuide('action:share_copy');
+    setCopyStatus(copied
       ? 'Ссылка скопирована'
       : 'Ссылка выделена. Нажми «Копировать» в меню выделения.');
   }
@@ -97,11 +101,11 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
       </div></div>
       {profile?.gameLinkVerified && <><div className="actionPair">
         <button className="secondary" onClick={copy}>{copyStatus === 'Ссылка скопирована' ? '✓ Скопировано' : 'Копировать'}</button>
-        <button className="primary" onClick={() => shareGuide(url, 'Приглашаю в NOT Wise! Открой гайд и нажми «Открыть игру», чтобы вступить по моему приглашению.')}>Пригласить друга</button>
+        <button className="primary" onClick={() => { trackGuide('action:share_send'); shareGuide(url, 'Приглашаю в NOT Wise! Открой гайд и нажми «Открыть игру», чтобы вступить по моему приглашению.'); }}>Пригласить друга</button>
       </div>
       <p role="status" className="copyFeedback">{copyStatus}</p>
       <label className="field">Ссылка на гайд<input ref={linkInput} type="url" readOnly value={url} onFocus={event => event.currentTarget.select()}/></label></>}
-      <button type="button" className="secondary plainGuideShare" onClick={() => shareGuide(guideShareUrl())}>
+      <button type="button" className="secondary plainGuideShare" onClick={() => { trackGuide('action:share_send'); shareGuide(guideShareUrl()); }}>
         Поделиться гайдом без рефки
       </button>
       {!authData() && <p className="caption">Открой гайд в Telegram, чтобы получить персональную ссылку.</p>}
@@ -112,7 +116,7 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
         <h2>{profile.gameLinkVerified ? 'Твоя рефка Not Wise' : 'Привяжи рефку Not Wise'}</h2>
         <p>Открой «Друзья» в Not Wise, скопируй игровую ссылку и сохрани её здесь. После этого гайд соберёт персональное приглашение для отправки.</p>
         {!canEnterLink && <div className="actionPair referralGate">
-          <a className="secondary" href="https://t.me/cryptoeone">Подписаться на канал</a>
+          <a className="secondary" href={channelInvite} onClick={() => trackGuide('action:channel')}>Подписаться на канал</a>
           <button className="secondary" disabled={checking} onClick={checkSubscription}>
             {checking ? 'Проверяем…' : 'Проверить подписку'}
           </button>
@@ -123,7 +127,7 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
           <button className="secondary" disabled={saving || (input === null && (!profile.gameLink || profile.gameLinkVerified))}>{saving ? 'Сохраняем…' : 'Сохранить'}</button>
         </form>}
         {linkMessage && <p className="referralStatus" role="status">{linkMessage}</p>}
-        <a className="textLink" href="https://t.me/notwise_bot/thegame">Открыть Not Wise и взять рефку</a>
+        <a className="textLink" href={profile?.gameEntry ?? defaultGameLink} onClick={() => trackGuide('action:game')}>Открыть Not Wise и взять рефку</a>
       </section>
       <section className="card">
         <h2>Открыли гайд по ссылке · {profile.invitedCount}</h2>
@@ -147,7 +151,7 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
           </div></div>
           <p>Задания на 3, 5 и 10 друзей дают 3 000, 7 000 и 15 000 монет соответственно.</p>
         </div>
-        <a className="textLink" href="https://t.me/notwise_bot/thegame">Посмотреть друзей в игре</a>
+        <a className="textLink" href={profile?.gameEntry ?? defaultGameLink} onClick={() => trackGuide('action:game')}>Посмотреть друзей в игре</a>
       </details>
     </section>
     <p role="status" className="referralStatus">{message}</p>

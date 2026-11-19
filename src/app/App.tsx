@@ -1,3 +1,5 @@
+import { trackGuide, useGuideAnalytics } from '../features/guideAnalytics';
+import { channelInvite } from '../domain/guide-links';
 import { startMarketUpdates } from '../features/marketData';
 import { copyLink } from '../ui/copyLink';
 import { GuideProgress, ProgressStatus, useProgress } from '../features/GuideProgress';
@@ -34,6 +36,7 @@ type Item={id:number;name:string;description:string;short_descr:string;rarity:nu
 function App() {
   const loc = useLocation();
   const nav = useNavigate();
+  useGuideAnalytics(loc.pathname);
   const [hamster, setHamster] = useState(false);
   const [hamsterLocked, setHamsterLocked] = useState(false);
   const [coach, setCoach] = useState(() => localStorage.getItem('notwise.guide.dock.v1') !== '1');
@@ -73,7 +76,7 @@ useEffect(() => {
 }, [hamster, hamsterLocked]);useEffect(()=>{telegramPopup()?.ready();const key='notwise.guide.startapp.v1';if(sessionStorage.getItem(key))return;const start=new URLSearchParams(location.search).get('startapp')??telegramPopup()?.initDataUnsafe?.start_param;const routes:Record<string,string>={capsules_gold:'/capsules/gold',eggs:'/owl',secrets:'/secrets',market:'/collections/market'};if(start&&Object.hasOwn(routes,start)){sessionStorage.setItem(key,'1');nav(routes[start],{replace:true})}},[nav]);const ask=()=>{lightHaptic();const tg=telegramPopup();if(tg?.showPopup){try { tg.showPopup({title:'Секреты Not Wise',message:'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты',buttons:[{id:'pay',text:'Заплатить',type:'default'},{id:'back',text:'Назад',type:'default'}]},()=>reveal()); return; } catch { /* Older Telegram clients use the local dialog. */ }}setPopup(true)};function reveal(){setPopup(false);setJoke(true);setShowJoke(true);localStorage.setItem('notwise.guide.secrets.v1','1')}
 return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach}><Link to="/" className="brand"><img src="/brand/notwise.svg" alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main key={loc.pathname} inert={hamster || coach}>{loc.pathname === '/' ? <Home profile={profile} profileFailed={profileFailed} retryProfile={() => {
   setProfileFailed(false); setProfileAttempt(value => value + 1);
-}}/> : loc.pathname === '/admin' ? <AdminPage profile={profile}/> : <Page ask={ask} joke={joke} popup={popup} reveal={reveal}
+}}/> : loc.pathname === '/admin' ? <AdminPage profile={profile}/> : <Page profile={profile} ask={ask} joke={joke} popup={popup} reveal={reveal}
   referrals={<ReferralsPage profile={profile} failed={profileFailed} onSave={setProfile} onRetry={() => {
     setProfileFailed(false);
     setProfileAttempt(value => value + 1);
@@ -187,7 +190,7 @@ function Home({ profile, profileFailed, retryProfile }: {
     <div className="heroActions">
       {fromInvite && !profile ? <button className="primary" disabled={!profileFailed} onClick={retryProfile}>
         {profileFailed ? 'Повторить проверку' : 'Проверяем приглашение…'}
-      </button> : <a className="primary" href={profile?.gameEntry ?? defaultGameLink}>Открыть игру</a>}
+      </button> : <a className="primary" href={profile?.gameEntry ?? defaultGameLink} onClick={() => trackGuide('action:game')}>Открыть игру</a>}
       <a className="secondary" href="https://t.me/notgames_bot/squads?startapp=575801">
         <span className="squadMark" aria-hidden="true"/>Наш сквад
       </a>
@@ -204,7 +207,7 @@ function Home({ profile, profileFailed, retryProfile }: {
       <span className="tileText"><b>{name}</b><small>{description}</small></span>
     </Link>
   )}</div>
-  <div className="supportFooter"><a className="supportPill" href="https://t.me/cryptoeone"><img className="channelLogo" src="/brand/cryptoone-channel.jpg" alt="" width="24" height="24"/>Канал CryptoOne</a><Link className="supportPill" to="/support"><img src="/brand/cryptoone.svg" alt="" width="18" height="19"/>О проекте</Link></div>
+  <div className="supportFooter"><a className="supportPill" href={channelInvite} onClick={() => trackGuide('action:channel')}><img className="channelLogo" src="/brand/cryptoone-channel.jpg" alt="" width="24" height="24"/>Канал CryptoOne</a><Link className="supportPill" to="/support"><img src="/brand/cryptoone.svg" alt="" width="18" height="19"/>О проекте</Link></div>
   {profile?.isAdmin && <Link className="textLink" to="/admin">Управление гайдом</Link>}
  </>;
 }
@@ -216,12 +219,14 @@ function ShareDialog({ close }: { close: () => void }) {
   useModal(dialog, true);
   async function copy() {
     lightHaptic();
-    setFeedback(await copyLink(url, field.current)
-      ? 'Ссылка скопирована.'
+    const copied = await copyLink(url, field.current);
+    if (copied) trackGuide('action:share_copy');
+    setFeedback(copied ? 'Ссылка скопирована.'
       : 'Ссылка выделена. Выбери «Копировать» в меню выделения.');
   }
   function chooseRecipient() {
     lightHaptic();
+    trackGuide('action:share_send');
     shareGuide(url);
     close();
   }
@@ -241,7 +246,8 @@ function ShareDialog({ close }: { close: () => void }) {
   </dialog>;
 }
 function Card({children}:{children:React.ReactNode}){return <section className="card">{children}</section>}
-function Page({ ask, joke, popup, reveal, referrals }: {
+function Page({ profile, ask, joke, popup, reveal, referrals }: {
+  profile: GuideProfile | null;
   ask: () => void; joke: boolean; popup: boolean; reveal: () => void; referrals: React.ReactNode;
 }) {
   const { pathname } = useLocation();
@@ -254,13 +260,13 @@ function Page({ ask, joke, popup, reveal, referrals }: {
     {section?.[1] === '/capsules' && <CapsulePage/>}
     {section?.[1] === '/owl' && <OwlPage/>}
     {section?.[1] === '/collections' && <CollectionPage/>}
-    {section?.[1] === '/ecosystem' && <EcosystemPage/>}
+    {section?.[1] === '/ecosystem' && <EcosystemPage gameEntry={profile?.gameEntry ?? defaultGameLink}/>}
     {section?.[1] === '/combat' && <CombatPage/>}
-    {section?.[1] === '/squads' && <SquadPage/>}
+    {section?.[1] === '/squads' && <SquadPage gameEntry={profile?.gameEntry ?? defaultGameLink}/>}
     {section?.[1] === '/secrets' && <Secrets ask={ask} joke={joke} popup={popup} reveal={reveal}/>}
     {section?.[1] === '/assets' && <InventoryPage/>}
     {section?.[1] === '/referrals' && referrals}
-    {pathname === '/support' && <SupportPage/>}
+    {pathname === '/support' && <SupportPage isAdmin={profile?.isAdmin === true}/>}
   </>;
 }
 function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean; popup: boolean; reveal: () => void }) {

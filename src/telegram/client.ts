@@ -15,9 +15,22 @@ function applySafeArea() {
   }
 }
 
+export function syncTelegramTheme() {
+  const graphite = document.documentElement.dataset.theme !== 'glass';
+  const background = graphite ? '#111112' : '#080d1b';
+  const dock = graphite ? '#181819' : '#131314';
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', background);
+  const tg = window.Telegram?.WebApp;
+  // Older Telegram clients only accept their own theme colors.
+  try { tg?.setHeaderColor?.(background); } catch {}
+  try { tg?.setBackgroundColor?.(background); } catch {}
+  try { tg?.setBottomBarColor?.(dock); } catch {}
+}
+
 export async function bootTelegram() {
   if (booted) return;
   booted = true;
+  syncTelegramTheme();
 
   // 1. Native Telegram WebApp SDK (direct expand + fullscreen + safe area tracking + disable pull-to-close)
   const tg = window.Telegram?.WebApp;

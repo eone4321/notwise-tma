@@ -1,26 +1,37 @@
 import { Link } from 'react-router';
 import { artSrc } from '../ui/warmArt';
+import { GameArt } from '../ui/GameArt';
 
 export const skinExamples = [
-  { id: 5565, rarity: 'Эпический', features: 'Вишнёвое оперение, авиаторы, боло и повязка', bonus: 20 },
+  { id: 701, rarity: 'Эпический', features: 'Тёмное оперение, цепь NOT, голубые глаза, авиаторы и праздничный колпак', bonus: 30 },
+  { id: 5405, rarity: 'Золотой', features: 'Золотое оперение, цепь NOT, светло-зелёные глаза и авиаторы', bonus: 35 },
   { id: 6568, rarity: 'Золотой', features: 'Золотое оперение, бабочка и скорлупа', bonus: 25 },
+  { id: 5565, rarity: 'Эпический', features: 'Вишнёвое оперение, авиаторы, боло и повязка', bonus: 20 },
 ] as const;
 
 export function SkinExamples() {
-  return <section className="skinGuide">
-    <h2>Как выглядит скин и зачем он нужен</h2>
-    <p>Экипируй скин, чтобы повысить шанс выпадения $NOT из капсул. Сам жетон бонуса не даёт.</p>
-    <div className="skinGallery">{skinExamples.map(skin => <figure key={skin.id}>
-      <img src={artSrc(`/game/skins/${skin.id}.svg`)} width="512" height="512" alt={skin.features}/>
-      <figcaption><strong>{skin.rarity} №{skin.id}</strong><b>Бонус к дропу +{skin.bonus}%</b><small>{skin.features}</small></figcaption>
-    </figure>)}</div>
-    <dl className="skinRules">
-      <div><dt>Обычный</dt><dd>Одно оперение.</dd></div>
-      <div><dt>Редкий</dt><dd>Оперение и один аксессуар.</dd></div>
-      <div><dt>Эпический</dt><dd>Оперение и два или больше аксессуаров.</dd></div>
-      <div><dt>Золотой</dt><dd>Золотое оперение независимо от числа аксессуаров.</dd></div>
-    </dl>
-    <Link to="/owl/loot" className="textLink">В каких яйцах выпадают жетоны</Link>
-    <p>К бонусу дропа прибавляется 5% за обычную деталь, 15% за золотое оперение и 10% за цепь NOT. Каждый уровень заточки добавляет к бонусу ещё 5%.</p>
-  </section>;
+  return <>
+    <section className="card skinGuide">
+      <h2>Скины совы</h2>
+      <p>Бонус фарма с экипированного скина повышает шанс на $NOT из капсул. Посмотри, сколько дают детали и заточка.</p>
+      <div className="skinGallery">{skinExamples.map(skin => <figure key={skin.id}>
+        <div className="skinPreview">
+          <img src={artSrc(`/game/skins/${skin.id}.svg`)} width="512" height="512" alt=""/>
+          <b>+{skin.bonus}% к фарму</b>
+        </div>
+        <figcaption><strong>{skin.rarity} · №{skin.id}</strong><small>{skin.features}</small></figcaption>
+      </figure>)}</div>
+    </section>
+    <section className="card">
+      <h2>Из чего складывается бонус</h2>
+      <dl className="analyticsRows skinBonuses">
+        <div><dt>Обычное оперение или аксессуар</dt><dd>+5%</dd></div>
+        <div><dt>Золотое оперение</dt><dd>+15%</dd></div>
+        <div><dt>Цепь NOT</dt><dd>+10%</dd></div>
+        <div><dt><GameArt path="/game/items/scroll-enchant-skin.webp" size={26}/> За уровень заточки</dt><dd>+5%</dd></div>
+      </dl>
+      <p>Золотое оперение, цепь NOT и один обычный аксессуар дают +30%. С заточкой +1 получится +35%. У скина №5405 заточка +1 поднимает бонус с +35% до +40%. Без заточки +40% дают золотое оперение, цепь NOT, глаза, очки и головной убор.</p>
+      <Link to="/assets/gear" className="textLink">Как заточить скин</Link>
+    </section>
+  </>;
 }

@@ -1,5 +1,6 @@
 import { telegramUser } from '../../server/telegram-auth';
 import { redis } from '../../server/redis';
+import { readGuideAnalytics, recordGuideEvent } from '../../server/guide-analytics';
 import { guideProgress } from '../../server/guide-progress';
 
 export const config = { runtime: 'edge' };
@@ -21,7 +22,7 @@ function gameLink(input: unknown) {
   }
 }
 
-async function channelMember(id: string, token: string) {
+async function channelStatus(id: string, token: string) {
   const response = await fetch(`https://api.telegram.org/bot${token}/getChatMember`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -30,8 +31,18 @@ async function channelMember(id: string, token: string) {
   });
   const data = await response.json();
   if (!response.ok || !data.ok || !data.result?.status) throw new Error('Channel check unavailable');
-  const { status, is_member: isMember } = data.result;
+  return data.result;
+}
+
+async function channelMember(id: string, token: string) {
+  const { status, is_member: isMember } = await channelStatus(id, token);
   return ['creator', 'administrator', 'member'].includes(status) || (status === 'restricted' && isMember === true);
+}
+
+async function guideAdmin(id: string, token: string) {
+  const ids = (process.env.GUIDE_ADMIN_IDS ?? '').split(',').map(value => value.trim()).filter(Boolean);
+  if (ids.length) return ids.includes(id);
+  return (await channelStatus(id, token)).status === 'creator';
 }
 
 // Account creation, first-touch attribution and indexes update atomically.
@@ -107,13 +118,20 @@ export default async function handler(request: Request) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return json({ error: 'invalid_request' }, 400);
 
   const { id, name, avatar, start } = user;
-  const isAdmin = (process.env.GUIDE_ADMIN_IDS ?? '').split(',').some(value => value.trim() === id);
   const action = input.action ?? 'profile';
   const offset = input.offset ?? 0;
   if (!Number.isSafeInteger(offset) || offset < 0 || offset > 1_000_000) return json({ error: 'invalid_request' }, 400);
-  if (action === 'admin' && !isAdmin) return json({ error: 'forbidden' }, 403);
 
   try {
+    if (action === 'track') {
+      return await recordGuideEvent(id, token, input.event)
+        ? new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } })
+        : json({ error: 'invalid_request' }, 400);
+    }
+    if (action === 'admin' || action === 'analytics') {
+      if (!await guideAdmin(id, token)) return json({ error: 'forbidden' }, 403);
+      return json(action === 'admin' ? await members(membersKey, offset) : await readGuideAnalytics());
+    }
     if (action === 'progress' || action === 'mark') {
       const progress = await guideProgress(redis, namespace, id, input);
       if (progress === null) return json({ error: 'invalid_request' }, 400);
@@ -124,7 +142,6 @@ export default async function handler(request: Request) {
       const subscribed = await channelMember(id, token).catch(() => null);
       return subscribed === null ? json({ error: 'subscription_unavailable' }, 503) : json({ subscribed });
     }
-    if (action === 'admin') return json(await members(membersKey, offset));
     if (action === 'invited') {
       const { items, total } = await members(invitedPrefix + id, offset);
       return json({ items: items.map(({ name, avatar, joinedAt }) => ({ name, avatar, joinedAt })), total });
@@ -139,6 +156,7 @@ export default async function handler(request: Request) {
     }
     const inviterCode = /^g_[a-f0-9]{32}$/.test(start) ? start : '';
     const referralCode = 'g_' + crypto.randomUUID().replaceAll('-', '');
+    const admin = guideAdmin(id, token).catch(() => false);
     const raw = await redis<string>([
       'EVAL', updateAccount, 3, accountsKey, membersKey, namespace + 'codes',
       id, name, Date.now(), inviterCode, referralCode, invitedPrefix, action, link ?? '', avatar,
@@ -157,7 +175,7 @@ export default async function handler(request: Request) {
       invited: items.map(({ name, avatar, joinedAt }) => ({ name, avatar, joinedAt })),
       invitedCount: total,
       referralCode: account.referralCode,
-      isAdmin,
+      isAdmin: await admin,
     });
   } catch {
     return json({ error: 'unavailable' }, 503);

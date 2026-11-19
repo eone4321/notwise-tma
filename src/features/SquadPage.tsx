@@ -1,3 +1,4 @@
+import { trackGuide } from './guideAnalytics';
 import { SquadMap } from './SquadMap';
 import { Price } from './Price';
 import squadShop from './squad-shop.json';
@@ -14,7 +15,7 @@ const squadItemUse: Record<string, string> = {
   'chiller': 'Заморозить начисление XP',
 };
 
-export function SquadPage() {
+export function SquadPage({ gameEntry }: { gameEntry: string }) {
   const { pathname } = useLocation();
   if (pathname === '/squads/war') return <><SquadMap/><section className="card squadIntro">
     <h2>Как участвовать в осаде</h2>
@@ -34,7 +35,7 @@ export function SquadPage() {
       <GameArt path={`/game/items/${item.id}.webp`} size={38}/>
       <span><b>{item.name_ru}</b><small className="shopUse">{squadItemUse[item.id]}</small></span><strong><Price value={item.price} currency="squad_silver"/></strong>
     </li>)}</ul>
-    <a className="textLink" href="https://t.me/notwise_bot/thegame">Посмотреть магазин в игре</a>
+    <a className="textLink" href={gameEntry} onClick={() => trackGuide('action:game')}>Посмотреть магазин в игре</a>
   </section>;
   return <>
     <nav className="choiceBar squadNav" aria-label="Сквады">

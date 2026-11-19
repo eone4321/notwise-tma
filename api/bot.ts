@@ -1,3 +1,4 @@
+import { channelInvite } from '../src/domain/guide-links';
 import { setOwlSaleSubscription } from '../server/owl-sale-alerts';
 import { answerCheckout, recordPayment, validWebhook } from '../server/donations';
 
@@ -67,7 +68,7 @@ export default async function handler(req: Request) {
       if (text === '/paysupport' || text === '/paysupport@NotWiseGuideBot') {
         await callTelegram('sendMessage', {
           chat_id: chatId,
-          text: 'По вопросам платежей напиши в CryptoOne: https://t.me/cryptoeone. Укажи время платежа и сумму в Stars.',
+          text: `По вопросам платежей напиши в CryptoOne: ${channelInvite}. Укажи время платежа и сумму в Stars.`,
         });
       }
       if (text.startsWith('/start')) {

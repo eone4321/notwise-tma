@@ -12,9 +12,9 @@ import skinParts from './skin-parts.json';
 const eggs = [
   { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное', source: 'Из капсул или в Лавке', details: 'Лавка продаёт его за монеты или Stars. Из капсулы можно получить такое же яйцо. В пуле есть еда, лекарства, оформление и жетон скина.' },
   { id: 19, slug: 'red', file: 'golden-egg-special.webp', name: 'Золотое загадочное', source: 'За места 1–10 в сезоне', details: 'Вручается автоматически по итогам сезона. Может дать два вида жетонов скина.' },
-  { id: 56, slug: 'season', file: 'golden-egg.webp', name: 'Сезонное загадочное', source: 'За места 11–100 в сезоне', details: 'В сезонном топе награда приходит автоматически. В Лавке этот пул привязан к золотому яйцу за Stars.' },
+  { id: 56, slug: 'season', file: 'golden-egg.webp', name: 'Сезонное загадочное', source: 'За места 11–100 или за скорлупу', details: 'Дают за 11–100-е места по итогам сезона. Можно собрать за 15 000 осколков скорлупы или купить в Лавке за Stars.' },
   { id: 18, slug: 'green', file: '18.png', name: 'Бежевое', source: 'Способ получения не подтверждён', details: 'Из этого яйца выпадают оформление, жетон скина и другие награды. Еды в пуле нет.' },
-  { id: 20, slug: 'gold', file: '20.png', name: 'Белое', source: 'Способ получения не подтверждён', details: 'Пул похож на бежевое яйцо, но жетон даёт другой след.' },
+  { id: 20, slug: 'gold', file: '20.png', name: 'Белое', source: 'Способ получения не подтверждён', details: 'Пул похож на бежевое яйцо, но здесь выпадает золотой жетон скина.' },
 ] as const;
 
 const eggOffers = {
@@ -38,15 +38,29 @@ export function OwlPage() {
   const isEggIndex = ['/owl', '/owl/shop', '/owl/loot'].includes(pathname);
   return <>
     <nav className="choiceBar owlTabs" aria-label="Яйца и скины">
-      <Link to="/owl" aria-current={isEggIndex || egg ? 'page' : undefined}>Яйца</Link>
-      <Link to="/owl/skins" aria-current={pathname === '/owl/skins' ? 'page' : undefined}>Скины и жетоны</Link>
-      <Link to="/owl/care" aria-current={care ? 'page' : undefined}>Кормление</Link>
+      <Link to="/owl" replace aria-current={isEggIndex || egg ? 'page' : undefined}>Яйца</Link>
+      <Link to="/owl/skins" replace aria-current={pathname === '/owl/skins' ? 'page' : undefined}>Скины и жетоны</Link>
+      <Link to="/owl/care" replace aria-current={care ? 'page' : undefined}>Кормление</Link>
     </nav>
     {isEggIndex && <>
       <section className="card leanList eggSources">
-        <h2>Яйца в игре</h2>
+        <h2>Лавка, капсулы и награды сезона</h2>
         <p className="caption">Открой карточку яйца, чтобы увидеть награды и шансы.</p>
         {eggs.slice(0, 3).map(item => <EggLink key={item.id} egg={item} from={pathname}/>)}
+      </section>
+      <section className="card leanList eggSources" id="shards">
+        <h2>Крафт за скорлупу</h2>
+        <p className="caption">В игре открой осколки в инвентаре и выбери яйцо.</p>
+        <div className="mediaRow">
+          <GameArt path={itemPath('egg-stars.webp')} size={40}/>
+          <span><strong>Белое яйцо</strong><small>На красном фоне</small></span>
+          <span className="rowEnd shardCost" aria-label="3 000 осколков скорлупы"><strong>3 000</strong><GameArt path={itemPath('eggshell-shards-icon.webp')} size={23}/></span>
+        </div>
+        <Link className="mediaRow" to="/owl/season" state={{ returnTo: pathname }} aria-label="Сезонное загадочное яйцо, 15 000 осколков скорлупы">
+          <GameArt path={itemPath('golden-egg.webp')} size={40}/>
+          <span><strong>Сезонное загадочное</strong><small>Золотое на зелёном фоне</small></span>
+          <span className="rowEnd shardCost"><strong>15 000</strong><GameArt path={itemPath('eggshell-shards-icon.webp')} size={23}/><span className="rowChevron" aria-hidden="true"/></span>
+        </Link>
       </section>
       <section className="card leanList eggSources">
         <h2>За приглашение</h2>
@@ -193,7 +207,7 @@ const categories: Record<string, Category> = {
     title: 'Крафт и хранение XP', icon: 'eggshell-shards-icon.webp', summary: 'Скорлупа, дискеты опыта и колбы SP',
     items: [
       { name: 'Холодильник XP', file: 'chiller.webp', effect: 'Открытая дверца замораживает опыт: капсулы продолжают давать монеты и лут, но XP не начисляется.', source: 'Управление опытом' },
-      { name: 'Осколки скорлупы', file: 'eggshell-shards-icon.webp', effect: 'Из осколков можно собрать яйца и другие награды. Цена в осколках зависит от рецепта.', source: 'Яйца и капсулы · рецепты в инвентаре' },
+      { name: 'Осколки скорлупы', file: 'eggshell-shards-icon.webp', effect: 'Из осколков можно собрать яйца и другие награды. Белое яйцо на красном фоне стоит 3 000 осколков, сезонное загадочное — 15 000.', source: 'Яйца и капсулы · рецепты в инвентаре' },
       { name: 'Пустая дискета XP', file: 'floppy-empty.webp', effect: 'Заготовка для записи XP. Размер дискеты выбираешь при записи.', source: 'Лавка · покупка за Stars' },
       ...floppySpecs.map(([id, contents, cost]) => ({
         name: 'Дискета ' + contents + ' XP', file: 'floppy-' + id + '.webp',
@@ -222,14 +236,10 @@ const categories: Record<string, Category> = {
   },
 };
 
-const jettons: CatalogItem[] = [
-  { name: 'Обычный жетон', file: 'skin-jetton.webp', effect: 'Случайное оперение.', source: 'Жетон скина' },
-  { name: 'Эпический жетон', file: 'skin-jetton-epic.webp', effect: 'Оперение и несколько случайных аксессуаров.', source: 'Жетон скина' },
-  { name: 'Золотой жетон', file: 'skin-jetton-golden.webp', effect: 'Эпический скин с золотым оперением.', source: 'Жетон скина' },
-  ...[25, 26, 27].map(id => {
-    const [name, file] = itemNames[id];
-    return { name, file, effect: 'Добавляет сове особый след в полёте.', source: 'Жетон скина · яйцо' };
-  }),
+const jettons: (CatalogItem & { id: number })[] = [
+  { id: 25, name: 'Обычный жетон', file: 'skin-jetton.webp', effect: 'Даёт случайный обычный скин с новым оперением.', source: 'Из яиц' },
+  { id: 26, name: 'Эпический жетон', file: 'skin-jetton-epic.webp', effect: 'Даёт случайный эпический скин с оперением и несколькими аксессуарами.', source: 'Из яиц' },
+  { id: 27, name: 'Золотой жетон', file: 'skin-jetton-golden.webp', effect: 'Даёт случайный эпический скин с золотым оперением. Цепь NOT зависит от выпавших деталей.', source: 'Из яиц' },
 ];
 
 function lootDestination(id: number, file: string) {
@@ -239,18 +249,21 @@ function lootDestination(id: number, file: string) {
 }
 
 function SkinCatalog() {
-  return <section className="card">
+  return <>
     <SkinExamples/>
-    <h2>Жетоны</h2>
+    <section className="card">
+    <h2>Жетоны скинов</h2>
+    <p className="caption">Переверни жетон в инвентаре, чтобы получить скин. После этого его можно надеть на сову.</p>
     <ul className="compactList">{jettons.map(item =>
-      <InventoryRow item={item} key={item.file} id={/^\d/.test(item.file) ? 'jetton-' + item.file.split('.')[0] : undefined}/>)}</ul>
-    <details className="plainDisclosure"><summary>Все детали скинов</summary>
+      <InventoryRow item={item} key={item.file} id={'jetton-' + item.id}/>)}</ul>
+    </section>
+    <details className="card plainDisclosure"><summary>Все детали скинов</summary>
       {([
         ['body', 'Оперение'], ['hat', 'Головные уборы'], ['glasses', 'Очки'],
         ['chest', 'Украшения на груди'], ['eyes', 'Глаза'],
       ] as const).map(([slot, label]) => <p key={slot}><strong>{label} · </strong>{skinParts[slot].join(', ')}</p>)}
     </details>
-  </section>;
+  </>;
 }
 
 function InventoryRow({ item, id }: { item: CatalogItem; id?: string }) {

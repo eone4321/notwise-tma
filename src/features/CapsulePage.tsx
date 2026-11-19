@@ -72,7 +72,7 @@ function CapsuleDetail({ tier: currentTier }: { tier: typeof tiers[number] }) {
           <button key={value} aria-pressed={skinMode === value} onClick={() => setSkinMode(value)}>{label}</button>)}
       </div>
       {skinMode === 'example' && <div className="mediaRow notSkinExample">
-        <GameArt path="/game/skins/5565.svg" size={50}/><span>{skinExamples[0].features}</span>
+        <GameArt path={`/game/skins/${skinExamples[0].id}.svg`} size={50}/><span>{skinExamples[0].features}</span>
       </div>}
       {skinMode === 'custom' && <div className="customSkin">
         <label className="field">Обычные детали

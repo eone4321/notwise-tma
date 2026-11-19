@@ -49,7 +49,7 @@ function QuoteList({ quotes, fromHome }: { quotes: ReturnType<typeof useQuotes>;
         const price = usable.find(row => row.symbol === symbol)?.displayPrice ?? '—';
         const cap = tokenCapitalization(rows.find(row => row.symbol === symbol));
         return <li key={symbol}>
-          <Link className="tokenRateLink" to={`/ecosystem#token-${symbol}`} state={fromHome ? { returnTo: '/' } : undefined}
+          <Link className="tokenRateLink" to={`/ecosystem/tokens#token-${symbol}`} state={{ returnTo: fromHome ? '/' : '/ecosystem/quotes' }}
             aria-label={`${symbol}, ${price}. ${cap.label} ${cap.value}. Открыть токен`}>
             <img src={artSrc(tokenIcon(symbol))} alt="" width="30" height="30"/>
             <span className="tokenRateName"><b>{symbol}</b><small>{name}</small></span>

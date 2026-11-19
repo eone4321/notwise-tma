@@ -1,3 +1,7 @@
+import { trackGuide } from './guideAnalytics';
+import { Link } from 'react-router';
+import { Appearance } from './Appearance';
+import { channelInvite } from '../domain/guide-links';
 import { artSrc } from '../ui/warmArt';
 import { useRef, useState } from 'react';
 import { openTelegramInvoice, telegramPopup } from '../telegram/client';
@@ -16,7 +20,7 @@ async function paymentConfirmed(id: string, initData: string) {
   return result.state === 'paid';
 }
 
-export function SupportPage() {
+export function SupportPage({ isAdmin }: { isAdmin: boolean }) {
   const [amount, setAmount] = useState(5);
   const [message, setMessage] = useState('');
   const [order, setOrder] = useState('');
@@ -111,7 +115,7 @@ export function SupportPage() {
         <h2>NOT Wise Guide</h2></div>
       <p>Мы собрали интерактивную базу знаний и аналитику по NOT Wise: The GAME на TON.</p>
       <p>Здесь можно разобраться в прокачке и уходе за совой, подобрать боевой билд и узнать, что выпадает из капсул и яиц. Цены Getgems и котировки токенов обновляются автоматически.</p>
-      <a className="textLink aboutSignature" href="https://t.me/cryptoeone">
+      <a className="textLink aboutSignature" href={channelInvite} onClick={() => trackGuide('action:channel')}>
         <img src={artSrc('/brand/cryptoone.svg')} width="18" height="19" alt=""/>CryptoOne | MEDIA &amp; PRO ХОМЯКИ
       </a>
     </section>
@@ -144,5 +148,11 @@ export function SupportPage() {
       <p>Владелец NFT получает доступ в закрытый чат сообщества участников рынка. CryptoOne объединяет их с 2022 года.</p>
       <a className="secondary" href="https://getgems.io/prohamsters" target="_blank" rel="noreferrer">Открыть на Getgems</a>
     </section>
+    <section className="card">
+      <h2>Статистика гайда</h2>
+      <p>В Telegram считаем открытия разделов и нажатия на ссылки в сводной статистике. Содержимое сообщений и личные ссылки в отчёт не попадают.</p>
+      {isAdmin && <Link to="/admin" className="textLink">Открыть админку</Link>}
+    </section>
+    <Appearance/>
   </>;
 }
