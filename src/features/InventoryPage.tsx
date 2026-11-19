@@ -51,7 +51,7 @@ export function OwlPage() {
             <span className="rowChevron" aria-hidden="true"/>
           </Link></li>;
         })}</ul>
-        <p className="caption">В Лавке три предложения. Два из них ведут к одному загадочному яйцу. Отдельные яйца выпадают в сезоне и других наградах.</p>
+        <p className="caption">В Лавке три предложения. У загадочных яиц за монеты и Stars один набор наград. Отдельные яйца выпадают в сезоне и других наградах.</p>
       </section>
       <section className="card leanList eggSources">
         <h2>Капсулы и сезон</h2>
@@ -70,9 +70,15 @@ export function OwlPage() {
       </section>
       <section className="card eggSources">
         <h2>NFT-яйца</h2>
-        <p>У коллекции NOT Wise Eggs отдельный выпуск на TON. Ранее NFT-яйца сжигали для получения яйца в игре. Доступность обмена сейчас и игровая функция NFT-лотков не подтверждены.</p>
+        <p>NOT Wise Eggs — отдельный выпуск на TON. Ранее эти NFT сжигали для получения яйца в игре. Доступность обмена сейчас не подтверждена.</p>
         <a className="textLink" href={`https://getgems.io/collection/${marketEggs.address}`} target="_blank" rel="noreferrer">Открыть коллекцию</a>
         <Link className="textLink spacedLink" to="/collections/market#eggs">Флор</Link>
+        <details className="mediaDetails guideDisclosure">
+          <summary><GameArt path={itemPath('golden-egg-special.webp')} size={34}/>
+            <span><strong>Лотки Lottoque</strong><small>История NFT-коллекции</small></span></summary>
+          <p>В 2024 году за сжигание NFT-лотка обещали 10 специальных золотых яиц. Возможность обменять лоток сейчас не подтверждена.</p>
+          <a className="textLink" href="https://getgems.io/lottoque" target="_blank" rel="noreferrer">Открыть Lottoque на Getgems</a>
+        </details>
       </section>
       <section className="card leanList eggSources">
         <Link to="/owl/skins" className="mediaRow"><GameArt path={itemPath('skin-jetton.webp')} size={38}/>
