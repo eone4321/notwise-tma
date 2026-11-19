@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router';
 import { GameArt } from '../ui/GameArt';
 import { chanceLabel } from '../domain/mechanics';
-import { dropsFor, itemNames } from './inventory';
+import { dropsFor, eggDrawCounts, itemNames } from './inventory';
 import marketCollections from './market-collections.json';
 import { OwlPrices } from './OwlPrices';
 import { Price, type Currency } from './Price';
@@ -11,24 +11,25 @@ import skinParts from './skin-parts.json';
 import { SkinFarmCalculator } from './SkinFarmCalculator';
 
 const eggs = [
-  { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное', badge: 'Крафт · Лавка · Капсулы', source: 'Лавка (9 999 монет), капсулы и крафт (3 000 скорлупы)', details: 'Базовое яйцо за монеты, капсулы и осколки (3 000 скорлупы). Содержит еду, лекарства, оформление, скин-жетон и чиллер.' },
-  { id: 56, slug: 'season', file: 'golden-egg.webp', name: 'Золотое загадочное', badge: 'Крафт · Лавка · Сезон', source: 'Крафт за 15 000 скорлупы · Лавка (500 ⭐) · Топ 11–100 сезона', details: 'Крафтится из 15 000 осколков скорлупы, продаётся в Лавке за 500 Stars или вручается за 11–100 места сезона. Содержит заточки кольца (1/20) и скина (1/200), скин-жетон (1/440), чиллер (1/160) и монтмориллонит.' },
-  { id: 19, slug: 'red', file: 'golden-egg-special.webp', name: 'Специальное золотое', badge: 'Топ 1–10 сезона', source: 'Эксклюзивная награда за места 1–10 в сезоне', details: 'Вручается автоматически по итогам сезона топ-10 игрокам (на красном фоне). Обладает удвоенными шансами на заточки (кольцо 1/10, скин 1/100, зажигалка 1/18) и содержит сразу два вида жетонов — обычный (1/88) и Эпический скин-жетон (1/440).' },
-  { id: 17, slug: 'referral', file: 'referral-egg.webp', name: 'Реферальное', badge: 'Приглашение друга', source: 'За вход в игру по ссылке друга (+5 000 монет)', details: 'Выдаётся новому игроку вместе с 5 000 монет при старте по пригласительной ссылке. Набор наград и шансов полностью идентичен базовому загадочному яйцу.' },
-  { id: 18, slug: 'green', file: '18.png', name: 'Бежевое', badge: 'Редкое (архив)', source: 'Способ получения не подтверждён', details: 'Из этого яйца выпадают оформление, жетон скина и другие награды. Еды в пуле нет.' },
-  { id: 20, slug: 'gold', file: '20.png', name: 'Белое', badge: 'Редкое (архив)', source: 'Способ получения не подтверждён', details: 'Пул похож на бежевое яйцо, но здесь выпадает золотой жетон скина.' },
+  { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное', badge: 'Капсулы · Лавка за монеты', source: 'Из капсул или за 9 999 монет', details: 'В наградах есть еда, лекарства, оформление, обычный жетон скина и чиллер. У реферального яйца те же шансы.' },
+  { id: 56, slug: 'season', file: 'egg-stars.webp', name: 'Загадочное', badge: 'Белое на красном фоне · Stars · Крафт', source: 'За 100 Stars или за 3 000 осколков скорлупы', details: 'В этом варианте могут выпасть свитки заточки кольца и скина. По базовым правилам сезона его выдают за 11–100-е места.' },
+  { id: 19, slug: 'red', file: 'golden-egg.webp', name: 'Золотое загадочное', badge: 'Золотое на зелёном фоне · Stars · Крафт', source: 'За 500 Stars или за 15 000 осколков скорлупы', details: 'В пуле есть обычный и эпический жетоны скина. По базовым правилам сезона его выдают за 1–10-е места.' },
+  { id: 61, slug: 'referral', file: 'referral-egg.webp', name: 'Реферальное', badge: 'Приглашение друга', source: 'За вход в игру по ссылке друга (+5 000 монет)', details: 'У этого яйца такие же награды и шансы, как у загадочного яйца за монеты.' },
+  { id: 18, slug: 'green', file: '18.png', name: 'Специальное загадочное', badge: 'Редкое · бежевое', source: 'Способ получения не подтверждён', details: 'В пуле есть оформление, свитки заточки и эпический жетон скина.' },
+  { id: 20, slug: 'gold', file: '20.png', name: 'Специальное золотое загадочное', badge: 'Редкое · белое на жёлтом фоне', source: 'Способ получения не подтверждён', details: 'В пуле есть оформление, свитки заточки и золотой жетон скина.' },
 ] as const;
 
-const eggOffers = {
-  mystery: ['egg', 'egg-stars'],
-  season: ['golden-egg'],
-} as const;
+const eggOffers: Partial<Record<typeof eggs[number]['slug'], string>> = {
+  mystery: 'egg',
+  season: 'egg-stars',
+  red: 'golden-egg',
+};
 const marketEggs = marketCollections.find(item => item.id === 'eggs')!;
 
 // Mirrors the base 80/15/5 draw counts and Z6() in the game's public client.
 function openingChance(chance: number) {
   const miss = 1 - chance / 100;
-  return 100 * (0.8 * (1 - miss) + 0.15 * (1 - miss ** 2) + 0.05 * (1 - miss ** 3));
+  return eggDrawCounts.reduce((total, weight, index) => total + weight * (1 - miss ** (index + 1)), 0);
 }
 
 export function OwlPage() {
@@ -53,12 +54,12 @@ export function OwlPage() {
       <section className="card leanList eggSources" id="shards">
         <h2>Крафт за скорлупу</h2>
         <p className="caption">В игре открой осколки в инвентаре и выбери яйцо.</p>
-        <Link className="mediaRow" to="/owl/mystery" state={{ returnTo: pathname }} aria-label="Загадочное яйцо, 3 000 осколков скорлупы">
+        <Link className="mediaRow" to="/owl/season" state={{ returnTo: pathname }} aria-label="Загадочное яйцо, 3 000 осколков скорлупы">
           <GameArt path={itemPath('egg-stars.webp')} size={40}/>
           <span className="eggRowText"><strong>Загадочное яйцо</strong><small>3 000 осколков скорлупы</small></span>
           <span className="rowEnd shardCost"><strong>3 000</strong><GameArt path={itemPath('eggshell-shards-icon.webp')} size={23}/><span className="rowChevron" aria-hidden="true"/></span>
         </Link>
-        <Link className="mediaRow" to="/owl/season" state={{ returnTo: pathname }} aria-label="Золотое загадочное яйцо, 15 000 осколков скорлупы">
+        <Link className="mediaRow" to="/owl/red" state={{ returnTo: pathname }} aria-label="Золотое загадочное яйцо, 15 000 осколков скорлупы">
           <GameArt path={itemPath('golden-egg.webp')} size={40}/>
           <span className="eggRowText"><strong>Золотое загадочное яйцо</strong><small>15 000 осколков скорлупы</small></span>
           <span className="rowEnd shardCost"><strong>15 000</strong><GameArt path={itemPath('eggshell-shards-icon.webp')} size={23}/><span className="rowChevron" aria-hidden="true"/></span>
@@ -74,7 +75,7 @@ export function OwlPage() {
           <summary><GameArt path={itemPath('18.png')} size={34}/>
             <span><strong>Бежевое и белое яйца</strong><small>Награды двух редких видов</small></span></summary>
           <p>Список наград известен для обоих яиц. Где их получить сейчас, пока не подтверждено.</p>
-          {eggs.slice(3).map(item => <EggLink key={item.id} egg={item} from={pathname}/>)}
+          {eggs.slice(4).map(item => <EggLink key={item.id} egg={item} from={pathname}/>)}
         </details>
         <details className="mediaDetails guideDisclosure">
           <summary><GameArt path="/brand/collections/eggs.png" size={34}/>
@@ -150,13 +151,10 @@ function EggLink({ egg, from }: { egg: typeof eggs[number]; from: string }) {
 }
 
 function EggShopPrices({ slug }: { slug: typeof eggs[number]['slug'] }) {
-  if (slug !== 'mystery' && slug !== 'season') return null;
+  const offer = shopItems.find(item => item.id === eggOffers[slug]);
+  if (!offer) return null;
   return <span className="eggPrices" aria-label="Цена в Лавке">
-    {slug === 'season' && <small>В Лавке за Stars</small>}
-    {eggOffers[slug].map(id => {
-      const offer = shopItems.find(item => item.id === id);
-      return offer && <Price key={id} value={offer.price} currency={offer.currency === 'stars' ? 'stars' : 'coins'}/>;
-    })}
+    <Price value={offer.price} currency={offer.currency === 'stars' ? 'stars' : 'coins'}/>
   </span>;
 }
 
@@ -194,12 +192,11 @@ const categories: Record<string, Category> = {
     title: 'Расходники', icon: 'seba-cola.webp', summary: 'Лавка Wise Plaza · защита, пластилин, колбы и книги',
     items: [
       { name: 'Seba Cola', file: 'seba-cola.webp', effect: 'Защищает сову от рейдов и подбора в соперники на 24 часа. Если сова сама нападёт, защита спадёт.', source: 'Лавка Wise Plaza', price: { value: 1500, currency: 'coins' } },
-      { name: 'Зажигалка', file: 'lighter.webp', effect: 'Один заряд позволяет благословить сквад в ежедневном ритуале. Даёт командный бонус при 50% активности сквада.', source: 'Лавка Wise Plaza', price: { value: 2000, currency: 'coins' } },
+      { name: 'Зажигалка', file: 'lighter.webp', effect: '10 зарядов для благословений в ритуалах сквада. Доступна с 3-го уровня.', source: 'Лавка Wise Plaza или награда из яйца' },
       { name: 'Большие чёрные часы', file: 'big-black-clock.webp', effect: 'Блокируют новый штраф за голод на 30 дней. Действующий штраф закончится по своему таймеру. Каждые часы добавляют ещё 30 дней защиты.', source: 'Лавка Wise Plaza', price: { value: 10000, currency: 'coins' } },
       { name: 'Эпическая книга исследователей', file: 'book.webp', effect: 'Открывает ежедневную загадку на 60 секунд. Верный ответ даёт монеты, опыт и +5 мудрости на сутки. Три ошибки уничтожают книгу.', source: 'Лавка Wise Plaza', price: { value: 20000, currency: 'coins' } },
-      { name: 'Пластилин', file: 'morpher.webp', effect: 'Расходный материал для Морфера. Позволяет изменить внешность и свойства совы при помощи пластилина.', source: 'Лавка Wise Plaza', price: { value: 20000, currency: 'coins' } },
       { name: 'Холодильник XP', file: 'chiller.webp', effect: 'Открытая дверца замораживает опыт: капсулы продолжают давать монеты и лут, но XP не начисляется.', source: 'Лавка Wise Plaza', price: { value: 100000, currency: 'coins' } },
-      { name: 'Пластилин (Stars)', file: 'morpher.webp', effect: 'Набор цветного пластилина для Морфера за Telegram Stars. Изменяет внешность и свойства совы.', source: 'Лавка Wise Plaza · Stars', price: { value: 100, currency: 'stars' } },
+      { name: 'Морфер', file: 'morpher.webp', effect: 'Сбрасывает распределение характеристик и навыки совы. Очки навыков (SP) сохраняются.', source: 'Лавка Wise Plaza', offerId: 'morpher-stars' },
       { name: 'Пустая колба SP', file: 'flask-empty.webp', effect: 'Заготовка для записи SP. Для заполнения нужно вдвое больше SP, чем вмещает колба. Сгорают все свободные SP совы.', source: 'Лавка Wise Plaza · Stars', price: { value: 500, currency: 'stars' } },
       { name: 'Пустая дискета XP', file: 'floppy-empty.webp', effect: 'Заготовка для записи XP. Запись сбрасывает весь текущий опыт, SP и навыки, сова снова становится яйцом.', source: 'Лавка Wise Plaza · Stars', price: { value: 500, currency: 'stars' } },
       { name: 'Таблетка восстановления', file: 'recovery-pill.webp', effect: 'Снимает штраф голода и полностью восстанавливает сытость (20). Можно использовать раз в 7 дней.', source: 'Лавка Wise Plaza · Stars', price: { value: 300, currency: 'stars' } },
@@ -208,10 +205,10 @@ const categories: Record<string, Category> = {
   squad: {
     title: 'Лавка сквада', icon: 'morpher.webp', summary: 'Морфер, заточки и зажигалка за серебро осад',
     items: [
-      { name: 'Морфер', file: 'morpher.webp', effect: 'Предмет трансформации. Позволяет изменить внешность и свойства совы при помощи пластилина.', source: 'Лавка сквада · серебро осад', price: { value: 5000, currency: 'squad_silver' } },
-      { name: 'Заточка кольца', file: 'scroll-enchant-ring.webp', effect: 'Мистический свиток с поля осады. Улучшает кольцо: +1 к его атрибуту и +5% к бонусу дропа $NOT.', source: 'Лавка сквада · серебро осад', price: { value: 500, currency: 'squad_silver' } },
-      { name: 'Заточка скина', file: 'scroll-enchant-skin.webp', effect: 'Мистический свиток с поля осады. Улучшает скин, прибавляя 5% к бонусу дропа $NOT за ступень.', source: 'Лавка сквада · серебро осад', price: { value: 5000, currency: 'squad_silver' } },
-      { name: 'Зажигалка сквада', file: 'lighter.webp', effect: 'Один заряд позволяет благословить сквад в ежедневном ритуале за командное серебро.', source: 'Лавка сквада · серебро осад', price: { value: 1000, currency: 'squad_silver' } },
+      { name: 'Морфер', file: 'morpher.webp', effect: 'Сбрасывает распределение характеристик и навыки совы. Очки навыков (SP) сохраняются.', source: 'Лавка сквада · серебро осад', price: { value: 5000, currency: 'squad_silver' } },
+      { name: 'Заточка кольца', file: 'scroll-enchant-ring.webp', effect: 'Мистический свиток с поля осады. Улучшает кольцо: +1 к его атрибуту и +5% к бонусу фарма монет.', source: 'Лавка сквада · серебро осад', price: { value: 500, currency: 'squad_silver' } },
+      { name: 'Заточка скина', file: 'scroll-enchant-skin.webp', effect: 'Мистический свиток с поля осады. Улучшает скин, прибавляя 5% к бонусу фарма монет за ступень.', source: 'Лавка сквада · серебро осад', price: { value: 5000, currency: 'squad_silver' } },
+      { name: 'Зажигалка сквада', file: 'lighter.webp', effect: 'Один заряд позволяет благословить сквад в ежедневном ритуале за командное серебро.', source: 'Лавка сквада · серебро осад', offerId: 'squad-lighter' },
       { name: 'Холодильник XP (Сквад)', file: 'chiller.webp', effect: 'Замораживает опыт совы при открытии капсул. Покупка за валюту осад.', source: 'Лавка сквада · серебро осад', price: { value: 25000, currency: 'squad_silver' } },
       { name: 'Универсальная заточка', file: 'enchanter.webp', effect: 'Подходит для кольца и скина. За одну ступень даёт тот же бонус, что и соответствующий свиток.', source: 'Особая награда осад' },
     ],
@@ -220,22 +217,21 @@ const categories: Record<string, Category> = {
     title: 'Кольца и артефакты', icon: 'ring-wit-3.webp', summary: 'Кольца атрибутов и Монтмориллонит',
     items: [
       ...rings,
-      { name: 'Монтмориллонит', file: 'montmorillonite.webp', effect: 'С экипированным артефактом здоровье остаётся полным, а бонус к дропу $NOT растёт на 10%. Выпадает из загадочных яиц.',
+      { name: 'Монтмориллонит', file: 'montmorillonite.webp', effect: 'С экипированным артефактом здоровье остаётся полным, а бонус фарма монет растёт на 10%. Выпадает из загадочных яиц.',
         source: 'Лавка · Кристалл маны (999 999 монет)', price: { value: 999999, currency: 'coins' } },
     ],
   },
   care: {
     title: 'Еда и лекарства', icon: 'croissant.webp', summary: 'Сытость, здоровье и любимая еда',
     items: [
-      ...[5, 6, 7, 8].map(id => ({
-        name: itemNames[id][0], file: itemNames[id][1], effect: 'Восстанавливает сытость. Любимая еда даёт двойную сытость.',
-        source: 'Добыча из яиц. Часть еды есть в Лавке за монеты.',
+      ...([[1, 5], [2, 5], [3, 5], [5, 10], [6, 10], [7, 20], [8, 20]] as const).map(([id, satiety]) => ({
+        name: itemNames[id][0], file: itemNames[id][1],
+        effect: `Восстанавливает ${satiety} сытости.${id === 7 ? ' Доступна с 5-го уровня.' : ''}`,
+        source: id >= 5 ? 'Лавка Wise Plaza или награда из яйца' : 'Лавка Wise Plaza',
       })),
-      { name: 'Рогач', file: 'rogach.webp', effect: 'Съедобный жук. Повышает сытость совы.', source: 'Еда' },
-      { name: 'Груша', file: 'pear.webp', effect: 'Полностью восстанавливает сытость (20).', source: 'Лавка Wise Plaza · 400 монет', price: { value: 400, currency: 'coins' } },
-      { name: 'Круассан', file: 'croissant.webp', effect: 'Восстанавливает сытость. Может быть любимой едой совы.', source: 'Лавка Wise Plaza · 400 монет', price: { value: 400, currency: 'coins' } },
-      { name: 'Пластырь', file: 'patch.webp', effect: 'Восстанавливает здоровье.', source: 'Лавка Wise Plaza · 150 монет', price: { value: 150, currency: 'coins' } },
-      { name: 'Аптечка', file: 'first-aid-kit.webp', effect: 'Восстанавливает 50 здоровья.', source: 'Лавка Wise Plaza · 400 монет', price: { value: 400, currency: 'coins' } },
+      { name: 'Подорожник', file: 'plantain.webp', effect: 'Восстанавливает 1 здоровье.', source: 'Лавка Wise Plaza' },
+      { name: 'Пластырь', file: 'patch.webp', effect: 'Восстанавливает 20 здоровья.', source: 'Лавка Wise Plaza или награда из яйца' },
+      { name: 'Аптечка', file: 'first-aid-kit.webp', effect: 'Восстанавливает 50 здоровья. Доступна с 5-го уровня.', source: 'Лавка Wise Plaza или награда из яйца' },
     ],
   },
   craft: {

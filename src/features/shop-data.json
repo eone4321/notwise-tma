@@ -81,7 +81,7 @@
     "name_ru": "Зажигалка",
     "category": "squad_ritual",
     "currency": "coins",
-    "price": 2000
+    "price": 5000
   },
   {
     "id": "ring-str-1",
@@ -89,7 +89,7 @@
     "tier": 1,
     "category": "ring",
     "currency": "coins",
-    "price": 5000,
+    "price": 20000,
     "required_level": 5,
     "stat": "strength"
   },
@@ -99,7 +99,7 @@
     "tier": 1,
     "category": "ring",
     "currency": "coins",
-    "price": 5000,
+    "price": 20000,
     "required_level": 5,
     "stat": "agility"
   },
@@ -109,7 +109,7 @@
     "tier": 1,
     "category": "ring",
     "currency": "coins",
-    "price": 5000,
+    "price": 20000,
     "required_level": 5,
     "stat": "wisdom"
   },
@@ -136,19 +136,12 @@
     "price": 20000
   },
   {
-    "id": "plasticine-coins",
-    "name_ru": "Пластилин",
-    "category": "consumable",
-    "currency": "coins",
-    "price": 20000
-  },
-  {
     "id": "ring-str-2",
     "name_ru": "Обсидиановое кольцо силы",
     "tier": 2,
     "category": "ring",
     "currency": "coins",
-    "price": 30000,
+    "price": 67000,
     "required_level": 10,
     "stat": "strength"
   },
@@ -158,7 +151,7 @@
     "tier": 2,
     "category": "ring",
     "currency": "coins",
-    "price": 30000,
+    "price": 67000,
     "required_level": 10,
     "stat": "agility"
   },
@@ -168,7 +161,7 @@
     "tier": 2,
     "category": "ring",
     "currency": "coins",
-    "price": 30000,
+    "price": 67000,
     "required_level": 10,
     "stat": "wisdom"
   },
@@ -186,7 +179,7 @@
     "tier": 3,
     "category": "ring",
     "currency": "coins",
-    "price": 150000,
+    "price": 200000,
     "required_level": 20,
     "stat": "strength"
   },
@@ -196,7 +189,7 @@
     "tier": 3,
     "category": "ring",
     "currency": "coins",
-    "price": 150000,
+    "price": 200000,
     "required_level": 20,
     "stat": "agility"
   },
@@ -206,7 +199,7 @@
     "tier": 3,
     "category": "ring",
     "currency": "coins",
-    "price": 150000,
+    "price": 200000,
     "required_level": 20,
     "stat": "wisdom"
   },
@@ -223,14 +216,15 @@
     "name_ru": "Загадочное яйцо (Mystery)",
     "category": "egg",
     "currency": "stars",
-    "price": 100
+    "price": 100,
+    "item_id": 56
   },
   {
-    "id": "plasticine-stars",
-    "name_ru": "Пластилин (Stars)",
+    "id": "morpher-stars",
+    "name_ru": "Морфер",
     "category": "consumable",
     "currency": "stars",
-    "price": 100
+    "price": 250
   },
   {
     "id": "recovery-pill",
@@ -242,7 +236,7 @@
   },
   {
     "id": "golden-egg",
-    "item_id": 56,
+    "item_id": 19,
     "name_ru": "Золотое яйцо",
     "category": "egg",
     "currency": "stars",
@@ -274,7 +268,7 @@
     "name_ru": "Зажигалка",
     "category": "squad",
     "currency": "squad_silver",
-    "price": 1000
+    "price": 2500
   },
   {
     "id": "squad-scroll-skin",

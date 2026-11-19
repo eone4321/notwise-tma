@@ -76,9 +76,9 @@ export function CombatPage() {
           {icon === 'rocket' ? <FlightDetails/> : <p>{description}</p>}
         </details>)}
         <details className="mediaDetails"><summary><GameSymbol name="trophy"/><span><strong>Призы сезона</strong><small>Первые 100 мест</small></span></summary>
-        <p>Базовый фонд клиента — 1 млн $NOT. 1-е место получает 400 000, 2-е — 350 000, 3-е — 250 000 $NOT. Топ-10 получает золотое загадочное яйцо, места 11–100 — сезонное загадочное яйцо.</p>
+        <p>Базовый фонд клиента — 1 млн $NOT. 1-е место получает 400 000, 2-е — 350 000, 3-е — 250 000 $NOT. Топ-10 получает золотое загадочное яйцо, места 11–100 — белое загадочное яйцо на красном фоне.</p>
         <p className="caption">Игра может изменить фонд конкретного сезона. Призы приходят автоматически.</p>
-        <Link className="textLink" to="/owl/season">Что выпадает из сезонного яйца</Link>
+        <Link className="textLink" to="/owl/season">Что выпадает из белого загадочного яйца</Link>
       </details>
       <details className="mediaDetails" id="leagues" open={hash === "#leagues" || undefined}><summary><GameSymbol name="shield"/><span><strong>Боевые лиги</strong><small>Пороги рейтинга и бонус к фарму</small></span></summary>
         <table className="priceTable">

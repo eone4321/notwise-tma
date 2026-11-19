@@ -11,7 +11,7 @@ const squadItemUse: Record<string, string> = {
   'scroll-enchant-ring': 'Заточить кольцо до +20',
   'lighter': 'Благословить сквад',
   'scroll-enchant-skin': 'Усилить бонус скина к фарму',
-  'morpher': 'Предмет трансформации',
+  'morpher': 'Сбрасывает характеристики и навыки, сохраняя SP',
   'chiller': 'Заморозить начисление XP',
 };
 
