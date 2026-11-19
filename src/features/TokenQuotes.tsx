@@ -155,7 +155,7 @@ export function TokenTicker() {
       onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onClick={() => setOpened(true)}>
       <span className="tokenTickerTrack" aria-hidden="true">
         {quote ? <AnimatePresence initial={false}>
-          <motion.span className="tokenTickerValue" key={quote.symbol}
+          <motion.span className="tokenTickerValue" data-symbol={quote.symbol} key={quote.symbol}
             initial={{ y: 12, opacity: 0, filter: "blur(3px)" }} animate={{ y: 0, opacity: 1, filter: "blur(0px)" }} exit={{ y: -12, opacity: 0, filter: "blur(3px)" }}
             transition={{ duration: reducedMotion ? 0 : 0.45, ease: 'easeInOut' }}>
             <b>{quote.symbol}</b><span className="tickerPrice">{quote.displayPrice}</span>

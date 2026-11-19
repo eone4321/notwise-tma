@@ -581,7 +581,9 @@ html { scrollbar-gutter: stable; }
 .tokenTicker {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  width: clamp(145px, 47vw, 165px);
+  flex: 0 1 185px;
+  min-width: 0;
+  width: 185px;
   max-width: none;
   min-height: 44px;
   padding: 2px 0 2px 4px;
@@ -610,6 +612,7 @@ html { scrollbar-gutter: stable; }
 }
 .tokenTickerValue > b { grid-area: 1 / 1; color: var(--text); font-size: 11px; }
 .tokenTickerValue > .tickerPrice { grid-area: 2 / 1; color: var(--muted); font-size: 12px; }
+.tokenTickerValue[data-symbol="NOT"] > .tickerPrice { font-size: 10px; }
 .tokenTickerValue > img { grid-area: 1 / 2 / span 2; align-self: center; }
 .tokenTickerEmpty { grid-area: 1 / 1; align-self: center; }
 .tokenRatesList li { display: block; min-height: 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; padding: 0; }
