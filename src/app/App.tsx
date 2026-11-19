@@ -1,3 +1,4 @@
+import { copyLink } from '../ui/copyLink';
 import { GuideProgress, ProgressStatus, useProgress } from '../features/GuideProgress';
 import { useModal } from '../ui/useModal';
 import { artSrc } from '../ui/warmArt';
@@ -68,7 +69,7 @@ useEffect(() => {
   window.addEventListener('keydown', close);
   return () => window.removeEventListener('keydown', close);
 }, [hamster, hamsterLocked]);useEffect(()=>{telegramPopup()?.ready();const key='notwise.guide.startapp.v1';if(sessionStorage.getItem(key))return;const start=new URLSearchParams(location.search).get('startapp')??telegramPopup()?.initDataUnsafe?.start_param;const routes:Record<string,string>={capsules_gold:'/capsules/gold',eggs:'/owl',secrets:'/secrets',market:'/collections/market'};if(start&&Object.hasOwn(routes,start)){sessionStorage.setItem(key,'1');nav(routes[start],{replace:true})}},[nav]);const ask=()=>{lightHaptic();const tg=telegramPopup();if(tg?.showPopup){try { tg.showPopup({title:'Секреты Not Wise',message:'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты',buttons:[{id:'pay',text:'Заплатить',type:'default'},{id:'back',text:'Назад',type:'default'}]},()=>reveal()); return; } catch { /* Older Telegram clients use the local dialog. */ }}setPopup(true)};function reveal(){setPopup(false);setJoke(true);setShowJoke(true);localStorage.setItem('notwise.guide.secrets.v1','1')}
-return <GuideProgress key={profile?.userId ?? "local"} user={profile?.userId}><div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach}><Link to="/" className="brand"><img src="/brand/notwise.svg" alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main key={loc.pathname} inert={hamster || coach}>{loc.pathname === '/' ? <Home profile={profile} profileFailed={profileFailed} retryProfile={() => {
+return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach}><Link to="/" className="brand"><img src="/brand/notwise.svg" alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main key={loc.pathname} inert={hamster || coach}>{loc.pathname === '/' ? <Home profile={profile} profileFailed={profileFailed} retryProfile={() => {
   setProfileFailed(false); setProfileAttempt(value => value + 1);
 }}/> : loc.pathname === '/admin' ? <AdminPage profile={profile}/> : <Page ask={ask} joke={joke} popup={popup} reveal={reveal}
   referrals={<ReferralsPage profile={profile} failed={profileFailed} onSave={setProfile} onRetry={() => {
@@ -178,7 +179,7 @@ function Home({ profile, profileFailed, retryProfile }: {
   ['Бои и навыки', '/combat', '/game/skills/1.png', 'Какие навыки выбрать и что качать?', '/game/skills/16.png'],
   ['Предметы', '/assets', '/game/items/ring-wit-3.webp', 'Еда, кольца и оформление', '/game/items/book.webp'],
   ['Сквады и войны', '/squads', '/game/items/lighter.webp', 'Ритуалы, осады и награды', '/game/war/siege-header.webp'],
-  ['Экосистема', '/ecosystem', '/game/items/coins.webp', 'Токены, проекты и курсы', '/brand/tokens/gram.png'],
+  ['Экосистема', '/ecosystem', '/brand/notwise.svg', 'Токены, проекты и курсы', '/brand/projects/grouche.png'],
   ['Пригласить друзей', '/referrals', '/game/items/wise-coin.webp', 'Твоя ссылка и список приглашённых', '/game/items/referral-egg.webp'],
  ] as const;
  return <>
@@ -195,7 +196,7 @@ function Home({ profile, profileFailed, retryProfile }: {
     <button className="heroShare secondary" aria-haspopup="dialog" onClick={() => { lightHaptic(); setShare(true); }}>Поделиться гайдом</button>
     </div>
   </section>
-  {share && <ShareDialog profile={profile} close={() => setShare(false)}/>}
+  {share && <ShareDialog close={() => setShare(false)}/>}
   <OwlPrices/>
   <div className="sectionHeading"><div><h2>Что ищешь?</h2></div></div>
   <div className="guideGrid">{tiles.map(([name, path, icon, description, art]) =>
@@ -205,17 +206,25 @@ function Home({ profile, profileFailed, retryProfile }: {
       <span className="tileText"><b>{name}</b><small>{description}</small></span>
     </Link>
   )}</div>
-  <div className="supportFooter"><a className="supportPill" href="https://t.me/cryptoeone"><img className="channelLogo" src="/brand/cryptoone-channel.jpg" alt="" width="24" height="24"/>Канал CryptoOne</a><Link className="supportPill" to="/support"><img src="/brand/cryptoone.svg" alt="" width="18" height="19"/>Поддержать проект</Link></div>
+  <div className="supportFooter"><a className="supportPill" href="https://t.me/cryptoeone"><img className="channelLogo" src="/brand/cryptoone-channel.jpg" alt="" width="24" height="24"/>Канал CryptoOne</a><Link className="supportPill" to="/support"><img src="/brand/cryptoone.svg" alt="" width="18" height="19"/>О проекте</Link></div>
   {profile?.isAdmin && <Link className="textLink" to="/admin">Управление гайдом</Link>}
  </>;
 }
-function ShareDialog({ profile, close }: { profile: GuideProfile | null; close: () => void }) {
+function ShareDialog({ close }: { close: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const field = useRef<HTMLInputElement>(null);
+  const [feedback, setFeedback] = useState('');
+  const url = guideShareUrl();
   useModal(dialog, true);
-  const linked = profile?.gameLinkVerified === true;
-  function send(personal: boolean) {
+  async function copy() {
     lightHaptic();
-    shareGuide(guideShareUrl(personal && linked ? profile?.referralCode : undefined));
+    setFeedback(await copyLink(url, field.current)
+      ? 'Ссылка скопирована.'
+      : 'Ссылка выделена. Выбери «Копировать» в меню выделения.');
+  }
+  function chooseRecipient() {
+    lightHaptic();
+    shareGuide(url);
     close();
   }
   return <dialog className="modal" ref={dialog} aria-labelledby="share-title"
@@ -224,11 +233,12 @@ function ShareDialog({ profile, close }: { profile: GuideProfile | null; close: 
     <div className="dialogBody">
       <div className="tokenRatesDialogHeader"><h2 id="share-title" data-dialog-title tabIndex={-1}>Поделиться гайдом</h2>
         <button className="close" onClick={close} aria-label="Закрыть">×</button></div>
-      <p>{linked ? 'Хочешь, чтобы друзья могли открыть игру по твоей рефке?' :
-        'Можно отправить гайд сейчас. В нём будет игровая ссылка проекта.'}</p>
-      {linked ? <button className="primary" onClick={() => send(true)}>С моей рефкой</button> :
-        <Link className="secondary" to="/referrals" onClick={close}>Привязать мою рефку</Link>}
-      <button className={linked ? 'secondary' : 'primary'} onClick={() => send(false)}>Без моей рефки</button>
+      <label className="field shareLink"><span className="sr-only">Ссылка на гайд</span>
+        <input ref={field} readOnly value={url} onFocus={event => event.currentTarget.select()}/>
+      </label>
+      <button className="primary" onClick={chooseRecipient}>Выбрать получателя</button>
+      <button className="secondary" onClick={() => void copy()}>Скопировать ссылку</button>
+      {feedback && <p className="supportStatus" role="status">{feedback}</p>}
     </div>
   </dialog>;
 }
@@ -242,7 +252,7 @@ function Page({ ask, joke, popup, reveal, referrals }: {
     <h1>Страница не найдена</h1><Link className="textLink" to="/">На главную</Link>
   </Card>;
   return <>
-    <h1 className="pageTitle">{section?.[0] ?? 'Поддержать проект'}</h1>
+    <h1 className="pageTitle">{section?.[0] ?? 'О проекте'}</h1>
     {section?.[1] === '/capsules' && <CapsulePage/>}
     {section?.[1] === '/owl' && <OwlPage/>}
     {section?.[1] === '/collections' && <CollectionPage/>}

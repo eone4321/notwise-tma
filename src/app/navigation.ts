@@ -4,31 +4,68 @@ import { useLocation, useNavigate, useNavigationType } from 'react-router';
 const positions = new Map<string, number>();
 
 export function useGuideScroll() {
-  const location = useLocation();
+  const { key, hash, pathname, state } = useLocation();
   const navigationType = useNavigationType();
-  const { hash, pathname, state } = location;
   const address = pathname + hash;
-  const restore = state?.restoreGuideScroll || (navigationType === 'POP' && positions.has(address));
+  const restore = state?.restoreGuideScroll || navigationType === 'POP';
 
   useLayoutEffect(() => {
-    const save = () => { if (document.body.style.position !== 'fixed') positions.set(address, window.scrollY); };
-    const anchor = hash ? document.getElementById(hash.slice(1)) : null;
-    const previousPosition = positions.get(address);
-    if (restore && previousPosition !== undefined) window.scrollTo(0, previousPosition);
-    else if (anchor) anchor.scrollIntoView();
-    else window.scrollTo(0, 0);
-    save();
+    const previousPosition = restore ? positions.get(address) : undefined;
+    let pending = previousPosition;
+    let observer: ResizeObserver | undefined;
+    let frame = 0;
 
+    function save() {
+      if (pending === undefined && document.body.style.position !== 'fixed') {
+        positions.set(address, window.scrollY);
+      }
+    }
+    function finish() {
+      pending = undefined;
+      observer?.disconnect();
+      cancelAnimationFrame(frame);
+      save();
+    }
+    function apply() {
+      if (pending === undefined || document.body.style.position === 'fixed') return;
+      window.scrollTo({ top: pending, behavior: 'instant' });
+      if (Math.abs(window.scrollY - pending) <= 1) finish();
+    }
+    if (previousPosition !== undefined) {
+      apply();
+      if (pending !== undefined) {
+        observer = new ResizeObserver(apply);
+        const shell = document.querySelector('.shell');
+        if (shell) observer.observe(shell);
+        frame = requestAnimationFrame(apply);
+      }
+    } else {
+      const anchor = hash && document.getElementById(hash.slice(1));
+      if (anchor) anchor.scrollIntoView();
+      else window.scrollTo({ top: 0, behavior: 'instant' });
+      save();
+    }
+
+    const interrupt = () => {
+      if (pending !== undefined) finish();
+      else save();
+    };
     window.addEventListener('scroll', save, { passive: true });
-    document.addEventListener('click', save, true);
+    document.addEventListener('pointerdown', interrupt, true);
+    document.addEventListener('wheel', interrupt, { passive: true, capture: true });
+    document.addEventListener('click', interrupt, true);
     const browserSetting = history.scrollRestoration;
     history.scrollRestoration = 'manual';
     return () => {
+      observer?.disconnect();
+      cancelAnimationFrame(frame);
       window.removeEventListener('scroll', save);
-      document.removeEventListener('click', save, true);
+      document.removeEventListener('pointerdown', interrupt, true);
+      document.removeEventListener('wheel', interrupt, true);
+      document.removeEventListener('click', interrupt, true);
       history.scrollRestoration = browserSetting;
     };
-  }, [address, hash, location.key, restore]);
+  }, [address, hash, key, restore]);
 }
 
 export function useGuideNavigation() {
@@ -40,7 +77,11 @@ export function useGuideNavigation() {
   const isEgg = sections[0] === 'owl' && ['mystery','red','season','green','gold'].includes(sections[1]);
   const returnTo = state?.returnTo;
   const fromEgg = pathname.startsWith('/assets/item/') || pathname === '/owl/skins';
+  const fromAlbum = pathname === '/secrets' && /^#sticker-\d+$/.test(hash) &&
+    typeof returnTo === 'string' && /^\/collections\/albums\/(?:[1-9]|1\d|20)$/.test(returnTo);
   const hasReturn = typeof returnTo === 'string' && (
+    fromAlbum ||
+    (pathname === '/ecosystem' && hash.startsWith('#token-') && returnTo === '/') ||
     (fromEgg && /^\/owl\/(mystery|red|season|green|gold)$/.test(returnTo)) ||
     (isEgg && ['/owl', '/owl/loot', '/owl/shop'].includes(returnTo))
   );
@@ -52,7 +93,10 @@ export function useGuideNavigation() {
     back: () => {
       if (parent === pathname && !hash) return;
       positions.set(pathname + hash, window.scrollY);
-      navigate(parent, { replace: true, state: { restoreGuideScroll: true } });
+      navigate(parent, { replace: true, state: {
+        restoreGuideScroll: true,
+        ...(fromAlbum && { stickerId: Number(hash.slice('#sticker-'.length)) }),
+      } });
     },
     home: () => {
       positions.set(pathname + hash, window.scrollY);

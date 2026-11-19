@@ -106,7 +106,18 @@ export function SupportPage() {
   }
 
   return <>
-    <p className="intro">Донаты помогают оплачивать сервер и развивать гайд.</p>
+    <section className="card aboutGuide">
+      <div className="mediaHeading"><img src={artSrc('/brand/notwise.svg')} width="36" height="36" alt=""/>
+        <h2>NOT Wise Guide</h2></div>
+      <p>Мы собрали интерактивную базу знаний и аналитику по NOT Wise: The GAME на TON.</p>
+      <p>Здесь можно разобраться в прокачке и уходе за совой, подобрать боевой билд и узнать, что выпадает из капсул и яиц. Цены Getgems и котировки токенов обновляются автоматически.</p>
+      <a className="textLink aboutSignature" href="https://t.me/cryptoeone">
+        <img src={artSrc('/brand/cryptoone.svg')} width="18" height="19" alt=""/>CryptoOne | MEDIA &amp; PRO ХОМЯКИ
+      </a>
+    </section>
+    <div className="sectionHeading"><h2>Поддержать проект</h2>
+      <p className="caption">Донаты помогают оплачивать сервер и развивать гайд.</p>
+    </div>
     <section className="card">
       <h2>Telegram Stars</h2>
       <p>Выбери удобную сумму.</p>

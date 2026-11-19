@@ -1,3 +1,4 @@
+import { copyLink } from '../ui/copyLink';
 import { useEffect, useState, useRef, type FormEvent } from 'react';
 import { GameArt } from '../ui/GameArt';
 import { authData, guideShareUrl, profileRequest, shareGuide, type GuideProfile } from './guideProfile';
@@ -69,22 +70,9 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
   const [copyStatus, setCopyStatus] = useState('');
   async function copy() {
     setCopyStatus('Копируем…');
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopyStatus('Ссылка скопирована');
-      return;
-    } catch {
-      linkInput.current?.focus();
-      linkInput.current?.select();
-      linkInput.current?.setSelectionRange(0, url.length);
-      try {
-        if (document.execCommand('copy')) {
-          setCopyStatus('Ссылка скопирована');
-          return;
-        }
-      } catch { /* The selected input remains available for manual copying. */ }
-      setCopyStatus('Ссылка выделена. Нажми «Копировать» в меню выделения.');
-    }
+    setCopyStatus(await copyLink(url, linkInput.current)
+      ? 'Ссылка скопирована'
+      : 'Ссылка выделена. Нажми «Копировать» в меню выделения.');
   }
 
   async function loadMore() {

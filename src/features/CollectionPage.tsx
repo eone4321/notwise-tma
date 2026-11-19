@@ -28,7 +28,7 @@ const stickerAlbum = (id: number) => Math.ceil(id / 5);
 let cachedMarket: MarketRow[] | null = null;
 
 export function CollectionPage() {
-  const { pathname, hash } = useLocation();
+  const { pathname, hash, state } = useLocation();
   const { collected, setMark } = useProgress();
   const albumNumber = Number(pathname.match(/albums\/(\d+)$/)?.[1]);
   const album = albumNumber >= 1 && albumNumber <= albums.length ? albumNumber : null;
@@ -94,12 +94,12 @@ export function CollectionPage() {
         <ProgressCount count={count} total={total}/>
         <ProgressStatus/>
         {matches.map(item => <div className="stickerProgressRow" key={item.id}>
-          <details className="mediaDetails"><summary>
+          <details className="mediaDetails" open={state?.stickerId === item.id || undefined}><summary>
             <GameArt path={`/game/stickers/${item.id}.webp`} size={34}/>
             <span><strong>{item.name}</strong><small>{item.kind === 'secret' ? 'Секрет' :
               item.kind === 'achievement' ? 'Достижение' : 'Набор стикеров'}</small></span>
           </summary>
-          {item.kind === 'secret' ? <Link className="textLink" to={`/secrets#sticker-${item.id}`}>Условие секрета</Link> :
+          {item.kind === 'secret' ? <Link className="textLink" to={`/secrets#sticker-${item.id}`} state={{ returnTo: pathname }}>Условие секрета</Link> :
             <p>{achievementActions[item.id] ?? 'Может выпасть при открытии набора стикеров.'}</p>}
           </details>
           <label className="secretCheck"><input type="checkbox" checked={collected.includes(item.id)}

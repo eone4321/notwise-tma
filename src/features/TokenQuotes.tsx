@@ -1,6 +1,7 @@
 import { useModal } from '../ui/useModal';
 import { artSrc } from '../ui/warmArt';
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import tokens from '../../public/data/tokens.json';
 
@@ -14,10 +15,11 @@ const usd = new Intl.NumberFormat('ru-RU', {
   style: 'currency', currency: 'USD', maximumFractionDigits: 2,
 });
 
+const fullUsd = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 20 });
 const smallUsd = new Intl.NumberFormat('ru-RU', { maximumSignificantDigits: 3 });
 
 function formatQuote(symbol: string, price: number) {
-  if (symbol === 'NOT') return smallUsd.format(price * 1000) + ' $ / 1 000';
+  if (symbol === 'NOT') return fullUsd.format(price) + ' $';
   return price < 0.01 ? smallUsd.format(price) + ' $' : usd.format(price);
 }
 
@@ -92,16 +94,20 @@ function useQuotes() {
   return { usable, pending, reload };
 }
 
-function QuoteList({ quotes }: { quotes: ReturnType<typeof useQuotes> }) {
+function QuoteList({ quotes, fromHome }: { quotes: ReturnType<typeof useQuotes>; fromHome?: boolean }) {
   const { usable, pending, reload } = quotes;
   const updated = usable.find(row => row.fetchedAt)?.fetchedAt;
   return <>
     <ul className="tokenRatesList" aria-busy={pending}>
       {tokens.tokens.map(({ symbol, name }) => (
         <li key={symbol}>
-          <img src={artSrc(tokenIcon(symbol))} alt="" width="30" height="30"/>
-          <div className="tokenRateName"><b>{symbol}</b><small>{name}</small></div>
-          <strong>{usable.find(row => row.symbol === symbol)?.displayPrice ?? '—'}</strong>
+          <Link className="tokenRateLink" to={`/ecosystem#token-${symbol}`} state={fromHome ? { returnTo: '/' } : undefined}
+            aria-label={`${symbol}, ${usable.find(row => row.symbol === symbol)?.displayPrice ?? 'цена недоступна'}. Открыть токен`}>
+            <img src={artSrc(tokenIcon(symbol))} alt="" width="30" height="30"/>
+            <span className="tokenRateName"><b>{symbol}</b><small>{name}</small></span>
+            <strong>{usable.find(row => row.symbol === symbol)?.displayPrice ?? '—'}</strong>
+            <span className="rowChevron" aria-hidden="true"/>
+          </Link>
         </li>
       ))}
     </ul>
@@ -167,7 +173,7 @@ export function TokenTicker() {
           <h2 id="ticker-rates-title" data-dialog-title tabIndex={-1}>Курсы токенов</h2>
           <button className="close" type="button" aria-label="Закрыть курсы" onClick={() => setOpened(false)}>×</button>
         </div>
-        <QuoteList quotes={quotes}/>
+        <QuoteList quotes={quotes} fromHome/>
       </div>
     </dialog>
   </>;

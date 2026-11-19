@@ -150,10 +150,15 @@ function CombatStats() {
         <p>{detail}</p>
       </details>)}
     </section>
-    <section className="card"><h2>Перки и опыт</h2>
-      <p>Перки покупаются за SP. Запас энергии растёт на 100 за ступень. Восстановление энергии и здоровья растёт на 3% за ступень соответствующего перка.</p>
-      <details><summary>Цены перков по уровням</summary>
-        <label className="field">Текущий уровень перка
+    <section className="card"><h2>Улучшения совы</h2>
+      <p>Перки — постоянные улучшения совы за SP (очки навыков). У каждого улучшения свой уровень.</p>
+      <ul className="compactList owlUpgrades">
+        <li><GameSymbol name="bolt" size={24}/><span>Запас энергии</span><b>+100 за уровень</b></li>
+        <li><GameSymbol name="rocket" size={24}/><span>Восстановление энергии</span><b>+3% за уровень</b></li>
+        <li><GameSymbol name="heart" size={24}/><span>Восстановление здоровья</span><b>+3% за уровень</b></li>
+      </ul>
+      <details><summary>Стоимость улучшения</summary>
+        <label className="field">Текущий уровень улучшения
           <select value={level} onChange={event => setLevel(Number(event.target.value))}>
             {Array.from({ length: 21 }, (_, i) => <option key={i} value={i}>{i}</option>)}
           </select>

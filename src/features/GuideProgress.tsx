@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { lightHaptic } from '../telegram/client';
 import { profileRequest } from './guideProfile';
 
@@ -33,23 +33,26 @@ const migrated = (user: string) => 'notwise.guide.imported.' + user;
 const importOwner = 'notwise.guide.importOwner';
 
 export function GuideProgress({ user, children }: { user?: string; children: ReactNode }) {
-  const [data, setData] = useState<Progress>(() => ({
-    completed: read('completed', user), collected: read('collected', user), percentages: null,
-  }));
-  const [error, setError] = useState('');
-  const queue = useRef<Change[]>([]);
-  const working = useRef(false);
-  const active = useRef(false);
+  const session = useMemo(() => ({
+    initial: { completed: read('completed', user), collected: read('collected', user), percentages: null } as Progress,
+    queue: [] as Change[],
+    working: false,
+    controller: null as AbortController | null,
+  }), [user]);
+  const [snapshot, setSnapshot] = useState({ session, data: session.initial, error: '' });
+  const data = snapshot.session === session ? snapshot.data : session.initial;
+  const error = snapshot.session === session ? snapshot.error : '';
 
   function apply(progress: Progress) {
     save('completed', progress.completed, user);
     save('collected', progress.collected, user);
-    setData(queue.current.reduce((state, change) => changed(state, change), progress));
+    setSnapshot({ session, data: session.queue.reduce(changed, progress), error: '' });
   }
 
   async function sync(refresh: boolean) {
-    if (!user || working.current) return;
-    working.current = true;
+    const signal = session.controller?.signal;
+    if (!user || !signal || signal.aborted || session.working) return;
+    session.working = true;
     try {
       const imported = localStorage.getItem(migrated(user)) === '1';
       if (refresh || !imported) {
@@ -58,54 +61,60 @@ export function GuideProgress({ user, children }: { user?: string; children: Rea
         const result = await profileRequest<Progress>({
           action: 'progress',
           ...(includeLocal && { completed: read('completed'), collected: read('collected') }),
-        });
-        if (!active.current) return;
+        }, signal);
+        if (signal.aborted) return;
         if (includeLocal) localStorage.setItem(importOwner, user);
         localStorage.setItem(migrated(user), '1');
         apply(result);
       }
-      while (active.current && queue.current.length) {
-        const change = queue.current[0];
+      while (!signal.aborted && session.queue.length) {
+        const change = session.queue[0];
         const result = await profileRequest<Progress>({
           action: 'mark', group: change.list === 'completed' ? 'c' : 's', id: change.id, checked: change.checked,
-        });
-        queue.current.shift();
-        if (active.current) apply(result);
+        }, signal);
+        if (signal.aborted) return;
+        session.queue.shift();
+        apply(result);
       }
-      if (active.current) setError('');
     } catch {
-      if (active.current) setError('Синхронизация недоступна.');
+      if (!signal.aborted) setSnapshot(current => ({
+        session, data: current.session === session ? current.data : session.initial, error: 'Синхронизация недоступна.',
+      }));
     } finally {
-      working.current = false;
+      if (session.controller?.signal === signal) session.working = false;
     }
   }
 
   useEffect(() => {
-    active.current = true;
+    const controller = new AbortController();
+    session.controller = controller;
+    session.working = false;
     const refresh = () => { if (!document.hidden) void sync(true); };
     refresh();
     document.addEventListener('visibilitychange', refresh);
     window.addEventListener('focus', refresh);
     window.addEventListener('online', refresh);
     return () => {
-      active.current = false;
+      controller.abort();
       document.removeEventListener('visibilitychange', refresh);
       window.removeEventListener('focus', refresh);
       window.removeEventListener('online', refresh);
     };
-  }, [user]);
+  }, [session]);
 
   function setMark(list: List, id: number, checked: boolean) {
     lightHaptic();
     const change = { list, id, checked };
     if (user) {
-      queue.current.push(change);
-      setData(state => changed(state, change));
+      session.queue.push(change);
+      setSnapshot(current => ({
+        session, data: changed(current.session === session ? current.data : session.initial, change), error,
+      }));
       void sync(false);
     } else {
       const next = changed(data, change);
       save(list, next[list]);
-      setData(next);
+      setSnapshot({ session, data: next, error: '' });
     }
   }
   return <Context.Provider value={{ ...data, error, setMark, retry: () => void sync(true) }}>{children}</Context.Provider>;

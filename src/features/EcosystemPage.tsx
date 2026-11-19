@@ -1,5 +1,4 @@
 import { artSrc } from '../ui/warmArt';
-import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router';
 import { TokenQuotes } from './TokenQuotes';
 import tokens from '../../public/data/tokens.json';
@@ -73,11 +72,6 @@ const projects: Project[] = [
 
 export function EcosystemPage() {
   const { hash } = useLocation();
-  useEffect(() => {
-    if (!hash.startsWith('#token-')) return;
-    const target = document.getElementById(hash.slice(1));
-    if (target instanceof HTMLDetailsElement) target.open = true;
-  }, [hash]);
   return <>
     <section className="projectSection" aria-labelledby="ecosystem-projects">
       <h2 id="ecosystem-projects">Проекты экосистемы</h2>
@@ -105,12 +99,16 @@ export function EcosystemPage() {
     <TokenQuotes/>
     <section className="card">
       <h2>Токены экосистемы</h2>
-      {tokens.tokens.map(token => <details key={token.symbol} id={`token-${token.symbol}`}>
-        <summary><b className="gold">${token.symbol}</b> · {token.name}</summary>
+      {tokens.tokens.map(token => <details className="mediaDetails tokenContract" key={token.symbol} id={`token-${token.symbol}`} open={hash === `#token-${token.symbol}` || undefined}>
+        <summary>
+          <img src={artSrc(`/brand/tokens/${token.symbol === 'GRAM' ? 'gram.png' : token.symbol.toLowerCase() + '.webp'}`)} width="30" height="30" alt=""/>
+          <span><strong>{token.symbol}</strong><small>{token.name}</small></span>
+        </summary>
         <p>{token.role}</p>
         {'in_game_utility' in token && <p>{token.in_game_utility}</p>}
-        {token.master_address && <small className="address">{token.master_address}</small>}
-        {token.dex?.map(({ name, url }) => <div key={url}><a className="textLink" href={url} target="_blank" rel="noreferrer">{name}</a></div>)}
+        {token.master_address && <div className="tokenAddress"><small>Адрес контракта</small><code>{token.master_address}</code></div>}
+        <div className="projectLinks">{token.dex?.map(({ name, url }) =>
+          <a key={url} href={url} target="_blank" rel="noreferrer">Открыть на {name}</a>)}</div>
       </details>)}
     </section>
     <section className="card">

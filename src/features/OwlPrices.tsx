@@ -19,9 +19,10 @@ type Quote = {
   status: 'fresh' | 'stale' | 'unavailable';
 };
 type MarketPrices = { items: Quote[]; gramToUsdt: number | null };
+let lastMarket: MarketPrices | null = null;
 
 export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}) {
-  const [market, setMarket] = useState<MarketPrices | null>(null);
+  const [market, setMarket] = useState(lastMarket);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -31,7 +32,10 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
         if (!response.ok) throw new Error('Market unavailable');
         const data = await response.json();
         if (!Array.isArray(data.items)) throw new Error('Invalid market response');
-        setMarket(data);
+        if (!controller.signal.aborted) {
+          lastMarket = data;
+          setMarket(data);
+        }
       } catch {
         if (!controller.signal.aborted) setMarket(previous => previous
           ? { ...previous, gramToUsdt: null, items: previous.items.map(quote => ({
