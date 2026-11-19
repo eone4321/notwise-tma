@@ -369,6 +369,40 @@
 .feedingCard .mediaHeading { margin-bottom: 8px; }
 .modesCard .mediaDetails + .mediaDetails { border-top: 1px solid var(--game-panel-line); }
 
+.siegeRewards h3 { margin-block: 14px 7px; }
+.siegeRewardsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  margin: 0;
+}
+.siegeRewardsGrid > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  min-height: 36px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: var(--game-tile);
+}
+.siegeRewardsGrid dt { color: var(--muted); font-size: 11px; }
+.siegeRewardsGrid dd {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.siegeRewardsGrid .gameAttribute { font-size: 16px; }
+.siegeRewardDetails > summary { min-height: 46px; }
+.siegeRewardDetails .mediaRow { justify-content: space-between; gap: 7px; font-size: 13px; }
+.siegeRewardDetails .mediaRow > strong { font-size: 12px; }
+.siegeRewards .siegeChat { display: flex; justify-content: center; margin: 6px 0 9px; }
+
 .inventoryPanel .inventoryRow {
   grid-template-columns: 38px minmax(0, 1fr);
   align-items: start;

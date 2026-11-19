@@ -5,9 +5,10 @@ import { Price } from './Price';
 import squadShop from './squad-shop.json';
 import { artSrc } from '../ui/warmArt';
 import { Link, useLocation } from 'react-router';
-import { GameGlyph } from '../ui/GameGlyph';
+import { GameAttribute, GameGlyph } from '../ui/GameGlyph';
 import { GameArt } from '../ui/GameArt';
 import { shopPrice } from './shop';
+import { communityChat } from '../domain/guide-links';
 
 const squadItemUse: Record<string, string> = {
   'scroll-enchant-ring': 'Заточить кольцо до +20',
@@ -17,9 +18,41 @@ const squadItemUse: Record<string, string> = {
   'chiller': 'Заморозить начисление XP',
 };
 
+function SiegeRewards() {
+  return <section className="card siegeRewards" id="siege-rewards">
+    <h2>Награды за осаду</h2>
+    <p>За удержанные территории можно получить монеты, серебро сквада и усиления характеристик на 24 часа. Доля начисляется за раунды, в которых ты атаковал. Забери её в День празднования.</p>
+    <h3>Пример выплаты за 20 удержанных территорий</h3>
+    <dl className="siegeRewardsGrid">
+      <div><dt>Монеты</dt><dd><Price value={3500} currency="coins"/></dd></div>
+      <div><dt>Серебро сквада</dt><dd><Price value={700} currency="squad_silver"/></dd></div>
+      {([
+        ['wisdom', 'Мудрость', 8], ['endurance', 'Выносливость', 2],
+        ['agility', 'Ловкость', 4], ['strength', 'Сила', 4],
+      ] as const).map(([attribute, label, amount]) => <div key={attribute}>
+        <dt>{label}</dt><dd>+{amount} <GameAttribute name={attribute}/></dd>
+      </div>)}
+    </dl>
+    <p className="caption">Суммы из игрового отчёта. Твоя выплата зависит от территорий и участия в раундах.</p>
+    <a className="secondary siegeChat" href={communityChat} onClick={() => trackGuide('action:chat')}>
+      <GameGlyph name="chat"/>Чат для планирования осад
+    </a>
+    <details className="mediaDetails siegeRewardDetails">
+      <summary><strong>Примеры наград за территории</strong></summary>
+      <ul className="compactList">
+        <li className="mediaRow"><span>Янтарная роща</span><Price value={500} currency="coins"/></li>
+        <li className="mediaRow"><span>Рассветный лес</span><Price value={100} currency="squad_silver"/></li>
+        <li className="mediaRow"><span>Глухолесье</span><strong>+5 к мудрости</strong></li>
+        <li className="mediaRow"><span>Папоротниковая долина</span><Price value={500} currency="coins"/></li>
+        <li className="mediaRow"><span>Лисья низина</span><strong>+2 к выносливости</strong></li>
+      </ul>
+    </details>
+  </section>;
+}
+
 export function SquadPage({ gameEntry }: { gameEntry: string }) {
   const { pathname } = useLocation();
-  if (pathname === '/squads/war') return <><SquadMap/><section className="card squadIntro">
+  if (pathname === '/squads/war') return <><SiegeRewards/><SquadMap/><section className="card squadIntro">
     <h2>Как участвовать в осаде</h2>
     <ol className="referralSteps">
       <li>Вступи в сквад. С 4-го уровня откроется карта осады.</li>
@@ -50,11 +83,8 @@ export function SquadPage({ gameEntry }: { gameEntry: string }) {
       <p>Сквады доступны с 3-го уровня, война — с 4-го. Один раунд длится 8 часов. В конце раунда награду получает сквад, который удерживает территорию.</p>
       <Link className="textLink" to="/squads/war">Как участвовать и забрать награду</Link>
     </section>
+    <SiegeRewards/>
     <SquadMap/>
-    <section className="card">
-      <h2>Как получить награду</h2>
-      <p>Участвуй в атаке раунда, чтобы получить награду.</p><p>Территория даёт серебро сквада, монеты или +1–2 к атрибуту на 24 ч.</p>
-    </section>
     <section className="card">
       <div className="mediaHeading"><GameArt path="/game/items/lighter.webp" size={45}/><h2>Ежедневный ритуал</h2></div>
       <p>Одно благословение тратит заряд зажигалки. Если ритуал выполняет половина сквада, участники получают бонус на сутки.</p>
