@@ -13,6 +13,7 @@ import { ProgressStatus, useProgress } from './GuideProgress';
 import marketCollections from './market-collections';
 import stickerData from './sticker-data';
 import { chanceLabel, chancePerOpening } from '../domain/mechanics';
+import { useGuideLocale } from './guideLocale';
 
 const albums = ['Wonderland','Flying Saucer','Cosmo Zone','Summer Vibes','Wild Fortune','Hellborn','Mimizuku','Showtime','Power Mode','Naughty Mood','Hustle Pack','Spellbound','Wanted Sheriff','Internet Moments','Laa-Laa Land','Fine Art','The Family','GG Pack','Golden Scarab','Back to School'];
 const themes: Record<string, string> = { Showtime: 'Сцена и иллюзии' };
@@ -35,6 +36,9 @@ const stickerAlbum = (id: number) => Math.ceil(id / 5);
 export function CollectionPage() {
   const { pathname, hash, state } = useLocation();
   const keepParent = state?.guideDetail === true;
+  const { locale } = useGuideLocale();
+  const isRu = locale !== 'en';
+  const stickerTitle = (item: (typeof stickers)[number]) => (isRu ? (item.name_ru || item.name) : item.name);
   const { collected, completed, setMark } = useProgress();
   const isDone = (id: number) => collected.includes(id) || completed.includes(id);
   const albumNumber = Number(pathname.match(/albums\/(\d+)$/)?.[1]);
@@ -124,7 +128,7 @@ export function CollectionPage() {
         {matches.map(item => <div className="stickerProgressRow" key={item.id}>
           <details className="mediaDetails"><summary>
             <GameArt path={`/game/stickers/${item.id}.webp`} size={34}/>
-            <span><strong>{item.name}</strong><small>{item.kind === 'secret' ? 'Секрет' :
+            <span><strong>{stickerTitle(item)}</strong><small>{item.kind === 'secret' ? 'Секрет' :
               item.kind === 'achievement' ? 'Достижение' : 'Набор стикеров'}</small></span>
           </summary>
           {item.kind === 'secret' ? <DetailLink className="textLink" to={`/secrets#sticker-${item.id}`}>Условие секрета</DetailLink> :
@@ -136,7 +140,7 @@ export function CollectionPage() {
           </details>
           <label className="secretCheck"><input type="checkbox" checked={isDone(item.id)}
             onChange={event => setMark('collected', item.id, event.target.checked)}/>
-            <span className="sr-only">Собран: {item.name}</span></label>
+            <span className="sr-only">Собран: {stickerTitle(item)}</span></label>
         </div>)}
       </section>}
     </>}

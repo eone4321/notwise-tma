@@ -40,7 +40,7 @@ const sections = [
   ['Экосистема', '/ecosystem'], ['Пригласить друзей', '/referrals'],
   ['Памятка и режимы', '/care'], ['Памятка и режимы', '/modes'],
 ] as const;
-type Item={id:number;name:string;description:string;short_descr:string;rarity:number;kind?:string;key?:string};
+type Item={id:number;name:string;name_ru?:string;description:string;short_descr:string;rarity:number;kind?:string;key?:string};
 function App() {
   const loc = useLocation();
   const nav = useNavigate();
@@ -384,7 +384,7 @@ function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean;
         <h2>{group.title}</h2>
         {group.items.map(item => {
         const quest = quests.secret_quests.find(row => row.key === item.key);
-        const title = quest?.name.match(/\((.+)\)/)?.[1] ?? item.name;
+        const title = item.name_ru || (quest?.name.match(/\((.+)\)/)?.[1] ?? item.name);
         return <article className="secretRow" id={`sticker-${item.id}`} key={item.id} data-selected={selected === item.id}>
           <GameArt path={`/game/stickers/${item.id}.webp`} size={42}/>
           <div><h3>{title}</h3><small>{title !== item.name ? item.name + ' · ' : ''}Стикер №{item.id}</small>

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { DetailLink } from '../ui/DetailLink';
 import { GameArt } from '../ui/GameArt';
 import { GameGlyph } from '../ui/GameGlyph';
@@ -121,6 +121,7 @@ export function SkinFarmCalculator({
   const [presetId, setPresetId] = useState<number | null>(saved.presetId);
   const [activeTab, setActiveTab] = useState<SkinSlotKey>('body');
   const [presetModalOpen, setPresetModalOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [skinIdInput, setSkinIdInput] = useState('');
   const [skinIdError, setSkinIdError] = useState('');
   const [lookingUpId, setLookingUpId] = useState(false);
@@ -237,6 +238,10 @@ export function SkinFarmCalculator({
         </button>
       </div>
       <div className="buildLoadoutRight">
+        <button type="button" className="wardrobeActionIcon calcInfoBtn" title={copy('О калькуляторе скинов', 'About skin calculator')}
+          aria-label={copy('О калькуляторе скинов', 'About skin calculator')} onClick={() => { lightHaptic(); setInfoOpen(true); }}>
+          <GameGlyph name="info"/>
+        </button>
         <button type="button" className="wardrobeActionIcon" title={copy('Случайный образ', 'Randomize look')}
           aria-label={copy('Случайный образ', 'Randomize look')} onClick={randomize}>🎲</button>
         <button type="button" className="buildIconReset" title={copy('Сбросить скин', 'Reset skin')}
@@ -472,48 +477,104 @@ export function SkinFarmCalculator({
       title={copy('Примеры и поиск по №', 'Presets & Skin ID')}
       closeLabel={copy('Закрыть', 'Close')}
       onClose={() => setPresetModalOpen(false)}>
-      <form className="skinIdLookup" onSubmit={event => { event.preventDefault(); void lookupSkinById(); }}>
-        <input value={skinIdInput} inputMode="numeric" maxLength={5}
-          placeholder={copy('№ скина (например 5405)', 'Skin ID (e.g. 5405)')}
-          onChange={event => { setSkinIdInput(event.target.value.replace(/\D/g, '')); setSkinIdError(''); }}/>
-        <button className="secondary" type="submit" disabled={lookingUpId}>
-          {lookingUpId ? '…' : copy('Примерить', 'Load')}
+      {requestClose => <>
+        <form className="skinIdLookup" onSubmit={event => { event.preventDefault(); void lookupSkinById(); }}>
+          <input value={skinIdInput} inputMode="numeric" maxLength={5}
+            placeholder={copy('№ скина (например 5405)', 'Skin ID (e.g. 5405)')}
+            onChange={event => { setSkinIdInput(event.target.value.replace(/\D/g, '')); setSkinIdError(''); }}/>
+          <button className="secondary" type="submit" disabled={lookingUpId}>
+            {lookingUpId ? '…' : copy('Примерить', 'Load')}
+          </button>
+        </form>
+        {skinIdError && <p className="caption skinLookupError">{skinIdError}</p>}
+        <div className="buildPickerOptions">
+          {skinPresets.map(preset => {
+            const bonus = skinBonusForSelection(preset.selection);
+            const selected = presetId === preset.id;
+            return <button key={preset.id} type="button" className="buildPickerOption"
+              aria-pressed={selected}
+              onClick={() => { applyPreset(preset.id, preset.selection); requestClose(); }}>
+              <img className="skinPresetThumb" src={artSrc(preset.thumb)} width="38" height="38" alt=""/>
+              <span>
+                <strong>{copy(preset.nameRu, preset.nameEn)} · #{preset.id}</strong>
+                <small>+{bonus}% {copy('без заточки', 'base bonus')}</small>
+              </span>
+              <span className="buildPickerCheck" aria-hidden="true">{selected ? '✓' : ''}</span>
+            </button>;
+          })}
+        </div>
+      </>}
+    </SkinModal>}
+
+    {infoOpen && <SkinModal
+      title={copy('Зачем считать бонус к монетам', 'Why calculate coin bonus')}
+      closeLabel={copy('Закрыть', 'Close')}
+      onClose={() => setInfoOpen(false)}>
+      {requestClose => <div className="calcInfoSheetBody">
+        <p>{copy(
+          'Суммарный процент (+% к монетам) увеличивает добычу золотых монет совы: в полётах, при открытии капсул и в ежедневных активностях.',
+          'Your total coin bonus (+% coins) increases gold coin earnings across flights, capsule openings and daily activities.',
+        )}</p>
+        <div className="calcInfoList">
+          <div>
+            <strong>{copy('1. Детали скина (до +40% базово)', '1. Skin traits (up to +40% base)')}</strong>
+            <p>{copy('Любая обычная деталь в 5 слотах даёт +5%, цепь NOT на груди — +10%, золотое оперение — +15%.', 'Any standard trait in the 5 slots grants +5%, NOT Chain grants +10%, and Golden plumage grants +15%.')}</p>
+          </div>
+          <div>
+            <strong>{copy('2. Заточка скина и колец (+5% за ступень)', '2. Skin & ring enchanting (+5% per level)')}</strong>
+            <p>{copy('Каждый +1 заточки скина и каждого из 3 колец добавляет ещё +5% к монетам (вплоть до +20 на предмет). До +3 заточка 100% безопасна, а с +4 появляется риск сгорания в осколки скорлупы.', 'Each +1 enchant on your skin and up to 3 rings adds +5% coins (up to +20 each). Enchanting to +3 is 100% safe; from +4 failed attempts burn the item into shards.')}</p>
+          </div>
+          <div>
+            <strong>{copy('3. Артефакт и боевая лига', '3. Artifact & battle league')}</strong>
+            <p>{copy('Экипированный Монтмориллонит добавляет +10% к монетам и держит полное HP, а текущая боевая лига даёт ещё от +1% до +6%.', 'Equipped Montmorillonite adds +10% coins and keeps HP full, while your battle league adds +1% to +6%.')}</p>
+          </div>
+        </div>
+        <button type="button" className="secondary calcInfoDoneBtn" onClick={requestClose}>
+          {copy('Понятно', 'Got it')}
         </button>
-      </form>
-      {skinIdError && <p className="caption skinLookupError">{skinIdError}</p>}
-      <div className="buildPickerOptions">
-        {skinPresets.map(preset => {
-          const bonus = skinBonusForSelection(preset.selection);
-          const selected = presetId === preset.id;
-          return <button key={preset.id} type="button" className="buildPickerOption"
-            aria-pressed={selected}
-            onClick={() => { applyPreset(preset.id, preset.selection); setPresetModalOpen(false); }}>
-            <img className="skinPresetThumb" src={artSrc(preset.thumb)} width="38" height="38" alt=""/>
-            <span>
-              <strong>{copy(preset.nameRu, preset.nameEn)} · #{preset.id}</strong>
-              <small>+{bonus}% {copy('без заточки', 'base bonus')}</small>
-            </span>
-            <span className="buildPickerCheck" aria-hidden="true">{selected ? '✓' : ''}</span>
-          </button>;
-        })}
-      </div>
+      </div>}
     </SkinModal>}
   </section>;
 }
 
+const sheetDrawerEasing = 'cubic-bezier(0.32, 0.72, 0, 1)';
+const sheetReduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 function SkinModal({ title, closeLabel, onClose, children }: {
-  title: string; closeLabel: string; onClose: () => void; children: ReactNode;
+  title: string; closeLabel: string; onClose: () => void; children: ReactNode | ((requestClose: () => void) => ReactNode);
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const animation = useRef<Animation | null>(null);
   const titleId = useId();
   useModal(ref, true);
+  useLayoutEffect(() => {
+    const dialog = ref.current;
+    if (!dialog || sheetReduceMotion()) return;
+    animation.current = dialog.animate([{ translate: '0 100%' }, { translate: '0 0' }],
+      { duration: 460, easing: sheetDrawerEasing });
+    return () => animation.current?.cancel();
+  }, []);
+
+  function close() {
+    const dialog = ref.current;
+    if (!dialog || dialog.dataset.closing) return;
+    const from = getComputedStyle(dialog).translate;
+    animation.current?.cancel();
+    if (sheetReduceMotion()) { onClose(); return; }
+    dialog.dataset.closing = 'true';
+    animation.current = dialog.animate([{ translate: from }, { translate: '0 100%' }],
+      { duration: 360, easing: sheetDrawerEasing, fill: 'forwards' });
+    animation.current.finished.then(onClose, () => {});
+  }
+
   return <dialog className="modal buildPickerModal" ref={ref} aria-labelledby={titleId}
-    onCancel={event => { event.preventDefault(); onClose(); }}
-    onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
+    onCancel={event => { event.preventDefault(); close(); }}
+    onClick={event => { if (event.target === event.currentTarget) close(); }}>
     <div className="dialogBody">
+      <span className="sheetGrabber" aria-hidden="true"/>
       <header className="buildHeading"><h2 id={titleId} data-dialog-title tabIndex={-1}>{title}</h2>
-        <button className="close" type="button" aria-label={closeLabel} onClick={onClose}>×</button></header>
-      {children}
+        <button className="close" type="button" aria-label={closeLabel} onClick={() => { lightHaptic(); close(); }}>×</button></header>
+      {typeof children === 'function' ? children(close) : children}
     </div>
   </dialog>;
 }

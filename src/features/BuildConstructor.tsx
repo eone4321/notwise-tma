@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { battleStats, skillCooldown, skillMana, startingAttribute } from '../domain/combat';
 import { GameArt } from '../ui/GameArt';
@@ -172,6 +172,8 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
   const [budgetDraft, setBudgetDraft] = useState<string | null>(null);
   const [picker, setPicker] = useState<Picker | null>(null);
   const [choosePreset, setChoosePreset] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [ringEnchantPreview, setRingEnchantPreview] = useState(0);
   const spent = totalAttributes(state.points);
   const budget = state.budget ?? state.level;
   const left = budget - spent;
@@ -179,6 +181,24 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
   const total = activeAttributes(state);
   const results = battleStats(state.level, total.strength, total.agility, total.wisdom, total.endurance);
   const nameOf = (skill: typeof combatSkills[number]) => lang ? skill.name : skill.title;
+  const equippedRingsCount = state.rings.filter(Boolean).length;
+  const mainEnchantLevel = equippedRingsCount > 0
+    ? Math.max(...state.rings.map(slot => slot?.enchant ?? 0))
+    : ringEnchantPreview;
+  const nextMainTarget = Math.min(20, mainEnchantLevel + 1);
+  const mainEnchantSuccess = 100 - Math.max(0, (nextMainTarget - 1) - 2) * 5;
+  const mainEnchantBurn = 100 - mainEnchantSuccess;
+  const mainRiskZone = mainEnchantLevel < 3 ? 'safe' : mainEnchantLevel < 10 ? 'mid' : 'high';
+
+  function applyMainRingEnchant(nextLvl: number) {
+    const clamped = Math.max(0, Math.min(20, nextLvl));
+    setRingEnchantPreview(clamped);
+    if (state.rings.some(Boolean)) {
+      update({
+        rings: state.rings.map(slot => slot ? { ...slot, enchant: clamped } : null),
+      });
+    }
+  }
 
   const update = (change: Partial<BuildState>) => {
     trackGuide('build:edit');
@@ -230,7 +250,7 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
           </label>
           <button type="button" className="buildPresetChip" aria-haspopup="dialog" onClick={() => { lightHaptic(); setChoosePreset(true); }}>
             {selectedPreset ? <GameAttribute name={selectedPreset.icon}/> : <GameGlyph name="sparkles"/>}
-            <span>{selectedPreset ? selectedPreset.name[lang] : copy('Готовая сборка', 'Preset build')}</span>
+            <span>{selectedPreset ? selectedPreset.name[lang] : copy('Готовые', 'Presets')}</span>
             <span className="buildChipCaret" aria-hidden="true">▾</span>
           </button>
         </div>
@@ -238,6 +258,10 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
           <span className="buildBudgetPill" data-empty={left === 0 || undefined}>
             {left === 0 ? copy('✓ 0 очк.', '✓ 0 pts') : copy(`Свободно: ${left}`, `Free: ${left}`)}
           </span>
+          <button type="button" className="wardrobeActionIcon calcInfoBtn" title={copy('О калькуляторе билдов', 'About build calculator')}
+            aria-label={copy('О калькуляторе билдов', 'About build calculator')} onClick={() => { lightHaptic(); setInfoOpen(true); }}>
+            <GameGlyph name="info"/>
+          </button>
           <button type="button" className="buildIconReset" title={copy('Сбросить билд', 'Reset build')}
             aria-label={copy('Сбросить билд', 'Reset build')} onClick={() => {
               lightHaptic();
@@ -245,6 +269,7 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
               setComparison(null);
               setBudgetDraft(null);
               setSharedBanner(false);
+              setRingEnchantPreview(0);
               setState(initialBuild());
             }}>↺</button>
         </div>
@@ -285,7 +310,7 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
             }}>
             {warningCount === 0
               ? copy('✓ Баланс ОК', '✓ Balanced')
-              : copy(`! Советы (${warningCount})`, `! Tips (${warningCount})`)}
+              : copy(`Советы (${warningCount})`, `Tips (${warningCount})`)}
           </a>
         </div>
 
@@ -346,6 +371,53 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
             <div className="buildStatBar" aria-hidden="true"><span style={{ width: `${pct}%` }}/></div>
           </div>;
         })}
+      </div>
+
+      <div className="wardrobeEnchantCard buildRingEnchantCard">
+        <div className="skinEnchantBox">
+          <div className="skinEnchantMeta">
+            <GameArt path="/game/items/scroll-enchant-ring.webp" size={28}/>
+            <div className="skinEnchantText">
+              <strong>
+                <span>{copy('Заточка колец', 'Ring enchant')}</span>
+                <b className="skinEnchantBonusTag">
+                  {mainEnchantLevel > 0 ? `+${mainEnchantLevel} · +${mainEnchantLevel * 5}%` : '+0%'}
+                </b>
+              </strong>
+              <small data-risk={mainRiskZone}>
+                {mainEnchantLevel >= 20
+                  ? copy('Максимум +20 (+20 к стату · +100% монет)', 'Max +20 (+20 stat · +100% coins)')
+                  : mainEnchantBurn > 0
+                    ? copy(`На +${nextMainTarget}: ${mainEnchantSuccess}% успех · ${mainEnchantBurn}% риск 🔥`, `To +${nextMainTarget}: ${mainEnchantSuccess}% ok · ${mainEnchantBurn}% burn 🔥`)
+                    : copy(`На +${nextMainTarget}: 100% без сгорания`, `To +${nextMainTarget}: 100% safe`)}
+              </small>
+            </div>
+          </div>
+          <div className="buildStatStep skinEnchantStep">
+            <button type="button" aria-label={copy('Уменьшить заточку', 'Decrease enchant')}
+              disabled={mainEnchantLevel <= 0}
+              onClick={() => { lightHaptic(); applyMainRingEnchant(mainEnchantLevel - 1); }}>−</button>
+            <input aria-label={copy('Уровень заточки', 'Enchant level')}
+              value={mainEnchantLevel || ''} placeholder="0" inputMode="numeric" maxLength={2}
+              onChange={event => {
+                const digits = event.target.value.replace(/\D/g, '');
+                applyMainRingEnchant(digits ? Number(digits) : 0);
+              }}/>
+            <button type="button" aria-label={copy('Увеличить заточку', 'Increase enchant')}
+              disabled={mainEnchantLevel >= 20}
+              onClick={() => { lightHaptic(); applyMainRingEnchant(mainEnchantLevel + 1); }}>+</button>
+          </div>
+        </div>
+        <div className="wardrobeRiskMeter" aria-hidden="true">
+          <div className="wardrobeRiskTrack">
+            <div className="wardrobeRiskFill" data-risk={mainRiskZone} style={{ width: `${(mainEnchantLevel / 20) * 100}%` }}/>
+            <span className="wardrobeRiskSafeMark" style={{ left: '15%' }}/>
+          </div>
+          <div className="wardrobeRiskScale">
+            <span>{copy('+0..+3 безопасно (100%)', '+0..+3 safe (100%)')}</span>
+            <span>{copy('+4..+20 предмет может сгореть 🔥', '+4..+20 item can burn 🔥')}</span>
+          </div>
+        </div>
       </div>
 
       <details className="mediaDetails buildAdvanced" id="build-advanced">
@@ -442,19 +514,25 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
     </section>
 
     {choosePreset && <BuildPicker title={copy('Готовые сборки', 'Preset builds')} closeLabel={copy('Закрыть', 'Close')} onClose={() => setChoosePreset(false)}>
-      <p className="caption buildPresetNote">{copy('Сборка подставит очки, кольца и навыки под твой уровень.', 'Preset fills points, rings and skills for your current level.')}</p>
-      <div className="buildPickerOptions">
-        {builds.map(build => <PickerOption key={build.id} art={skillArt(build.signature)}
-          title={build.name[lang]} meta={build.role[lang]} selected={selectedPreset?.id === build.id} disabled={false}
-          onSelect={() => { applyPreset(build); setChoosePreset(false); }}/>)}
-      </div>
+      {requestClose => <>
+        <p className="caption buildPresetNote">{copy('Сборка подставит очки, кольца и навыки под твой уровень.', 'Preset fills points, rings and skills for your current level.')}</p>
+        <div className="buildPickerOptions">
+          {builds.map(build => <PickerOption key={build.id} art={skillArt(build.signature)}
+            title={build.name[lang]} meta={build.role[lang]} selected={selectedPreset?.id === build.id} disabled={false}
+            onSelect={() => { applyPreset(build); requestClose(); }}/>)}
+        </div>
+      </>}
     </BuildPicker>}
 
     {picker && <BuildPicker key={picker.kind} title={picker.kind === 'ring' ? copy('Слот кольца ', 'Ring slot ') + (picker.slot + 1) : copy('Слот навыка ', 'Skill slot ') + (picker.slot + 1)}
       closeLabel={copy('Закрыть', 'Close')} onClose={() => setPicker(null)}>
-      <div className="buildPickerOptions">
+      {requestClose => <div className="buildPickerOptions">
         {picker.kind === 'ring' && state.rings[picker.slot] && (() => {
           const equipped = state.rings[picker.slot]!;
+          const ringNext = Math.min(20, equipped.enchant + 1);
+          const ringSuccess = 100 - Math.max(0, (ringNext - 1) - 2) * 5;
+          const ringBurn = 100 - ringSuccess;
+          const ringRisk = equipped.enchant < 3 ? 'safe' : equipped.enchant < 10 ? 'mid' : 'high';
           return <div className="buildEquippedCard">
             <div className="buildEquippedTop">
               <GameArt path={ringArt(equipped.ring.id)} size={40}/>
@@ -465,18 +543,60 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
               <button className="buildPillButton" type="button" onClick={() => {
                 lightHaptic();
                 update({ rings: replaceSlot(state.rings, picker.slot, null) });
-                setPicker(null);
+                requestClose();
               }}>{copy('Снять', 'Remove')}</button>
             </div>
-            <div className="buildEquippedActions">
-              <PickerLevel title={copy('Заточка кольца', 'Ring sharpening')} min={0} max={20}
-                value={equipped.enchant} onChange={enchant => {
-                  update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant }) });
-                }}/>
-              <button className="primary buildEquippedDone" type="button" onClick={() => { lightHaptic(); setPicker(null); }}>
-                {copy('Готово', 'Done')}
-              </button>
+            <div className="skinEnchantBox buildModalEnchantBox">
+              <div className="skinEnchantMeta">
+                <div className="skinEnchantText">
+                  <strong>
+                    <span>{copy('Заточка кольца', 'Ring enchant')}</span>
+                    <b className="skinEnchantBonusTag">+{equipped.enchant} · +{equipped.enchant * 5}%</b>
+                  </strong>
+                  <small data-risk={ringRisk}>
+                    {equipped.enchant >= 20
+                      ? copy('Максимум +20 (+100% монет)', 'Max +20 (+100% coins)')
+                      : ringBurn > 0
+                        ? copy(`На +${ringNext}: ${ringSuccess}% успех · ${ringBurn}% риск 🔥`, `To +${ringNext}: ${ringSuccess}% ok · ${ringBurn}% burn 🔥`)
+                        : copy(`На +${ringNext}: 100% без сгорания`, `To +${ringNext}: 100% safe`)}
+                  </small>
+                </div>
+              </div>
+              <div className="buildStatStep skinEnchantStep">
+                <button type="button" aria-label={copy('Уменьшить заточку', 'Decrease enchant')}
+                  disabled={equipped.enchant <= 0}
+                  onClick={() => {
+                    lightHaptic();
+                    update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant: Math.max(0, equipped.enchant - 1) }) });
+                  }}>−</button>
+                <input aria-label={copy('Заточка кольца', 'Ring sharpening')}
+                  value={equipped.enchant || ''} placeholder="0" inputMode="numeric" maxLength={2}
+                  onChange={event => {
+                    const digits = event.target.value.replace(/\D/g, '');
+                    const val = digits ? Math.min(20, Math.max(0, Number(digits))) : 0;
+                    update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant: val }) });
+                  }}/>
+                <button type="button" aria-label={copy('Увеличить заточку', 'Increase enchant')}
+                  disabled={equipped.enchant >= 20}
+                  onClick={() => {
+                    lightHaptic();
+                    update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant: Math.min(20, equipped.enchant + 1) }) });
+                  }}>+</button>
+              </div>
             </div>
+            <div className="wardrobeRiskMeter" aria-hidden="true">
+              <div className="wardrobeRiskTrack">
+                <div className="wardrobeRiskFill" data-risk={ringRisk} style={{ width: `${(equipped.enchant / 20) * 100}%` }}/>
+                <span className="wardrobeRiskSafeMark" style={{ left: '15%' }}/>
+              </div>
+              <div className="wardrobeRiskScale">
+                <span>{copy('+0..+3 безопасно', '+0..+3 safe')}</span>
+                <span>{copy('+4..+20 риск сгорания 🔥', '+4..+20 burn risk 🔥')}</span>
+              </div>
+            </div>
+            <button className="buildPillButton buildEquippedDonePill buildEquippedConfirmBtn" type="button" onClick={() => { lightHaptic(); requestClose(); }}>
+              {copy('Готово', 'Done')}
+            </button>
           </div>;
         })()}
         {picker.kind === 'skill' && state.skills[picker.slot] && (() => {
@@ -494,19 +614,44 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
               <button className="buildPillButton" type="button" onClick={() => {
                 lightHaptic();
                 update({ skills: replaceSlot(state.skills, picker.slot, null) });
-                setPicker(null);
+                requestClose();
               }}>{copy('Снять', 'Remove')}</button>
             </div>
             <p className="buildEquippedEffect">{skillEffect(skill.id, equipped.level, state.level, lang).map(row => row.join(' ')).join(' · ')}</p>
-            <div className="buildEquippedActions">
-              <PickerLevel title={copy('Уровень навыка', 'Skill level')} min={1} max={21}
-                value={equipped.level} onChange={level => {
-                  update({ skills: replaceSlot(state.skills, picker.slot, { ...equipped, level }) });
-                }}/>
-              <button className="primary buildEquippedDone" type="button" onClick={() => { lightHaptic(); setPicker(null); }}>
-                {copy('Готово', 'Done')}
-              </button>
+            <div className="skinEnchantBox buildModalEnchantBox">
+              <div className="skinEnchantMeta">
+                <div className="skinEnchantText">
+                  <strong>
+                    <span>{copy('Уровень навыка в Додзё', 'Dojo skill level')}</span>
+                    <b className="skinEnchantBonusTag">{copy(`Ур. ${equipped.level} / 21`, `Lv. ${equipped.level} / 21`)}</b>
+                  </strong>
+                </div>
+              </div>
+              <div className="buildStatStep skinEnchantStep">
+                <button type="button" aria-label={copy('Уменьшить уровень', 'Decrease level')}
+                  disabled={equipped.level <= 1}
+                  onClick={() => {
+                    lightHaptic();
+                    update({ skills: replaceSlot(state.skills, picker.slot, { ...equipped, level: Math.max(1, equipped.level - 1) }) });
+                  }}>−</button>
+                <input aria-label={copy('Уровень навыка', 'Skill level')}
+                  value={equipped.level} inputMode="numeric" maxLength={2}
+                  onChange={event => {
+                    const digits = event.target.value.replace(/\D/g, '');
+                    const val = digits ? Math.min(21, Math.max(1, Number(digits))) : 1;
+                    update({ skills: replaceSlot(state.skills, picker.slot, { ...equipped, level: val }) });
+                  }}/>
+                <button type="button" aria-label={copy('Увеличить уровень', 'Increase level')}
+                  disabled={equipped.level >= 21}
+                  onClick={() => {
+                    lightHaptic();
+                    update({ skills: replaceSlot(state.skills, picker.slot, { ...equipped, level: Math.min(21, equipped.level + 1) }) });
+                  }}>+</button>
+              </div>
             </div>
+            <button className="buildPillButton buildEquippedDonePill buildEquippedConfirmBtn" type="button" onClick={() => { lightHaptic(); requestClose(); }}>
+              {copy('Готово', 'Done')}
+            </button>
           </div> : null;
         })()}
         {picker.kind === 'ring' ? ringCatalog.map(ring => {
@@ -516,7 +661,7 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
             disabled={locked} selected={state.rings[picker.slot]?.ring.id === ring.id} onSelect={button => {
               lightHaptic();
               const equipped = state.rings[picker.slot];
-              update({ rings: replaceSlot(state.rings, picker.slot, equipped?.ring.id === ring.id ? equipped : { ring, enchant: 0 }) });
+              update({ rings: replaceSlot(state.rings, picker.slot, equipped?.ring.id === ring.id ? equipped : { ring, enchant: ringEnchantPreview }) });
               button.closest('.dialogBody')?.scrollTo({ top: 0, behavior: 'smooth' });
             }}/>;
         }) : <SkillPickerOptions state={state} slot={picker.slot} lang={lang} onSelect={(id, button) => {
@@ -525,8 +670,38 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
           update({ skills: replaceSlot(state.skills, picker.slot, equipped?.id === id ? equipped : { id, level: 1 }) });
           button.closest('.dialogBody')?.scrollTo({ top: 0, behavior: 'smooth' });
         }}/>}
-      </div>
+      </div>}
     </BuildPicker>}
+
+    {infoOpen && <BuildPicker
+      title={copy('Зачем нужен калькулятор билдов', 'Why use the build calculator')}
+      closeLabel={copy('Закрыть', 'Close')}
+      onClose={() => setInfoOpen(false)}>
+      {requestClose => <div className="calcInfoSheetBody">
+        <p>{copy(
+          'Калькулятор точно повторяет боевую математику NOT Wise: показывает, как очки характеристик, навыки, кольца и баффы влияют на HP, ману, урон, уклонение и крит в PvP-боях и рейдах.',
+          'The calculator mirrors NOT Wise combat math: see how attributes, skills, rings and buffs affect HP, mana, hit damage, dodge and crit in PvP duels and raids.',
+        )}</p>
+        <div className="calcInfoList">
+          <div>
+            <strong>{copy('1. Четыре характеристики и потолок 70%', '1. Four attributes & 70% cap')}</strong>
+            <p>{copy('Сила увеличивает обычный удар, Выносливость даёт +2 HP за очко, Ловкость даёт +0,7% уклонения (максимум 70% на 100 очках), Мудрость даёт +20 маны и +0,7% шанса крита ×2 (потолок крита — 70% на 100 очках).', 'Strength raises basic hit, Endurance grants +2 HP/pt, Agility grants +0.7% dodge (capped at 70% at 100 pts), Wisdom grants +20 mana and +0.7% crit ×2 (capped at 70% at 100 pts).')}</p>
+          </div>
+          <div>
+            <strong>{copy('2. Навыки и очки SP', '2. Skills & SP points')}</strong>
+            <p>{copy('Чтобы открыть навык в ветке, вложи в неё нужное число базовых очков (от 1 до 5). Каждый навык прокачивается в Додзё с 1 до 21 уровня за SP.', 'Invest 1–5 base points into a branch to unlock its skills. Each skill upgrades in the Dojo from level 1 to 21 using SP.')}</p>
+          </div>
+          <div>
+            <strong>{copy('3. Кольца, заточка и баффы', '3. Rings, enchanting & buffs')}</strong>
+            <p>{copy('До 3 колец (с 5, 10 и 20 ур.) дают от +2 до +10 к стату. Каждая ступень заточки кольца добавляет ещё +1 к стату и +5% к монетам (до +3 без риска, с +4 кольцо может сгореть в скорлупу).', 'Equip up to 3 rings (+2 to +10 stat). Each ring enchant adds +1 stat and +5% coin bonus (safe up to +3, burn risk from +4).')}</p>
+          </div>
+        </div>
+        <button type="button" className="secondary calcInfoDoneBtn" onClick={requestClose}>
+          {copy('Понятно', 'Got it')}
+        </button>
+      </div>}
+    </BuildPicker>}
+
     {shareOpen && <BuildShareDialog state={state} lang={lang} presetName={selectedPreset?.name[lang]}
       referralCode={referralCode} close={() => setShareOpen(false)}/>}
   </div>;
@@ -555,7 +730,7 @@ function BuildShareDialog({ state, lang, presetName, referralCode, close }: {
   }
 
   return <BuildPicker title={copy('Поделиться сборкой', 'Share build')} closeLabel={copy('Закрыть', 'Close')} onClose={close}>
-    <div className="buildShareBody">
+    {requestClose => <div className="buildShareBody">
       <p className="buildShareSummary">{summary}</p>
       <label className="field shareLink">
         <span className="sr-only">{copy('Ссылка на сборку', 'Build link')}</span>
@@ -566,14 +741,14 @@ function BuildShareDialog({ state, lang, presetName, referralCode, close }: {
           lightHaptic();
           trackGuide('build:share');
           void shareGuide(url, summary);
-          close();
+          requestClose();
         }}>{copy('Отправить в Telegram', 'Send in Telegram')}</button>
         <button className="secondary" type="button" onClick={() => void copyUrl()}>
           {copy('Скопировать ссылку', 'Copy link')}
         </button>
       </div>
       {feedback && <p className="supportStatus" role="status">{feedback}</p>}
-    </div>
+    </div>}
   </BuildPicker>;
 }
 
@@ -589,17 +764,44 @@ function AttributeInput({ name, value, onCommit }: { name: string; value: number
     }}/>;
 }
 
-function BuildPicker({ title, closeLabel, onClose, children }: { title: string; closeLabel: string; onClose: () => void; children: ReactNode }) {
+const buildSheetEasing = 'cubic-bezier(0.32, 0.72, 0, 1)';
+const buildSheetReduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function BuildPicker({ title, closeLabel, onClose, children }: {
+  title: string; closeLabel: string; onClose: () => void; children: ReactNode | ((requestClose: () => void) => ReactNode);
+}) {
   const ref = useRef<HTMLDialogElement>(null);
+  const animation = useRef<Animation | null>(null);
   const titleId = useId();
   useModal(ref, true);
+  useLayoutEffect(() => {
+    const dialog = ref.current;
+    if (!dialog || buildSheetReduceMotion()) return;
+    animation.current = dialog.animate([{ translate: '0 100%' }, { translate: '0 0' }],
+      { duration: 460, easing: buildSheetEasing });
+    return () => animation.current?.cancel();
+  }, []);
+
+  function close() {
+    const dialog = ref.current;
+    if (!dialog || dialog.dataset.closing) return;
+    const from = getComputedStyle(dialog).translate;
+    animation.current?.cancel();
+    if (buildSheetReduceMotion()) { onClose(); return; }
+    dialog.dataset.closing = 'true';
+    animation.current = dialog.animate([{ translate: from }, { translate: '0 100%' }],
+      { duration: 360, easing: buildSheetEasing, fill: 'forwards' });
+    animation.current.finished.then(onClose, () => {});
+  }
+
   return <dialog className="modal buildPickerModal" ref={ref} aria-labelledby={titleId}
-    onCancel={event => { event.preventDefault(); onClose(); }}
-    onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
+    onCancel={event => { event.preventDefault(); close(); }}
+    onClick={event => { if (event.target === event.currentTarget) close(); }}>
     <div className="dialogBody">
+      <span className="sheetGrabber" aria-hidden="true"/>
       <header className="buildHeading"><h2 id={titleId} data-dialog-title tabIndex={-1}>{title}</h2>
-        <button className="close" type="button" aria-label={closeLabel} onClick={onClose}>×</button></header>
-      {children}
+        <button className="close" type="button" aria-label={closeLabel} onClick={() => { lightHaptic(); close(); }}>×</button></header>
+      {typeof children === 'function' ? children(close) : children}
     </div>
   </dialog>;
 }
@@ -636,16 +838,6 @@ function PickerOption({ art, title, meta, disabled, selected, onSelect }: {
     <GameArt path={art} size={36}/><span><strong>{title}</strong><small>{meta}</small></span>
     <span className="buildPickerCheck" aria-hidden="true">{selected ? '✓' : ''}</span>
   </button>;
-}
-
-function PickerLevel({ title, min, max, value, onChange }: {
-  title: string; min: number; max: number; value: number; onChange: (value: number) => void;
-}) {
-  return <label className="field buildPickerLevel"><span>{title}</span>
-    <select value={value} onChange={event => onChange(Number(event.target.value))}>
-      {Array.from({ length: max - min + 1 }, (_, i) => <option key={i} value={i + min}>{min === 0 ? '+' : ''}{i + min}</option>)}
-    </select>
-  </label>;
 }
 
 function BuildAnalysis({ state, lang }: { state: BuildState; lang: number }) {

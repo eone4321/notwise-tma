@@ -23,16 +23,20 @@ export function skillEffect(id: number, level: number, owlLevel: number, lang = 
   const HP = ' HP';
   const seconds = lang ? ' s' : ' с';
   const rows: [string, string][] = [];
-  const whole = Math.floor(amount);
+  const frac = amount - Math.floor(amount);
+  const countRange = frac < 0.05 ? String(Math.floor(amount)) : frac > 0.95 ? String(Math.ceil(amount)) : `${Math.floor(amount)}–${Math.ceil(amount)}`;
   if (amount) {
     const hpVal = amount * multiplier;
     const main = healthEffects.has(type) ? format(hpVal >= 10 ? Math.round(hpVal) : hpVal) + HP :
-      type === 'evade' || type === 'flurry' ? (whole === amount ? String(whole) : `${whole}–${whole + 1}`) : Math.trunc(amount) + '%';
+      type === 'evade' || type === 'flurry' ? countRange : Math.trunc(amount) + '%';
     rows.push([(effectLabels[type] ?? ['Базовый урон', 'Base damage'])[lang], main]);
   }
-  if ('dps' in extra) rows.push([lang ? 'Burn' : 'Поджог', format(extra.dps[level - 1] * multiplier) + (lang ? ' HP/s' : ' HP/с')]);
+  if ('dps' in extra) {
+    const dpsVal = extra.dps[level - 1] * multiplier;
+    rows.push([lang ? 'Burn' : 'Поджог', format(dpsVal >= 10 ? Math.round(dpsVal) : dpsVal) + (lang ? ' HP/s' : ' HP/с')]);
+  }
   if (duration) rows.push([type === 'poison' ? (lang ? 'Triggers' : 'Срабатываний') : (lang ? 'Duration' : 'Длительность'),
-    type === 'poison' ? format(duration) : format(duration) + seconds]);
+    type === 'poison' ? String(Math.round(duration)) : format(duration) + seconds]);
   return rows;
 }
 

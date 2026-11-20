@@ -429,8 +429,11 @@ export function InventoryPage() {
       <ul className="compactList singleItem">{item === skinNft ? <SkinCollectionRow/> : <InventoryRow item={item}/>}</ul></> : <p>Предмет не найден.</p>}
   </section>;
 
+  const categoryOrder = ['decor', 'skins', 'gear', 'consumables', 'craft', 'care', 'squad'] as const;
+  const orderedCategories = categoryOrder.map(id => [id, categories[id]] as const);
+
   return <>
-    {(category ? [[slug, category] as const] : Object.entries(categories)).map(([id, entry]) =>
+    {(category ? [[slug, category] as const] : orderedCategories).map(([id, entry]) =>
         <details className="card mediaDetails inventoryPanel inventorySection" key={id} id={'inventory-' + id}
           data-category={id} open={category !== undefined || undefined}>
           <summary><GameArt path={itemPath(entry.icon)} size={34}/><span><strong>{entry.title}</strong><small>{entry.summary}</small></span></summary>

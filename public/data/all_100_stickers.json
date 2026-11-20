@@ -4,21 +4,24 @@
     "name": "Queen of Hearts",
     "description": "Off with their heads! Politely.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Червонная королева"
   },
   {
     "id": 2,
     "name": "Down the Rabbit Hole",
     "description": "Coins, clocks and eggs. Normal Tuesday.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "В кроличью нору"
   },
   {
     "id": 3,
     "name": "Cheshire Grin",
     "description": "The smile stays even when the owl leaves.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Чеширская улыбка"
   },
   {
     "id": 4,
@@ -27,7 +30,8 @@
     "short_descr": "Some owls are always in a hurry.",
     "rarity": 3,
     "kind": "secret",
-    "key": "time_traveller"
+    "key": "time_traveller",
+    "name_ru": "Путешественник во времени"
   },
   {
     "id": 5,
@@ -36,7 +40,8 @@
     "short_descr": "Play 10 days in a row",
     "rarity": 2,
     "kind": "achievement",
-    "key": "days_streak"
+    "key": "days_streak",
+    "name_ru": "Время чая"
   },
   {
     "id": 6,
@@ -45,21 +50,24 @@
     "short_descr": "Complete 30 flights",
     "rarity": 3,
     "kind": "achievement",
-    "key": "flights"
+    "key": "flights",
+    "name_ru": "Пилот НЛО"
   },
   {
     "id": 7,
     "name": "Close Encounter",
     "description": "They come in peace. Probably.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Близкий контакт"
   },
   {
     "id": 8,
     "name": "Beam Me Up",
     "description": "Left the desk for five minutes. Got abducted.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Телепорт"
   },
   {
     "id": 9,
@@ -68,14 +76,16 @@
     "short_descr": "The moon looks tasty tonight.",
     "rarity": 2,
     "kind": "secret",
-    "key": "cheese_moon"
+    "key": "cheese_moon",
+    "name_ru": "Сырная луна"
   },
   {
     "id": 10,
     "name": "Alien Hug",
     "description": "He just wants a fren. Don't move.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Объятия пришельца"
   },
   {
     "id": 11,
@@ -84,14 +94,16 @@
     "short_descr": "Sometimes the best move is no move.",
     "rarity": 1,
     "kind": "secret",
-    "key": "quiet_hour"
+    "key": "quiet_hour",
+    "name_ru": "Тихий час"
   },
   {
     "id": 12,
     "name": "Wormhole Grab",
     "description": "Reaching for coins across the galaxy.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Кротовая нора"
   },
   {
     "id": 13,
@@ -100,28 +112,32 @@
     "short_descr": "Use skills in fights 100 times",
     "rarity": 2,
     "kind": "achievement",
-    "key": "skill_casts"
+    "key": "skill_casts",
+    "name_ru": "Да пребудет сила"
   },
   {
     "id": 14,
     "name": "Agent O",
     "description": "Look into the light. You saw nothing.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Агент О"
   },
   {
     "id": 15,
     "name": "Classified",
     "description": "UFO files? Never heard of them.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 3
+    "rarity": 3,
+    "name_ru": "Секретно"
   },
   {
     "id": 16,
     "name": "Stranded",
     "description": "Tiny island, big sharks, zero wifi.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "На мели"
   },
   {
     "id": 17,
@@ -130,14 +146,16 @@
     "short_descr": "Owls hate bright screens at night.",
     "rarity": 3,
     "kind": "secret",
-    "key": "sunglasses"
+    "key": "sunglasses",
+    "name_ru": "Слишком ярко"
   },
   {
     "id": 18,
     "name": "Respect+",
     "description": "Mission passed. Cocktail earned.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Респект+"
   },
   {
     "id": 19,
@@ -146,14 +164,16 @@
     "short_descr": "Open 10 eggs",
     "rarity": 1,
     "kind": "achievement",
-    "key": "eggs"
+    "key": "eggs",
+    "name_ru": "Летнее яйцо"
   },
   {
     "id": 20,
     "name": "Beach Day",
     "description": "Found a sunny spot. Everyone else found it first.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Пляжный день"
   },
   {
     "id": 21,
@@ -162,7 +182,8 @@
     "short_descr": "Some eggs are fuller than others.",
     "rarity": 3,
     "kind": "secret",
-    "key": "jackpot"
+    "key": "jackpot",
+    "name_ru": "Джекпот"
   },
   {
     "id": 22,
@@ -171,35 +192,40 @@
     "short_descr": "Have 100,000 coins on your balance",
     "rarity": 2,
     "kind": "achievement",
-    "key": "balance"
+    "key": "balance",
+    "name_ru": "Хайроллер"
   },
   {
     "id": 23,
     "name": "Poker Face",
     "description": "All in. Hood up. Zero emotions.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Покерфейс"
   },
   {
     "id": 24,
     "name": "Calculating Odds",
     "description": "Did the math. Still confused.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Считаю шансы"
   },
   {
     "id": 25,
     "name": "Dumpster Drip",
     "description": "Rich by vibe, homeless by address.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Шик у мусорки"
   },
   {
     "id": 26,
     "name": "Money Devil",
     "description": "Hot money, hotter owl.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 3
+    "rarity": 3,
+    "name_ru": "Денежный чёрт"
   },
   {
     "id": 27,
@@ -208,14 +234,16 @@
     "short_descr": "Feed your owl its favourite food 10 times",
     "rarity": 2,
     "kind": "achievement",
-    "key": "favourite_food"
+    "key": "favourite_food",
+    "name_ru": "Адский голод"
   },
   {
     "id": 28,
     "name": "Devil in Love",
     "description": "Even horns have a soft side.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Влюблённый чёрт"
   },
   {
     "id": 29,
@@ -224,28 +252,32 @@
     "short_descr": "Real owls don't sleep at midnight.",
     "rarity": 1,
     "kind": "secret",
-    "key": "night_owl"
+    "key": "night_owl",
+    "name_ru": "Ночная сова"
   },
   {
     "id": 30,
     "name": "Devil's Laugh",
     "description": "Laughs in fire, dresses in a tracksuit.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Дьявольский смех"
   },
   {
     "id": 31,
     "name": "Fuji View",
     "description": "Sakura, mountain, inner peace.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Вид на Фудзи"
   },
   {
     "id": 32,
     "name": "Kawaii",
     "description": "Too cute to fight. Fights anyway.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Каваии"
   },
   {
     "id": 33,
@@ -254,14 +286,16 @@
     "short_descr": "Pet your owl 100 times",
     "rarity": 3,
     "kind": "achievement",
-    "key": "pets"
+    "key": "pets",
+    "name_ru": "Неко-сова"
   },
   {
     "id": 34,
     "name": "Owlzilla",
     "description": "The city wasn't ready.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Совазилла"
   },
   {
     "id": 35,
@@ -270,7 +304,8 @@
     "short_descr": "The quietest owl wins.",
     "rarity": 1,
     "kind": "secret",
-    "key": "ninja"
+    "key": "ninja",
+    "name_ru": "Ниндзя"
   },
   {
     "id": 36,
@@ -279,28 +314,32 @@
     "short_descr": "Every knife missed.",
     "rarity": 3,
     "kind": "secret",
-    "key": "untouchable"
+    "key": "untouchable",
+    "name_ru": "Неуязвимый"
   },
   {
     "id": 37,
     "name": "Puppet",
     "description": "Someone else pulls the strings.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Марионетка"
   },
   {
     "id": 38,
     "name": "Unicycle",
     "description": "One wheel, zero fear.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Моноцикл"
   },
   {
     "id": 39,
     "name": "Sad Clown",
     "description": "The show must go on. Unfortunately.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Грустный клоун"
   },
   {
     "id": 40,
@@ -309,14 +348,16 @@
     "short_descr": "Collect 2,000 coins in one flight",
     "rarity": 2,
     "kind": "achievement",
-    "key": "flight_coins"
+    "key": "flight_coins",
+    "name_ru": "Человек-ядро"
   },
   {
     "id": 41,
     "name": "Flat Out",
     "description": "Gym 1, owl 0.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Без сил"
   },
   {
     "id": 42,
@@ -325,14 +366,16 @@
     "short_descr": "Some flights are all-you-can-eat.",
     "rarity": 2,
     "kind": "secret",
-    "key": "sushi_master"
+    "key": "sushi_master",
+    "name_ru": "Мастер суши"
   },
   {
     "id": 43,
     "name": "Beast Mode",
     "description": "The shirt didn't make it.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Режим зверя"
   },
   {
     "id": 44,
@@ -341,14 +384,16 @@
     "short_descr": "Land 1,000 hits in the dojo",
     "rarity": 1,
     "kind": "achievement",
-    "key": "dojo_hits"
+    "key": "dojo_hits",
+    "name_ru": "Железо"
   },
   {
     "id": 45,
     "name": "Fake Abs",
     "description": "Summer body, printed at home.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 3
+    "rarity": 3,
+    "name_ru": "Нарисованный пресс"
   },
   {
     "id": 46,
@@ -357,21 +402,24 @@
     "short_descr": "Turn off the lamp and listen.",
     "rarity": 2,
     "kind": "secret",
-    "key": "sweet_dream"
+    "key": "sweet_dream",
+    "name_ru": "Сладкий сон"
   },
   {
     "id": 47,
     "name": "Shy Owl",
     "description": "Not like this, fren.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Стеснительная сова"
   },
   {
     "id": 48,
     "name": "Tied Up",
     "description": "It's not what it looks like.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Связан"
   },
   {
     "id": 49,
@@ -380,14 +428,16 @@
     "short_descr": "Win 50 fights",
     "rarity": 2,
     "kind": "achievement",
-    "key": "wins"
+    "key": "wins",
+    "name_ru": "Строгий офицер"
   },
   {
     "id": 50,
     "name": "Cherry on Top",
     "description": "Sweet tooth, sweeter intentions.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 3
+    "rarity": 3,
+    "name_ru": "Вишенка на торте"
   },
   {
     "id": 51,
@@ -396,14 +446,16 @@
     "short_descr": "Complete 20 squad ritual quests",
     "rarity": 2,
     "kind": "achievement",
-    "key": "ritual_quests"
+    "key": "ritual_quests",
+    "name_ru": "Бумажная работа"
   },
   {
     "id": 52,
     "name": "Deadline",
     "description": "Everyone is pointing. Nobody is helping.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Дедлайн"
   },
   {
     "id": 53,
@@ -412,28 +464,32 @@
     "short_descr": "Row, row, row your chair.",
     "rarity": 3,
     "kind": "secret",
-    "key": "long_shift"
+    "key": "long_shift",
+    "name_ru": "Долгая смена"
   },
   {
     "id": 54,
     "name": "Boss Coffee",
     "description": "The mug is bigger than the owl. Boss vibes.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Кофе босса"
   },
   {
     "id": 55,
     "name": "Crunch Time",
     "description": "Deadline survived. Sanity didn't.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Аврал"
   },
   {
     "id": 56,
     "name": "Learner's Broom",
     "description": "First ride on a broom. Not the last scream.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Учебная метла"
   },
   {
     "id": 57,
@@ -442,21 +498,24 @@
     "short_descr": "One night a month the moon answers back.",
     "rarity": 1,
     "kind": "secret",
-    "key": "full_moon"
+    "key": "full_moon",
+    "name_ru": "Полнолуние"
   },
   {
     "id": 58,
     "name": "Crystal Ball",
     "description": "I see coins in your future.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Хрустальный шар"
   },
   {
     "id": 59,
     "name": "Money Ritual",
     "description": "Candles lit. Wallet pending.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Денежный ритуал"
   },
   {
     "id": 60,
@@ -465,21 +524,24 @@
     "short_descr": "Get the top grade in Wild Magic 3 times",
     "rarity": 3,
     "kind": "achievement",
-    "key": "wild_magic"
+    "key": "wild_magic",
+    "name_ru": "Книга заклинаний"
   },
   {
     "id": 61,
     "name": "Rodeo",
     "description": "Eight seconds is all it takes.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Родео"
   },
   {
     "id": 62,
     "name": "Come Back Soon",
     "description": "Store closed. Probably nothing.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 3
+    "rarity": 3,
+    "name_ru": "Скоро вернусь"
   },
   {
     "id": 63,
@@ -488,7 +550,8 @@
     "short_descr": "Win 10 raids",
     "rarity": 2,
     "kind": "achievement",
-    "key": "raid_wins"
+    "key": "raid_wins",
+    "name_ru": "Разбойник"
   },
   {
     "id": 64,
@@ -497,14 +560,16 @@
     "short_descr": "Sometimes nobody wins, and that's the point.",
     "rarity": 1,
     "kind": "secret",
-    "key": "peacemaker"
+    "key": "peacemaker",
+    "name_ru": "Миротворец"
   },
   {
     "id": 65,
     "name": "Shadow",
     "description": "Faster than his own shadow. Almost.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Тень"
   },
   {
     "id": 66,
@@ -513,21 +578,24 @@
     "short_descr": "Tap tap tap... wait, wrong game.",
     "rarity": 3,
     "kind": "secret",
-    "key": "not_a_clicker"
+    "key": "not_a_clicker",
+    "name_ru": "Не кликер"
   },
   {
     "id": 67,
     "name": "Yay",
     "description": "Hands up if you claimed today.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Йей"
   },
   {
     "id": 68,
     "name": "Hmm",
     "description": "Thinking about it. Will think tomorrow.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Хмм"
   },
   {
     "id": 69,
@@ -536,21 +604,24 @@
     "short_descr": "Reach level 10",
     "rarity": 2,
     "kind": "achievement",
-    "key": "level"
+    "key": "level",
+    "name_ru": "Вечеринка уровня"
   },
   {
     "id": 70,
     "name": "Magic",
     "description": "Rainbow sweater, unlimited power.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Магия"
   },
   {
     "id": 71,
     "name": "Baby Sun",
     "description": "Good morning, it's Notwise time.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Солнце-малыш"
   },
   {
     "id": 72,
@@ -559,21 +630,24 @@
     "short_descr": "The story isn't over until the last line.",
     "rarity": 3,
     "kind": "secret",
-    "key": "credits"
+    "key": "credits",
+    "name_ru": "Финальные титры"
   },
   {
     "id": 73,
     "name": "Pay Day",
     "description": "Friends who share coins stay friends.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Получка"
   },
   {
     "id": 74,
     "name": "Breaking News",
     "description": "The owl channel is live. Panic included.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Срочные новости"
   },
   {
     "id": 75,
@@ -582,7 +656,8 @@
     "short_descr": "Invite 3 friends who hatch their owls",
     "rarity": 1,
     "kind": "achievement",
-    "key": "friends"
+    "key": "friends",
+    "name_ru": "Большие обнимашки"
   },
   {
     "id": 76,
@@ -591,14 +666,16 @@
     "short_descr": "Collect 15 different stickers",
     "rarity": 2,
     "kind": "achievement",
-    "key": "stickers"
+    "key": "stickers",
+    "name_ru": "Сова Лиза"
   },
   {
     "id": 77,
     "name": "The Scream",
     "description": "When you see the energy bar.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Крик"
   },
   {
     "id": 78,
@@ -607,28 +684,32 @@
     "short_descr": "Eggs love heat.",
     "rarity": 1,
     "kind": "secret",
-    "key": "warm_it_up"
+    "key": "warm_it_up",
+    "name_ru": "Согрей его"
   },
   {
     "id": 79,
     "name": "Birth of Venus",
     "description": "Fresh from the shell. Flawless.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Рождение Венеры"
   },
   {
     "id": 80,
     "name": "The Kiss",
     "description": "Gold, love and a little bit of art.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 3
+    "rarity": 3,
+    "name_ru": "Поцелуй"
   },
   {
     "id": 81,
     "name": "Counting Money",
     "description": "Every coin has its place.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Пересчёт"
   },
   {
     "id": 82,
@@ -637,14 +718,16 @@
     "short_descr": "Keep your friends close...",
     "rarity": 2,
     "kind": "secret",
-    "key": "friendly_fire"
+    "key": "friendly_fire",
+    "name_ru": "Огонь по своим"
   },
   {
     "id": 83,
     "name": "The Offer",
     "description": "An offer you can't refuse.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Предложение"
   },
   {
     "id": 84,
@@ -653,21 +736,24 @@
     "short_descr": "Attack for your squad in 7 siege rounds in a row",
     "rarity": 3,
     "kind": "achievement",
-    "key": "siege_streak"
+    "key": "siege_streak",
+    "name_ru": "Хозяин земель"
   },
   {
     "id": 85,
     "name": "Mugshot",
     "description": "Looked better in color.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Фото в профиль"
   },
   {
     "id": 86,
     "name": "Creeper",
     "description": "Ssssss... boom?",
     "short_descr": "Drops from sticker packs",
-    "rarity": 3
+    "rarity": 3,
+    "name_ru": "Крипер"
   },
   {
     "id": 87,
@@ -676,7 +762,8 @@
     "short_descr": "Win 5 fights in a row",
     "rarity": 1,
     "kind": "achievement",
-    "key": "win_streak"
+    "key": "win_streak",
+    "name_ru": "Ледяное комбо"
   },
   {
     "id": 88,
@@ -685,35 +772,40 @@
     "short_descr": "Rise from the ashes. Again. And again.",
     "rarity": 2,
     "kind": "secret",
-    "key": "phoenix"
+    "key": "phoenix",
+    "name_ru": "Феникс"
   },
   {
     "id": 89,
     "name": "Rush B",
     "description": "No plan, only rush.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Раш Б"
   },
   {
     "id": 90,
     "name": "Bomber",
     "description": "Planted. Now run.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Подрывник"
   },
   {
     "id": 91,
     "name": "Cleopatra",
     "description": "Eyeliner sharp enough to rule Egypt.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Клеопатра"
   },
   {
     "id": 92,
     "name": "Walk Like an Egyptian",
     "description": "Sideways is the only way.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Египетская походка"
   },
   {
     "id": 93,
@@ -722,7 +814,8 @@
     "short_descr": "Riddles sound different in other languages.",
     "rarity": 2,
     "kind": "secret",
-    "key": "polyglot"
+    "key": "polyglot",
+    "name_ru": "Полиглот"
   },
   {
     "id": 94,
@@ -731,21 +824,24 @@
     "short_descr": "Open 30 capsules",
     "rarity": 1,
     "kind": "achievement",
-    "key": "capsules"
+    "key": "capsules",
+    "name_ru": "Саркофаг"
   },
   {
     "id": 95,
     "name": "Tomb Raider",
     "description": "Fortune and glory, kid.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 3
+    "rarity": 3,
+    "name_ru": "Расхититель гробниц"
   },
   {
     "id": 96,
     "name": "Willingly",
     "description": "Prove you came here willingly.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Добровольно"
   },
   {
     "id": 97,
@@ -754,14 +850,16 @@
     "short_descr": "Some trees need a good shake.",
     "rarity": 3,
     "kind": "secret",
-    "key": "tree_shake"
+    "key": "tree_shake",
+    "name_ru": "Трясун"
   },
   {
     "id": 98,
     "name": "Exam Night",
     "description": "Studied all night. Remembered nothing.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 2
+    "rarity": 2,
+    "name_ru": "Ночь перед экзаменом"
   },
   {
     "id": 99,
@@ -770,13 +868,15 @@
     "short_descr": "Enchant a ring to +5",
     "rarity": 1,
     "kind": "achievement",
-    "key": "ring"
+    "key": "ring",
+    "name_ru": "Алхимик"
   },
   {
     "id": 100,
     "name": "Paper Plane",
     "description": "Flies better than you think.",
     "short_descr": "Drops from sticker packs",
-    "rarity": 1
+    "rarity": 1,
+    "name_ru": "Бумажный самолётик"
   }
 ]
