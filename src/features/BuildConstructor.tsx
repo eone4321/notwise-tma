@@ -4,6 +4,7 @@ import { GameArt } from '../ui/GameArt';
 import { GameAttribute, GameGlyph } from '../ui/GameGlyph';
 import { useModal } from '../ui/useModal';
 import { lightHaptic } from '../telegram/client';
+import { trackGuide } from './guideAnalytics';
 import { useGuideLocale } from './guideLocale';
 import progression from './owl-progression.json';
 import { BattleReadout, skillEffect } from './BattleReadout';
@@ -96,6 +97,9 @@ export function BuildConstructor() {
   const [comparison, setComparison] = useState<PracticeResult | null>(null);
   const worker = useRef<Worker | null>(null);
   useEffect(() => {
+    trackGuide('build:open');
+  }, []);
+  useEffect(() => {
     try { localStorage.setItem(buildStorage, JSON.stringify(state)); } catch { /* Storage is optional. */ }
   }, [state]);
   useEffect(() => () => worker.current?.terminate(), []);
@@ -106,6 +110,7 @@ export function BuildConstructor() {
   };
   const startPractice = () => {
     lightHaptic();
+    trackGuide('build:practice');
     resetPractice();
     setPractice('waiting');
     try {
@@ -146,6 +151,7 @@ export function BuildConstructor() {
     element?.scrollIntoView({ block: 'start' });
   };
   const update = (change: Partial<BuildState>) => {
+    trackGuide('build:edit');
     resetPractice();
     setState(current => {
       const next = { ...current, ...change };
@@ -155,6 +161,7 @@ export function BuildConstructor() {
     });
   };
   const updateAttribute = (stat: StatKey, getAmount: (current: number) => number) => {
+    trackGuide('build:edit');
     resetPractice();
     setState(s => {
       const current = s.points[stat];
@@ -170,6 +177,7 @@ export function BuildConstructor() {
 
   function applyPreset(build: typeof builds[number], returnToLevel = false) {
     lightHaptic();
+    trackGuide('build:preset');
     resetPractice();
     setState(applyBuildPreset(build, state));
     if (returnToLevel) jumpTo(levelRef.current);
@@ -286,7 +294,10 @@ export function BuildConstructor() {
       <BattleReadout stats={results}/>
       <button className="primary buildAnalyze" type="button" aria-expanded={showReview} aria-controls="build-review" onClick={() => {
         lightHaptic();
-        setShowReview(open => !open);
+        setShowReview(open => {
+          if (!open) trackGuide('build:analyze');
+          return !open;
+        });
       }}><GameGlyph name="sparkles"/>{showReview ? copy('Свернуть анализ', 'Hide analysis') : copy('Анализ сборки', 'Analyze build')}</button>
       <div id="build-review" className="buildAnalysisStatus" hidden={!showReview}>
         {showReview && <BuildAnalysis state={state} lang={lang}/>}

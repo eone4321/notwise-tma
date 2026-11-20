@@ -94,7 +94,7 @@ useEffect(() => {
 return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach !== null}><Link to="/" className="brand"><img src={artSrc('/brand/notwise.svg')} alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main className="guideScreen" key={loc.pathname} inert={hamster || coach !== null}>{loc.pathname === '/' ? <Home onChatVisit={awards.noteChatVisit} onSquadVisit={() => { void awards.update('visit_squad').catch(() => {}); }} english={english} profile={profile} profileFailed={profileFailed} retryProfile={() => {
   setProfileFailed(false); setProfileAttempt(value => value + 1);
 }}/> : <div className="guidePageContent">{loc.pathname === '/admin' ? <AdminPage profile={profile}/> : loc.pathname === '/support' || loc.pathname.startsWith('/support/') ?
-  <SettingsPage profile={profile} earned={awards.earned}/> : <div lang="ru"><Page profile={profile} ask={ask} joke={joke} popup={popup} reveal={reveal}
+  <SettingsPage profile={profile} earned={awards.earned} chatIssue={awards.chatIssue}/> : <div lang="ru"><Page profile={profile} onChatVisit={awards.noteChatVisit} ask={ask} joke={joke} popup={popup} reveal={reveal}
   referrals={<ReferralsPage profile={profile} failed={profileFailed} onSave={next => { setProfile(next); void awards.update().catch(() => {}); }} onRetry={() => {
     setProfileFailed(false);
     setProfileAttempt(value => value + 1);
@@ -223,7 +223,7 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
           {en ? 'Open the game' : 'Открыть игру'}
         </a>
       )}
-      <Link className="secondary heroBuilds" to="/combat/builds" onClick={() => { lightHaptic(); (trackGuide as (e: string) => void)('action:builds'); }}>
+      <Link className="secondary heroBuilds" to="/combat/builds" onClick={() => { lightHaptic(); trackGuide('action:builds'); }}>
         <GameGlyph name="fight"/>
         <span>{en ? 'Builds' : 'Собрать билд'}</span>
         </Link>
@@ -290,8 +290,8 @@ function ShareDialog({ close, english: en }: { close: () => void; english: boole
   </dialog>;
 }
 function Card({children}:{children:React.ReactNode}){return <section className="card">{children}</section>}
-function Page({ profile, ask, joke, popup, reveal, referrals }: {
-  profile: GuideProfile | null;
+function Page({ profile, onChatVisit, ask, joke, popup, reveal, referrals }: {
+  profile: GuideProfile | null; onChatVisit: () => void;
   ask: () => void; joke: boolean; popup: boolean; reveal: () => void; referrals: React.ReactNode;
 }) {
   const { pathname, hash, state } = useLocation();
@@ -311,7 +311,7 @@ function Page({ profile, ask, joke, popup, reveal, referrals }: {
     {section?.[1] === '/combat' && <CombatPage/>}
     {section?.[1] === '/modes' && <ModesPage/>}
     {section?.[1] === '/care' && <CarePage/>}
-    {section?.[1] === '/squads' && <SquadPage gameEntry={profile?.gameEntry ?? defaultGameLink}/>}
+    {section?.[1] === '/squads' && <SquadPage gameEntry={profile?.gameEntry ?? defaultGameLink} onChatVisit={onChatVisit}/>}
     {section?.[1] === '/secrets' && <Secrets ask={ask} joke={joke} popup={popup} reveal={reveal}/>}
     {section?.[1] === '/assets' && <InventoryPage/>}
     {section?.[1] === '/referrals' && referrals}

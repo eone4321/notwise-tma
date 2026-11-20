@@ -1,7 +1,7 @@
 import { AwardIcon } from './GuideAwards';
 import { guideAchievements, type GuideAchievement } from '../domain/guide-achievements';
 import { useEffect, useState } from 'react';
-import { guideActions, guidePages, type GuideEvent } from '../domain/guide-events';
+import { guideActions, guideBuilds, guidePages, type GuideEvent } from '../domain/guide-events';
 import { authData, profileRequest, type GuideMember } from './guideProfile';
 
 const date = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' });
@@ -76,7 +76,7 @@ export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null })
 function Analytics({ days }: { days: Daily[] }) {
   const [period, setPeriod] = useState(7);
   const interval = days.slice(0, period);
-  function count(prefix: 'view' | 'action', key: string) {
+  function count(prefix: 'view' | 'action' | 'build', key: string) {
     return interval.reduce((sum, day) => sum + (day.events[`${prefix}:${key}` as GuideEvent] ?? 0), 0);
   }
   return <>
@@ -93,6 +93,10 @@ function Analytics({ days }: { days: Daily[] }) {
         </div>)}
       </dl>
     </section>
+    <section className="card"><h2>Конструктор билдов</h2><dl className="analyticsRows">
+      {Object.entries(guideBuilds).map(([key, label]) =>
+        <div key={key}><dt>{label}</dt><dd>{number.format(count('build', key))}</dd></div>)}
+    </dl></section>
     <section className="card"><h2>Открытия разделов</h2><dl className="analyticsRows">
       {Object.entries(guidePages).sort(([a], [b]) => count('view', b) - count('view', a)).map(([key, label]) =>
         <div key={key}><dt>{label}</dt><dd>{number.format(count('view', key))}</dd></div>)}

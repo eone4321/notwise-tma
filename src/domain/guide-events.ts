@@ -10,14 +10,29 @@ export const guideActions = {
   share_copy: 'Скопировали ссылку на гайд',
   chat: 'Открыли ссылку на чат',
   squad: 'Открыли ссылку на сквад',
+  builds: 'Нажали «Собрать билд» на главной',
   share_send: 'Открыли выбор получателя',
 } as const;
 
-export type GuideEvent = `view:${keyof typeof guidePages}` | `action:${keyof typeof guideActions}`;
+export const guideBuilds = {
+  open: 'Открыли конструктор билда',
+  preset: 'Применили готовый билд',
+  edit: 'Меняли параметры и экипировку',
+  analyze: 'Открыли анализ сборки',
+  practice: 'Запустили тренировочные бои',
+} as const;
+
+export type GuideEvent =
+  | `view:${keyof typeof guidePages}`
+  | `action:${keyof typeof guideActions}`
+  | `build:${keyof typeof guideBuilds}`;
 
 export function isGuideEvent(event: unknown): event is GuideEvent {
   if (typeof event !== 'string') return false;
   const [kind, key, extra] = event.split(':');
-  return extra === undefined && (kind === 'view' ? Object.hasOwn(guidePages, key) :
-    kind === 'action' && Object.hasOwn(guideActions, key));
+  return extra === undefined && (
+    kind === 'view' ? Object.hasOwn(guidePages, key) :
+    kind === 'action' ? Object.hasOwn(guideActions, key) :
+    kind === 'build' && Object.hasOwn(guideBuilds, key)
+  );
 }
