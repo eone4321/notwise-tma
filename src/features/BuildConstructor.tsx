@@ -502,7 +502,7 @@ function BuildShareDialog({ state, lang, presetName, close }: {
   async function copyUrl() {
     lightHaptic();
     const ok = await copyLink(url, field.current);
-    if (ok) trackGuide('build:share_copy');
+    if (ok) trackGuide('build:share');
     setFeedback(ok ? copy('Ссылка на сборку скопирована.', 'Build link copied.')
       : copy('Ссылка выделена — нажми «Копировать».', 'Link selected — tap Copy.'));
   }
@@ -517,7 +517,7 @@ function BuildShareDialog({ state, lang, presetName, close }: {
       <div className="buildShareActions">
         <button className="primary" type="button" onClick={() => {
           lightHaptic();
-          trackGuide('build:share_send');
+          trackGuide('build:share');
           void shareGuide(url, summary);
           close();
         }}>{copy('Отправить в Telegram', 'Send in Telegram')}</button>

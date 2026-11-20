@@ -20,6 +20,7 @@ export const guideBuilds = {
   edit: 'Меняли параметры и экипировку',
   analyze: 'Открыли анализ сборки',
   practice: 'Запустили тренировочные бои',
+  share: 'Поделились сборкой',
 } as const;
 
 export type GuideEvent =
