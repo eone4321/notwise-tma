@@ -1,6 +1,6 @@
 import { battleStats, skillMana } from '../domain/combat';
 import {
-  activeAttributes, applyBuildPreset, builds, combatSkills, emptyAttributes, ringCatalog, skillAvailable,
+  attributeBudget, activeAttributes, applyBuildPreset, builds, combatSkills, emptyAttributes, ringCatalog, skillAvailable,
   totalAttributes, type BuildState,
 } from './combat-builds';
 import { combatant, simulateDuel } from './combat-simulation';
@@ -10,7 +10,7 @@ const practiceProfiles = builds.filter(build => ['assault', 'stun', 'bastion', '
 
 export function reviewBuild(state: BuildState) {
   const attributes = activeAttributes(state);
-  const freePoints = (state.budget ?? state.level) - totalAttributes(state.points);
+  const freePoints = attributeBudget(state) - totalAttributes(state.points);
   const filled = new Set(state.skills.flatMap(slot => slot ? [slot.id] : []));
   const equipped = combatSkills.filter(skill => filled.has(skill.id));
   const active = equipped.filter(skill => skill.type !== 'passive');
@@ -33,7 +33,7 @@ export function reviewBuild(state: BuildState) {
 export type PracticeResult = ReturnType<typeof analyzeBuild>;
 
 export function practiceKey(state: BuildState) {
-  return state.level + ':' + (state.budget ?? state.level);
+  return state.level + ':' + attributeBudget(state);
 }
 
 export function analyzeBuild(state: BuildState) {

@@ -14,7 +14,7 @@ import { BattleReadout, skillEffect } from './BattleReadout';
 import {
   activeAttributes, applyBuildPreset, builds, combatSkills, decodeBuildCode, emptyAttributes, encodeBuildCode,
   requiredAttributes, ringCatalog, skillAvailable, skillById, statKeys, statLabels, totalAttributes,
-  validateBuild, type StatKey, type BuildState, type Ring,
+  attributeBudget, validateBuild, type StatKey, type BuildState, type Ring,
 } from './combat-builds';
 import { practiceKey, reviewBuild, type PracticeResult } from './combat-analysis';
 import { OwlSkinCanvas } from './OwlSkinCanvas';
@@ -179,7 +179,7 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
   const [ringEnchantPreview, setRingEnchantPreview] = useState(0);
   const [bulkConfirmLevel, setBulkConfirmLevel] = useState<number | null>(null);
   const spent = totalAttributes(state.points);
-  const budget = state.budget ?? state.level;
+  const budget = attributeBudget(state);
   const left = budget - spent;
   const selectedPreset = builds.find(build => build.id === activePreset);
   const total = activeAttributes(state);
@@ -237,7 +237,7 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
     resetPractice();
     setState(s => {
       const current = s.points[stat];
-      const max = (s.budget ?? s.level) - totalAttributes(s.points) + current;
+      const max = attributeBudget(s) - totalAttributes(s.points) + current;
       const value = Math.min(max, Math.max(0, getAmount(current)));
       return validateBuild({ ...s, points: { ...s.points, [stat]: value } });
     });
@@ -407,9 +407,9 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
 
       <details className="mediaDetails buildAdvanced" id="build-advanced">
         <summary><strong>{copy('Запас очков и баффы (осада, книга)', 'Custom budget and temporary buffs')}</strong></summary>
-        <p className="caption">{copy('По умолчанию доступно 1 очко за уровень. Если у тебя другой запас или действуют усиления от осады/книги, укажи их здесь.', 'Default budget is 1 point per level. Adjust your point pool or add siege/book buffs here.')}</p>
+        <p className="caption">{copy('Оценка калькулятора: 5 очков на 2-м уровне и ещё одно за каждый следующий. Если в игре суммарно вложенных и свободных очков больше или меньше, введи свой запас. Временные усиления указываются отдельно.', 'Estimated budget: 5 points at level 2 and one more per subsequent level. Enter your own total of spent and unspent points if it differs in game. Add temporary buffs separately.')}</p>
         <label className="field">{copy('Всего очков для распределения', 'Total points to allocate')}
-          <input value={budgetDraft ?? state.budget ?? ''} placeholder={String(state.level)} inputMode="numeric" maxLength={3}
+          <input value={budgetDraft ?? state.budget ?? ''} placeholder={String(budget)} inputMode="numeric" maxLength={3}
             onChange={event => setBudgetDraft(event.target.value.replace(/\D/g, ''))}
             onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur(); }}
             onBlur={() => {
@@ -1034,7 +1034,7 @@ function BuildPractice({ result, comparison, lang, save, clear, state }: {
       : copy('Попробуй Static Shield для ответного урона или Snowball для замедления атак.', 'Try Static Shield for retaliation, or Snowball to slow attacks.'),
   };
   const verdict = overall >= 58 ? copy('Выше базы', 'Above meta') : overall >= 48 ? copy('На равных с метой', 'Even with meta') : copy('Сложные матчапы', 'Tough matchups');
-  const canCompareFullBuilds = state.level >= 5 && (state.budget ?? state.level) >= 8;
+  const canCompareFullBuilds = state.level >= 5 && (attributeBudget(state)) >= 8;
   return <div className="buildPracticeResult">
     <div className="buildOverallWinrate">
       <div>

@@ -156,9 +156,15 @@ export function skillAvailable(id: number, { level, points }: BuildState) {
   return !!skill && level >= 2 && points[skill.branch] >= skill.tier;
 }
 
+// The client receives the actual balance from the server. These defaults
+// match the level 2 example and the captured level 12 profile.
+export function attributeBudget({ budget, level }: Pick<BuildState, 'budget' | 'level'>) {
+  return budget ?? (level >= 2 ? level + 3 : 0);
+}
+
 export function validateBuild(state: BuildState): BuildState {
   const points = { ...state.points };
-  let excess = totalAttributes(points) - (state.budget ?? state.level);
+  let excess = totalAttributes(points) - attributeBudget(state);
   for (const stat of [...statKeys].reverse()) {
     if (excess <= 0) break;
     const refund = Math.min(points[stat], excess);
@@ -282,7 +288,7 @@ export function decodeBuildCode(code: string, maxLevel = 150): BuildState | null
 }
 
 export function applyBuildPreset(build: Build, state: BuildState): BuildState {
-  const budget = state.budget ?? state.level;
+  const budget = attributeBudget(state);
   const chosen: number[] = [];
   let points = { ...emptyAttributes };
   if (state.level >= 2) {
