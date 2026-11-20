@@ -243,17 +243,22 @@ export function MarketChartsPage() {
       .map(b => ({ enchant: b.enchant, floor: b.floor, count: b.count }));
   }, [asset.enchantable, assetBuckets]);
 
-  // Buy vs Enchant insight for rings at +1..+12
+  // Buy vs Enchant insight for rings & skins at +1..+12 using live Getgems prices of base item + enchant scroll
   const buyVsEnchant = useMemo(() => {
-    if (asset.category !== 'rings' || enchant === null || enchant <= 0 || enchant > 12 || !liveFloor) return null;
-    const baseFloor = assetBuckets?.get(0)?.floor ?? itemsSnap?.items.find(i => i.id === asset.slug)?.floor ?? 0;
-    const scrollFloor = bucketsBySlug.get('scroll-enchant-ring')?.get(0)?.floor
-      ?? itemsSnap?.items.find(i => i.id === 'scroll-enchant-ring')?.floor ?? 0;
+    const isRing = asset.category === 'rings';
+    const isSkin = asset.slug === 'owl-skin';
+    if ((!isRing && !isSkin) || enchant === null || enchant <= 0 || enchant > 12 || !liveFloor) return null;
+    const baseFloor = assetBuckets?.get(0)?.floor
+      ?? (isSkin ? cols?.items.find(c => c.id === 'skins')?.floor : itemsSnap?.items.find(i => i.id === asset.slug)?.floor)
+      ?? 0;
+    const scrollSlug = isSkin ? 'scroll-enchant-skin' : 'scroll-enchant-ring';
+    const scrollFloor = bucketsBySlug.get(scrollSlug)?.get(0)?.floor
+      ?? itemsSnap?.items.find(i => i.id === scrollSlug)?.floor ?? 0;
     const calc = expectedRingEnchantCost(enchant, baseFloor, scrollFloor);
     if (!calc) return null;
     const diffPct = ((liveFloor - calc.expectedGram) / calc.expectedGram) * 100;
-    return { ...calc, baseFloor, scrollFloor, diffPct };
-  }, [asset, enchant, liveFloor, assetBuckets, itemsSnap, bucketsBySlug]);
+    return { ...calc, baseFloor, scrollFloor, diffPct, isSkin };
+  }, [asset, enchant, liveFloor, assetBuckets, cols, itemsSnap, bucketsBySlug]);
 
   // Lots sorted (supports "Все" across all enchant levels + single enchant level)
   const sortedLots: (ExplorerLot & { enchant: number })[] = useMemo(() => {
@@ -576,7 +581,7 @@ export function MarketChartsPage() {
         </div>
       </section>
 
-      {/* Buy vs Self-Enchant Insight (Rings +1..+12) */}
+      {/* Buy vs Self-Enchant Insight (Rings & Skins +1..+12) */}
       {buyVsEnchant && (
         <section className={`card radarInsightCard ${buyVsEnchant.diffPct <= 0 ? 'isCheaper' : 'isPricier'}`}>
           <div className="radarInsightHead">
@@ -590,9 +595,12 @@ export function MarketChartsPage() {
             </span>
           </div>
           <p>
-            Средняя себестоимость самостоятельной заточки до <b>+{enchant}</b> с учётом риска сгорания:{' '}
-            <b>≈ {fmtInt.format(buyVsEnchant.expectedGram)} GRAM</b>{' '}
-            <span>(~{buyVsEnchant.expectedRings} колец и ~{buyVsEnchant.expectedScrolls} свитков).</span>
+            Себестоимость заточки до <b>+{enchant}</b> с учётом риска сгорания:{' '}
+            <b>≈ {fmtNum.format(buyVsEnchant.expectedGram)} GRAM</b>{' '}
+            <span>(~{buyVsEnchant.expectedRings} {buyVsEnchant.isSkin ? 'скинов' : 'колец'} и ~{buyVsEnchant.expectedScrolls} заточек).</span>
+          </p>
+          <p className="radarInsightPrices">
+            По ценам маркета: база +0 — <b>{fmtNum.format(buyVsEnchant.baseFloor)} GRAM</b> · заточка — <b>{fmtNum.format(buyVsEnchant.scrollFloor)} GRAM</b>.
           </p>
         </section>
       )}

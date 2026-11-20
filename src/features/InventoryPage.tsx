@@ -18,6 +18,7 @@ import shopItems from './shop-data.json';
 import { SkinFarmCalculator } from './SkinFarmCalculator';
 import { matchingJetton, type SkinSelection } from './skinRig';
 import { ModesPage } from './CombatPage';
+import { LifehacksPage } from './LifehacksPage';
 import { itemCollectionMarketUrl } from '../domain/item-market-links';
 
 const eggs = [
@@ -126,15 +127,15 @@ export function OwlPage() {
 }
 
 const energyTiers = [
-  { range: 'Ур. 0–4', fight: 10, flight: 200, fightsPer1k: 100, note: 'Старт' },
-  { range: 'Ур. 5–9', fight: 20, flight: 250, fightsPer1k: 50, note: '×2 дороже' },
-  { range: 'Ур. 10–14', fight: 30, flight: 300, fightsPer1k: 33, note: '' },
-  { range: 'Ур. 15–19', fight: 40, flight: 350, fightsPer1k: 25, note: '' },
-  { range: 'Ур. 20–24', fight: 50, flight: 400, fightsPer1k: 20, note: 'Порог золотых колец' },
-  { range: 'Ур. 25–29', fight: 60, flight: 450, fightsPer1k: 16, note: '' },
-  { range: 'Ур. 30–34', fight: 70, flight: 500, fightsPer1k: 14, note: '' },
-  { range: 'Ур. 35–39', fight: 80, flight: 550, fightsPer1k: 12, note: '' },
-  { range: 'Ур. 40–44', fight: 90, flight: 600, fightsPer1k: 11, note: '' },
+  { range: 'Ур. 0–4', fight: 10, flight: 200 },
+  { range: 'Ур. 5–9', fight: 20, flight: 250 },
+  { range: 'Ур. 10–14', fight: 30, flight: 300 },
+  { range: 'Ур. 15–19', fight: 40, flight: 350 },
+  { range: 'Ур. 20–24', fight: 50, flight: 400 },
+  { range: 'Ур. 25–29', fight: 60, flight: 450 },
+  { range: 'Ур. 30–34', fight: 70, flight: 500 },
+  { range: 'Ур. 35–39', fight: 80, flight: 550 },
+  { range: 'Ур. 40–44', fight: 90, flight: 600 },
 ] as const;
 
 export function CarePage() {
@@ -142,102 +143,123 @@ export function CarePage() {
   const keepParent = state?.guideDetail === true;
   const tabState = keepParent ? { guideDetail: true } : undefined;
   const isModes = pathname === '/modes';
+  const isLifehacks = pathname === '/lifehacks';
 
   return <>
-    <nav className="choiceBar profileTabs careTabs" aria-label="Памятка и режимы">
-      <Link to="/care" replace state={tabState} aria-current={!isModes ? 'page' : undefined}>
+    <nav className="choiceBar profileTabs collectionTabs3 careTabs" aria-label="Памятка, лайфхаки и режимы">
+      <Link to="/care" replace state={tabState} aria-current={!isModes && !isLifehacks ? 'page' : undefined}>
         <GameGlyph name="info"/>Памятка
       </Link>
+      <Link to="/lifehacks" replace state={tabState} aria-current={isLifehacks ? 'page' : undefined}>
+        <GameGlyph name="sparkles"/>Лайфхаки
+      </Link>
       <Link to="/modes" replace state={tabState} aria-current={isModes ? 'page' : undefined}>
-        <GameGlyph name="fight"/>Режимы игры
+        <GameGlyph name="fight"/>Режимы
       </Link>
     </nav>
 
-    {isModes ? <ModesPage/> : <>
-      <section className="card feedingCard">
-        <div className="mediaHeading"><GameArt path={itemPath('book.webp')} size={46}/>
-          <div><h2>Памятка на каждый день</h2><p>Главные таймеры, лимиты и механики игры в одном месте.</p></div>
+    {isModes ? <ModesPage/> : isLifehacks ? <LifehacksPage/> : <div className="memoStack">
+      <section className="card memoCard">
+        <div className="memoCardHead">
+          <GameArt path={itemPath('book.webp')} size={40}/>
+          <div>
+            <h2>Ежедневный цикл и уход</h2>
+            <p>Ключевые таймеры, сбросы и базовые параметры</p>
+          </div>
         </div>
-        <ul className="memoList">
-          <li>
-            <strong>Сытость совы (раз в 3 дня)</strong>
-            <span>Максимум 20, для полёта нужно от 10. Любимая еда даёт ×2 сытости. Если не кормить 3 дня — штраф на 24 ч: монеты и опыт ×0.5, реген HP и энергии вдвое медленнее.</span>
-          </li>
-          <li>
-            <strong>Бесплатные сбросы в 00:00 UTC</strong>
-            <span>Раз в день можно бесплатно восстановить всю энергию, запустить до 3 ракет в полёте, решить Загадку книги (до ×3 наград за серию и +5 мудрости на 24 ч) и зажечь ритуал сквада.</span>
-          </li>
-          <li>
-            <strong>Хитрости полёта (Суши и Ракеты)</strong>
-            <span>Первые две суши снимают по 20% монет забега, зато третья прибавляет +20% к остатку и открывает стикер Sushi Master. Три ракеты за один полёт открывают секрет Phoenix.</span>
-          </li>
-        </ul>
+        <div className="memoRows">
+          <div className="memoRow">
+            <span className="memoRowIcon"><GameArt path={itemPath('lighter.webp')} size={26}/></span>
+            <div>
+              <strong>Сбросы в 00:00 UTC</strong>
+              <p>Бесплатное восстановление всей энергии, 3 ракеты в полёте, Загадка книги (до ×3 за серию и +5 мудрости на 24 ч) и ритуал сквада.</p>
+            </div>
+          </div>
+          <div className="memoRow">
+            <span className="memoRowIcon"><GameArt path={itemPath('croissant.webp')} size={26}/></span>
+            <div>
+              <strong>Сытость — раз в 3 дня</strong>
+              <p>Макс. 20, для полёта нужно от 10. Любимая еда даёт ×2. Без еды 3 дня — штраф на 24 ч: монеты и опыт ×0.5, реген HP и энергии вдвое медленнее.</p>
+            </div>
+          </div>
+          <div className="memoRow">
+            <span className="memoRowIcon"><GameArt path={itemPath('big-black-clock.webp')} size={26}/></span>
+            <div>
+              <strong>Запас и реген энергии</strong>
+              <p>База: 100 ⚡ и реген 80 ⚡/ч (1 ⚡ за 45 с). Перк Мудрости даёт +100 ⚡ к запасу (до 2 200 ⚡), перк Ловкости ускоряет реген на +3% за ур. (до 130 ⚡/ч).</p>
+            </div>
+          </div>
+        </div>
         <DetailLink className="textLink" to="/assets/care">Вся еда и лекарства</DetailLink>
       </section>
 
-      <section className="card feedingCard energyGradCard">
-        <div className="mediaHeading"><GameArt path={itemPath('chiller.webp')} size={44}/>
+      <section className="card memoCard energyGradCard">
+        <div className="memoCardHead">
+          <GameArt path={itemPath('chiller.webp')} size={40}/>
           <div>
-            <h2>Стоимость боя, полёта и фарм SP</h2>
-            <p>Цена боя растёт на +10 ⚡ каждые 5 уровней, полёта — на +50 ⚡. В Додзё всегда 2 ⚡ за удар.</p>
+            <h2>Стоимость боя и полёта</h2>
+            <p>Бой растёт на +10 ⚡ каждые 5 уровней, полёт — на +50 ⚡</p>
           </div>
         </div>
 
-        <div className="energyGradTable" role="table" aria-label="Градация стоимости энергии по уровням">
+        <div className="energyGradTable" role="table" aria-label="Стоимость боя и полёта по уровням">
           <div className="energyGradHead" role="row">
             <span role="columnheader">Уровень</span>
             <span role="columnheader">Бой</span>
             <span role="columnheader">Полёт</span>
-            <span role="columnheader">Боёв / 1000 ⚡</span>
           </div>
           {energyTiers.map(tier => (
             <div className="energyGradRow" role="row" key={tier.range}>
               <strong role="cell">{tier.range}</strong>
               <span role="cell" className="isGold">{tier.fight} ⚡</span>
               <span role="cell">{tier.flight} ⚡</span>
-              <span role="cell" className="isFights">{tier.fightsPer1k}</span>
             </div>
           ))}
         </div>
 
-        <ul className="memoList">
-          <li>
-            <strong>Динамика фарма SP и Чиллер</strong>
-            <span>На границе ступеней (ур. 4, 9, 14, 19) выгоднее всего включать <b>Чиллер</b> (заморозку XP), чтобы делать максимум боёв и фармить SP до скачка цены на +10 ⚡. На ур. 4 за 1 000 ⚡ проходит 100 боёв, на ур. 20 — уже только 20.</span>
-          </li>
-          <li>
-            <strong>Запас и регенерация энергии</strong>
-            <span>База: 100 ⚡ и реген 80 ⚡/ч (1 ⚡ за 45 с). Перк Мудрости добавляет +100 ⚡ к запасу за уровень (до 2 200 ⚡ на 21 ур.), перк Ловкости ускоряет реген на +3% за уровень (до 130 ⚡/ч).</span>
-          </li>
-        </ul>
+        <p className="memoNote">
+          В Додзё цена фиксированная — <b>2 ⚡ за удар</b>. Чтобы не переплачивать за бои при фарме SP, включай <b>Холодильник XP</b> на границе ступеней (ур. 4, 9, 14, 19).
+        </p>
       </section>
 
-      <section className="card feedingCard">
-        <h2>Бой, осада и защита</h2>
-        <ul className="memoList">
-          <li>
-            <strong>Потолок статов — 70% на 100 очках</strong>
-            <span>Выше 100 ловкости (уклонение) и 100 мудрости (крит) шансы не растут — лишняя мудрость даёт только +20 маны за очко. В бой можно взять до 3 навыков; мана за бой не восстанавливается.</span>
-          </li>
-          <li>
-            <strong>Осады сквадов и боевая мощь</strong>
-            <span>Личная мощь для захвата территорий растёт от прокачки в Додзё и боях, а не от уровня совы. Награды территорий суммируются за все 3 раунда осады.</span>
-          </li>
-          <li>
-            <strong>Сбросы и перенос прогресса</strong>
-            <span>Чиллер замораживает XP из капсул, Морфер сбрасывает статы и навыки без потери SP, Колба записывает накопленные SP, а Дискета сохраняет XP перед перерождением.</span>
-          </li>
-          <li>
-            <strong>Защита от рейдов</strong>
-            <span>Победитель забирает 3% монет. После любого боя действует 5-минутная передышка, после 3 проигранных защит подряд включается щит до входа в игру, а Seba Cola даёт купол на 24 ч.</span>
-          </li>
-        </ul>
+      <section className="card memoCard">
+        <div className="memoCardHead">
+          <GameArt path={itemPath('ring-wit-3.webp')} size={40}/>
+          <div>
+            <h2>Бой, осада и защита</h2>
+            <p>Ограничения статов, рейды и предметы прогресса</p>
+          </div>
+        </div>
+        <div className="memoRows">
+          <div className="memoRow">
+            <span className="memoRowIcon"><GameArt path={itemPath('ring-ag-3.webp')} size={26}/></span>
+            <div>
+              <strong>Потолок статов — 70% на 100 очках</strong>
+              <p>Выше 100 Ловкости (уклонение) и 100 Мудрости (крит) шансы не растут — лишняя Мудрость даёт только +20 маны за очко. В бой берётся до 3 навыков, мана не регенится.</p>
+            </div>
+          </div>
+          <div className="memoRow">
+            <span className="memoRowIcon"><GameArt path={itemPath('seba-cola.webp')} size={26}/></span>
+            <div>
+              <strong>Рейды и защита баланса</strong>
+              <p>Победитель забирает 3% монет. После любого боя действует передышка 5 мин, после 3 проигранных защит — щит до входа в игру, Seba Cola даёт купол на 24 ч.</p>
+            </div>
+          </div>
+          <div className="memoRow">
+            <span className="memoRowIcon"><GameArt path={itemPath('morpher.webp')} size={26}/></span>
+            <div>
+              <strong>Сбросы и перенос прогресса</strong>
+              <p><b>Холодильник XP</b> морозит опыт из капсул, <b>Морфер</b> сбрасывает статы и навыки без потери SP, <b>Пустая колба SP</b> записывает SP, <b>Пустая дискета XP</b> сохраняет XP перед перерождением.</p>
+            </div>
+          </div>
+        </div>
         <div className="memoLinks">
+          <DetailLink className="textLink" to="/lifehacks">Лайфхаки игры</DetailLink>
           <DetailLink className="textLink" to="/combat/builds">Калькулятор билдов</DetailLink>
           <DetailLink className="textLink" to="/squads">Сквады и осада</DetailLink>
         </div>
       </section>
-    </>}
+    </div>}
   </>;
 }
 

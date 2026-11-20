@@ -303,16 +303,24 @@ async function toncenterJson<T>(url: URL, token: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-async function toncenterListings(token: string, supply: number | null) {
+type TonCenterTransfer = { old_owner?: string; transaction_now?: number };
+
+async function toncenterCollectionCrawl(
+  token: string,
+  collectionAddress: string,
+  maxPages: number,
+  prices: Map<string, Listing>,
+  buckets: Map<string, BucketAccumulator>,
+  forcedSlug?: string,
+) {
   const base = 'https://toncenter.com/api/v3/nft/';
   const pageSize = 1000;
-  const limit = supply === null ? 6 : Math.ceil(supply / pageSize) + 2;
   const listed = new Map<string, { address: string; image?: string; name?: string; contentUri?: string }>();
   const seen = new Set<string>();
   let finished = false;
-  for (let page = 0; page < limit; page++) {
+  for (let page = 0; page < maxPages; page++) {
     const url = new URL('items', base);
-    url.search = new URLSearchParams({ collection_address: itemsCollection, limit: String(pageSize), offset: String(page * pageSize), sort_by_last_transaction_lt: 'false' }).toString();
+    url.search = new URLSearchParams({ collection_address: collectionAddress, limit: String(pageSize), offset: String(page * pageSize), sort_by_last_transaction_lt: 'false' }).toString();
     const data = await toncenterJson<{ nft_items: TonCenterItem[]; metadata?: Record<string, TonCenterMeta> }>(url, token);
     if (!Array.isArray(data.nft_items)) throw new Error('Invalid TON Center item page');
     for (const row of data.nft_items) {
@@ -326,13 +334,11 @@ async function toncenterListings(token: string, supply: number | null) {
     }
     if (data.nft_items.length < pageSize) { finished = true; break; }
   }
-  if (!finished) throw new Error('TON Center item crawl incomplete');
+  if (!finished && !forcedSlug) throw new Error('TON Center item crawl incomplete');
 
-  const prices = new Map<string, Listing>();
-  const buckets = new Map<string, BucketAccumulator>();
   const contracts = [...listed.keys()];
   for (let i = 0; i < contracts.length; i += 40) {
-    if (i) await new Promise(resolve => setTimeout(resolve, 150));
+    if (i) await new Promise(resolve => setTimeout(resolve, 120));
     const url = new URL('sales', base);
     for (const address of contracts.slice(i, i + 40)) url.searchParams.append('address', address);
     const data = await toncenterJson<{ nft_sales: TonCenterSale[]; metadata?: Record<string, TonCenterMeta> }>(url, token);
@@ -350,10 +356,128 @@ async function toncenterListings(token: string, supply: number | null) {
         sale.details.full_price,
         item.address,
         item.contentUri ?? sale.nft_item?.content?.uri,
+        forcedSlug,
       );
     }
   }
+}
+
+async function toncenterListings(token: string, supply: number | null) {
+  const prices = new Map<string, Listing>();
+  const buckets = new Map<string, BucketAccumulator>();
+  const limit = supply === null ? 6 : Math.ceil(supply / 1000) + 2;
+  await toncenterCollectionCrawl(token, itemsCollection, limit, prices, buckets);
+  // Best-effort crawl of NOT Wise: Skins so NFT skins & enchants are always populated.
+  await toncenterCollectionCrawl(token, skinsCollection, 6, prices, buckets, 'owl-skin').catch(() => null);
   return { items: [...prices.values()], buckets: finalizeBuckets(buckets) };
+}
+
+async function backfillCollectionSales(
+  token: string,
+  collectionAddress: string,
+  maxTransfers: number,
+  forcedSlug?: string,
+): Promise<Map<string, Map<string, number>>> {
+  const base = 'https://toncenter.com/api/v3/nft/';
+  const ownerToTime = new Map<string, number>();
+  const pageSize = Math.min(100, maxTransfers);
+  const pages = Math.ceil(maxTransfers / pageSize);
+  for (let page = 0; page < pages; page++) {
+    const url = new URL('transfers', base);
+    url.search = new URLSearchParams({
+      collection_address: collectionAddress,
+      limit: String(pageSize),
+      offset: String(page * pageSize),
+      sort: 'desc',
+    }).toString();
+    const data = await toncenterJson<{ nft_transfers?: TonCenterTransfer[] }>(url, token).catch(() => null);
+    const list = data?.nft_transfers ?? [];
+    for (const tr of list) {
+      if (tr.old_owner && typeof tr.transaction_now === 'number' && tr.transaction_now > 0) {
+        const key = tr.old_owner.toLowerCase();
+        if (!ownerToTime.has(key)) ownerToTime.set(key, tr.transaction_now);
+      }
+    }
+    if (list.length < pageSize) break;
+  }
+
+  // key: `${slug}:${enchant}` -> Map<hourKey, minPrice>
+  const hourly = new Map<string, Map<string, number>>();
+  const contracts = [...ownerToTime.keys()];
+  for (let i = 0; i < contracts.length; i += 40) {
+    if (i) await new Promise(resolve => setTimeout(resolve, 100));
+    const url = new URL('sales', base);
+    for (const addr of contracts.slice(i, i + 40)) url.searchParams.append('address', addr);
+    const data = await toncenterJson<{ nft_sales?: TonCenterSale[]; metadata?: Record<string, TonCenterMeta> }>(url, token).catch(() => null);
+    for (const sale of data?.nft_sales ?? []) {
+      if (sale.type !== 'getgems_sale' || sale.details?.is_complete !== true || !sale.address || !sale.details.full_price) continue;
+      if (!/^\d{1,24}$/.test(sale.details.full_price)) continue;
+      const price = Number(sale.details.full_price) / 1e9;
+      if (!(price > 0) || !Number.isFinite(price)) continue;
+      const txNow = ownerToTime.get(sale.address.toLowerCase());
+      if (!txNow) continue;
+      const nftAddr = sale.nft_address ?? '';
+      const meta = nftAddr ? data?.metadata?.[nftAddr]?.token_info?.find(entry => entry.type === 'nft_items') : undefined;
+      const slug = forcedSlug ?? itemSlug(meta?.image, meta?.name, sale.nft_item?.content?.uri);
+      if (!slug) continue;
+      const enchant = forcedSlug?.startsWith('col:') ? 0 : parseEnchant(meta?.name);
+      const bucketKey = `${slug}:${enchant}`;
+      const hourKey = String(Math.floor((txNow * 1000) / 3_600_000));
+      let hours = hourly.get(bucketKey);
+      if (!hours) {
+        hours = new Map();
+        hourly.set(bucketKey, hours);
+      }
+      const prev = hours.get(hourKey);
+      if (prev === undefined || price < prev) hours.set(hourKey, price);
+    }
+  }
+  return hourly;
+}
+
+const backfillKey = 'notwise:getgems:sales-backfill:v1';
+
+async function runSalesBackfill(targetSlug?: string): Promise<void> {
+  const token = process.env.TONCENTER_API_KEY;
+  if (!token) return;
+  const results: Map<string, Map<string, number>>[] = [];
+
+  if (targetSlug?.startsWith('col:')) {
+    const colId = targetSlug.slice(4);
+    const col = collections.find(c => c.id === colId);
+    if (col) {
+      results.push(await backfillCollectionSales(token, col.address, 100, `col:${col.id}`).catch(() => new Map()));
+    }
+  } else if (targetSlug === 'owl-skin') {
+    results.push(await backfillCollectionSales(token, skinsCollection, 200, 'owl-skin').catch(() => new Map()));
+  } else {
+    // Full backfill (guarded by 6h Redis lock so it doesn't repeat on every request)
+    const claimed = await redis<string | null>(['SET', backfillKey, '1', 'EX', 21600, 'NX']).catch(() => null);
+    if (claimed !== 'OK') return;
+    results.push(await backfillCollectionSales(token, itemsCollection, 300).catch(() => new Map()));
+    results.push(await backfillCollectionSales(token, skinsCollection, 200, 'owl-skin').catch(() => new Map()));
+    for (const col of collections) {
+      if (col.id === 'items' || col.id === 'skins') continue;
+      results.push(await backfillCollectionSales(token, col.address, 80, `col:${col.id}`).catch(() => new Map()));
+    }
+  }
+
+  const writes: { key: string; hour: string; price: number }[] = [];
+  for (const map of results) {
+    for (const [bucketKey, hours] of map.entries()) {
+      for (const [hour, price] of hours.entries()) {
+        writes.push({ key: `${historyPrefix}${bucketKey}`, hour, price });
+      }
+    }
+  }
+  for (let i = 0; i < writes.length; i += 16) {
+    const chunk = writes.slice(i, i + 16);
+    await Promise.all(chunk.map(async ({ key, hour, price }) => {
+      // HSETNX preserves any existing live floor snapshot while filling past hours with real sale prices.
+      await redis(['HSETNX', key, hour, `${price}|1`]).catch(() => null);
+      await redis(['EXPIRE', key, historyRetentionSec]).catch(() => null);
+    }));
+  }
 }
 
 type FreshItemsResult = { snapshot: ItemsSnapshot; buckets: ExplorerBucket[] | null };
@@ -471,6 +595,7 @@ async function refresh(previous: MarketSnapshot | null) {
         await redis(['SET', explorerKey, JSON.stringify(memoryExplorer), 'EX', 86400]).catch(() => null);
       }
       await recordHistory(attemptedAt, itemsResult.buckets, allCols).catch(() => null);
+      await runSalesBackfill().catch(() => null);
     }
     return snapshot;
   } finally {
@@ -528,7 +653,8 @@ function parseHistoryHash(raw: Record<string, string> | string[] | null): Histor
 
 export async function marketExplorer(): Promise<ExplorerSnapshot> {
   let explorer = await storedExplorer();
-  if (!explorer || !explorer.buckets.length) {
+  const hasSkins = explorer?.buckets.some(b => b.slug === 'owl-skin') ?? false;
+  if (!explorer || !explorer.buckets.length || !hasSkins) {
     await market(true);
     explorer = await storedExplorer();
   } else {
@@ -558,6 +684,11 @@ export async function marketHistory(
   try {
     const raw = await redis<Record<string, string> | string[] | null>(['HGETALL', key]);
     points = parseHistoryHash(raw);
+    if (points.length < 2) {
+      await runSalesBackfill(safeSlug.startsWith('col:') || safeSlug === 'owl-skin' ? safeSlug : undefined).catch(() => null);
+      const refreshed = await redis<Record<string, string> | string[] | null>(['HGETALL', key]);
+      points = parseHistoryHash(refreshed);
+    }
   } catch { /* Redis unavailable */ }
   const now = Date.now();
   const windowMs = range === '24h' ? 86_400_000 : range === '7d' ? 7 * 86_400_000 : range === '30d' ? 30 * 86_400_000 : Infinity;

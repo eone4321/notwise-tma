@@ -21,7 +21,7 @@ export const itemNames: Record<number, [string, string]> = {
   39: ['Монтмориллонит', 'montmorillonite.webp'],
   50: ['Зажигалка', 'lighter.webp'],
   51: ['Осколки скорлупы', 'eggshell-shards-icon.webp'],
-  52: ['Чиллер', 'chiller.webp'],
+  52: ['Холодильник XP', 'chiller.webp'],
   53: ['Заточка кольца', 'scroll-enchant-ring.webp'],
   54: ['Заточка скина', 'scroll-enchant-skin.webp'],
 };

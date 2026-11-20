@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Price } from './Price';
 import { DetailLink } from '../ui/DetailLink';
 import { artSrc } from '../ui/warmArt';
@@ -27,6 +28,44 @@ const fmtFloor = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
 
 export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}) {
   const { data: market, pending } = collectionMarket.useSnapshot();
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const pauseUntilRef = useRef(0);
+  const draggingRef = useRef(false);
+
+  useEffect(() => {
+    if (only) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let raf = 0;
+    let carry = 0;
+    let last = performance.now();
+
+    const step = (now: number) => {
+      const dt = Math.min(48, now - last);
+      last = now;
+      const el = scrollerRef.current;
+      if (el && !draggingRef.current && now >= pauseUntilRef.current) {
+        const half = el.scrollWidth / 2;
+        if (half > 0) {
+          carry += (dt / 1000) * 26;
+          if (carry >= 1) {
+            const px = Math.floor(carry);
+            carry -= px;
+            el.scrollLeft += px;
+            if (el.scrollLeft >= half) {
+              el.scrollLeft -= half;
+            }
+          }
+        }
+      }
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [only]);
+
+  const pauseAutoScroll = (ms = 2400) => {
+    pauseUntilRef.current = performance.now() + ms;
+  };
 
   // Subpage single-collection mode stays unchanged
   if (only) {
@@ -133,7 +172,19 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
         </div>
       </DetailLink>
 
-      <div className="homeColMarquee" aria-label="Коллекции NOT Wise на Getgems" aria-busy={!market && pending}>
+      <div
+        ref={scrollerRef}
+        className="homeColMarquee"
+        aria-label="Коллекции NOT Wise на Getgems"
+        aria-busy={!market && pending}
+        onTouchStart={() => { draggingRef.current = true; pauseAutoScroll(2800); }}
+        onTouchEnd={() => { draggingRef.current = false; pauseAutoScroll(2200); }}
+        onTouchCancel={() => { draggingRef.current = false; pauseAutoScroll(2200); }}
+        onPointerDown={e => { if (e.pointerType !== 'touch') { draggingRef.current = true; pauseAutoScroll(2800); } }}
+        onPointerUp={() => { draggingRef.current = false; pauseAutoScroll(2200); }}
+        onPointerCancel={() => { draggingRef.current = false; pauseAutoScroll(2200); }}
+        onWheel={() => pauseAutoScroll(2400)}
+      >
         <div className="homeColTrack">
           <div className="homeColGroup">
             {marqueeCollections.map(item => renderSquareCard(item, 'a'))}

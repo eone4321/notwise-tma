@@ -43,13 +43,13 @@ const skinAssets: MarketAsset[] = [
     slug: 'owl-skin',
     historySlug: 'owl-skin',
     category: 'skins',
-    nameRu: 'NFT-скины сов (по заточке)',
+    nameRu: 'NFT-скины сов',
     nameEn: 'NOT Wise Skin',
     icon: '/brand/collections/skins.png',
     enchantable: true,
     collectionAddress: skinsColAddress,
     collectionUrl: `https://getgems.io/collection/${skinsColAddress}`,
-    noteRu: 'Скины из коллекции NOT Wise: Skins с учётом уровня заточки (+0…+20).',
+    noteRu: 'Скины из коллекции NOT Wise: Skins на Getgems.',
   },
   { slug: 'skin-jetton', historySlug: 'skin-jetton', category: 'skins', nameRu: 'Скин-жетон (обычный)', nameEn: 'Skin Jetton', icon: '/game/items/skin-jetton.webp', collectionAddress: itemsColAddress, collectionUrl: itemCollectionMarketUrl(itemsColAddress, 'skin-jetton') },
   { slug: 'skin-jetton-epic', historySlug: 'skin-jetton-epic', category: 'skins', nameRu: 'Эпический скин-жетон', nameEn: 'Epic Skin Jetton', icon: '/game/items/skin-jetton-epic.webp', collectionAddress: itemsColAddress, collectionUrl: itemCollectionMarketUrl(itemsColAddress, 'skin-jetton-epic') },
@@ -61,7 +61,7 @@ const itemAssets: MarketAsset[] = [
   { slug: 'scroll-enchant-ring', historySlug: 'scroll-enchant-ring', category: 'items', nameRu: 'Заточка кольца', nameEn: 'Ring Enchanter', icon: '/game/items/scroll-enchant-ring.webp', collectionAddress: itemsColAddress, collectionUrl: itemCollectionMarketUrl(itemsColAddress, 'scroll-enchant-ring') },
   { slug: 'montmorillonite', historySlug: 'montmorillonite', category: 'items', nameRu: 'Монтмориллонит', nameEn: 'Montmorillonite', icon: '/game/items/montmorillonite.webp', collectionAddress: itemsColAddress, collectionUrl: itemCollectionMarketUrl(itemsColAddress, 'montmorillonite') },
   { slug: 'big-black-clock', historySlug: 'big-black-clock', category: 'items', nameRu: 'Большие чёрные часы', nameEn: 'Big Black Clock', icon: '/game/items/big-black-clock.webp', collectionAddress: itemsColAddress, collectionUrl: itemCollectionMarketUrl(itemsColAddress, 'big-black-clock') },
-  { slug: 'chiller', historySlug: 'chiller', category: 'items', nameRu: 'Чиллер', nameEn: 'Chiller', icon: '/game/items/chiller.webp', collectionAddress: itemsColAddress, collectionUrl: itemCollectionMarketUrl(itemsColAddress, 'chiller') },
+  { slug: 'chiller', historySlug: 'chiller', category: 'items', nameRu: 'Холодильник XP', nameEn: 'Chiller', icon: '/game/items/chiller.webp', collectionAddress: itemsColAddress, collectionUrl: itemCollectionMarketUrl(itemsColAddress, 'chiller') },
   { slug: 'lighter', historySlug: 'lighter', category: 'items', nameRu: 'Зажигалка', nameEn: 'Lighter', icon: '/game/items/lighter.webp', collectionAddress: itemsColAddress, collectionUrl: itemCollectionMarketUrl(itemsColAddress, 'lighter') },
   { slug: 'morpher', historySlug: 'morpher', category: 'items', nameRu: 'Морфер', nameEn: 'Morpher', icon: '/game/items/morpher.webp', collectionAddress: itemsColAddress, collectionUrl: itemCollectionMarketUrl(itemsColAddress, 'morpher') },
   { slug: 'dubai-chocolate', historySlug: 'dubai-chocolate', category: 'items', nameRu: 'Дубайский шоколад', nameEn: 'Dubai Chocolate', icon: '/game/items/dubai-chocolate.webp', collectionAddress: itemsColAddress, collectionUrl: itemCollectionMarketUrl(itemsColAddress, 'dubai-chocolate') },
@@ -77,16 +77,18 @@ const itemAssets: MarketAsset[] = [
   { slug: 'floppy-10m', historySlug: 'floppy-10m', category: 'items', nameRu: 'Дискета 10M', nameEn: 'Floppy 10M', icon: '/game/items/floppy-10m.webp', collectionAddress: itemsColAddress, collectionUrl: itemCollectionMarketUrl(itemsColAddress, 'floppy-10m') },
 ];
 
-const collectionAssets: MarketAsset[] = marketCollections.map(col => ({
-  slug: `col:${col.id}`,
-  historySlug: `col:${col.id}`,
-  category: 'collections',
-  nameRu: col.name,
-  nameEn: col.name,
-  icon: `/brand/collections/${col.id}.png`,
-  collectionAddress: col.address,
-  collectionUrl: `https://getgems.io/collection/${col.address}`,
-}));
+const collectionAssets: MarketAsset[] = marketCollections
+  .filter(col => col.id !== 'items')
+  .map(col => ({
+    slug: `col:${col.id}`,
+    historySlug: `col:${col.id}`,
+    category: 'collections',
+    nameRu: col.name,
+    nameEn: col.name,
+    icon: `/brand/collections/${col.id}.png`,
+    collectionAddress: col.address,
+    collectionUrl: `https://getgems.io/collection/${col.address}`,
+  }));
 
 export const marketCatalog: readonly MarketAsset[] = [
   ...ringAssets,

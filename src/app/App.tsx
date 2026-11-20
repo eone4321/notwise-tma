@@ -38,7 +38,7 @@ const sections = [
   ['Секреты', '/secrets'], ['Капсулы', '/capsules'], ['Яйца и скины', '/owl'],
   ['Коллекции', '/collections'], ['Бои и навыки', '/combat'], ['Предметы', '/assets'],
   ['Экосистема', '/ecosystem'], ['Пригласить друзей', '/referrals'],
-  ['Памятка и режимы', '/care'], ['Памятка и режимы', '/modes'],
+  ['Памятка и режимы', '/care'], ['Памятка и режимы', '/modes'], ['Лайфхаки', '/lifehacks'],
 ] as const;
 type Item={id:number;name:string;name_ru?:string;description:string;short_descr:string;rarity:number;kind?:string;key?:string};
 function App() {
@@ -230,6 +230,8 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
     ru: ['Коллекции', 'Стикеры, альбомы и Getgems'], en: ['Collections', 'Stickers and Getgems'] },
   { path: '/care', icon: '/game/items/book.webp', art: '/game/ui/fight-vs.png',
     ru: ['Памятка и режимы', 'Таймеры, полёт, Додзё и лиги'], en: ['Cheat sheet & modes', 'Timers, flight, Dojo and leagues'] },
+  { path: '/lifehacks', icon: '/game/items/chiller.webp', art: '/game/items/montmorillonite.webp',
+    ru: ['Лайфхаки', 'Фарм $NOT, SP, экономика и редкость'], en: ['Lifehacks', 'Farming $NOT, SP, economy & rare drops'] },
   { path: '/referrals', icon: '/game/items/wise-coin.webp', art: '/game/items/referral-egg.webp',
     ru: ['Пригласить друзей', 'Твоя ссылка и список приглашённых'], en: ['Invite friends', 'Your links and invitations'] },
 ] as const;
@@ -335,13 +337,13 @@ function Page({ profile, onChatVisit, ask, joke, popup, reveal, referrals }: {
     <h1>Страница не найдена</h1><Link className="textLink" to="/">На главную</Link>
   </Card>;
   return <>
-    <h1 className="pageTitle">{section[0]}</h1>
+    <h1 className="pageTitle">{pathname === '/collections/charts' ? 'Маркет и графики' : section[0]}</h1>
     {section?.[1] === '/capsules' && <CapsulePage/>}
     {section?.[1] === '/owl' && <OwlPage/>}
     {section?.[1] === '/collections' && <CollectionPage/>}
     {section?.[1] === '/ecosystem' && <EcosystemPage gameEntry={profile?.gameEntry ?? defaultGameLink}/>}
     {section?.[1] === '/combat' && <CombatPage referralCode={profile?.referralCode}/>}
-    {(section?.[1] === '/care' || section?.[1] === '/modes') && <CarePage/>}
+    {(section?.[1] === '/care' || section?.[1] === '/modes' || section?.[1] === '/lifehacks') && <CarePage/>}
     {section?.[1] === '/squads' && <SquadPage gameEntry={profile?.gameEntry ?? defaultGameLink} onChatVisit={onChatVisit}/>}
     {section?.[1] === '/secrets' && <Secrets ask={ask} joke={joke} popup={popup} reveal={reveal}/>}
     {section?.[1] === '/assets' && <InventoryPage/>}

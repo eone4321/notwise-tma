@@ -60,10 +60,9 @@ export function CollectionPage() {
   const theme = themes[title] ?? marketPacks.packs.find(pack => pack.name === 'NOT Wise: ' + title)?.theme;
   const total = album === null ? stickers.length : matches.length;
   return <>
-    {album === null && <nav className="choiceBar profileTabs collectionTabs3" aria-label="Раздел коллекций">
-      <Link to="/collections" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={!marketView && !chartsView ? 'page' : undefined}><GameGlyph name="gift"/>Стикеры</Link>
-      <Link to="/collections/market" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={marketView ? 'page' : undefined}><GameGlyph name="treasure"/>Getgems</Link>
-      <Link to="/collections/charts" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={chartsView ? 'page' : undefined}><GameGlyph name="sparkles"/>Графики</Link>
+    {album === null && !chartsView && <nav className="choiceBar profileTabs" aria-label="Раздел коллекций">
+      <Link to="/collections" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={!marketView ? 'page' : undefined}><GameGlyph name="gift"/>Стикеры</Link>
+      <Link to="/collections/market" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={marketView ? 'page' : undefined}><GameGlyph name="treasure"/>NFT на Getgems</Link>
     </nav>}
     {chartsView ? <MarketChartsPage/> : marketView ? <section className="card marketCollections" aria-busy={!market && pending}>
       {marketCollections.map(item => {
