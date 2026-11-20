@@ -254,11 +254,9 @@ export default async function handler(request: Request) {
     if (action === 'admin' || action === 'analytics' || action === 'award_stats' || action === 'market_status' || action === 'market_refresh') {
       if (!await guideAdmin(id, token)) return json({ error: 'forbidden' }, 403);
       if (action === 'market_refresh') {
-        if (!await redis(['SET', namespace + 'admin-market-refresh', '1', 'NX', 'EX', 15]).catch(() => 'OK')) {
-          return json(await marketDiagnostics());
-        }
-        await refreshMarket().catch(() => null);
-        return json(await marketDiagnostics());
+        const allowed = await redis(['SET', namespace + 'admin-market-refresh', '1', 'NX', 'EX', 10]).catch(() => 'OK');
+        const refreshSummary = allowed ? await refreshMarket().catch(() => null) : null;
+        return json({ ...await marketDiagnostics(), refreshSummary, throttled: !allowed });
       }
       return json(
         action === 'admin' ? await members(membersKey, offset) :

@@ -3,7 +3,7 @@ import { guideAchievements, type GuideAchievement } from '../domain/guide-achiev
 import { useEffect, useState } from 'react';
 import { guideActions, guideBuilds, guidePages, type GuideEvent } from '../domain/guide-events';
 import { authData, profileRequest, type GuideMember } from './guideProfile';
-import { tokenMarket } from './marketData';
+import { collectionMarket, itemMarket, tokenMarket } from './marketData';
 
 const date = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' });
 const timeOnly = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -28,6 +28,14 @@ type MarketStatus = {
     updatedAt: string | null;
     items: { id: string; floor: number }[];
   };
+  throttled?: boolean;
+  refreshSummary?: {
+    collections: number;
+    total: number;
+    itemTypes: number;
+    itemsStatus?: string;
+    itemSource?: string;
+  } | null;
 };
 type Tab = 'analytics' | 'award_stats' | 'admin' | 'market_status';
 
@@ -61,7 +69,11 @@ export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null })
     setRefreshingMarket(true);
     setError('');
     try {
-      setResult(await profileRequest<MarketStatus>({ action: 'market_refresh' }));
+      const next = await profileRequest<MarketStatus>({ action: 'market_refresh' });
+      setResult(next);
+      tokenMarket.refresh(true);
+      collectionMarket.refresh(true);
+      itemMarket.refresh(true);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'unavailable');
     } finally {
@@ -147,6 +159,13 @@ function MarketDiagnostics({ data, refreshing, onRefresh }: {
       <p className="caption">
         {healthy ? 'Все источники работают штатно.' : 'Есть задержки, резервный источник или ошибки обновления.'} Расписание — каждые {data.intervalMinutes} мин.
       </p>
+      <button className="primary" type="button" disabled={refreshing} onClick={onRefresh}>
+        {refreshing ? 'Запускаем парсер…' : 'Обновить цены сейчас'}
+      </button>
+      {data.throttled && <p className="supportStatus" role="status">Повторный запуск доступен раз в 10 секунд — показан последний снимок.</p>}
+      {data.refreshSummary && !data.throttled && <p className="supportStatus" role="status">
+        Парсер обновлён: {data.refreshSummary.collections}/{data.refreshSummary.total} коллекций, {data.refreshSummary.itemTypes} типов предметов.
+      </p>}
       <dl className="analyticsRows">
         <div><dt>Статус снимка</dt><dd>{data.fresh ? 'Актуальный' : 'Устарел'}</dd></div>
         <div><dt>Последний прогон</dt><dd>{formatAge(data.attemptedAt)}</dd></div>
@@ -158,9 +177,6 @@ function MarketDiagnostics({ data, refreshing, onRefresh }: {
         <div><dt>Источник предметов</dt><dd>{data.items.source ? (sourceLabel[data.items.source] ?? data.items.source) : '—'}</dd></div>
         <div><dt>Обновление предметов</dt><dd>{formatAge(data.items.updatedAt)}</dd></div>
       </dl>
-      <button className="secondary" type="button" disabled={refreshing} onClick={onRefresh}>
-        {refreshing ? 'Обновляем парсер…' : 'Обновить цены сейчас'}
-      </button>
     </section>
 
     <section className="card">
