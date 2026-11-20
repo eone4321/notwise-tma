@@ -33,7 +33,8 @@ const format = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
 const stickerAlbum = (id: number) => Math.ceil(id / 5);
 
 export function CollectionPage() {
-  const { pathname, hash } = useLocation();
+  const { pathname, hash, state } = useLocation();
+  const keepParent = state?.guideDetail === true;
   const { collected, completed, setMark } = useProgress();
   const isDone = (id: number) => collected.includes(id) || completed.includes(id);
   const albumNumber = Number(pathname.match(/albums\/(\d+)$/)?.[1]);
@@ -54,8 +55,8 @@ export function CollectionPage() {
   const total = album === null ? stickers.length : matches.length;
   return <>
     {album === null && <nav className="choiceBar profileTabs" aria-label="Раздел коллекций">
-      <Link to="/collections" replace aria-current={!marketView ? 'page' : undefined}><GameGlyph name="gift"/>Стикеры</Link>
-      <Link to="/collections/market" replace aria-current={marketView ? 'page' : undefined}><GameGlyph name="treasure"/>NFT на Getgems</Link>
+      <Link to="/collections" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={!marketView ? 'page' : undefined}><GameGlyph name="gift"/>Стикеры</Link>
+      <Link to="/collections/market" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={marketView ? 'page' : undefined}><GameGlyph name="treasure"/>NFT на Getgems</Link>
     </nav>}
     {marketView ? <section className="card marketCollections" aria-busy={!market && pending}>
       {marketCollections.map(item => {
@@ -104,11 +105,11 @@ export function CollectionPage() {
             const minted = supplyFor(pack);
             const found = stickers.filter(item => stickerAlbum(item.id) === pack && isDone(item.id)).length;
             return <DetailLink key={label} to={`/collections/albums/${pack}`}>
+              {typeof minted === 'number' && <span className="albumNftCorner" aria-hidden="true">{format.format(minted)} NFT</span>}
               <AlbumLogo id={pack}/>
               <span className="sr-only">{label}, собрано {found} из 5{typeof minted === 'number' ? `, сминчено ${minted}` : ''}</span>
               <span className="albumTileMeta" aria-hidden="true">
                 <span className={found === 5 ? 'isComplete' : undefined}>{found}/5</span>
-                {typeof minted === 'number' && <span className="nftBadge">{format.format(minted)} NFT</span>}
               </span>
             </DetailLink>;
           })}</div>

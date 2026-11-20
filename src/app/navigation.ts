@@ -61,7 +61,7 @@ export function useGuideScroll() {
     const restore = () => {
       if (pending === undefined || document.body.style.position === 'fixed') return;
       window.scrollTo({ top: pending, behavior: 'instant' });
-      if (Math.abs(window.scrollY - pending) <= 1) {
+      if (Math.abs(window.scrollY - pending) <= 2) {
         pending = undefined;
         observer?.disconnect();
       }
@@ -99,6 +99,7 @@ export function useGuideScroll() {
     document.addEventListener('click', persist, true);
     main.addEventListener('click', markDisclosure);
     document.addEventListener('pointerdown', interrupt, true);
+    document.addEventListener('touchstart', interrupt, { capture: true, passive: true });
     document.addEventListener('wheel', interrupt, { capture: true, passive: true });
     main.addEventListener('toggle', save, true);
 
@@ -109,6 +110,7 @@ export function useGuideScroll() {
       window.removeEventListener('popstate', persist);
       document.removeEventListener('click', persist, true);
       document.removeEventListener('pointerdown', interrupt, true);
+      document.removeEventListener('touchstart', interrupt, true);
       document.removeEventListener('wheel', interrupt, true);
       main.removeEventListener('toggle', save, true);
       main.removeEventListener('click', markDisclosure);

@@ -59,11 +59,12 @@ export function CombatPage() {
   const isSkills = !page && !isBuilds && !isStats;
   const branch = !isBuilds && branches.find(item => item[0] === branchId);
   const skill = !isBuilds && skills.find(item => item.id === Number(skillId) && item.branch === branchId);
+  const keepParent = state?.guideDetail === true;
   return <>
     {!branch && <nav className="choiceBar profileTabs combatTabs" aria-label="Раздел боя">
-      <Link to="/combat" replace aria-current={isSkills ? 'page' : undefined}><GameGlyph name="lightning"/>Навыки</Link>
-      <Link to="/combat/stats" replace aria-current={isStats ? 'page' : undefined}><GameGlyph name="shield"/>Характеристики</Link>
-      <Link to="/combat/builds" replace aria-current={isBuilds ? 'page' : undefined}><GameGlyph name="sparkles"/>Билды</Link>
+      <Link to="/combat" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isSkills ? 'page' : undefined}><GameGlyph name="lightning"/>Навыки</Link>
+      <Link to="/combat/stats" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isStats ? 'page' : undefined}><GameGlyph name="shield"/>Характеристики</Link>
+      <Link to="/combat/builds" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isBuilds ? 'page' : undefined}><GameGlyph name="sparkles"/>Билды</Link>
     </nav>}
     {isBuilds ? <BuildConstructor/> :
       skill ? <SkillDetail key={skill.id} skill={skill}/> :

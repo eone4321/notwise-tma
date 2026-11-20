@@ -231,20 +231,20 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
     <div className="heroCopy"><h1>{en ? <>NOT Wise <span>Guide</span></> : <>Гайд по <span>NOT Wise</span></>}</h1><p className="heroSub">{en ? 'Loot, combat and owl care.' : 'Награды, бои и уход за совой.'}</p></div>
     <img className="heroImage" src={artSrc('/brand/notwise-home.jpg')} width="1170" height="1200" alt=""/>
     <div className="heroActions">
+      <Link className="primary heroBuilds" to="/combat/builds" onClick={() => { lightHaptic(); trackGuide('action:builds'); }}>
+        <GameGlyph name="fight"/>
+        <span>{en ? 'Build calculator' : 'Калькулятор билдов'}</span>
+      </Link>
       {fromInvite && !profile ? (
-        <button className="primary openGame" disabled={!profileFailed} onClick={retryProfile}>
-          {profileFailed ? (en ? 'Retry' : 'Повторить проверку') : (en ? 'Checking invitation…' : 'Проверяем приглашение…')}
+        <button className="secondary openGame" disabled={!profileFailed} onClick={retryProfile}>
+          {profileFailed ? (en ? 'Retry' : 'Повторить') : (en ? 'Checking…' : 'Проверяем…')}
         </button>
       ) : (
-        <a className="primary openGame" href={profile?.gameEntry ?? defaultGameLink} onClick={() => trackGuide('action:game')}>
+        <a className="secondary openGame" href={profile?.gameEntry ?? defaultGameLink} onClick={() => trackGuide('action:game')}>
           <span className="launchMark" aria-hidden="true"/>
-          {en ? 'Open the game' : 'Открыть игру'}
+          <span>{en ? 'Open the game' : 'Открыть игру'}</span>
         </a>
       )}
-      <Link className="secondary heroBuilds" to="/combat/builds" onClick={() => { lightHaptic(); trackGuide('action:builds'); }}>
-        <GameGlyph name="fight"/>
-        <span>{en ? 'Build calculator' : 'Собрать билд'}</span>
-      </Link>
       <button className="heroShare secondary" aria-haspopup="dialog" onClick={() => { lightHaptic(); setShare(true); }}>
         <GameGlyph name="share"/>
         <span>{en ? 'Share' : 'Поделиться'}</span>
@@ -333,7 +333,8 @@ function Page({ profile, onChatVisit, ask, joke, popup, reveal, referrals }: {
   </>;
 }
 function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean; popup: boolean; reveal: () => void }) {
-  const { hash, pathname } = useLocation();
+  const { hash, pathname, state } = useLocation();
+  const keepParent = state?.guideDetail === true;
   const tab = pathname === '/secrets/achievements' ? 'achievement' : 'secret';
   const selected = tab === 'secret' && hash.startsWith('#sticker-') ? Number(hash.slice(9)) : null;
   const { completed, collected, percentages, setMark } = useProgress();
@@ -352,8 +353,8 @@ function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean;
   return <>
     <p className="intro">Скрытые действия и обычные достижения открывают стикеры для альбомов.</p>
     <div className="choiceBar profileTabs" aria-label="Способ получения">
-      <Link to="/secrets" replace aria-current={tab === 'secret' ? 'page' : undefined}><GameGlyph name="lock"/>Секреты</Link>
-      <Link to="/secrets/achievements" replace aria-current={tab === 'achievement' ? 'page' : undefined}><GameGlyph name="treasure"/>Достижения</Link>
+      <Link to="/secrets" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={tab === 'secret' ? 'page' : undefined}><GameGlyph name="lock"/>Секреты</Link>
+      <Link to="/secrets/achievements" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={tab === 'achievement' ? 'page' : undefined}><GameGlyph name="treasure"/>Достижения</Link>
     </div>
     {tab === 'secret' && !joke ? <Card>
       <h2>20 скрытых заданий</h2>
@@ -403,12 +404,17 @@ function RevealedSecrets({ close }: { close: () => void }) {
 function SecretDialog({reveal}: {reveal: () => void}) {
   const dialog = useRef<HTMLDialogElement>(null);
   useModal(dialog, true);
-  return <dialog className="modal" ref={dialog} aria-labelledby="modalTitle" onCancel={event => {event.preventDefault();reveal();}}>
-    <button className="close" onClick={reveal} aria-label="Закрыть окно">×</button>
-    <h2 id="modalTitle" data-dialog-title tabIndex={-1}>Секреты Not Wise</h2>
-    <p>Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты</p>
-    <button className="primary" onClick={reveal}>Заплатить</button>
-    <button className="secondary" onClick={reveal}>Назад</button>
+  return <dialog className="modal" ref={dialog} aria-labelledby="modalTitle" onCancel={event => {event.preventDefault();reveal();}}
+    onClick={event => { if (event.target === event.currentTarget) reveal(); }}>
+    <div className="dialogBody">
+      <div className="tokenRatesDialogHeader">
+        <h2 id="modalTitle" data-dialog-title tabIndex={-1}>Секреты Not Wise</h2>
+        <button className="close" onClick={reveal} aria-label="Закрыть окно">×</button>
+      </div>
+      <p>Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты</p>
+      <button className="primary" onClick={reveal}>Заплатить</button>
+      <button className="secondary" onClick={reveal}>Назад</button>
+    </div>
   </dialog>;
 }
 export {App};

@@ -1,5 +1,5 @@
 import { DetailLink } from '../ui/DetailLink';
-import { useId, useState } from 'react';
+import { useId } from 'react';
 import { collectionMarket, itemMarket } from './marketData';
 import publishing from '../domain/game-publishing.json';
 import mintableItems from './mintable-items.json';
@@ -12,13 +12,11 @@ import marketCollections from './market-collections';
 import { OwlPrices } from './OwlPrices';
 import { Price, type Currency } from './Price';
 import { GramEstimate, StarsAndGram } from './GamePrice';
-import { SkinExamples } from './SkinExamples';
 import { ItemHelp } from './ItemHelp';
 import { ringCatalog } from './combat-builds';
 import shopItems from './shop-data.json';
 import skinParts from './skin-parts.json';
 import { SkinFarmCalculator } from './SkinFarmCalculator';
-import { emptySkin } from './skin-examples';
 import { itemCollectionMarketUrl } from '../domain/item-market-links';
 
 const eggs = [
@@ -36,17 +34,19 @@ const marketEggs = marketCollections.find(item => item.id === 'eggs')!;
 const itemMintGram: Readonly<Partial<Record<number, number>>> = publishing.itemMintGram;
 
 export function OwlPage() {
-  const { pathname } = useLocation();
+  const { pathname, state } = useLocation();
+  const keepParent = state?.guideDetail === true;
+  const [, , slug] = pathname.split('/');
   const egg = eggs.find(item => pathname === '/owl/' + item.slug);
   const drops = egg ? dropsFor(egg.id) : [];
   const shopPrice = egg && eggPrice(egg, 'shop');
   const unknownChance = drops.reduce((sum, [id, chance]) => sum + (itemNames[id] ? 0 : chance), 0);
   const isEggIndex = ['/owl', '/owl/shop', '/owl/loot'].includes(pathname);
   return <>
-    <nav className="choiceBar profileTabs owlTabs" aria-label="Яйца и скины">
-      <Link to="/owl" replace aria-current={isEggIndex || egg ? 'page' : undefined}><GameArt path="/game/items/egg.webp" size={16}/>Яйца</Link>
-      <Link to="/owl/skins" replace aria-current={pathname === '/owl/skins' ? 'page' : undefined}><GameGlyph name="skin"/>Скины и жетоны</Link>
-    </nav>
+    {!egg && <nav className="choiceBar profileTabs owlTabs" aria-label="Яйца и скины">
+      <Link to="/owl" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isEggIndex ? 'page' : undefined}><GameArt path="/game/items/egg.webp" size={16}/>Яйца</Link>
+      <Link to="/owl/skins" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={slug === 'skins' ? 'page' : undefined}><GameGlyph name="skin"/>Скины и жетоны</Link>
+    </nav>}
     {isEggIndex && <>
       <section className="card leanList eggSources">
         <h2>Лавка</h2>
@@ -290,19 +290,21 @@ function lootDestination(id: number, file: string) {
 }
 
 function SkinCatalog() {
-  const [parts, setParts] = useState(emptySkin);
   return <>
-    <SkinExamples onUseExample={setParts}/>
-    <section className="card skinCalculatorPanel" id="skin-calculator" aria-labelledby="farm-title" tabIndex={-1}>
-      <SkinFarmCalculator parts={parts} onChange={setParts}/>
-    </section>
-    <section className="card inventoryPanel skinJettons" data-category="skins">
+    <SkinFarmCalculator/>
+    <section className="card inventoryPanel skinJettons" id="skin-jettons" data-category="skins">
       <h2>Как получить скин</h2>
       <p className="caption">Открой жетон в инвентаре и надень выпавший скин на сову.</p>
       <ul className="compactList">
         {jettons.map(item => <InventoryRow item={item} key={item.file} id={'jetton-' + item.id}/>)}
         <SkinCollectionRow/>
       </ul>
+      <details className="mediaDetails skinRuleDisclosure" id="skin-farm-rules">
+        <summary><GameArt path="/game/items/scroll-enchant-skin.webp" size={27}/><strong>Как увеличить бонус</strong></summary>
+        <p>Обычная деталь даёт +5%, золотое оперение +15%, цепь NOT +10%. Каждый уровень заточки добавляет ещё +5%.</p>
+        <p>Золотое оперение, цепь NOT, глаза, очки и убор вместе дают +40% даже без заточки.</p>
+        <DetailLink to="/assets/gear" className="textLink">Шансы заточки</DetailLink>
+      </details>
     </section>
     <details className="card mediaDetails skinPartsList" id="skin-parts">
       <summary><GameGlyph name="skin"/><strong>Все детали скинов</strong></summary>

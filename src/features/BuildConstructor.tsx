@@ -87,7 +87,9 @@ export function BuildConstructor() {
   const [sharedBanner, setSharedBanner] = useState(() => Boolean(initialShared));
   const [practice, setPractice] = useState<PracticeResult | 'waiting' | 'error' | null>(null);
   const [comparison, setComparison] = useState<PracticeResult | null>(null);
-  const [showAllBuilds, setShowAllBuilds] = useState(false);
+  const [showAllBuilds, setShowAllBuilds] = useState(() => {
+    try { return sessionStorage.getItem('notwise.guide.builds.show-all.v1') === '1'; } catch { return false; }
+  });
   const [shareOpen, setShareOpen] = useState(false);
   const worker = useRef<Worker | null>(null);
 
@@ -256,7 +258,12 @@ export function BuildConstructor() {
           <div className="buildLoadoutOwl">
             <GameArt path="/game/skins/7895.png" size={104}/>
           </div>
-          <a href="#build-results-title" className="buildLoadoutStatus" data-ok={warningCount === 0 || undefined}>
+          <a href="#build-results-title" className="buildLoadoutStatus" data-ok={warningCount === 0 || undefined}
+            onClick={event => {
+              event.preventDefault();
+              lightHaptic();
+              document.getElementById('build-results-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}>
             {warningCount === 0
               ? copy('✓ Баланс ОК', '✓ Balanced')
               : copy(`! Советы (${warningCount})`, `! Tips (${warningCount})`)}
@@ -377,8 +384,10 @@ export function BuildConstructor() {
         <button type="button" className="buildPillButton" onClick={() => {
           lightHaptic();
           setShowAllBuilds(open => {
-            if (!open) trackGuide('build:analyze');
-            return !open;
+            const next = !open;
+            if (next) trackGuide('build:analyze');
+            try { sessionStorage.setItem('notwise.guide.builds.show-all.v1', next ? '1' : '0'); } catch { /* Optional. */ }
+            return next;
           });
         }}>{showAllBuilds ? copy('Свернуть', 'Hide') : copy('Показать все', 'Show all')}</button>
       </div>

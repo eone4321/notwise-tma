@@ -19,7 +19,8 @@ type Notifications = { ready: boolean; extraAvailable: boolean; enabled: Record<
 const bot = 'https://t.me/NotWiseGuideBot';
 
 export function SettingsPage({ profile, earned, chatIssue }: { profile: GuideProfile | null; earned: GuideAchievement[]; chatIssue?: string }) {
-  const { pathname } = useLocation();
+  const { pathname, state } = useLocation();
+  const keepParent = state?.guideDetail === true;
   const language = useGuideLocale(profile?.language);
   const en = language.locale === 'en';
   const tabs = [
@@ -30,7 +31,7 @@ export function SettingsPage({ profile, earned, chatIssue }: { profile: GuidePro
   return <>
     <h1 className="pageTitle">{en ? 'Settings' : 'Настройки'}</h1>
     <nav className="choiceBar profileTabs settingsTabs" aria-label={en ? 'Guide settings' : 'Настройки гайда'}>
-      {tabs.map(([to, label, glyph]) => <NavLink key={to} end replace to={to}><GameGlyph name={glyph}/>{label}</NavLink>)}
+      {tabs.map(([to, label, glyph]) => <NavLink key={to} end replace state={keepParent ? { guideDetail: true } : undefined} to={to}><GameGlyph name={glyph}/>{label}</NavLink>)}
     </nav>
     {pathname === '/support' && <div className="settingsContent" lang="ru"><SupportPage isAdmin={profile?.isAdmin === true}/></div>}
     {pathname === '/support/settings' && <div className="settingsContent">

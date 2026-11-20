@@ -73,14 +73,15 @@ const projects: Project[] = [
 ];
 
 export function EcosystemPage({ gameEntry }: { gameEntry: string }) {
-  const { hash, pathname } = useLocation();
+  const { hash, pathname, state } = useLocation();
+  const keepParent = state?.guideDetail === true;
   const tab = pathname === '/ecosystem/quotes' ? 'quotes' :
     pathname === '/ecosystem/tokens' || hash.startsWith('#token-') ? 'tokens' : 'projects';
   return <>
     <nav className="choiceBar profileTabs ecosystemTabs" aria-label="Экосистема">
       {([['projects', '/ecosystem', 'Проекты', 'sparkles'], ['quotes', '/ecosystem/quotes', 'Курсы', 'treasure'],
         ['tokens', '/ecosystem/tokens', 'Токены', 'inventory']] as const).map(([key, path, label, icon]) =>
-        <Link key={key} to={path} replace aria-current={key === tab ? 'page' : undefined}><GameGlyph name={icon}/>{label}</Link>)}
+        <Link key={key} to={path} replace state={keepParent ? { guideDetail: true } : undefined} aria-current={key === tab ? 'page' : undefined}><GameGlyph name={icon}/>{label}</Link>)}
     </nav>
     {tab === 'projects' && <section className="projectSection" aria-labelledby="ecosystem-projects">
       <h2 id="ecosystem-projects">Проекты экосистемы</h2>

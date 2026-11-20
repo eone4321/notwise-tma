@@ -4,7 +4,7 @@ import { SiegeRewardValue, SquadMap } from './SquadMap';
 import { Price } from './Price';
 import squadShop from './squad-shop.json';
 import { artSrc } from '../ui/warmArt';
-import { Link, useLocation } from 'react-router';
+import { useLocation } from 'react-router';
 import { GameGlyph } from '../ui/GameGlyph';
 import { ItemHelp } from './ItemHelp';
 import { GameArt } from '../ui/GameArt';
@@ -77,14 +77,14 @@ export function SquadPage({ gameEntry, onChatVisit }: { gameEntry: string; onCha
   </section>;
   return <>
     <nav className="choiceBar profileTabs squadNav" aria-label="Сквады">
-      <Link to="/squads/war"><GameGlyph name="fight"/>Карта и осада</Link>
-      <Link to="/squads/shop"><GameGlyph name="shop"/>Магазин сквада</Link>
+      <DetailLink to="/squads/war"><GameGlyph name="fight"/>Карта и осада</DetailLink>
+      <DetailLink to="/squads/shop"><GameGlyph name="shop"/>Магазин сквада</DetailLink>
     </nav>
     <section className="card squadIntro">
       <img src={artSrc('/game/war/siege-header.webp')} alt="" />
       <h2>Осада и территории</h2>
       <p>Сквады доступны с 3-го уровня, война — с 4-го. Один раунд длится 8 часов. В конце раунда награду получает сквад, который удерживает территорию.</p>
-      <Link className="textLink" to="/squads/war">Как участвовать и забрать награду</Link>
+      <DetailLink className="textLink" to="/squads/war">Как участвовать и забрать награду</DetailLink>
     </section>
     <SiegeRewards onChatVisit={onChatVisit}/>
     <SquadMap/>
