@@ -1111,7 +1111,7 @@
   dialog.modal[open] { animation: guideDialogIn 180ms cubic-bezier(.16,1,.3,1); }
 }
 
-.buildConstructor { display: grid; gap: 12px; margin-block-end: 16px; }
+.buildConstructor { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 12px; margin-block-end: 16px; }
 .buildConstructor[data-level-pending] :is([inert] > *, .buildShareHeroBtn, .buildPresetChip, .buildLoadoutRight) {
   opacity: .32;
 }
@@ -1589,7 +1589,9 @@ details.buildCollapsePanel[open] > .buildCollapseSummary::after { transform: rot
 details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px; }
 [data-theme="graphite"] .buildCollapseSummary::after { border-color: var(--gold); }
 
-.buildLoadoutCard { display: grid; gap: 11px; }
+.buildLoadoutCard { display: grid; grid-template-columns: minmax(0, 1fr); gap: 11px; }
+.buildLoadoutCard .buildLoadoutTop { flex-wrap: wrap; }
+.buildLoadoutCard .buildLoadoutControls { max-width: 100%; }
 .buildLoadoutTop { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 5px; }
 .buildLoadoutControls, .buildLoadoutRight { display: flex; align-items: center; gap: 5px; min-width: 0; }
 .buildLoadoutRight { flex: none; }

@@ -275,7 +275,7 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
               setLevelSelected(true);
               update({ level: Number(event.target.value) });
             }}>
-              <option value="" disabled>{copy('Выбрать', 'Choose')}</option>
+              {!levelSelected && <option value="" disabled>{copy('Выбрать', 'Choose')}</option>}
               {Array.from({ length: maxLevel }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
             </select>
           </label>
