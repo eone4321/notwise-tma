@@ -41,40 +41,40 @@ function SiegeSimpleRules({ onChatVisit, keepParent }: { onChatVisit?: () => voi
   const linkState = keepParent ? { guideDetail: true } : undefined;
   return <section className="card siegeRulesCard" id="siege-rewards">
     <div className="siegeSectionHead">
-      <h2>⚔️ Как работает осада</h2>
-      <p>Коротко о захвате, мощи и получении наград.</p>
+      <h2><GameGlyph name="fight"/>Как работает осада</h2>
+      <p>Что нужно делать в раундах и зачем в них участвовать.</p>
     </div>
 
     <ul className="siegeSimpleSteps">
       <li>
         <span className="siegeStepNum">1</span>
         <div>
-          <strong>Захват и защита земель</strong>
-          <p>Пока земель нет — атакуй крайние участки карты. Когда появятся свои — защищай их и захватывай соседние.</p>
+          <strong>Подготовка и накопление мощи</strong>
+          <p>Сквад доступен с 3-го уровня, осада — с 4-го. Чтобы захватывать земли, копи мощь: она растёт от тренировок с чучелом в Додзё и боёв (опыт и уровень её не дают).</p>
         </div>
       </li>
       <li>
         <span className="siegeStepNum">2</span>
         <div>
-          <strong>Откуда берётся мощь</strong>
-          <p>Мощь растёт от прокачки в Додзё (чучело + навыки) и боёв, а не от уровня. Побеждает сквад с большим вкладом за 8 часов; остаток мощи переносится.</p>
+          <strong>Три раунда по 8 часов</strong>
+          <p>Пока у сквада 0 земель — атакуй участки с краю карты, дальше защищай свои и бей соседние. Землю забирает сквад с большим вкладом мощи к концу раунда; остаток переносится дальше.</p>
         </div>
       </li>
       <li>
         <span className="siegeStepNum">3</span>
         <div>
-          <strong>Когда дают награды и баффы</strong>
-          <p>Вложи в раунде от 1 мощи в удержанный участок. После 3-го раунда нажми «Забрать» — баффы к статам включатся на 24 часа.</p>
+          <strong>Награды и профит для игрока</strong>
+          <p>Вложи от 1 мощи в раунд — получишь награды со всех удержанных сквадом земель: монеты, серебро (на свитки заточки, Морфер и Чиллер) и баффы +1/+2 к статам на 24 ч после кнопки «Забрать».</p>
         </div>
       </li>
     </ul>
 
     <div className="siegeActionPair">
       <Link className="secondary" to="/squads/war" replace state={linkState}>
-        <GameGlyph name="fight"/>Открыть карту земель
+        <GameGlyph name="fight"/><span>Карта 20 земель</span>
       </Link>
       <a className="secondary" href={communityChat} onClick={() => { onChatVisit?.(); trackGuide('action:chat'); }}>
-        <GameGlyph name="chat"/>Чат осад
+        <GameGlyph name="chat"/><span>Чат планирования осад</span>
       </a>
     </div>
   </section>;
@@ -85,23 +85,32 @@ function RitualCard() {
     <div className="mediaHeading">
       <GameArt path="/game/items/lighter.webp" size={44}/>
       <div>
-        <h2>🕯️ Ежедневный ритуал</h2>
+        <h2>Ежедневный ритуал</h2>
         <p>Общий бафф дня на 24 часа для всего сквада.</p>
       </div>
     </div>
 
     <div className="ritualStatsRow">
-      <div><span>Зажигалка</span><strong><Price value={2500} currency="squad_silver"/></strong></div>
-      <div><span>Хватит на</span><strong>🔥 10 дней</strong></div>
-      <div><span>Порог</span><strong>50% сквада</strong></div>
+      <div>
+        <span>Зажигалка</span>
+        <strong><Price value={2500} currency="squad_silver"/></strong>
+      </div>
+      <div>
+        <span>Хватит на</span>
+        <strong>10 дней</strong>
+      </div>
+      <div>
+        <span>Для активации</span>
+        <strong>50% сквада</strong>
+      </div>
     </div>
 
     <p className="ritualSimpleCopy">
-      Когда половина участников сквада зажигает ритуал за день (1 заряд = 250 серебра), весь сквад получает бонус дня на 24 часа. Там же доступны ежедневные задания.
+      Один ритуал в сутки тратит 1 заряд Зажигалки (250 серебра). Когда половина сквада зажжёт его за день, всем включается общий бонус на 24 часа. Там же в игре открываются ежедневные клановые задания.
     </p>
 
     <DetailLink className="secondary ritualShopLink" to="/squads/shop">
-      <GameGlyph name="shop"/>Открыть магазин сквада
+      <GameGlyph name="shop"/><span>Открыть магазин сквада</span>
     </DetailLink>
   </section>;
 }
@@ -111,7 +120,7 @@ function SquadShopView({ gameEntry }: { gameEntry: string }) {
     <div className="mediaHeading">
       <span className="silverCoin"><GameArt path="/game/items/wise-coin.webp" size={40}/></span>
       <div>
-        <h2>🛒 Магазин сквада</h2>
+        <h2>Магазин сквада</h2>
         <p>Открыт с 3-го уровня. Серебро добывается за удержание территорий в осаде.</p>
       </div>
     </div>
@@ -158,24 +167,24 @@ export function SquadPage({ gameEntry, onChatVisit }: { gameEntry: string; onCha
       </div>
       <div className="squadKpiGrid">
         <div className="squadKpiTile">
-          <span>🏰 Вход</span>
+          <span>Доступ</span>
           <strong>3+ / 4+ ур.</strong>
           <small>сквад с 3 ур. · война с 4 ур.</small>
         </div>
         <div className="squadKpiTile">
-          <span>⏱️ Длительность</span>
+          <span>Расписание</span>
           <strong>3 × 8 часов</strong>
-          <small>затем сбор наград</small>
+          <small>далее сбор наград</small>
         </div>
         <div className="squadKpiTile">
-          <span>⚡ Мощь осады</span>
-          <strong>Додзё и бои</strong>
-          <small>качается активностью, не XP</small>
+          <span>Профит</span>
+          <strong>Монеты и баффы</strong>
+          <small>плюс серебро магазина</small>
         </div>
         <div className="squadKpiTile">
-          <span>🎯 Для награды</span>
+          <span>Условие доли</span>
           <strong>От 1 мощи</strong>
-          <small>вложить в раунд</small>
+          <small>вложить в раунде</small>
         </div>
       </div>
     </section>

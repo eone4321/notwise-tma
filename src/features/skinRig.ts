@@ -148,20 +148,54 @@ export const defaultHomeOwlSkin: SkinSelection =
   };
 
 export const homeOwlStorageKey = 'notwise.guide.home-owl.v1';
+export const homeOwlChangeEvent = 'notwise-home-owl-changed';
 
-export function sanitizeSkinSelection(raw: unknown): SkinSelection | null {
-  if (!raw || typeof raw !== 'object') return null;
+type CloudStorageLike = {
+  getItem?: (key: string, cb: (err: unknown, value?: string) => void) => void;
+  setItem?: (key: string, value: string, cb?: (err: unknown, ok?: boolean) => void) => void;
+  removeItem?: (key: string, cb?: (err: unknown, ok?: boolean) => void) => void;
+};
+
+function telegramUserStorageSuffix(): string {
+  try {
+    const uid = (window as { Telegram?: { WebApp?: { initDataUnsafe?: { user?: { id?: number } } } } })
+      .Telegram?.WebApp?.initDataUnsafe?.user?.id;
+    return typeof uid === 'number' && uid > 0 ? `:${uid}` : '';
+  } catch {
+    return '';
+  }
+}
+
+export function scopedStorageKey(base: string): string {
+  return base + telegramUserStorageSuffix();
+}
+
+function telegramCloudStorage(): CloudStorageLike | null {
+  try {
+    const cs = (window as { Telegram?: { WebApp?: { CloudStorage?: CloudStorageLike } } })
+      .Telegram?.WebApp?.CloudStorage;
+    return cs && typeof cs.getItem === 'function' && typeof cs.setItem === 'function' ? cs : null;
+  } catch {
+    return null;
+  }
+}
+
+export function sanitizeSkinSelection(raw: unknown, allowEmpty = false): SkinSelection | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const record = raw as Record<string, unknown>;
   const next: SkinSelection = { ...emptySkinSelection };
   let hasAny = false;
+  let recognizedShape = false;
   for (const slot of ['body', 'chest', 'hat', 'glasses', 'eyes'] as const) {
+    if (slot in record) recognizedShape = true;
     const val = record[slot];
     if (typeof val === 'string' && findTrait(slot, val)) {
       next[slot] = val;
       hasAny = true;
     }
   }
-  return hasAny ? next : null;
+  if (!recognizedShape) return null;
+  return hasAny || allowEmpty ? next : null;
 }
 
 export function sameSkinSelection(a: SkinSelection, b: SkinSelection): boolean {
@@ -170,20 +204,44 @@ export function sameSkinSelection(a: SkinSelection, b: SkinSelection): boolean {
 
 export function readHomeOwlSkin(): { selection: SkinSelection; isCustom: boolean } {
   try {
-    const raw = JSON.parse(localStorage.getItem(homeOwlStorageKey) ?? 'null');
-    const clean = sanitizeSkinSelection(raw);
+    const key = scopedStorageKey(homeOwlStorageKey);
+    const rawText = localStorage.getItem(key) ?? (key !== homeOwlStorageKey ? localStorage.getItem(homeOwlStorageKey) : null);
+    const clean = rawText ? sanitizeSkinSelection(JSON.parse(rawText), true) : null;
     if (clean) return { selection: clean, isCustom: true };
   } catch { /* fallback */ }
   return { selection: { ...defaultHomeOwlSkin }, isCustom: false };
 }
 
 export function saveHomeOwlSkin(selection: SkinSelection | null): void {
+  const key = scopedStorageKey(homeOwlStorageKey);
+  const cloud = telegramCloudStorage();
   try {
-    if (selection === null || sameSkinSelection(selection, defaultHomeOwlSkin)) {
-      localStorage.removeItem(homeOwlStorageKey);
+    if (selection === null) {
+      localStorage.removeItem(key);
+      if (key !== homeOwlStorageKey) localStorage.removeItem(homeOwlStorageKey);
+      cloud?.removeItem?.(homeOwlStorageKey);
     } else {
-      localStorage.setItem(homeOwlStorageKey, JSON.stringify(selection));
+      const encoded = JSON.stringify(selection);
+      localStorage.setItem(key, encoded);
+      cloud?.setItem?.(homeOwlStorageKey, encoded);
     }
+  } catch { /* ignore */ }
+  window.dispatchEvent(new Event(homeOwlChangeEvent));
+}
+
+export function hydrateHomeOwlFromCloud(onHydrate: (selection: SkinSelection) => void): void {
+  const cloud = telegramCloudStorage();
+  if (!cloud?.getItem) return;
+  try {
+    cloud.getItem(homeOwlStorageKey, (err, value) => {
+      if (err || !value) return;
+      try {
+        const clean = sanitizeSkinSelection(JSON.parse(value), true);
+        if (!clean) return;
+        localStorage.setItem(scopedStorageKey(homeOwlStorageKey), JSON.stringify(clean));
+        onHydrate(clean);
+      } catch { /* ignore */ }
+    });
   } catch { /* ignore */ }
 }
 

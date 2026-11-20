@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import territories from './squad-map.json';
-import { GameAttribute } from '../ui/GameGlyph';
+import { GameAttribute, GameGlyph } from '../ui/GameGlyph';
 import { Price } from './Price';
 import { siegeRewardLabels, siegeRewardTotals, territoryRewards } from './siege-rewards';
 
@@ -12,18 +12,18 @@ export const territoryLabelsRu: Record<string, string> = {
   'heart': 'Сердце леса',
   'north': 'Сосновый хребет',
   'north-east': 'Лунная роща',
-  'south-east': 'Тлеющая поляна',
-  'south': 'Мшистая лощина',
+  'south-east': 'Угольная поляна',
+  'south': 'Мшистая низина',
   'south-west': 'Старые корни',
   'north-west': 'Серебряная чаща',
   'high-pines': 'Высокие сосны',
   'mist-pass': 'Туманный перевал',
   'dawn-wood': 'Рассветный лес',
   'amber-grove': 'Янтарная роща',
-  'fox-hollow': 'Лисья нора',
+  'fox-hollow': 'Лисья низина',
   'sun-glade': 'Солнечная поляна',
-  'fern-valley': 'Долина папоротников',
-  'deep-wood': 'Дремучий бор',
+  'fern-valley': 'Папоротниковая долина',
+  'deep-wood': 'Глухолесье',
   'stone-roots': 'Каменные корни',
   'raven-wood': 'Вороний лес',
   'silent-grove': 'Тихая роща',
@@ -91,10 +91,10 @@ export function SiegeTotals({ totals = siegeRewardTotals }: { totals?: Partial<R
 }
 
 const mapFilterOptions: { id: MapFilter; label: string }[] = [
-  { id: 'all', label: '🗺️ Все' },
-  { id: 'coins', label: '🪙 Монеты' },
-  { id: 'squad_silver', label: '🥈 Серебро' },
-  { id: 'stats', label: '⚡ Статы' },
+  { id: 'all', label: 'Все (20)' },
+  { id: 'coins', label: 'Монеты (8)' },
+  { id: 'squad_silver', label: 'Серебро (7)' },
+  { id: 'stats', label: 'Баффы (5)' },
 ];
 
 export function SquadMap() {
@@ -109,8 +109,8 @@ export function SquadMap() {
 
   return <section className="card squadMapCard" id="siege-map">
     <div className="squadMapHeader">
-      <h2>🗺️ Карта земель (20)</h2>
-      <p className="squadMapSub">Нажми на участок — покажем награду и соседние земли.</p>
+      <h2><GameGlyph name="fight"/>Карта земель леса</h2>
+      <p className="squadMapSub">Нажимай прямо на треугольники на карте — покажем награду и соседние земли (пунктир).</p>
     </div>
 
     <div className="squadMapFilters" role="group" aria-label="Фильтр наград на карте">
@@ -155,7 +155,7 @@ export function SquadMap() {
 
       <div className="squadMapLegend" aria-hidden="true">
         <span><i className="legendDot isSelected"/>Выбрана</span>
-        <span><i className="legendDot isNeighbor"/>Рядом ({neighbors.length})</span>
+        <span><i className="legendDot isNeighbor"/>Соседи ({neighbors.length})</span>
         <span><i className="legendDot isCoins"/>Монеты</span>
         <span><i className="legendDot isSilver"/>Серебро</span>
         <span><i className="legendDot isStats"/>Бафф</span>
@@ -164,39 +164,28 @@ export function SquadMap() {
 
     <div className="squadMapInspector" aria-live="polite">
       <div className="squadMapInspectorHead">
-        <div>
+        <div className="squadInspectorCopy">
           <strong>{territoryLabelsRu[territory.id] ?? territory.label}</strong>
-          <small>{isEntry ? 'С краю карты — можно зайти с 0 земель' : 'Внутри — атака от своих соседних земель'}</small>
+          <small>{isEntry ? 'С краю карты — открыта при 0 земель' : 'Внутри леса — нужна смежная земля'}</small>
         </div>
         {reward && <div className="squadMapRewardPill">
-          <span>{siegeRewardLabels[reward[0]]}</span>
+          <span>{reward[0] === 'coins' || reward[0] === 'squad_silver' ? siegeRewardLabels[reward[0]] : `${siegeRewardLabels[reward[0]]} · 24 ч`}</span>
           <strong><SiegeRewardValue kind={reward[0]} amount={reward[1]}/></strong>
         </div>}
-      </div>
-
-      <div className="squadNeighborsBar">
-        <span className="squadNeighborsLabel">Рядом на карте:</span>
-        <div className="squadNeighborChips">
-          {neighbors.map(neighborId => <button
-            key={neighborId}
-            type="button"
-            className="squadNeighborChip"
-            onClick={() => setSelected(neighborId)}
-          >
-            {territoryLabelsRu[neighborId] ?? byId.get(neighborId)?.label ?? neighborId}
-          </button>)}
-        </div>
       </div>
     </div>
 
     <details className="mediaDetails siegePayoutExample">
       <summary>
         <span>
-          <strong>🪙 Пул всех 20 земель за раунд</strong>
-          <small>4 000 монет · 700 серебра · +8 к статам</small>
+          <strong>Награды всех 20 земель за 1 раунд</strong>
+          <small>4 000 монет · 700 серебра · +3 Мдр · +2 Лов · +2 Сил · +1 Вын</small>
         </span>
       </summary>
       <SiegeTotals totals={siegeRewardTotals}/>
+      <p className="siegePoolNote">
+        За 3 раунда монеты и серебро суммируются по итогам каждого 8-часового раунда (участнику нужен вклад от 1 мощи в раунде). Баффы к статам действуют 24 часа после нажатия «Забрать».
+      </p>
     </details>
   </section>;
 }

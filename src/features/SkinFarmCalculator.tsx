@@ -9,9 +9,9 @@ import { battleLeagues } from './battle-leagues';
 import { useGuideLocale } from './guideLocale';
 import { OwlSkinCanvas } from './OwlSkinCanvas';
 import {
-  defaultHomeOwlSkin, emptySkinSelection, findTrait, loadSkinRigData, matchingJetton,
-  rarityLabels, readHomeOwlSkin, sameSkinSelection, saveHomeOwlSkin, selectionFromSkinId,
-  skinBonusForSelection, skinPartBonus, skinPresets, skinRarityForSelection,
+  emptySkinSelection, findTrait, homeOwlChangeEvent, hydrateHomeOwlFromCloud, loadSkinRigData,
+  matchingJetton, rarityLabels, readHomeOwlSkin, sameSkinSelection, saveHomeOwlSkin, scopedStorageKey,
+  selectionFromSkinId, skinBonusForSelection, skinPartBonus, skinPresets, skinRarityForSelection,
   skinSlotMeta, skinTraitsBySlot, type SkinSelection, type SkinSlotKey,
 } from './skinRig';
 
@@ -78,7 +78,8 @@ function enchantValue(raw: string, max: number) {
 
 function readSavedSkinCalc(): SavedSkinCalc {
   try {
-    const raw = JSON.parse(sessionStorage.getItem(skinCalcStorage) ?? 'null');
+    const key = scopedStorageKey(skinCalcStorage);
+    const raw = JSON.parse(sessionStorage.getItem(key) ?? sessionStorage.getItem(skinCalcStorage) ?? 'null');
     if (raw && typeof raw === 'object' && raw.selection && typeof raw.selection === 'object') {
       const sel: SkinSelection = { ...emptySkinSelection };
       for (const slot of slotOrder) {
@@ -125,8 +126,15 @@ export function SkinFarmCalculator({
   const [lookingUpId, setLookingUpId] = useState(false);
 
   useEffect(() => {
+    const syncHome = () => setHomeSkin(readHomeOwlSkin().selection);
+    window.addEventListener(homeOwlChangeEvent, syncHome);
+    hydrateHomeOwlFromCloud(setHomeSkin);
+    return () => window.removeEventListener(homeOwlChangeEvent, syncHome);
+  }, []);
+
+  useEffect(() => {
     try {
-      sessionStorage.setItem(skinCalcStorage, JSON.stringify({ selection, enchant, gear, presetId }));
+      sessionStorage.setItem(scopedStorageKey(skinCalcStorage), JSON.stringify({ selection, enchant, gear, presetId }));
     } catch { /* ignore */ }
     onSelectionChange?.(selection);
   }, [selection, enchant, gear, presetId, onSelectionChange]);
@@ -205,18 +213,14 @@ export function SkinFarmCalculator({
   const activeTraits = skinTraitsBySlot[activeTab];
   const equippedInTab = findTrait(activeTab, selection[activeTab]);
   const isOnHome = sameSkinSelection(selection, homeSkin);
-  const isDefaultHome = sameSkinSelection(selection, defaultHomeOwlSkin);
   const ringLevel = Number(gear.rings) || 0;
 
   function handleSetHome() {
     lightHaptic();
-    if (isOnHome && !isDefaultHome) {
-      saveHomeOwlSkin(null);
-      setHomeSkin({ ...defaultHomeOwlSkin });
-      return;
-    }
-    saveHomeOwlSkin(selection);
-    setHomeSkin({ ...selection });
+    if (isOnHome) return;
+    const savedCopy = { ...selection };
+    saveHomeOwlSkin(savedCopy);
+    setHomeSkin(savedCopy);
   }
 
   return <section className="card buildPanel wardrobeCard" id="skin-calculator" aria-labelledby="farm-title" tabIndex={-1}>

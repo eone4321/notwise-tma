@@ -19,13 +19,15 @@ import {
 import { practiceKey, reviewBuild, type PracticeResult } from './combat-analysis';
 import { OwlSkinCanvas } from './OwlSkinCanvas';
 import {
-  readHomeOwlSkin, sanitizeSkinSelection, skinRarityForSelection, type SkinSelection,
+  homeOwlChangeEvent, readHomeOwlSkin, sanitizeSkinSelection, scopedStorageKey, skinRarityForSelection,
+  type SkinSelection,
 } from './skinRig';
 
 function readCombatOwlSkin(): SkinSelection {
   try {
-    const raw = JSON.parse(sessionStorage.getItem('notwise.guide.skin-calc.v1') ?? 'null');
-    const sessionSkin = sanitizeSkinSelection(raw?.selection);
+    const key = scopedStorageKey('notwise.guide.skin-calc.v1');
+    const raw = JSON.parse(sessionStorage.getItem(key) ?? sessionStorage.getItem('notwise.guide.skin-calc.v1') ?? 'null');
+    const sessionSkin = sanitizeSkinSelection(raw?.selection, false);
     if (sessionSkin) return sessionSkin;
   } catch { /* fallback */ }
   return readHomeOwlSkin().selection;
@@ -48,7 +50,8 @@ function storedInteger(value: unknown, minimum: number, maximum: number): value 
 
 function readBuild(): BuildState {
   try {
-    const saved = JSON.parse(localStorage.getItem(buildStorage) ?? 'null');
+    const key = scopedStorageKey(buildStorage);
+    const saved = JSON.parse(localStorage.getItem(key) ?? localStorage.getItem(buildStorage) ?? 'null');
     if (!saved || !storedInteger(saved.level, 1, maxLevel)) return initialBuild();
     const budget = storedInteger(saved.budget, 0, 999) ? saved.budget : null;
     const attributes = (value: Record<string, unknown> | undefined) => {
@@ -122,7 +125,7 @@ export function BuildConstructor() {
     navigate('/combat/builds', { replace: true });
   }, [search, navigate]);
   useEffect(() => {
-    try { localStorage.setItem(buildStorage, JSON.stringify(state)); } catch { /* Storage is optional. */ }
+    try { localStorage.setItem(scopedStorageKey(buildStorage), JSON.stringify(state)); } catch { /* Storage is optional. */ }
   }, [state]);
   useEffect(() => () => worker.current?.terminate(), []);
 
@@ -158,7 +161,12 @@ export function BuildConstructor() {
       state.rings.every((slot, i) => slot?.ring.id === preset.rings[i]?.ring.id && slot?.enchant === preset.rings[i]?.enchant) &&
       state.skills.every((slot, i) => slot?.id === preset.skills[i]?.id && slot?.level === preset.skills[i]?.level);
   })?.id, [state]);
-  const [combatOwl] = useState<SkinSelection>(readCombatOwlSkin);
+  const [combatOwl, setCombatOwl] = useState<SkinSelection>(readCombatOwlSkin);
+  useEffect(() => {
+    const refresh = () => setCombatOwl(readCombatOwlSkin());
+    window.addEventListener(homeOwlChangeEvent, refresh);
+    return () => window.removeEventListener(homeOwlChangeEvent, refresh);
+  }, []);
   const owlRarity = skinRarityForSelection(combatOwl);
 
   const [budgetDraft, setBudgetDraft] = useState<string | null>(null);

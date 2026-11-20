@@ -22,7 +22,7 @@ import { CombatPage } from '../features/CombatPage';
 import { CollectionPage } from '../features/CollectionPage';
 import { CapsulePage } from '../features/CapsulePage';
 import { OwlSkinCanvas } from '../features/OwlSkinCanvas';
-import { readHomeOwlSkin } from '../features/skinRig';
+import { homeOwlChangeEvent, hydrateHomeOwlFromCloud, readHomeOwlSkin } from '../features/skinRig';
 import { achievementActions } from '../features/inventory';
 import {useEffect,useRef,useState}from'react';
 import{Link,Navigate,useLocation,useNavigate}from'react-router';
@@ -203,7 +203,13 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
   english: boolean; profile: GuideProfile | null; profileFailed: boolean; retryProfile: () => void; onChatVisit: () => void; onSquadVisit: () => void;
 }) {
  const [share, setShare] = useState(false);
- const [homeOwl] = useState(readHomeOwlSkin);
+ const [homeOwl, setHomeOwl] = useState(readHomeOwlSkin);
+ useEffect(() => {
+   const sync = () => setHomeOwl(readHomeOwlSkin());
+   window.addEventListener(homeOwlChangeEvent, sync);
+   hydrateHomeOwlFromCloud(sel => setHomeOwl({ selection: sel, isCustom: true }));
+   return () => window.removeEventListener(homeOwlChangeEvent, sync);
+ }, []);
  const fromInvite = authData() && /^g_[a-f0-9]{32}$/.test(telegramPopup()?.initDataUnsafe?.start_param ?? '');
  const homeTiles = [
   { path: '/secrets', icon: '/game/stickers/9.webp', art: '/game/stickers/42.webp',
@@ -258,10 +264,14 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
   <OwlPrices/>
   <section className="homeGameActions" aria-label={en ? 'Calculators' : 'Калькуляторы'}>
     <Link to="/combat/builds" onClick={() => { lightHaptic(); trackGuide('action:builds'); }}>
-      <GameArt path="/game/skills/1.png" size={34}/><span>{en ? 'Build calculator' : 'Калькулятор билдов'}</span><span className="rowChevron" aria-hidden="true"/>
+      <span className="homeCalcIcon" aria-hidden="true"><GameGlyph name="fight"/></span>
+      <span>{en ? 'Build calculator' : 'Калькулятор билдов'}</span>
+      <span className="rowChevron" aria-hidden="true"/>
     </Link>
     <Link to="/owl/skins" onClick={() => lightHaptic()}>
-      <GameArt path="/game/items/skin-jetton-golden.webp" size={34}/><span>{en ? 'Skin calculator' : 'Калькулятор скинов'}</span><span className="rowChevron" aria-hidden="true"/>
+      <span className="homeCalcIcon" aria-hidden="true"><GameGlyph name="skin"/></span>
+      <span>{en ? 'Skin calculator' : 'Калькулятор скинов'}</span>
+      <span className="rowChevron" aria-hidden="true"/>
     </Link>
   </section>
   <div className="sectionHeading"><div><h2>{en ? 'Explore' : 'Что ищешь?'}</h2></div></div>
