@@ -67,18 +67,18 @@
 .gameHero .heroOwlStage {
   position: absolute;
   z-index: 1;
-  right: 16px;
-  top: 28px;
-  width: clamp(134px, 36vw, 158px);
-  height: clamp(134px, 36vw, 158px);
+  right: 12px;
+  top: 22px;
+  width: clamp(144px, 38vw, 168px);
+  height: clamp(144px, 38vw, 168px);
   display: grid;
   place-items: center;
   pointer-events: auto;
 }
 .gameHero .heroOwlStage .skinOwlRender {
   transform: scaleX(-1);
-  -webkit-mask-image: radial-gradient(ellipse 49% 49% at 50% 55%, #000 54%, rgba(0, 0, 0, 0.72) 72%, rgba(0, 0, 0, 0.18) 88%, transparent 100%);
-  mask-image: radial-gradient(ellipse 49% 49% at 50% 55%, #000 54%, rgba(0, 0, 0, 0.72) 72%, rgba(0, 0, 0, 0.18) 88%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 56% 56% at 50% 52%, #000 68%, rgba(0, 0, 0, 0.52) 86%, transparent 100%);
+  mask-image: radial-gradient(ellipse 56% 56% at 50% 52%, #000 68%, rgba(0, 0, 0, 0.52) 86%, transparent 100%);
 }
 .gameHero .heroOwlStage::before {
   content: "";
@@ -2126,18 +2126,29 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   height: auto;
   max-height: 112px;
   object-fit: contain;
+  filter: brightness(0.68) saturate(0.88);
+}
+.squadScrollBanner::after {
+  content: "";
+  position: absolute;
+  inset: 22% 16% 28%;
+  border-radius: 12px;
+  background: radial-gradient(ellipse at center, rgba(10, 12, 22, 0.84) 0%, rgba(10, 12, 22, 0.56) 65%, transparent 100%);
+  pointer-events: none;
 }
 .squadScrollBanner h2 {
   position: absolute;
   inset: 0;
+  z-index: 1;
   margin: 0;
   padding-bottom: 10px;
   display: grid;
   place-items: center;
-  font-size: 16px;
-  font-weight: 900;
-  color: #fff3d2;
-  text-shadow: 0 2px 6px rgba(10, 8, 16, 0.9);
+  font-size: 16.5px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #fff6df;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95);
   pointer-events: none;
 }
 .squadIntroLead {

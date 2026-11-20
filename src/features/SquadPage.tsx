@@ -37,34 +37,34 @@ function SquadNavTabs({ pathname, keepParent }: { pathname: string; keepParent: 
   </nav>;
 }
 
-function SiegeSimpleRules({ onChatVisit, keepParent }: { onChatVisit?: () => void; keepParent: boolean }) {
+function SiegeGuideCard({ onChatVisit, keepParent }: { onChatVisit?: () => void; keepParent: boolean }) {
   const linkState = keepParent ? { guideDetail: true } : undefined;
   return <section className="card siegeRulesCard" id="siege-rewards">
     <div className="siegeSectionHead">
-      <h2><GameGlyph name="fight"/>Как работает осада</h2>
-      <p>Что нужно делать в раундах и зачем в них участвовать.</p>
+      <h2><GameGlyph name="fight"/>Как проходят осады</h2>
+      <p>Полный цикл от прокачки мощи до сбора наград в День празднования.</p>
     </div>
 
     <ul className="siegeSimpleSteps">
       <li>
         <span className="siegeStepNum">1</span>
         <div>
-          <strong>Подготовка и накопление мощи</strong>
-          <p>Сквад доступен с 3-го уровня, осада — с 4-го. Чтобы захватывать земли, копи мощь: она растёт от тренировок с чучелом в Додзё и боёв (опыт и уровень её не дают).</p>
+          <strong>Мощь осады: что это и как копить</strong>
+          <p>Для атаки и защиты земель нужна личная мощь — она зависит от заработанных SP (ориентир: ~1 мощь за 100 SP, опыт XP на неё не влияет). Быстрее всего SP растёт на манекене в Додзё (особенно с навыками) и в боях. Ползунком выбираешь, сколько доступной мощи влить; остаток не сгорает и переходит в следующие раунды.</p>
         </div>
       </li>
       <li>
         <span className="siegeStepNum">2</span>
         <div>
-          <strong>Три раунда по 8 часов</strong>
-          <p>Пока у сквада 0 земель — атакуй участки с краю карты, дальше защищай свои и бей соседние. Землю забирает сквад с большим вкладом мощи к концу раунда; остаток переносится дальше.</p>
+          <strong>Три раунда по 8 часов и захват</strong>
+          <p>Пока у сквада 0 земель, атакуй пограничные земли с краю карты или нейтральные участки (у ничейных стоит стартовый гарнизон). Когда земли уже есть — защищай свои и захватывай соседние по общим границам (перепрыгнуть через чужую территорию нельзя). Землю берёт сквад с большим вкладом мощи к концу 8 ч; при ничьей участок обнуляется.</p>
         </div>
       </li>
       <li>
         <span className="siegeStepNum">3</span>
         <div>
-          <strong>Награды и профит для игрока</strong>
-          <p>Вложи от 1 мощи в раунд — получишь награды со всех удержанных сквадом земель: монеты, серебро (на свитки заточки, Морфер и Чиллер) и баффы +1/+2 к статам на 24 ч после кнопки «Забрать».</p>
+          <strong>Кто получает награды и в чём профит</strong>
+          <p>Долю за раунд забирает каждый участник, кто вложил в этом раунде от 1 мощи, за все удержанные сквадом участки. После 3-го раунда наступает мирный День празднования: нажми «Забрать» — накопленные монеты и серебро (для свитков заточки, Морфера, Чиллера и Зажигалок) придут сразу, а баффы +1/+2 к статам включатся ровно на 24 часа.</p>
         </div>
       </li>
     </ul>
@@ -86,7 +86,7 @@ function RitualCard() {
       <GameArt path="/game/items/lighter.webp" size={44}/>
       <div>
         <h2>Ежедневный ритуал</h2>
-        <p>Общий бафф дня на 24 часа для всего сквада.</p>
+        <p>Общий клановый бафф на 24 часа и ежедневные задания.</p>
       </div>
     </div>
 
@@ -96,17 +96,17 @@ function RitualCard() {
         <strong><Price value={2500} currency="squad_silver"/></strong>
       </div>
       <div>
-        <span>Хватит на</span>
-        <strong>10 дней</strong>
+        <span>Запас</span>
+        <strong>10 зарядов</strong>
       </div>
       <div>
-        <span>Для активации</span>
+        <span>Активация</span>
         <strong>50% сквада</strong>
       </div>
     </div>
 
     <p className="ritualSimpleCopy">
-      Один ритуал в сутки тратит 1 заряд Зажигалки (250 серебра). Когда половина сквада зажжёт его за день, всем включается общий бонус на 24 часа. Там же в игре открываются ежедневные клановые задания.
+      Раз в сутки благословение расходует 1 заряд Зажигалки (250 серебра в день). Как только ритуал зажгут 50% участников сквада, всем включается бонус дня на 24 часа. Там же в игре находятся ежедневные клановые задания.
     </p>
 
     <DetailLink className="secondary ritualShopLink" to="/squads/shop">
@@ -172,24 +172,24 @@ export function SquadPage({ gameEntry, onChatVisit }: { gameEntry: string; onCha
           <small>сквад с 3 ур. · война с 4 ур.</small>
         </div>
         <div className="squadKpiTile">
-          <span>Расписание</span>
+          <span>Цикл войны</span>
           <strong>3 × 8 часов</strong>
-          <small>далее сбор наград</small>
+          <small>+ День празднования</small>
         </div>
         <div className="squadKpiTile">
-          <span>Профит</span>
-          <strong>Монеты и баффы</strong>
-          <small>плюс серебро магазина</small>
+          <span>Мощь осады</span>
+          <strong>От твоих SP</strong>
+          <small>~1 мощь за 100 SP</small>
         </div>
         <div className="squadKpiTile">
-          <span>Условие доли</span>
+          <span>Доля наград</span>
           <strong>От 1 мощи</strong>
-          <small>вложить в раунде</small>
+          <small>личного вклада в раунде</small>
         </div>
       </div>
     </section>
 
-    <SiegeSimpleRules onChatVisit={onChatVisit} keepParent={keepParent}/>
+    <SiegeGuideCard onChatVisit={onChatVisit} keepParent={keepParent}/>
     <RitualCard/>
   </>;
 }

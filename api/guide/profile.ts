@@ -225,9 +225,9 @@ export default async function handler(request: Request) {
       if (!await redis(['SET', namespace + 'prepare-share:' + id, '1', 'NX', 'EX', 3])) {
         return json({ error: 'share_unavailable' }, 429);
       }
-      const raw = input.personal === true ? await redis<string | null>(['HGET', accountsKey, id]) : null;
+      const raw = input.personal !== false ? await redis<string | null>(['HGET', accountsKey, id]) : null;
       const account = raw ? JSON.parse(raw) as Account : null;
-      const code = account?.gameLinkVerified ? account.referralCode : '';
+      const code = account?.referralCode ?? '';
       const url = 'https://t.me/NotWiseGuideBot?startapp' + (code ? '=' + code : '');
       const result = await fetch(`https://api.telegram.org/bot${token}/savePreparedInlineMessage`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(3500),
@@ -287,7 +287,8 @@ export default async function handler(request: Request) {
       if (subscribed === null) return json({ error: 'subscription_unavailable' }, 503);
       if (!subscribed) return json({ error: 'subscription_required' }, 403);
     }
-    const inviterCode = /^g_[a-f0-9]{32}$/.test(start) ? start : '';
+    const refMatch = start.match(/(?:^|--)(g_[a-f0-9]{32})$/);
+    const inviterCode = refMatch ? refMatch[1] : '';
     const referralCode = 'g_' + crypto.randomUUID().replaceAll('-', '');
     const admin = guideAdmin(id, token).catch(() => false);
     const raw = await redis<string>([

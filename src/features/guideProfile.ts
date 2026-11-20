@@ -20,14 +20,14 @@ export function guideShareUrl(referralCode?: string) {
   return referralCode ? guideUrl.split('?')[0] + '?startapp=' + referralCode : guideUrl;
 }
 
-export async function shareGuide(url: string, text = 'Гайд по NOT Wise') {
+export async function shareGuide(url: string, text = 'Гайд по NOT Wise', personal = true) {
   const shareUrl = 'https://t.me/share/url?' + new URLSearchParams({ url, text });
   const telegram = telegramPopup();
-  const hasCustomTarget = /[?&]startapp=b_/.test(url);
-  if (!hasCustomTarget && telegram?.initData && typeof telegram.shareMessage === 'function' && telegram.isVersionAtLeast?.('8.0')) {
+  const hasBuildTarget = /[?&]startapp=b_/.test(url);
+  if (!hasBuildTarget && telegram?.initData && typeof telegram.shareMessage === 'function' && telegram.isVersionAtLeast?.('8.0')) {
     try {
       const { messageId } = await profileRequest<{ messageId: string }>({
-        action: 'prepare_share', personal: /[?&]startapp=g_[a-f0-9]{32}$/.test(url),
+        action: 'prepare_share', personal,
       });
       telegram.shareMessage(messageId, (sent: boolean) => {
         if (sent) void profileRequest({ action: 'shared' })

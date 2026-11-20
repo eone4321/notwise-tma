@@ -104,7 +104,7 @@ const closeJoke = () => {
 useEffect(() => {
   if (loc.pathname !== '/secrets' && showJoke) closeJoke();
 });
-useEffect(()=>{telegramPopup()?.ready();const key='notwise.guide.startapp.v1';if(sessionStorage.getItem(key))return;const start=new URLSearchParams(location.search).get('startapp')??telegramPopup()?.initDataUnsafe?.start_param;if(start?.startsWith('b_')){sessionStorage.setItem(key,'1');nav('/combat/builds?build='+encodeURIComponent(start),{replace:true});return;}const routes:Record<string,string>={capsules_gold:'/capsules/gold',eggs:'/owl',secrets:'/secrets',market:'/collections/market'};if(start&&Object.hasOwn(routes,start)){sessionStorage.setItem(key,'1');nav(routes[start],{replace:true})}},[nav]);const ask=()=>{lightHaptic();const tg=telegramPopup();if(tg?.showPopup){try { tg.showPopup({title:'Секреты Not Wise',message:'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты',buttons:[{id:'pay',text:'Заплатить',type:'default'},{id:'back',text:'Назад',type:'default'}]},()=>reveal()); return; } catch { /* Older Telegram clients use the local dialog. */ }}setPopup(true)};function reveal(){setPopup(false);setJoke(true);setShowJoke(true);jokePendingAward.current=true;localStorage.setItem('notwise.guide.secrets.v1','1')}
+useEffect(()=>{telegramPopup()?.ready();const key='notwise.guide.startapp.v1';if(sessionStorage.getItem(key))return;const start=new URLSearchParams(location.search).get('startapp')??telegramPopup()?.initDataUnsafe?.start_param;if(start?.startsWith('b_')){sessionStorage.setItem(key,'1');const [buildPart]=start.split('--g_');nav('/combat/builds?build='+encodeURIComponent(buildPart),{replace:true});return;}const routes:Record<string,string>={capsules_gold:'/capsules/gold',eggs:'/owl',secrets:'/secrets',market:'/collections/market'};if(start&&Object.hasOwn(routes,start)){sessionStorage.setItem(key,'1');nav(routes[start],{replace:true})}},[nav]);const ask=()=>{lightHaptic();const tg=telegramPopup();if(tg?.showPopup){try { tg.showPopup({title:'Секреты Not Wise',message:'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты',buttons:[{id:'pay',text:'Заплатить',type:'default'},{id:'back',text:'Назад',type:'default'}]},()=>reveal()); return; } catch { /* Older Telegram clients use the local dialog. */ }}setPopup(true)};function reveal(){setPopup(false);setJoke(true);setShowJoke(true);jokePendingAward.current=true;localStorage.setItem('notwise.guide.secrets.v1','1')}
 return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach !== null}><Link to="/" className="brand"><img src={artSrc('/brand/notwise.svg')} alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main className="guideScreen" key={loc.pathname} inert={hamster || coach !== null}>{loc.pathname === '/' ? <Home onChatVisit={awards.noteChatVisit} onSquadVisit={() => { void awards.update('visit_squad').catch(() => {}); }} english={english} profile={profile} profileFailed={profileFailed} retryProfile={() => {
   setProfileFailed(false); setProfileAttempt(value => value + 1);
 }}/> : <div className="guidePageContent">{loc.pathname === '/admin' ? <AdminPage profile={profile}/> : loc.pathname === '/support' || loc.pathname.startsWith('/support/') ?
@@ -214,12 +214,12 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
  const homeTiles = [
   { path: '/secrets', icon: '/game/stickers/9.webp', art: '/game/stickers/42.webp',
     ru: ['Секреты', 'Скрытые квесты и достижения'], en: ['Secrets', 'Hidden quests and achievements'] },
-  { path: '/capsules', icon: '/game/capsules/gold.webp', art: '/game/capsules/silver.webp',
-    ru: ['Капсулы', 'Шансы на $NOT, яйца и цены открытия'], en: ['Capsules', 'Loot odds, $NOT and opening costs'] },
-  { path: '/squads', icon: '/game/items/lighter.webp', art: '/game/war/siege-header.webp',
-    ru: ['Сквады и войны', 'Ритуалы, карта осад и магазин'], en: ['Squads and wars', 'Rituals, sieges and shop'] },
   { path: '/combat', icon: '/game/skills/1.png', art: '/game/skills/16.png',
     ru: ['Бои и навыки', 'Правила боя, навыки и калькулятор билдов'], en: ['Combat and skills', 'Rules, skills and build calculator'] },
+  { path: '/squads', icon: '/game/items/lighter.webp', art: '/game/war/siege-header.webp',
+    ru: ['Сквады и войны', 'Ритуалы, карта осад и магазин'], en: ['Squads and wars', 'Rituals, sieges and shop'] },
+  { path: '/capsules', icon: '/game/capsules/gold.webp', art: '/game/capsules/silver.webp',
+    ru: ['Капсулы', 'Шансы на $NOT, яйца и цены открытия'], en: ['Capsules', 'Loot odds, $NOT and opening costs'] },
   { path: '/owl', icon: '/game/items/egg.webp', art: '/game/skins/5565.svg',
     ru: ['Яйца и скины', 'Дроп, облики сов и калькулятор фарма'], en: ['Eggs and skins', 'Egg drops, skins and farm bonus'] },
   { path: '/assets', icon: '/game/items/ring-wit-3.webp', art: '/game/items/book.webp',
@@ -260,7 +260,7 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
       </button>
     </div>
   </section>
-  {share && <ShareDialog english={en} close={() => setShare(false)}/>}
+  {share && <ShareDialog english={en} referralCode={profile?.referralCode} close={() => setShare(false)}/>}
   <OwlPrices/>
   <section className="homeGameActions" aria-label={en ? 'Calculators' : 'Калькуляторы'}>
     <Link to="/combat/builds" onClick={() => { lightHaptic(); trackGuide('action:builds'); }}>
@@ -287,11 +287,11 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
   {profile?.isAdmin && <Link className="textLink" to="/admin">Управление гайдом</Link>}
  </>;
 }
-function ShareDialog({ close, english: en }: { close: () => void; english: boolean }) {
+function ShareDialog({ close, english: en, referralCode }: { close: () => void; english: boolean; referralCode?: string }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const field = useRef<HTMLInputElement>(null);
   const [feedback, setFeedback] = useState('');
-  const url = guideShareUrl();
+  const url = guideShareUrl(referralCode);
   useModal(dialog, true);
   async function copy() {
     lightHaptic();
@@ -340,7 +340,7 @@ function Page({ profile, onChatVisit, ask, joke, popup, reveal, referrals }: {
     {section?.[1] === '/owl' && <OwlPage/>}
     {section?.[1] === '/collections' && <CollectionPage/>}
     {section?.[1] === '/ecosystem' && <EcosystemPage gameEntry={profile?.gameEntry ?? defaultGameLink}/>}
-    {section?.[1] === '/combat' && <CombatPage/>}
+    {section?.[1] === '/combat' && <CombatPage referralCode={profile?.referralCode}/>}
     {(section?.[1] === '/care' || section?.[1] === '/modes') && <CarePage/>}
     {section?.[1] === '/squads' && <SquadPage gameEntry={profile?.gameEntry ?? defaultGameLink} onChatVisit={onChatVisit}/>}
     {section?.[1] === '/secrets' && <Secrets ask={ask} joke={joke} popup={popup} reveal={reveal}/>}

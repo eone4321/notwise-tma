@@ -49,7 +49,7 @@ function unlockCondition(skill: Skill) {
 const skillArt = (id: number) => '/game/skills/' + id + '.png';
 type Skill = typeof skills[number];
 
-export function CombatPage() {
+export function CombatPage({ referralCode }: { referralCode?: string }) {
   const { pathname, search, state } = useLocation();
   const [, , page, branchId, skillId] = pathname.split('/');
   const searchParams = new URLSearchParams(search);
@@ -66,7 +66,7 @@ export function CombatPage() {
       <Link to="/combat/stats" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isStats ? 'page' : undefined}><GameGlyph name="shield"/>Характеристики</Link>
       <Link to="/combat/builds" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isBuilds ? 'page' : undefined}><GameGlyph name="sparkles"/>Билды</Link>
     </nav>}
-    {isBuilds ? <BuildConstructor/> :
+    {isBuilds ? <BuildConstructor referralCode={referralCode}/> :
       skill ? <SkillDetail key={skill.id} skill={skill}/> :
       branch ? <>
         <h2 className="subTitle">{branch[1]}</h2>

@@ -106,7 +106,7 @@ export function ReferralsPage({ profile, failed, onSave, onRetry }: Props) {
       </div>
       <p role="status" className="copyFeedback">{copyStatus}</p>
       <label className="field">Ссылка на гайд<input ref={linkInput} type="url" readOnly value={url} onFocus={event => event.currentTarget.select()}/></label></>}
-      <button type="button" className="secondary plainGuideShare" onClick={() => { trackGuide('action:share_send'); shareGuide(guideShareUrl()); }}>
+      <button type="button" className="secondary plainGuideShare" onClick={() => { trackGuide('action:share_send'); shareGuide(guideShareUrl(), 'Гайд по NOT Wise', false); }}>
         <GameGlyph name="share"/> Поделиться гайдом без рефки
       </button>
       {!authData() && <p className="caption">Открой гайд в Telegram, чтобы получить персональную ссылку.</p>}

@@ -31,14 +31,22 @@ export const territoryLabelsRu: Record<string, string> = {
   'watch-pines': 'Дозорные сосны',
 };
 
-const { byId, neighborsMap, entryIds } = (() => {
+const { byId, neighborsMap, entryIds, counts } = (() => {
   const mapById = new Map<string, Territory>();
   const edgeOwners = new Map<string, string[]>();
   const adj: Record<string, string[]> = {};
+  let coins = 0;
+  let silver = 0;
+  let stats = 0;
 
   for (const item of territories) {
     mapById.set(item.id, item);
     adj[item.id] = [];
+    const rw = territoryRewards[item.id]?.[0];
+    if (rw === 'coins') coins += 1;
+    else if (rw === 'squad_silver') silver += 1;
+    else if (rw) stats += 1;
+
     const pts = item.points.map(([x, y]) => `${Math.round(x)},${Math.round(y)}`);
     for (let i = 0; i < pts.length; i += 1) {
       const a = pts[i];
@@ -60,7 +68,12 @@ const { byId, neighborsMap, entryIds } = (() => {
   const entry = new Set<string>(
     territories.filter(item => adj[item.id].length < 3).map(item => item.id),
   );
-  return { byId: mapById, neighborsMap: adj, entryIds: entry };
+  return {
+    byId: mapById,
+    neighborsMap: adj,
+    entryIds: entry,
+    counts: { total: territories.length, coins, silver, stats },
+  };
 })();
 
 function matchesFilter(kind: RewardKind | undefined, filter: MapFilter): boolean {
@@ -91,11 +104,13 @@ export function SiegeTotals({ totals = siegeRewardTotals }: { totals?: Partial<R
 }
 
 const mapFilterOptions: { id: MapFilter; label: string }[] = [
-  { id: 'all', label: 'Все (20)' },
-  { id: 'coins', label: 'Монеты (8)' },
-  { id: 'squad_silver', label: 'Серебро (7)' },
-  { id: 'stats', label: 'Баффы (5)' },
+  { id: 'all', label: `Все (${counts.total})` },
+  { id: 'coins', label: `Монеты (${counts.coins})` },
+  { id: 'squad_silver', label: `Серебро (${counts.silver})` },
+  { id: 'stats', label: `Баффы (${counts.stats})` },
 ];
+
+const nf = new Intl.NumberFormat('ru-RU');
 
 export function SquadMap() {
   const [selected, setSelected] = useState(territories[0].id);
@@ -107,10 +122,19 @@ export function SquadMap() {
   const neighborSet = useMemo(() => new Set(neighbors), [neighbors]);
   const isEntry = entryIds.has(territory.id);
 
+  const coinsTotal = siegeRewardTotals.coins ?? 0;
+  const silverTotal = siegeRewardTotals.squad_silver ?? 0;
+  const statSummary = [
+    siegeRewardTotals.wisdom ? `+${siegeRewardTotals.wisdom} Мдр` : '',
+    siegeRewardTotals.agility ? `+${siegeRewardTotals.agility} Лов` : '',
+    siegeRewardTotals.strength ? `+${siegeRewardTotals.strength} Сил` : '',
+    siegeRewardTotals.endurance ? `+${siegeRewardTotals.endurance} Вын` : '',
+  ].filter(Boolean).join(' · ');
+
   return <section className="card squadMapCard" id="siege-map">
     <div className="squadMapHeader">
-      <h2><GameGlyph name="fight"/>Карта земель леса</h2>
-      <p className="squadMapSub">Нажимай прямо на треугольники на карте — покажем награду и соседние земли (пунктир).</p>
+      <h2><GameGlyph name="fight"/>Карта 20 земель</h2>
+      <p className="squadMapSub">Нажимай на треугольники на карте — покажем награду и смежные земли для атаки (пунктир).</p>
     </div>
 
     <div className="squadMapFilters" role="group" aria-label="Фильтр наград на карте">
@@ -166,7 +190,7 @@ export function SquadMap() {
       <div className="squadMapInspectorHead">
         <div className="squadInspectorCopy">
           <strong>{territoryLabelsRu[territory.id] ?? territory.label}</strong>
-          <small>{isEntry ? 'С краю карты — открыта при 0 земель' : 'Внутри леса — нужна смежная земля'}</small>
+          <small>{isEntry ? 'С краю карты — открыта для первого захвата с 0 земель' : 'Внутри леса — атака только от смежной своей земли'}</small>
         </div>
         {reward && <div className="squadMapRewardPill">
           <span>{reward[0] === 'coins' || reward[0] === 'squad_silver' ? siegeRewardLabels[reward[0]] : `${siegeRewardLabels[reward[0]]} · 24 ч`}</span>
@@ -178,13 +202,13 @@ export function SquadMap() {
     <details className="mediaDetails siegePayoutExample">
       <summary>
         <span>
-          <strong>Награды всех 20 земель за 1 раунд</strong>
-          <small>4 000 монет · 700 серебра · +3 Мдр · +2 Лов · +2 Сил · +1 Вын</small>
+          <strong>Награды всех {counts.total} земель за 1 раунд</strong>
+          <small>{nf.format(coinsTotal)} монет · {nf.format(silverTotal)} серебра · {statSummary}</small>
         </span>
       </summary>
       <SiegeTotals totals={siegeRewardTotals}/>
       <p className="siegePoolNote">
-        За 3 раунда монеты и серебро суммируются по итогам каждого 8-часового раунда (участнику нужен вклад от 1 мощи в раунде). Баффы к статам действуют 24 часа после нажатия «Забрать».
+        Сумма выше — максимум за один 8-часовой раунд, если один сквад удержит все {counts.total} земель. В каждом из 3 раундов монеты и серебро начисляются отдельно тем участникам, кто вложил от 1 мощи, а стат-баффы работают 24 часа после нажатия «Забрать» в День празднования.
       </p>
     </details>
   </section>;

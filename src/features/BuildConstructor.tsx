@@ -89,14 +89,14 @@ function replaceSlot<T>(slots: T[], index: number, value: T) {
   return slots.map((slot, i) => i === index ? value : slot);
 }
 
-export function BuildConstructor() {
+export function BuildConstructor({ referralCode }: { referralCode?: string }) {
   const { locale } = useGuideLocale();
   const lang = locale === 'en' ? 1 : 0;
   const copy = (ru: string, en: string) => lang ? en : ru;
   const { search } = useLocation();
   const navigate = useNavigate();
   const initialShared = useMemo(() => {
-    const token = new URLSearchParams(search).get('build');
+    const token = new URLSearchParams(search).get('build')?.split('--g_')[0];
     return token ? decodeBuildCode(token, maxLevel) : null;
   }, []);
   const [state, setState] = useState(() => initialShared ?? readBuild());
@@ -113,7 +113,7 @@ export function BuildConstructor() {
     trackGuide('build:open');
   }, []);
   useEffect(() => {
-    const token = new URLSearchParams(search).get('build');
+    const token = new URLSearchParams(search).get('build')?.split('--g_')[0];
     if (!token) return;
     const decoded = decodeBuildCode(token, maxLevel);
     if (decoded) {
@@ -525,18 +525,19 @@ export function BuildConstructor() {
       </div>
     </BuildPicker>}
     {shareOpen && <BuildShareDialog state={state} lang={lang} presetName={selectedPreset?.name[lang]}
-      close={() => setShareOpen(false)}/>}
+      referralCode={referralCode} close={() => setShareOpen(false)}/>}
   </div>;
 }
 
-function BuildShareDialog({ state, lang, presetName, close }: {
-  state: BuildState; lang: number; presetName?: string; close: () => void;
+function BuildShareDialog({ state, lang, presetName, referralCode, close }: {
+  state: BuildState; lang: number; presetName?: string; referralCode?: string; close: () => void;
 }) {
   const copy = (ru: string, en: string) => lang ? en : ru;
   const field = useRef<HTMLInputElement>(null);
   const [feedback, setFeedback] = useState('');
   const code = encodeBuildCode(state);
-  const url = `${guideShareUrl().split('?')[0]}?startapp=${code}`;
+  const startapp = referralCode ? `${code}--${referralCode}` : code;
+  const url = `${guideShareUrl().split('?')[0]}?startapp=${startapp}`;
   const total = activeAttributes(state);
   const summary = lang
     ? `NOT Wise build (${presetName ? `${presetName}, ` : ''}Lv.${state.level}): STR ${total.strength} · AGI ${total.agility} · END ${total.endurance} · WIS ${total.wisdom}`
