@@ -1,4 +1,4 @@
-{
+export default {
   "drawCounts": [
     50,
     35,
@@ -130,4 +130,4 @@
     "EQDpm9Cwa3zoMz5xjcfciud5aX_j2IsTyQf_O57HB1EJ0u9d",
     "EQB07IX3nU4LpSls2Rx2iJP0FLP1jSnj7LwE6eDpqZudDjLV"
   ]
-}
+};

@@ -10,8 +10,8 @@ import { GameGlyph } from '../ui/GameGlyph';
 import { AlbumLogo } from '../ui/AlbumLogo';
 import { achievementActions } from './inventory';
 import { ProgressStatus, useProgress } from './GuideProgress';
-import marketCollections from './market-collections.json';
-import stickerData from './sticker-data.json';
+import marketCollections from './market-collections';
+import stickerData from './sticker-data';
 import { chanceLabel, chancePerOpening } from '../domain/mechanics';
 
 const albums = ['Wonderland','Flying Saucer','Cosmo Zone','Summer Vibes','Wild Fortune','Hellborn','Mimizuku','Showtime','Power Mode','Naughty Mood','Hustle Pack','Spellbound','Wanted Sheriff','Internet Moments','Laa-Laa Land','Fine Art','The Family','GG Pack','Golden Scarab','Back to School'];

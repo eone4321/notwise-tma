@@ -1,7 +1,7 @@
 import { getgemsItemLink } from './owl-sales-feed.js';
 import { redis } from './redis.js';
-import collections from '../src/features/market-collections.json' with { type: 'json' };
-import stickers from '../src/features/sticker-data.json' with { type: 'json' };
+import collections from '../src/features/market-collections.js';
+import stickers from '../src/features/sticker-data.js';
 
 const marketWallet = '0:584ee61b2dff0837116d0fcb5078d93964bcbe9c05fd6a141b1bfca5d6a43e18';
 const api = 'https://api.getgems.io/public-api/v1';

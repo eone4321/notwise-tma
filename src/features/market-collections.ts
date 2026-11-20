@@ -1,4 +1,4 @@
-[
+export default [
   {
     "id": "genesis",
     "name": "NOT Wise",
@@ -44,4 +44,4 @@
     "name": "NOT Wise Family",
     "address": "EQD8uo-PGjYTihplpM6hiUp9xAFp5F_8fXU7UADhjpyufvjK"
   }
-]
+];

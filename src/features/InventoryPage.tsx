@@ -8,7 +8,7 @@ import { GameGlyph } from '../ui/GameGlyph';
 import { GameArt } from '../ui/GameArt';
 import { chanceLabel, chancePerOpening } from '../domain/mechanics';
 import { dropsFor, eggDrawCounts, itemNames } from './inventory';
-import marketCollections from './market-collections.json';
+import marketCollections from './market-collections';
 import { OwlPrices } from './OwlPrices';
 import { Price, type Currency } from './Price';
 import { GramEstimate, StarsAndGram } from './GamePrice';

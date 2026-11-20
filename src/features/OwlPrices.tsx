@@ -2,7 +2,7 @@ import { Price } from './Price';
 import { DetailLink } from '../ui/DetailLink';
 import { artSrc } from '../ui/warmArt';
 import { collectionMarket } from './marketData';
-import collections from './market-collections.json';
+import collections from './market-collections';
 
 const featured = [
   { id: 'eggs', description: 'Коллекционные яйца' },
