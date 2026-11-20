@@ -1,5 +1,5 @@
 import { DetailLink } from '../ui/DetailLink';
-import { useId } from 'react';
+import { useCallback, useId, useState } from 'react';
 import { collectionMarket, itemMarket } from './marketData';
 import publishing from '../domain/game-publishing.json';
 import mintableItems from './mintable-items.json';
@@ -15,8 +15,9 @@ import { GramEstimate, StarsAndGram } from './GamePrice';
 import { ItemHelp } from './ItemHelp';
 import { ringCatalog } from './combat-builds';
 import shopItems from './shop-data.json';
-import skinParts from './skin-parts.json';
 import { SkinFarmCalculator } from './SkinFarmCalculator';
+import { matchingJetton, type SkinSelection } from './skinRig';
+import { ModesPage } from './CombatPage';
 import { itemCollectionMarketUrl } from '../domain/item-market-links';
 
 const eggs = [
@@ -125,53 +126,69 @@ export function OwlPage() {
 }
 
 export function CarePage() {
-  return <>
-    <section className="card feedingCard">
-      <div className="mediaHeading"><GameArt path={itemPath('book.webp')} size={46}/>
-        <div><h2>Памятка на каждый день</h2><p>Главные таймеры, лимиты и механики игры в одном месте.</p></div>
-      </div>
-      <ul className="memoList">
-        <li>
-          <strong>Сытость совы (раз в 3 дня)</strong>
-          <span>Максимум 20, для полёта нужно от 10. Любимая еда даёт ×2 сытости. Если не кормить 3 дня — штраф на 24 ч: монеты и опыт ×0.5, реген HP и энергии вдвое медленнее.</span>
-        </li>
-        <li>
-          <strong>Бесплатные сбросы в 00:00 UTC</strong>
-          <span>Раз в день можно бесплатно восстановить всю энергию, запустить до 3 ракет в полёте, решить Загадку книги (до ×3 наград за серию и +5 мудрости на 24 ч) и зажечь ритуал сквада.</span>
-        </li>
-        <li>
-          <strong>Хитрости полёта (Суши и Ракеты)</strong>
-          <span>Первые две суши снимают по 20% монет забега, зато третья прибавляет +20% к остатку и открывает стикер Sushi Master. Три ракеты за один полёт открывают секрет Phoenix.</span>
-        </li>
-      </ul>
-      <DetailLink className="textLink" to="/assets/care">Вся еда и лекарства</DetailLink>
-    </section>
+  const { pathname, state } = useLocation();
+  const keepParent = state?.guideDetail === true;
+  const tabState = keepParent ? { guideDetail: true } : undefined;
+  const isModes = pathname === '/modes';
 
-    <section className="card feedingCard">
-      <h2>Бой, прокачка и осада</h2>
-      <ul className="memoList">
-        <li>
-          <strong>Потолок статов — 70% на 100 очках</strong>
-          <span>Выше 100 ловкости (уклонение) и 100 мудрости (крит) шансы не растут — лишняя мудрость даёт только +20 маны за очко. В бой можно взять до 3 навыков; мана за бой не восстанавливается.</span>
-        </li>
-        <li>
-          <strong>Боевая мощь при осаде = твой SP</strong>
-          <span>Личная мощь для захвата территорий растёт от заработанных SP в Додзё и боях (ориентир: ~1 мощь за 100 SP).</span>
-        </li>
-        <li>
-          <strong>Сбросы и заморозка XP</strong>
-          <span>Чиллер замораживает получение XP (удобно фармить SP/монеты на своём уровне), Дискета сохраняет XP перед перерождением, Морфер сбрасывает статы и навыки без потери SP.</span>
-        </li>
-        <li>
-          <strong>Защита от рейдов</strong>
-          <span>Победитель забирает 3% монет. После 3 проигранных защит включается щит, пока владелец сам не вернётся в игру.</span>
-        </li>
-      </ul>
-      <div className="memoLinks">
-        <DetailLink className="textLink" to="/combat/builds">Калькулятор билдов</DetailLink>
-        <DetailLink className="textLink" to="/squads">Сквады и осада</DetailLink>
-      </div>
-    </section>
+  return <>
+    <nav className="choiceBar profileTabs careTabs" aria-label="Памятка и режимы">
+      <Link to="/care" replace state={tabState} aria-current={!isModes ? 'page' : undefined}>
+        <GameGlyph name="info"/>Памятка
+      </Link>
+      <Link to="/modes" replace state={tabState} aria-current={isModes ? 'page' : undefined}>
+        <GameGlyph name="fight"/>Режимы игры
+      </Link>
+    </nav>
+
+    {isModes ? <ModesPage/> : <>
+      <section className="card feedingCard">
+        <div className="mediaHeading"><GameArt path={itemPath('book.webp')} size={46}/>
+          <div><h2>Памятка на каждый день</h2><p>Главные таймеры, лимиты и механики игры в одном месте.</p></div>
+        </div>
+        <ul className="memoList">
+          <li>
+            <strong>Сытость совы (раз в 3 дня)</strong>
+            <span>Максимум 20, для полёта нужно от 10. Любимая еда даёт ×2 сытости. Если не кормить 3 дня — штраф на 24 ч: монеты и опыт ×0.5, реген HP и энергии вдвое медленнее.</span>
+          </li>
+          <li>
+            <strong>Бесплатные сбросы в 00:00 UTC</strong>
+            <span>Раз в день можно бесплатно восстановить всю энергию, запустить до 3 ракет в полёте, решить Загадку книги (до ×3 наград за серию и +5 мудрости на 24 ч) и зажечь ритуал сквада.</span>
+          </li>
+          <li>
+            <strong>Хитрости полёта (Суши и Ракеты)</strong>
+            <span>Первые две суши снимают по 20% монет забега, зато третья прибавляет +20% к остатку и открывает стикер Sushi Master. Три ракеты за один полёт открывают секрет Phoenix.</span>
+          </li>
+        </ul>
+        <DetailLink className="textLink" to="/assets/care">Вся еда и лекарства</DetailLink>
+      </section>
+
+      <section className="card feedingCard">
+        <h2>Бой, прокачка и осада</h2>
+        <ul className="memoList">
+          <li>
+            <strong>Потолок статов — 70% на 100 очках</strong>
+            <span>Выше 100 ловкости (уклонение) и 100 мудрости (крит) шансы не растут — лишняя мудрость даёт только +20 маны за очко. В бой можно взять до 3 навыков; мана за бой не восстанавливается.</span>
+          </li>
+          <li>
+            <strong>Боевая мощь в осадах</strong>
+            <span>Личная мощь для захвата территорий растёт от прокачки в Додзё и боях, а не от уровня или опыта.</span>
+          </li>
+          <li>
+            <strong>Сбросы и заморозка XP</strong>
+            <span>Чиллер замораживает получение XP (удобно фармить SP/монеты на своём уровне), Дискета сохраняет XP перед перерождением, Морфер сбрасывает статы и навыки без потери SP.</span>
+          </li>
+          <li>
+            <strong>Защита от рейдов</strong>
+            <span>Победитель забирает 3% монет. После 3 проигранных защит включается щит, пока владелец сам не вернётся в игру.</span>
+          </li>
+        </ul>
+        <div className="memoLinks">
+          <DetailLink className="textLink" to="/combat/builds">Калькулятор билдов</DetailLink>
+          <DetailLink className="textLink" to="/squads">Сквады и осада</DetailLink>
+        </div>
+      </section>
+    </>}
   </>;
 }
 
@@ -321,29 +338,27 @@ function lootDestination(id: number, file: string) {
 }
 
 function SkinCatalog() {
+  const [matchedJettonId, setMatchedJettonId] = useState<25 | 26 | 27 | null>(null);
+  const handleSelectionChange = useCallback((sel: SkinSelection) => {
+    setMatchedJettonId(matchingJetton(sel).id);
+  }, []);
+
   return <>
-    <SkinFarmCalculator/>
+    <SkinFarmCalculator onSelectionChange={handleSelectionChange}/>
     <section className="card inventoryPanel skinJettons" id="skin-jettons" data-category="skins">
       <h2>Как получить скин</h2>
-      <p className="caption">Открой жетон в инвентаре и надень выпавший скин на сову.</p>
+      <p className="caption">Подходящий к выбранному образу жетон подсвечен золотой рамкой.</p>
       <ul className="compactList">
-        {jettons.map(item => <InventoryRow item={item} key={item.file} id={'jetton-' + item.id}/>)}
+        {jettons.map(item => <InventoryRow item={item} key={item.file} id={'jetton-' + item.id} matched={matchedJettonId === item.id}/>)}
         <SkinCollectionRow/>
       </ul>
       <details className="mediaDetails skinRuleDisclosure" id="skin-farm-rules">
-        <summary><GameArt path="/game/items/scroll-enchant-skin.webp" size={27}/><strong>Как увеличить бонус</strong></summary>
+        <summary><GameArt path="/game/items/scroll-enchant-skin.webp" size={27}/><strong>Как увеличить бонус к монетам</strong></summary>
         <p>Обычная деталь даёт +5%, золотое оперение +15%, цепь NOT +10%. Каждый уровень заточки добавляет ещё +5%.</p>
         <p>Золотое оперение, цепь NOT, глаза, очки и убор вместе дают +40% даже без заточки.</p>
         <DetailLink to="/assets/gear" className="textLink">Шансы заточки</DetailLink>
       </details>
     </section>
-    <details className="card mediaDetails skinPartsList" id="skin-parts">
-      <summary><GameGlyph name="skin"/><strong>Все детали скинов</strong></summary>
-      <dl className="skinPartsReference">{([
-        ['body', 'Оперение'], ['hat', 'Головные уборы'], ['glasses', 'Очки'],
-        ['chest', 'Украшения на груди'], ['eyes', 'Глаза'],
-      ] as const).map(([slot, label]) => <div key={slot}><dt>{label}</dt><dd>{skinParts[slot].join(', ')}</dd></div>)}</dl>
-    </details>
   </>;
 }
 
@@ -353,7 +368,7 @@ function SkinCollectionRow() {
   return <InventoryRow item={skinNft} collectionFloor={quote?.floor ?? undefined} collectionStale={quote?.available === false}/>;
 }
 
-function InventoryRow({ item, id, collectionFloor, collectionStale }: { item: CatalogItem; id?: string; collectionFloor?: number; collectionStale?: boolean }) {
+function InventoryRow({ item, id, collectionFloor, collectionStale, matched }: { item: CatalogItem; id?: string; collectionFloor?: number; collectionStale?: boolean; matched?: boolean }) {
   const titleId = useId();
   const { data: market, stale } = itemMarket.useSnapshot();
   const marketKey = item.file.split('.')[0];
@@ -378,7 +393,7 @@ function InventoryRow({ item, id, collectionFloor, collectionStale }: { item: Ca
   const floorLabel = staleFloor ? 'Последний флор' : floor ? 'Getgems'
     : gameId && market?.status === 'ready' && latest && market.source === 'getgems' ? 'Нет лотов' : 'Getgems';
   const source = item.source + (level ? ` · с ${level}-го ур.` : '');
-  return <li className="inventoryRow" id={id} aria-labelledby={titleId}>
+  return <li className="inventoryRow" id={id} aria-labelledby={titleId} data-matched={matched || undefined}>
     <span className="inventoryIcon"><GameArt path={item.art ?? itemPath(item.file)} size={33}/></span>
     <div className="inventoryCopy">
       <div className="inventoryTitle">

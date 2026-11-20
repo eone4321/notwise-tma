@@ -124,26 +124,19 @@
   min-inline-size: 0;
   margin: 0;
 }
-.heroActions .heroBuilds, [data-theme="graphite"] .heroActions .heroBuilds {
-  grid-column: 1 / -1;
+.heroActions .openGame.primary, [data-theme="graphite"] .heroActions .openGame.primary {
   min-block-size: 46px;
-  font-size: 14px;
+  font-size: 13px;
   background: #ffe6b7;
   color: #1d1511;
   border: 1px solid #fff0d2;
   border-radius: 12px;
   box-shadow: inset 0 1px #fff7e4, 0 8px 14px #0a070946;
 }
-.heroActions .heroBuilds .gameGlyph {
-  color: #1d1511;
-  font-size: 16px;
-}
-.heroActions .heroBuilds:active {
+.heroActions .openGame.primary:active {
   filter: brightness(1.06);
 }
-.heroActions .secondary,
-.heroActions .openGame,
-[data-theme="graphite"] .heroActions .openGame {
+.heroActions .secondary {
   background: var(--game-tile);
   color: var(--text);
   border: 1px solid var(--line);
@@ -2549,4 +2542,283 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   .squadMapFilters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ritualStatsRow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .siegeStageTabs button { font-size: 11px; padding-inline: 4px; }
+}
+
+/* Wardrobe-Shelf Skins Calculator & Simplified Squad steps */
+.wardrobeCard { display: grid; gap: 11px; }
+.wardrobeActionIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  font-size: 16px;
+  cursor: pointer;
+}
+.wardrobeActionIcon:active { border-color: var(--gold); transform: scale(0.95); }
+
+.wardrobeStage {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 14px 12px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--game-panel-line);
+  background: radial-gradient(circle at 50% 42%, rgba(255, 211, 128, 0.14) 0%, var(--game-tile) 74%);
+}
+.wardrobeStage[data-rarity="Epic"] {
+  background: radial-gradient(circle at 50% 42%, rgba(177, 132, 255, 0.16) 0%, var(--game-tile) 74%);
+}
+.wardrobeStage[data-rarity="Rare"] {
+  background: radial-gradient(circle at 50% 42%, rgba(98, 194, 255, 0.15) 0%, var(--game-tile) 74%);
+}
+.wardrobeStage[data-rarity="Golden"] {
+  background: radial-gradient(circle at 50% 42%, rgba(255, 211, 128, 0.22) 0%, var(--game-tile) 74%);
+}
+.wardrobeOwl {
+  width: clamp(134px, 37vw, 162px);
+  height: clamp(134px, 37vw, 162px);
+}
+.wardrobeStageHud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.wardrobeBonusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--game-panel);
+  border: 1px solid color-mix(in srgb, var(--gold) 50%, var(--game-panel-line));
+  font-size: 13.5px;
+  color: var(--gold);
+}
+.wardrobeBonusPill strong { font-weight: 900; font-variant-numeric: tabular-nums; }
+
+.wardrobeSlotTabs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+}
+.wardrobeSlotTab {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  margin: 0;
+  padding: 7px 3px 6px;
+  min-width: 0;
+  border-radius: 10px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--muted);
+  cursor: pointer;
+}
+.wardrobeSlotTab[aria-selected="true"] {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 14%, var(--game-panel));
+  color: var(--text);
+}
+.wardrobeSlotTab[data-filled="true"]:not([aria-selected="true"]) {
+  border-color: color-mix(in srgb, var(--lavender) 40%, var(--game-panel-line));
+  color: var(--text);
+}
+.wardrobeSlotTab[data-gold="true"] { border-color: color-mix(in srgb, var(--gold) 65%, var(--game-panel-line)); }
+.wardrobeTabIcon {
+  display: grid;
+  place-items: center;
+  height: 20px;
+}
+.wardrobeTabIcon .skinSlotSvg { width: 17px; height: 17px; }
+.wardrobeTabIcon .skinColorDot { width: 16px; height: 16px; }
+.wardrobeTabLabel {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wardrobeTabBonus {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--gold);
+  line-height: 1;
+}
+.wardrobeTabDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--game-panel-line);
+  margin: 3px 0;
+}
+
+.wardrobeTrayWrap {
+  padding: 9px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  display: grid;
+  gap: 8px;
+}
+.wardrobeTrayHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.wardrobeTrayHead strong { color: var(--text); }
+.wardrobeTrayHead small { font-size: 12px; font-weight: 800; color: var(--gold); }
+
+.wardrobeTray {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 3px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.wardrobeTray::-webkit-scrollbar { display: none; }
+
+.wardrobeItemChip {
+  flex: none;
+  scroll-snap-align: start;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 74px;
+  max-width: 96px;
+  margin: 0;
+  padding: 8px 8px 7px;
+  border-radius: 10px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-panel);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.wardrobeItemChip span:nth-child(2) {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+.wardrobeItemChip small { font-size: 10px; font-weight: 800; color: var(--muted); }
+.wardrobeItemChip[data-gold="true"] small { color: var(--gold); }
+.wardrobeItemChip[aria-pressed="true"] {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 18%, var(--game-panel));
+}
+.wardrobeItemChip[aria-pressed="true"] small { color: var(--gold); }
+.wardrobeChipThumb { display: grid; place-items: center; height: 22px; color: var(--text); }
+.wardrobeChipThumb .skinSlotSvg { width: 18px; height: 18px; }
+.wardrobeChipThumb .skinColorDot { width: 18px; height: 18px; }
+
+.wardrobeEnchantCard {
+  padding: 9px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  display: grid;
+  gap: 8px;
+}
+.wardrobeEnchantCard .skinEnchantBox {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.skinEnchantMeta small[data-risk="safe"] { color: #8eeebb; }
+.skinEnchantMeta small[data-risk="mid"] { color: var(--gold); }
+.skinEnchantMeta small[data-risk="high"] { color: #ff8e82; }
+
+.wardrobeRiskMeter { display: grid; gap: 4px; }
+.wardrobeRiskTrack {
+  position: relative;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--game-panel);
+  overflow: visible;
+}
+.wardrobeRiskFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 160ms ease;
+}
+.wardrobeRiskFill[data-risk="safe"] { background: linear-gradient(90deg, #4bc98d, #8eeebb); }
+.wardrobeRiskFill[data-risk="mid"] { background: linear-gradient(90deg, #5ed198, #ffd380); }
+.wardrobeRiskFill[data-risk="high"] { background: linear-gradient(90deg, #ffd380, #ff6b6b); }
+.wardrobeRiskSafeMark {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 2px;
+}
+.wardrobeRiskScale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.inventoryRow[data-matched="true"] {
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+  border-radius: 10px;
+  padding-inline: 8px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 45%, transparent);
+}
+
+.siegeSimpleSteps {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.siegeSimpleSteps li {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+}
+.siegeStepNum {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold) 18%, var(--game-panel));
+  border: 1px solid color-mix(in srgb, var(--gold) 50%, var(--game-panel-line));
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 800;
+}
+.siegeSimpleSteps strong { display: block; font-size: 13px; margin-bottom: 2px; color: var(--text); }
+.siegeSimpleSteps p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.ritualSimpleCopy { margin: 0 0 10px; font-size: 13px; color: var(--muted); line-height: 1.45; }
+
+.careTabs { margin-bottom: 10px; }
+
+@media (max-width: 350px) {
+  .wardrobeSlotTabs { gap: 3px; }
+  .wardrobeTabLabel { font-size: 9px; }
 }

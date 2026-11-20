@@ -18,7 +18,7 @@ import { GameArt } from '../ui/GameArt';
 import { GameGlyph } from '../ui/GameGlyph';
 import { AlbumLogo } from '../ui/AlbumLogo';
 import { CarePage, InventoryPage, OwlPage } from '../features/InventoryPage';
-import { CombatPage, ModesPage } from '../features/CombatPage';
+import { CombatPage } from '../features/CombatPage';
 import { CollectionPage } from '../features/CollectionPage';
 import { CapsulePage } from '../features/CapsulePage';
 import { achievementActions } from '../features/inventory';
@@ -36,7 +36,7 @@ const sections = [
   ['Секреты', '/secrets'], ['Капсулы', '/capsules'], ['Яйца и скины', '/owl'],
   ['Коллекции', '/collections'], ['Бои и навыки', '/combat'], ['Предметы', '/assets'],
   ['Экосистема', '/ecosystem'], ['Пригласить друзей', '/referrals'],
-  ['Памятка', '/care'], ['Режимы игры', '/modes'],
+  ['Памятка и режимы', '/care'], ['Памятка и режимы', '/modes'],
 ] as const;
 type Item={id:number;name:string;description:string;short_descr:string;rarity:number;kind?:string;key?:string};
 function App() {
@@ -219,6 +219,8 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
     ru: ['Экосистема', 'Токены, проекты и курсы'], en: ['Ecosystem', 'Projects and token prices'] },
   { path: '/collections', icon: '/game/albums/1.webp', art: '/game/stickers/1.webp',
     ru: ['Коллекции', 'Стикеры, альбомы и Getgems'], en: ['Collections', 'Stickers and Getgems'] },
+  { path: '/care', icon: '/game/items/book.webp', art: '/game/ui/fight-vs.png',
+    ru: ['Памятка и режимы', 'Таймеры, полёт, Додзё и лиги'], en: ['Cheat sheet & modes', 'Timers, flight, Dojo and leagues'] },
   { path: '/referrals', icon: '/game/items/wise-coin.webp', art: '/game/items/referral-egg.webp',
     ru: ['Пригласить друзей', 'Твоя ссылка и список приглашённых'], en: ['Invite friends', 'Your links and invitations'] },
 ] as const;
@@ -231,16 +233,12 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
     <div className="heroCopy"><h1>{en ? <>NOT Wise <span>Guide</span></> : <>Гайд по <span>NOT Wise</span></>}</h1><p className="heroSub">{en ? 'Loot, combat and owl care.' : 'Награды, бои и уход за совой.'}</p></div>
     <img className="heroImage" src={artSrc('/brand/notwise-home.jpg')} width="1170" height="1200" alt=""/>
     <div className="heroActions">
-      <Link className="primary heroBuilds" to="/combat/builds" onClick={() => { lightHaptic(); trackGuide('action:builds'); }}>
-        <GameGlyph name="fight"/>
-        <span>{en ? 'Build calculator' : 'Калькулятор билдов'}</span>
-      </Link>
       {fromInvite && !profile ? (
-        <button className="secondary openGame" disabled={!profileFailed} onClick={retryProfile}>
+        <button className="primary openGame" disabled={!profileFailed} onClick={retryProfile}>
           {profileFailed ? (en ? 'Retry' : 'Повторить') : (en ? 'Checking…' : 'Проверяем…')}
         </button>
       ) : (
-        <a className="secondary openGame" href={profile?.gameEntry ?? defaultGameLink} onClick={() => trackGuide('action:game')}>
+        <a className="primary openGame" href={profile?.gameEntry ?? defaultGameLink} onClick={() => trackGuide('action:game')}>
           <span className="launchMark" aria-hidden="true"/>
           <span>{en ? 'Open the game' : 'Открыть игру'}</span>
         </a>
@@ -253,9 +251,13 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
   </section>
   {share && <ShareDialog english={en} close={() => setShare(false)}/>}
   <OwlPrices/>
-  <section className="homeGameActions" aria-label={en ? 'Gameplay' : 'Об игре'}>
-    <Link to="/modes"><GameArt path="/game/ui/fight-vs.png" size={34}/><span>{en ? 'Game modes' : 'Режимы игры'}</span><span className="rowChevron" aria-hidden="true"/></Link>
-    <Link to="/care"><GameArt path="/game/items/book.webp" size={34}/><span>{en ? 'Cheat sheet' : 'Памятка'}</span><span className="rowChevron" aria-hidden="true"/></Link>
+  <section className="homeGameActions" aria-label={en ? 'Calculators' : 'Калькуляторы'}>
+    <Link to="/combat/builds" onClick={() => { lightHaptic(); trackGuide('action:builds'); }}>
+      <GameArt path="/game/skills/1.png" size={34}/><span>{en ? 'Build calculator' : 'Калькулятор билдов'}</span><span className="rowChevron" aria-hidden="true"/>
+    </Link>
+    <Link to="/owl/skins" onClick={() => lightHaptic()}>
+      <GameArt path="/game/items/skin-jetton-golden.webp" size={34}/><span>{en ? 'Skin calculator' : 'Калькулятор скинов'}</span><span className="rowChevron" aria-hidden="true"/>
+    </Link>
   </section>
   <div className="sectionHeading"><div><h2>{en ? 'Explore' : 'Что ищешь?'}</h2></div></div>
   <div className="guideGrid">{homeTiles.map(tile => {
@@ -324,8 +326,7 @@ function Page({ profile, onChatVisit, ask, joke, popup, reveal, referrals }: {
     {section?.[1] === '/collections' && <CollectionPage/>}
     {section?.[1] === '/ecosystem' && <EcosystemPage gameEntry={profile?.gameEntry ?? defaultGameLink}/>}
     {section?.[1] === '/combat' && <CombatPage/>}
-    {section?.[1] === '/modes' && <ModesPage/>}
-    {section?.[1] === '/care' && <CarePage/>}
+    {(section?.[1] === '/care' || section?.[1] === '/modes') && <CarePage/>}
     {section?.[1] === '/squads' && <SquadPage gameEntry={profile?.gameEntry ?? defaultGameLink} onChatVisit={onChatVisit}/>}
     {section?.[1] === '/secrets' && <Secrets ask={ask} joke={joke} popup={popup} reveal={reveal}/>}
     {section?.[1] === '/assets' && <InventoryPage/>}

@@ -109,10 +109,8 @@ export function SquadMap() {
 
   return <section className="card squadMapCard" id="siege-map">
     <div className="squadMapHeader">
-      <div>
-        <h2>🗺️ Карта осады · 20 земель</h2>
-        <p className="squadMapSub">Нажми на треугольник, чтобы увидеть награду, вход с 0 земель и соседние пути атаки.</p>
-      </div>
+      <h2>🗺️ Карта земель (20)</h2>
+      <p className="squadMapSub">Нажми на участок — покажем награду и соседние земли.</p>
     </div>
 
     <div className="squadMapFilters" role="group" aria-label="Фильтр наград на карте">
@@ -125,12 +123,11 @@ export function SquadMap() {
     </div>
 
     <div className="squadMapStage">
-      <svg className="squadMap" viewBox="0 0 184 208" aria-label="Интерактивная карта из 20 территорий осады">
+      <svg className="squadMap" viewBox="0 0 184 208" aria-label="Карта из 20 территорий осады">
         {territories.map(item => {
           const itemReward = territoryRewards[item.id];
           const isSelected = selected === item.id;
           const isNeighbor = neighborSet.has(item.id);
-          const isBorderEntry = entryIds.has(item.id);
           const isDimmed = !isSelected && !matchesFilter(itemReward?.[0], filter);
           const ruName = territoryLabelsRu[item.id] ?? item.label;
           return <g
@@ -141,7 +138,6 @@ export function SquadMap() {
             aria-pressed={isSelected}
             data-reward-group={rewardGroup(itemReward?.[0])}
             data-neighbor={isNeighbor ? 'true' : undefined}
-            data-entry={isBorderEntry ? 'true' : undefined}
             data-dim={isDimmed ? 'true' : undefined}
             onClick={() => setSelected(item.id)}
             onKeyDown={event => {
@@ -159,7 +155,7 @@ export function SquadMap() {
 
       <div className="squadMapLegend" aria-hidden="true">
         <span><i className="legendDot isSelected"/>Выбран</span>
-        <span><i className="legendDot isNeighbor"/>Соседи ({neighbors.length})</span>
+        <span><i className="legendDot isNeighbor"/>Рядом ({neighbors.length})</span>
         <span><i className="legendDot isCoins"/>Монеты</span>
         <span><i className="legendDot isStats"/>Бафф</span>
       </div>
@@ -169,7 +165,7 @@ export function SquadMap() {
       <div className="squadMapInspectorHead">
         <div>
           <strong>{territoryLabelsRu[territory.id] ?? territory.label}</strong>
-          <small>{territory.label}</small>
+          <small>{isEntry ? 'С краю карты — можно зайти с 0 земель' : 'Внутри — атака от своих соседних земель'}</small>
         </div>
         {reward && <div className="squadMapRewardPill">
           <span>{siegeRewardLabels[reward[0]]}</span>
@@ -177,14 +173,8 @@ export function SquadMap() {
         </div>}
       </div>
 
-      <div className="squadMapTags">
-        <span className={`squadMapBadge ${isEntry ? 'isEntry' : 'isInner'}`}>
-          {isEntry ? '🚪 Граница: открыта при 0 землях' : '🛡️ Центр: вход через захваченных соседей'}
-        </span>
-      </div>
-
       <div className="squadNeighborsBar">
-        <span className="squadNeighborsLabel">🔗 Соседи для атаки:</span>
+        <span className="squadNeighborsLabel">Рядом на карте:</span>
         <div className="squadNeighborChips">
           {neighbors.map(neighborId => <button
             key={neighborId}
@@ -201,8 +191,8 @@ export function SquadMap() {
     <details className="mediaDetails siegePayoutExample">
       <summary>
         <span>
-          <strong>🪙 Общий пул карты за 1 раунд</strong>
-          <small>4 000 монет · 700 серебра · +8 к статам (все 20 земель)</small>
+          <strong>🪙 Пул всех 20 земель за раунд</strong>
+          <small>4 000 монет · 700 серебра · +8 к статам</small>
         </span>
       </summary>
       <SiegeTotals totals={siegeRewardTotals}/>

@@ -24,6 +24,7 @@ type SavedSkinCalc = {
 
 const skinCalcStorage = 'notwise.guide.skin-calc.v1';
 const defaultGear = { rings: '', artifact: false, league: 0 };
+const slotOrder: readonly SkinSlotKey[] = ['body', 'hat', 'glasses', 'chest', 'eyes'];
 
 const bodySwatches: Record<string, string> = {
   Golden: 'linear-gradient(135deg, #fff0a8, #eab038, #9e6b14)',
@@ -80,7 +81,7 @@ function readSavedSkinCalc(): SavedSkinCalc {
     const raw = JSON.parse(sessionStorage.getItem(skinCalcStorage) ?? 'null');
     if (raw && typeof raw === 'object' && raw.selection && typeof raw.selection === 'object') {
       const sel: SkinSelection = { ...emptySkinSelection };
-      for (const slot of ['body', 'chest', 'hat', 'glasses', 'eyes'] as const) {
+      for (const slot of slotOrder) {
         const val = raw.selection[slot];
         if (typeof val === 'string' && findTrait(slot, val)) sel[slot] = val;
       }
@@ -96,7 +97,17 @@ function readSavedSkinCalc(): SavedSkinCalc {
   return { selection: { ...emptySkinSelection }, enchant: '', gear: defaultGear, presetId: null };
 }
 
-export function SkinFarmCalculator() {
+function pickRandomTrait(slot: SkinSlotKey, allowEmpty: boolean): string | null {
+  const list = skinTraitsBySlot[slot];
+  if (allowEmpty && Math.random() < 0.25) return null;
+  return list[Math.floor(Math.random() * list.length)].key;
+}
+
+export function SkinFarmCalculator({
+  onSelectionChange,
+}: {
+  onSelectionChange?: (selection: SkinSelection) => void;
+}) {
   const { locale } = useGuideLocale();
   const en = locale === 'en';
   const copy = (ru: string, enText: string) => en ? enText : ru;
@@ -106,7 +117,7 @@ export function SkinFarmCalculator() {
   const [enchant, setEnchant] = useState(saved.enchant);
   const [gear, setGear] = useState(saved.gear);
   const [presetId, setPresetId] = useState<number | null>(saved.presetId);
-  const [activeSlot, setActiveSlot] = useState<SkinSlotKey | null>(null);
+  const [activeTab, setActiveTab] = useState<SkinSlotKey>('body');
   const [presetModalOpen, setPresetModalOpen] = useState(false);
   const [skinIdInput, setSkinIdInput] = useState('');
   const [skinIdError, setSkinIdError] = useState('');
@@ -116,7 +127,8 @@ export function SkinFarmCalculator() {
     try {
       sessionStorage.setItem(skinCalcStorage, JSON.stringify({ selection, enchant, gear, presetId }));
     } catch { /* ignore */ }
-  }, [selection, enchant, gear, presetId]);
+    onSelectionChange?.(selection);
+  }, [selection, enchant, gear, presetId, onSelectionChange]);
 
   const enchantLevel = Number(enchant) || 0;
   const enchantBonus = 5 * enchantLevel;
@@ -131,6 +143,7 @@ export function SkinFarmCalculator() {
   const nextEnchantTarget = enchantLevel < 20 ? enchantLevel + 1 : 20;
   const enchantSuccess = 100 - Math.max(0, nextEnchantTarget - 3) * 5;
   const enchantBurn = 100 - enchantSuccess;
+  const riskZone = enchantLevel >= 11 ? 'high' : enchantLevel >= 3 ? 'mid' : 'safe';
 
   function applySlot(slot: SkinSlotKey, key: string | null) {
     lightHaptic();
@@ -142,6 +155,18 @@ export function SkinFarmCalculator() {
     lightHaptic();
     setPresetId(id);
     setSelection({ ...nextSelection });
+  }
+
+  function randomize() {
+    lightHaptic();
+    setPresetId(null);
+    setSelection({
+      body: pickRandomTrait('body', false),
+      hat: pickRandomTrait('hat', true),
+      glasses: pickRandomTrait('glasses', true),
+      chest: pickRandomTrait('chest', true),
+      eyes: pickRandomTrait('eyes', true),
+    });
   }
 
   function reset() {
@@ -176,32 +201,10 @@ export function SkinFarmCalculator() {
     }
   }
 
-  const renderSlotButton = (slot: SkinSlotKey) => {
-    const meta = skinSlotMeta[slot];
-    const key = selection[slot];
-    const trait = findTrait(slot, key);
-    const bonus = skinPartBonus(slot, key);
-    return <button key={slot} type="button" className="buildLoadoutSlot skinLoadoutSlot"
-      data-filled={Boolean(trait) || undefined}
-      data-gold={key === 'Golden' || key === 'NOT_Chain' || undefined}
-      aria-haspopup="dialog"
-      aria-label={`${copy(meta.ru, meta.en)}: ${trait ? copy(trait.ru, trait.en) : copy(meta.emptyRu, meta.emptyEn)}`}
-      onClick={() => { lightHaptic(); setActiveSlot(slot); }}>
-      <span className="skinSlotKind">{copy(meta.ru, meta.en)}</span>
-      {trait ? <>
-        {slot === 'body' && key && bodySwatches[key]
-          ? <span className="skinColorDot" style={{ background: bodySwatches[key] }} aria-hidden="true"/>
-          : <SlotGlyph slot={slot}/>}
-        <span className="skinSlotValue">{copy(trait.ru, trait.en)}</span>
-        <span className="buildLoadoutTag">+{bonus}%</span>
-      </> : <>
-        <span className="buildSlotPlus" aria-hidden="true">+</span>
-        <span className="skinSlotEmpty">{copy(meta.emptyRu, meta.emptyEn)}</span>
-      </>}
-    </button>;
-  };
+  const activeTraits = skinTraitsBySlot[activeTab];
+  const equippedInTab = findTrait(activeTab, selection[activeTab]);
 
-  return <section className="card buildPanel buildLoadoutCard skinLoadoutCard" id="skin-calculator" aria-labelledby="farm-title" tabIndex={-1}>
+  return <section className="card buildPanel wardrobeCard" id="skin-calculator" aria-labelledby="farm-title" tabIndex={-1}>
     <div className="buildLoadoutTop">
       <div className="buildLoadoutControls">
         <span className="skinRarityPill" data-rarity={rarity}>
@@ -210,25 +213,26 @@ export function SkinFarmCalculator() {
         <button type="button" className="buildPresetChip" aria-haspopup="dialog"
           onClick={() => { lightHaptic(); setSkinIdError(''); setPresetModalOpen(true); }}>
           <GameGlyph name="skin"/>
-          <span>{presetId ? `#${presetId}` : copy('Примеры', 'Presets')}</span>
+          <span>{presetId ? `#${presetId}` : copy('Найти № / Примеры', 'ID / Presets')}</span>
           <span className="buildChipCaret" aria-hidden="true">▾</span>
         </button>
       </div>
       <div className="buildLoadoutRight">
-        <span className="buildBudgetPill skinTotalPill">+{total}%</span>
+        <button type="button" className="wardrobeActionIcon" title={copy('Случайный образ', 'Randomize look')}
+          aria-label={copy('Случайный образ', 'Randomize look')} onClick={randomize}>🎲</button>
         <button type="button" className="buildIconReset" title={copy('Сбросить скин', 'Reset skin')}
           aria-label={copy('Сбросить скин', 'Reset skin')} onClick={reset}>↺</button>
       </div>
     </div>
 
-    <div className="buildLoadoutStage skinLoadoutStage">
-      <div className="buildLoadoutCol skinLoadoutCol">
-        {(['body', 'chest'] as const).map(renderSlotButton)}
+    <div className="wardrobeStage" data-rarity={rarity}>
+      <div className="buildLoadoutOwl wardrobeOwl" data-rarity={rarity}>
+        <OwlSkinCanvas selection={selection} size={156}/>
       </div>
-
-      <div className="buildLoadoutHero skinLoadoutHero">
-        <div className="buildLoadoutOwl skinLoadoutOwl" data-rarity={rarity}>
-          <OwlSkinCanvas selection={selection} size={144}/>
+      <div className="wardrobeStageHud">
+        <div className="wardrobeBonusPill" role="status">
+          <GameArt path="/game/items/wise-coin.webp" size={20}/>
+          <strong id="farm-title">+{total}% {copy('к монетам', 'coins')}</strong>
         </div>
         <a href={jetton.id ? `#jetton-${jetton.id}` : '#skin-jettons'} className="skinJettonMatch"
           onClick={event => {
@@ -237,69 +241,126 @@ export function SkinFarmCalculator() {
             const targetId = jetton.id ? `jetton-${jetton.id}` : 'skin-jettons';
             document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }}>
-          <GameArt path={`/game/items/${jetton.file}`} size={18}/>
+          <GameArt path={`/game/items/${jetton.file}`} size={16}/>
           <span>{copy(jetton.ru, jetton.en)}</span>
         </a>
       </div>
+    </div>
 
-      <div className="buildLoadoutCol skinLoadoutCol">
-        {(['hat', 'glasses', 'eyes'] as const).map(renderSlotButton)}
+    <div className="wardrobeSlotTabs" role="tablist" aria-label={copy('Слоты образа', 'Skin slots')}>
+      {slotOrder.map(slot => {
+        const meta = skinSlotMeta[slot];
+        const key = selection[slot];
+        const trait = findTrait(slot, key);
+        const bonus = skinPartBonus(slot, key);
+        const selected = activeTab === slot;
+        return <button
+          key={slot}
+          type="button"
+          role="tab"
+          aria-selected={selected}
+          className="wardrobeSlotTab"
+          data-filled={Boolean(trait) || undefined}
+          data-gold={key === 'Golden' || key === 'NOT_Chain' || undefined}
+          onClick={() => { lightHaptic(); setActiveTab(slot); }}
+        >
+          <span className="wardrobeTabIcon">
+            {slot === 'body' && key && bodySwatches[key]
+              ? <span className="skinColorDot" style={{ background: bodySwatches[key] }} aria-hidden="true"/>
+              : <SlotGlyph slot={slot}/>}
+          </span>
+          <span className="wardrobeTabLabel">{copy(meta.ru, meta.en)}</span>
+          {trait ? <span className="wardrobeTabBonus">+{bonus}%</span> : <span className="wardrobeTabDot" aria-hidden="true"/>}
+        </button>;
+      })}
+    </div>
+
+    <div className="wardrobeTrayWrap" role="tabpanel" aria-label={copy(skinSlotMeta[activeTab].ru, skinSlotMeta[activeTab].en)}>
+      <div className="wardrobeTrayHead">
+        <span>
+          <strong>{copy(skinSlotMeta[activeTab].ru, skinSlotMeta[activeTab].en)}:</strong>{' '}
+          {equippedInTab ? copy(equippedInTab.ru, equippedInTab.en) : copy(skinSlotMeta[activeTab].emptyRu, skinSlotMeta[activeTab].emptyEn)}
+        </span>
+        {equippedInTab && <small>+{equippedInTab.bonus}%</small>}
+      </div>
+      <div className="wardrobeTray">
+        <button
+          type="button"
+          className="wardrobeItemChip"
+          aria-pressed={selection[activeTab] === null}
+          onClick={() => applySlot(activeTab, null)}
+        >
+          <span className="wardrobeChipThumb"><SlotGlyph slot={activeTab}/></span>
+          <span>{activeTab === 'body' ? copy('База', 'Base') : copy('Снять', 'None')}</span>
+          <small>0%</small>
+        </button>
+        {activeTraits.map(option => {
+          const isEquipped = selection[activeTab] === option.key;
+          const isSpecial = option.key === 'Golden' || option.key === 'NOT_Chain';
+          return <button
+            key={option.key}
+            type="button"
+            className="wardrobeItemChip"
+            data-gold={isSpecial || undefined}
+            aria-pressed={isEquipped}
+            onClick={() => applySlot(activeTab, isEquipped ? null : option.key)}
+          >
+            <span className="wardrobeChipThumb">
+              {activeTab === 'body' && bodySwatches[option.key]
+                ? <span className="skinColorDot" style={{ background: bodySwatches[option.key] }} aria-hidden="true"/>
+                : <SlotGlyph slot={activeTab}/>}
+            </span>
+            <span>{copy(option.ru, option.en)}</span>
+            <small>+{option.bonus}%</small>
+          </button>;
+        })}
       </div>
     </div>
 
-    <div className="skinQuickPresets" role="group" aria-label={copy('Готовые образы', 'Example skins')}>
-      {skinPresets.slice(0, 4).map(preset => (
-        <button key={preset.id} type="button" className="skinQuickChip"
-          aria-pressed={presetId === preset.id}
-          onClick={() => applyPreset(preset.id, preset.selection)}>
-          <img src={artSrc(preset.thumb)} width="26" height="26" alt=""/>
-          <span>#{preset.id}</span>
-        </button>
-      ))}
-    </div>
-
-    <div className="farmTotal" role="status">
-      <GameArt path="/game/items/wise-coin.webp" size={30}/>
-      <span>
-        <strong id="farm-title" className="skinFarmHeading">{copy('Бонус к монетам', 'Coin farm bonus')}</strong>
-        <small>
-          {copy('Детали', 'Parts')} +{partsBonus}%
-          {enchantBonus > 0 && ` · ${copy('заточка', 'enchant')} +${enchantBonus}%`}
-          {extras > 0 && ` · ${copy('экип', 'gear')} +${extras}%`}
-        </small>
-      </span>
-      <strong className="skinFarmTotalVal">+{total}%</strong>
-    </div>
-
-    <div className="skinEnchantBox">
-      <div className="skinEnchantMeta">
-        <GameArt path="/game/items/scroll-enchant-skin.webp" size={28}/>
-        <div>
-          <strong>{copy('Заточка скина', 'Skin enchant')}</strong>
-          <small>
-            {enchantLevel >= 20
-              ? copy('Максимум +20 (+100%)', 'Max +20 (+100%)')
-              : enchantBurn > 0
-                ? copy(`На +${nextEnchantTarget}: ${enchantSuccess}% успех · ${enchantBurn}% риск 🔥`, `To +${nextEnchantTarget}: ${enchantSuccess}% ok · ${enchantBurn}% burn 🔥`)
-                : copy(`На +${nextEnchantTarget}: 100% без сгорания`, `To +${nextEnchantTarget}: 100% safe`)}
-          </small>
+    <div className="wardrobeEnchantCard">
+      <div className="skinEnchantBox">
+        <div className="skinEnchantMeta">
+          <GameArt path="/game/items/scroll-enchant-skin.webp" size={28}/>
+          <div>
+            <strong>{copy('Заточка скина', 'Skin enchant')} {enchantLevel > 0 ? `+${enchantLevel} (+${enchantBonus}%)` : ''}</strong>
+            <small data-risk={riskZone}>
+              {enchantLevel >= 20
+                ? copy('Максимум +20 (+100%)', 'Max +20 (+100%)')
+                : enchantBurn > 0
+                  ? copy(`На +${nextEnchantTarget}: ${enchantSuccess}% успех · ${enchantBurn}% сгорание 🔥`, `To +${nextEnchantTarget}: ${enchantSuccess}% ok · ${enchantBurn}% burn 🔥`)
+                  : copy(`На +${nextEnchantTarget}: 100% без сгорания`, `To +${nextEnchantTarget}: 100% safe`)}
+            </small>
+          </div>
+        </div>
+        <div className="buildStatStep skinEnchantStep">
+          <button type="button" aria-label={copy('Уменьшить заточку', 'Decrease enchant')}
+            disabled={enchantLevel <= 0}
+            onClick={() => { lightHaptic(); setEnchant(enchantLevel <= 1 ? '' : String(enchantLevel - 1)); }}>−</button>
+          <input aria-label={copy('Уровень заточки скина', 'Skin enchant level')}
+            value={enchant} placeholder="0" inputMode="numeric" maxLength={2}
+            onChange={event => setEnchant(enchantValue(event.target.value, 20))}/>
+          <button type="button" aria-label={copy('Увеличить заточку', 'Increase enchant')}
+            disabled={enchantLevel >= 20}
+            onClick={() => { lightHaptic(); setEnchant(String(enchantLevel + 1)); }}>+</button>
         </div>
       </div>
-      <div className="buildStatStep skinEnchantStep">
-        <button type="button" aria-label={copy('Уменьшить заточку', 'Decrease enchant')}
-          disabled={enchantLevel <= 0}
-          onClick={() => { lightHaptic(); setEnchant(enchantLevel <= 1 ? '' : String(enchantLevel - 1)); }}>−</button>
-        <input aria-label={copy('Уровень заточки скина', 'Skin enchant level')}
-          value={enchant} placeholder="0" inputMode="numeric" maxLength={2}
-          onChange={event => setEnchant(enchantValue(event.target.value, 20))}/>
-        <button type="button" aria-label={copy('Увеличить заточку', 'Increase enchant')}
-          disabled={enchantLevel >= 20}
-          onClick={() => { lightHaptic(); setEnchant(String(enchantLevel + 1)); }}>+</button>
+
+      <div className="wardrobeRiskMeter" aria-hidden="true">
+        <div className="wardrobeRiskTrack">
+          <div className="wardrobeRiskFill" data-risk={riskZone} style={{ width: `${(enchantLevel / 20) * 100}%` }}/>
+          <span className="wardrobeRiskSafeMark" style={{ left: '15%' }}/>
+        </div>
+        <div className="wardrobeRiskScale">
+          <span>+0..+3 безопасно</span>
+          <span>+4..+20 риск сгорания 🔥</span>
+        </div>
       </div>
     </div>
 
     <details className="mediaDetails farmExtras" id="farm-equipment">
-      <summary><GameGlyph name="shield"/><strong>{copy('Кольца, артефакт и лига', 'Rings, artifact & league')}</strong>
+      <summary>
+        <GameGlyph name="shield"/>
+        <strong>{copy('Кольца, артефакт и лига', 'Rings, artifact & league')}</strong>
         {extras > 0 && <b className="farmExtrasValue">+{extras}%</b>}
       </summary>
       <div className="calculatorGrid">
@@ -318,39 +379,6 @@ export function SkinFarmCalculator() {
         onChange={event => setGear({ ...gear, artifact: event.target.checked })}/> {copy('Монтмориллонит +10%', 'Montmorillonite +10%')}</label>
       <DetailLink to="/assets/gear" className="textLink skinEnchantLink">{copy('Таблица шансов заточки', 'Enchant odds table')}</DetailLink>
     </details>
-
-    {activeSlot && <SkinModal
-      title={`${copy(skinSlotMeta[activeSlot].ru, skinSlotMeta[activeSlot].en)}`}
-      closeLabel={copy('Закрыть', 'Close')}
-      onClose={() => setActiveSlot(null)}>
-      <div className="buildPickerOptions">
-        <button type="button" className="buildPickerOption skinOptionRow"
-          aria-pressed={selection[activeSlot] === null}
-          onClick={() => { applySlot(activeSlot, null); setActiveSlot(null); }}>
-          <span className="skinOptionIcon"><SlotGlyph slot={activeSlot}/></span>
-          <span>
-            <strong>{activeSlot === 'body' ? copy('Без скина (базовая сова)', 'None (base owl)') : copy('Снять предмет', 'Unequip')}</strong>
-            <small>{copy('0% к фарму монет', '0% coin bonus')}</small>
-          </span>
-          <span className="buildPickerCheck" aria-hidden="true">{selection[activeSlot] === null ? '✓' : ''}</span>
-        </button>
-        {skinTraitsBySlot[activeSlot].map(option => {
-          const selected = selection[activeSlot] === option.key;
-          return <button key={option.key} type="button" className="buildPickerOption skinOptionRow"
-            aria-pressed={selected}
-            onClick={() => { applySlot(activeSlot, option.key); setActiveSlot(null); }}>
-            {activeSlot === 'body' && bodySwatches[option.key]
-              ? <span className="skinColorDot skinOptionDot" style={{ background: bodySwatches[option.key] }} aria-hidden="true"/>
-              : <span className="skinOptionIcon" aria-hidden="true"><SlotGlyph slot={activeSlot}/></span>}
-            <span>
-              <strong>{copy(option.ru, option.en)}</strong>
-              <small>+{option.bonus}% {copy('к монетам', 'coin bonus')}</small>
-            </span>
-            <span className="buildPickerCheck" aria-hidden="true">{selected ? '✓' : ''}</span>
-          </button>;
-        })}
-      </div>
-    </SkinModal>}
 
     {presetModalOpen && <SkinModal
       title={copy('Примеры и поиск по №', 'Presets & Skin ID')}
