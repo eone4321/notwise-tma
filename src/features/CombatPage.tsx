@@ -8,8 +8,9 @@ import { GameSymbol } from '../ui/GameSymbol';
 import { GameArt } from '../ui/GameArt';
 import { skillCopy } from './skill-copy';
 import skillLevels from './skill-levels.json';
+import { BattleReadout, skillEffect } from './BattleReadout';
 import { battleLeagues } from './battle-leagues';
-import { battleStats, skillHpMultiplier } from '../domain/combat';
+import { battleStats, skillHpMultiplier, skillCooldown, skillMana } from '../domain/combat';
 import { BuildConstructor } from './BuildConstructor';
 
 export function SpBadge({ value }: { value?: number | string }) {
@@ -52,7 +53,8 @@ export function CombatPage() {
   const { pathname, search, state } = useLocation();
   const [, , page, branchId, skillId] = pathname.split('/');
   const searchParams = new URLSearchParams(search);
-  const isBuilds = page === 'builds' || searchParams.get('tab') === 'builds' || searchParams.get('tab') === 'build' || (state as any)?.tab === 'builds';
+  const tab = searchParams.get('tab');
+  const isBuilds = page === 'builds' || (!page && (tab === 'builds' || tab === 'build' || state?.tab === 'builds'));
   const isStats = page === 'stats' && !isBuilds;
   const isSkills = !page && !isBuilds && !isStats;
   const branch = !isBuilds && branches.find(item => item[0] === branchId);
@@ -126,23 +128,9 @@ function SkillDetail({ skill }: { skill: Skill }) {
   const [level, setLevel] = useState(1);
   const [owlLevel, setOwlLevel] = useState(20);
   const [title, description] = skillCopy[skill.id - 1];
-  const cooldown = [8, 10, 12, 15, 20][skill.tier - 1];
-  const levels = skillLevels[String(skill.id) as keyof typeof skillLevels];
-  const { type, dur, value } = levels;
-  const amount = value[level - 1];
-  const seconds = dur[level - 1];
+  const type = skillLevels[String(skill.id) as keyof typeof skillLevels].type;
   const scalesWithLevel = hpEffects.has(type);
   const multiplier = skillHpMultiplier(owlLevel);
-  const floor = Math.floor(amount);
-  const effect = scalesWithLevel ? precise.format(amount * multiplier) + ' HP'
-    : type === 'evade' || type === 'flurry'
-      ? (amount - floor < 0.05 ? String(floor) : amount - floor > 0.95 ? String(floor + 1) : `${floor}–${floor + 1}`)
-      : amount ? Math.trunc(amount) + '%' : '';
-  const effectTitle: Partial<Record<string, string>> = {
-    heal: 'Лечение', poison: 'Урон за атаку врага', reflect: 'Отражение', empower: 'Усиление удара',
-    shield: 'Снижение урона', evade: 'Уклонений', flurry: 'Ударов', cleanse: 'Ослабление эффектов',
-    lifesteal: 'Лечение от урона', gamble: 'Шанс ×5', echo: 'Дополнительный урон',
-  };
   return <section className="card">
     <div className="mediaHeading"><GameArt path={skillArt(skill.id)} size={64}/><div>
       <h2>{title}</h2><p>{skill.name} · ступень {skill.tier}</p>
@@ -160,13 +148,11 @@ function SkillDetail({ skill }: { skill: Skill }) {
       </select>
     </label>}
     <ul className="compactList">
-      {effect && <li className="mediaRow"><span>{effectTitle[type] ?? 'Базовый урон'}</span><strong>{effect}</strong></li>}
-      {type === 'burn' && 'dps' in levels && <li className="mediaRow"><span>Поджог</span><strong>{precise.format(levels.dps[level - 1] * multiplier)} HP/с</strong></li>}
-      {seconds > 0 && <li className="mediaRow"><span>{type === 'poison' ? 'Срабатываний' : 'Длительность'}</span><strong>{type === 'poison' ? Math.round(seconds) : format.format(seconds) + ' с'}</strong></li>}
+      {skillEffect(skill.id, level, owlLevel).map(([label, value]) => <li className="mediaRow" key={label}><span>{label}</span><strong>{value}</strong></li>)}
       <li className="mediaRow"><span>{skill.type === 'active' ? 'Мана за применение' : 'Мана за срабатывание'}</span>
-        <strong>{skill.type === 'active' ? 25 * skill.tier : type === 'reveal' ? 20 : 2 * skill.tier}</strong></li>
+        <strong>{skillMana(skill.tier, skill.type === 'passive', type === 'reveal')}</strong></li>
       <li className="mediaRow"><span>Тренировка в Додзе</span><strong className="energyBadge">{skill.dojoEnergy} <GameSymbol name="bolt" size={15}/></strong></li>
-      {skill.type === 'active' && <li className="mediaRow"><span>Перезарядка</span><strong>{cooldown} с</strong></li>}
+      {skill.type === 'active' && <li className="mediaRow"><span>Перезарядка</span><strong>{skillCooldown(skill.tier)} с</strong></li>}
       <li className="mediaRow"><span>{level === 21 ? 'Прокачка' : `Улучшение до ${level + 1}-го уровня`}</span>
         <strong>{level === 21 ? 'Максимум' : <SpBadge value={format.format(100 * 2 ** (level - 1))}/>}</strong></li>
     </ul>
@@ -239,13 +225,8 @@ function BattleStatsCalculator() {
           onChange={event => setInput({ ...input, [key]: event.target.value.replace(/\D/g, '') })}/>
       </label>)}
     </div>
-    <dl className="battleResults" aria-live="polite">
-      <div><dt>Здоровье</dt><dd>{precise.format(stats.health)} HP</dd></div>
-      <div><dt>Мана</dt><dd>{precise.format(stats.mana)}</dd></div>
-      <div><dt>Базовый урон удара</dt><dd>{precise.format(stats.hit)} HP</dd></div>
-      <div><dt>Шанс уклонения</dt><dd>{precise.format(stats.dodge)}%</dd></div>
-      <div><dt>Шанс крита</dt><dd>{precise.format(stats.crit)}%</dd></div>
-    </dl>
+    <BattleReadout stats={stats}/>
+    <p className="caption">Обычный удар показан до округления, блока и других эффектов. Итог также зависит от действий соперника.</p>
   </details>;
 }
 

@@ -15,3 +15,13 @@ export function battleStats(level: number, strength: number, agility: number, wi
 export function skillHpMultiplier(owlLevel: number) {
   return baseHealth(owlLevel) / baseHealth(20);
 }
+
+const cooldowns = [8, 10, 12, 15, 20];
+
+export function skillCooldown(tier: number) {
+  return cooldowns[tier - 1];
+}
+
+export function skillMana(tier: number, passive: boolean, revealsGuard = false) {
+  return passive ? revealsGuard ? 20 : 2 * tier : 25 * tier;
+}

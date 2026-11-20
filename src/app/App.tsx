@@ -18,7 +18,6 @@ import { GameArt } from '../ui/GameArt';
 import { GameGlyph } from '../ui/GameGlyph';
 import { AlbumLogo } from '../ui/AlbumLogo';
 import { CarePage, InventoryPage, OwlPage } from '../features/InventoryPage';
-import { ArtifactInfoModal } from '../features/ArtifactInfoModal';
 import { CombatPage, ModesPage } from '../features/CombatPage';
 import { CollectionPage } from '../features/CollectionPage';
 import { CapsulePage } from '../features/CapsulePage';
@@ -297,7 +296,6 @@ function Page({ profile, ask, joke, popup, reveal, referrals }: {
   ask: () => void; joke: boolean; popup: boolean; reveal: () => void; referrals: React.ReactNode;
 }) {
   const { pathname, hash, state } = useLocation();
-  const [artifactModalOpen, setArtifactModalOpen] = useState(false);
   if (pathname === '/owl/care' || pathname === '/combat/modes') {
     return <Navigate to={(pathname === '/owl/care' ? '/care' : '/modes') + hash} state={state} replace/>;
   }
@@ -306,24 +304,7 @@ function Page({ profile, ask, joke, popup, reveal, referrals }: {
     <h1>Страница не найдена</h1><Link className="textLink" to="/">На главную</Link>
   </Card>;
   return <>
-    {section?.[1] === '/assets' ? (
-      <div className="headingWithAction pageTitleWithAction">
-        <h1 className="pageTitle">{section?.[0] ?? 'О проекте'}</h1>
-        <button
-          type="button"
-          className="infoCircleBtn"
-          aria-label="Справка по механике артефактов"
-          onClick={() => {
-            lightHaptic();
-            setArtifactModalOpen(true);
-          }}
-        >
-          i
-        </button>
-      </div>
-    ) : (
-      <h1 className="pageTitle">{section?.[0] ?? 'О проекте'}</h1>
-    )}
+    <h1 className="pageTitle">{section[0]}</h1>
     {section?.[1] === '/capsules' && <CapsulePage/>}
     {section?.[1] === '/owl' && <OwlPage/>}
     {section?.[1] === '/collections' && <CollectionPage/>}
@@ -335,12 +316,6 @@ function Page({ profile, ask, joke, popup, reveal, referrals }: {
     {section?.[1] === '/secrets' && <Secrets ask={ask} joke={joke} popup={popup} reveal={reveal}/>}
     {section?.[1] === '/assets' && <InventoryPage/>}
     {section?.[1] === '/referrals' && referrals}
-    {section?.[1] === '/assets' && (
-      <ArtifactInfoModal
-        open={artifactModalOpen}
-        onClose={() => setArtifactModalOpen(false)}
-      />
-    )}
   </>;
 }
 function Secrets({ ask, joke, popup, reveal }: { ask: () => void; joke: boolean; popup: boolean; reveal: () => void }) {

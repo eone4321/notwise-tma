@@ -13,6 +13,9 @@ import { OwlPrices } from './OwlPrices';
 import { Price, type Currency } from './Price';
 import { StarsAndGram } from './GamePrice';
 import { SkinExamples } from './SkinExamples';
+import { ArtifactInfoModal } from './ArtifactInfoModal';
+import { lightHaptic } from '../telegram/client';
+import { ringCatalog } from './combat-builds';
 import shopItems from './shop-data.json';
 import skinParts from './skin-parts.json';
 import { SkinFarmCalculator } from './SkinFarmCalculator';
@@ -189,17 +192,13 @@ const floppySpecs = [
   ['10m', '10 млн', '20 млн'], ['100m', '100 млн', '200 млн'], ['1b', '1 млрд', '2 млрд'],
 ] as const;
 
-const rings = shopItems.filter(offer => offer.category === 'ring').map(offer => {
-  const attribute = offer.stat === 'strength' ? 'силе' : offer.stat === 'agility' ? 'ловкости' : 'мудрости';
-  const effect = offer.stat === 'strength' ? 'Усиливает обычные удары.' :
-    offer.stat === 'agility' ? 'Повышает шанс уклониться.' : 'Повышает шанс крита и запас маны.';
-  const tier = offer.tier ?? 1;
-  const level = offer.required_level ?? (tier === 1 ? 5 : tier === 2 ? 10 : 20);
+const rings = ringCatalog.map(ring => {
+  const attribute = ring.attribute === 'strength' ? 'силе' : ring.attribute === 'agility' ? 'ловкости' : 'мудрости';
+  const effect = ring.attribute === 'strength' ? 'Усиливает обычные удары.' :
+    ring.attribute === 'agility' ? 'Повышает шанс уклониться.' : 'Повышает шанс крита и запас маны.';
   return {
-    name: offer.name_ru,
-    file: offer.id + '.webp',
-    effect: `+${[2, 5, 10][tier - 1]} к ${attribute}. ${effect}`,
-    source: 'Лавка', minLevel: level,
+    name: ring.title, file: ring.id + '.webp', effect: `+${ring.bonus} к ${attribute}. ${effect}`,
+    source: 'Лавка', minLevel: ring.minLevel,
   };
 });
 
@@ -209,9 +208,9 @@ const categories: Record<string, Category> = {
     items: [
       { name: 'Seba Cola', file: 'seba-cola.webp', effect: 'Защита от рейдов и подбора соперником на 24 ч. Снимается при твоём нападении.', source: 'Лавка', price: { value: 1500, currency: 'coins' } },
       { name: 'Зажигалка', file: 'lighter.webp', effect: '10 зарядов для ритуалов сквада.', source: 'Лавка или яйца', minLevel: 3 },
-      { name: 'Большие чёрные часы', file: 'big-black-clock.webp', effect: 'Добавляют 30 дней защиты от голода. Действующий штраф сохраняется до конца таймера.', source: 'Лавка', price: { value: 10000, currency: 'coins' } },
+      { name: 'Большие чёрные часы', file: 'big-black-clock.webp', minLevel: 7, effect: 'Добавляют 30 дней защиты от голода. Действующий штраф сохраняется до конца таймера.', source: 'Лавка', price: { value: 10000, currency: 'coins' } },
       { name: itemNames[38][0], file: 'book.webp', effect: 'Загадка дня на 60 с. Успех даёт монеты, XP и +5 мудрости на сутки. Три ошибки уничтожают книгу.', source: 'Лавка', price: { value: 20000, currency: 'coins' } },
-      { name: 'Холодильник XP', file: 'chiller.webp', effect: 'Пока дверца открыта, капсулы дают монеты и предметы, а опыт заморожен.', source: 'Лавка', price: { value: 100000, currency: 'coins' } },
+      { name: 'Холодильник XP', file: 'chiller.webp', minLevel: 4, effect: 'Пока дверца открыта, капсулы дают монеты и предметы, а опыт заморожен.', source: 'Лавка', price: { value: 100000, currency: 'coins' } },
       { name: 'Морфер', file: 'morpher.webp', effect: 'Сбрасывает характеристики и навыки. Накопленные SP сохраняются.', source: 'Лавка', offerId: 'morpher-stars' },
       { name: 'Пустая колба SP', file: 'flask-empty.webp', effect: 'Нужна для записи SP. Потребуется вдвое больше SP, чем вмещает колба. Все свободные SP списываются.', source: 'Лавка', price: { value: 500, currency: 'stars' } },
       { name: 'Пустая дискета XP', file: 'floppy-empty.webp', effect: 'Нужна для записи XP. Запись сбрасывает XP, SP и навыки и возвращает сову в яйцо.', source: 'Лавка', price: { value: 500, currency: 'stars' } },
@@ -225,7 +224,7 @@ const categories: Record<string, Category> = {
       { name: 'Заточка кольца', file: 'scroll-enchant-ring.webp', effect: '+1 к атрибуту кольца и +5% к монетам за каждую ступень заточки.', source: 'Лавка сквада', price: { value: 500, currency: 'squad_silver' } },
       { name: 'Заточка скина', file: 'scroll-enchant-skin.webp', effect: '+5% к монетам за ступень заточки скина.', source: 'Лавка сквада', price: { value: 5000, currency: 'squad_silver' } },
       { name: 'Зажигалка сквада', file: 'lighter.webp', effect: 'Даёт заряд для ежедневного благословения сквада.', source: 'Лавка сквада', offerId: 'squad-lighter' },
-      { name: 'Холодильник XP', file: 'chiller.webp', effect: 'Открой дверцу, чтобы заморозить опыт из капсул.', source: 'Лавка сквада', price: { value: 25000, currency: 'squad_silver' } },
+      { name: 'Холодильник XP', file: 'chiller.webp', minLevel: 4, effect: 'Открой дверцу, чтобы заморозить опыт из капсул.', source: 'Лавка сквада', price: { value: 25000, currency: 'squad_silver' } },
       { name: 'Универсальная заточка', file: 'enchanter.webp', effect: 'Заменяет свиток заточки кольца или скина.', source: 'Награда осад' },
     ],
   },
@@ -340,6 +339,7 @@ function InventoryRow({ item, id, collectionFloor }: { item: CatalogItem; id?: s
   return <li className="inventoryRow" id={id} aria-labelledby={titleId}>
     <span className="inventoryIcon"><GameArt path={item.art ?? itemPath(item.file)} size={33}/></span>
     <div className="inventoryCopy">
+      <h3 id={titleId}>{item.name}</h3>
       {(price || floor || marketUrl) && <div className="inventoryPrices">
         {price && <span className="inventoryShopPrice">{price.currency === 'stars'
           ? <StarsAndGram stars={price.value}/> : <Price value={price.value} currency={price.currency}/>}</span>}
@@ -350,11 +350,10 @@ function InventoryRow({ item, id, collectionFloor }: { item: CatalogItem; id?: s
           </a>
           : floor ? <span className="inventoryFloor"><Price value={floor} currency="gram"/></span> : null}
       </div>}
-      <h3 id={titleId}>{item.name}</h3>
       <p>{item.effect}</p>
       <div className="inventoryMeta">
         <small className="itemSource">{item.source}{level ? ` · с ${level}-го ур.` : ''}</small>
-        {mintPrice !== undefined && <span className="inventoryMint">Минт NFT <Price value={mintPrice} currency="gram"/></span>}
+        {mintPrice !== undefined && <span className="inventoryMint">Минт NFT <Price value={mintPrice} currency="gram" usdLayout="inline"/></span>}
       </div>
     </div>
   </li>;
@@ -363,25 +362,33 @@ function InventoryRow({ item, id, collectionFloor }: { item: CatalogItem; id?: s
 export function InventoryPage() {
   const { pathname } = useLocation();
   const [, , slug, file] = pathname.split('/');
+  const [artifactOpen, setArtifactOpen] = useState(false);
+  const openArtifact = () => { lightHaptic(); setArtifactOpen(true); };
   const category = Object.hasOwn(categories, slug) ? categories[slug] : undefined;
   const itemCategory = slug === 'item' ? Object.entries(categories).find(([, entry]) =>
     entry.items.some(value => value.file.split('.')[0] === file)) : undefined;
   const item = itemCategory?.[1].items.find(value => value.file.split('.')[0] === file);
-  if (slug === 'item') return <section className="card inventoryPanel" data-category={itemCategory?.[0]}>
+  if (slug === 'item') return <section className="card inventoryPanel inventorySingle" data-category={itemCategory?.[0]}>
     {item ? <><h2 className="inventoryCategoryLabel">{itemCategory?.[1].title}</h2>
+      {itemCategory?.[0] === 'gear' && <ArtifactHelp onClick={openArtifact}/>}
       <ul className="compactList singleItem">{item === skinNft ? <SkinCollectionRow/> : <InventoryRow item={item}/>}</ul></> : <p>Предмет не найден.</p>}
+    <ArtifactInfoModal open={artifactOpen} onClose={() => setArtifactOpen(false)}/>
   </section>;
 
   return <>
     {(category ? [[slug, category] as const] : Object.entries(categories)).map(([id, entry]) =>
-      <details className="card mediaDetails inventoryPanel inventorySection" key={id} id={'inventory-' + id}
-        data-category={id} open={category !== undefined || undefined}>
-        <summary><GameArt path={itemPath(entry.icon)} size={34}/><span><strong>{entry.title}</strong><small>{entry.summary}</small></span></summary>
-        <ul className="compactList">{entry.items.map(item => item === skinNft
-          ? <SkinCollectionRow key={item.file}/> : <InventoryRow item={item} key={item.file}/>)}</ul>
-        {id === 'gear' && !category && <DetailLink className="textLink" to="/assets/gear">Шансы заточки и NFT</DetailLink>}
-        {id === 'skins' && <DetailLink className="textLink" to="/owl/skins">Облики и калькулятор бонуса</DetailLink>}
-      </details>)}
+      <div className={id === 'gear' ? 'inventorySectionFrame withArtifactHelp' : 'inventorySectionFrame'} key={id}>
+        {id === 'gear' && <ArtifactHelp onClick={openArtifact}/>}
+        <details className="card mediaDetails inventoryPanel inventorySection" id={'inventory-' + id}
+          data-category={id} open={category !== undefined || undefined}>
+          <summary><GameArt path={itemPath(entry.icon)} size={34}/><span><strong>{entry.title}</strong><small>{entry.summary}</small></span></summary>
+          <ul className="compactList">{entry.items.map(item => item === skinNft
+            ? <SkinCollectionRow key={item.file}/> : <InventoryRow item={item} key={item.file}/>)}</ul>
+          {id === 'gear' && !category && <DetailLink className="textLink" to="/assets/gear">Шансы заточки и NFT</DetailLink>}
+          {id === 'skins' && <DetailLink className="textLink" to="/owl/skins">Облики и калькулятор бонуса</DetailLink>}
+        </details>
+      </div>)}
+    <ArtifactInfoModal open={artifactOpen} onClose={() => setArtifactOpen(false)}/>
     {slug === 'gear' && <>
       <EnchantGuide/>
       <OwlPrices only="items"/>
@@ -390,6 +397,12 @@ export function InventoryPage() {
       </details>
     </>}
   </>;
+}
+
+function ArtifactHelp({ onClick }: { onClick: () => void }) {
+  return <button type="button" className="artifactHelp" aria-label="Как работают кольца и артефакты" onClick={onClick}>
+    <span className="infoCircleBtn" aria-hidden="true">i</span>
+  </button>;
 }
 
 function EnchantGuide() {

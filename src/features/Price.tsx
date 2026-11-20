@@ -34,12 +34,14 @@ export function Price({
   from,
   approximate,
   withUsd = true,
+  usdLayout = 'stack',
 }: {
   value: number;
   currency: Currency;
   from?: boolean;
   approximate?: boolean;
   withUsd?: boolean;
+  usdLayout?: 'stack' | 'inline';
 }) {
   const badge = (
     <span className="priceBadge" data-currency={currency}>
@@ -57,7 +59,7 @@ export function Price({
 
   if (currency === 'gram' && withUsd && value > 0) {
     return (
-      <span className="priceGramBlock">
+      <span className="priceGramBlock" data-layout={usdLayout}>
         {badge}
         <GramUsdSubtext gram={value}/>
       </span>

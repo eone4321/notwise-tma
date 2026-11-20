@@ -1,1016 +1,326 @@
-import { useState, useMemo, useRef } from 'react';
-import { GameGlyph, GameAttribute, type GameAttributeName } from '../ui/GameGlyph';
-import { GameSymbol } from '../ui/GameSymbol';
+import { useRef, useState, type ReactNode } from 'react';
+import { battleStats, skillCooldown, skillMana } from '../domain/combat';
 import { GameArt } from '../ui/GameArt';
-import { battleStats } from '../domain/combat';
+import { GameAttribute, GameGlyph } from '../ui/GameGlyph';
+import { useModal } from '../ui/useModal';
 import { lightHaptic } from '../telegram/client';
 import { useGuideLocale } from './guideLocale';
-import { useModal } from '../ui/useModal';
-import rawSkills from '../../public/data/skills.json';
-import { skillCopy } from './skill-copy';
+import progression from './owl-progression.json';
+import { BattleReadout, skillEffect } from './BattleReadout';
+import {
+  builds, combatSkills, emptyAttributes, presetAttributes, requiredAttributes, ringCatalog,
+  skillById, statKeys, statLabels, totalAttributes, type Attributes, type StatKey,
+} from './combat-builds';
 
-export type StatKey = 'strength' | 'agility' | 'wisdom' | 'endurance';
+type Ring = typeof ringCatalog[number];
+type EquippedRing = { ring: Ring; enchant: number };
+type EquippedSkill = { id: number; level: number };
+type BuildState = {
+  level: number;
+  budget: number | null;
+  points: Attributes;
+  buffs: Attributes;
+  rings: (EquippedRing | null)[];
+  skills: (EquippedSkill | null)[];
+};
+type Picker = { kind: 'ring' | 'skill'; slot: number };
+const maxLevel = progression.current.length - 1;
+const emptySlots = [null, null, null];
+const orderedSkills = [...combatSkills].sort((a, b) => a.tier - b.tier);
+const skillArt = (id: number) => '/game/skills/' + id + '.png';
+const ringArt = (id: string) => '/game/items/' + id + '.webp';
+const passive = (skill: { type: string }) => skill.type === 'passive';
 
-export interface RingItem {
-  id: string;
-  nameRu: string;
-  nameEn: string;
-  tier: 1 | 2 | 3;
-  stat: 'strength' | 'agility' | 'wisdom';
-  baseBonus: number;
-  reqLevel: number;
+function initialBuild(level = 20, budget: number | null = null, buffs = emptyAttributes): BuildState {
+  return { level, budget, points: emptyAttributes, buffs, rings: emptySlots, skills: emptySlots };
 }
 
-export const RINGS_CATALOG: RingItem[] = [
-  { id: 'ring-str-1', nameRu: 'Деревянное кольцо силы', nameEn: 'Wooden Ring of Strength', tier: 1, stat: 'strength', baseBonus: 2, reqLevel: 5 },
-  { id: 'ring-ag-1', nameRu: 'Деревянное кольцо ловкости', nameEn: 'Wooden Ring of Agility', tier: 1, stat: 'agility', baseBonus: 2, reqLevel: 5 },
-  { id: 'ring-wit-1', nameRu: 'Деревянное кольцо мудрости', nameEn: 'Wooden Ring of Wisdom', tier: 1, stat: 'wisdom', baseBonus: 2, reqLevel: 5 },
-  { id: 'ring-str-2', nameRu: 'Обсидиановое кольцо силы', nameEn: 'Obsidian Ring of Strength', tier: 2, stat: 'strength', baseBonus: 5, reqLevel: 10 },
-  { id: 'ring-ag-2', nameRu: 'Обсидиановое кольцо ловкости', nameEn: 'Obsidian Ring of Agility', tier: 2, stat: 'agility', baseBonus: 5, reqLevel: 10 },
-  { id: 'ring-wit-2', nameRu: 'Обсидиановое кольцо мудрости', nameEn: 'Obsidian Ring of Wisdom', tier: 2, stat: 'wisdom', baseBonus: 5, reqLevel: 10 },
-  { id: 'ring-str-3', nameRu: 'Золотое кольцо силы', nameEn: 'Golden Ring of Strength', tier: 3, stat: 'strength', baseBonus: 10, reqLevel: 20 },
-  { id: 'ring-ag-3', nameRu: 'Золотое кольцо ловкости', nameEn: 'Golden Ring of Agility', tier: 3, stat: 'agility', baseBonus: 10, reqLevel: 20 },
-  { id: 'ring-wit-3', nameRu: 'Золотое кольцо мудрости', nameEn: 'Golden Ring of Wisdom', tier: 3, stat: 'wisdom', baseBonus: 10, reqLevel: 20 },
-];
-
-export interface EquippedRing {
-  ringId: string | null;
-  enchant: number;
+function replaceSlot<T>(slots: T[], index: number, value: T) {
+  return slots.map((slot, i) => i === index ? value : slot);
 }
 
-interface SkillItem {
-  id: number;
-  name: string;
-  nameRu: string;
-  descRu: string;
-  branch: GameAttributeName;
-  tier: number;
-  type: 'active' | 'passive';
-  manaCost: number;
-  dojoEnergy: number;
+function skillAvailable(id: number, { level, points }: BuildState) {
+  const skill = skillById.get(id);
+  return !!skill && level >= 2 && points[skill.branch] >= skill.tier;
 }
 
-const ALL_SKILLS: SkillItem[] = rawSkills.map(s => {
-  const ru = skillCopy[s.id - 1];
-  const manaCost = s.type === 'active' ? 25 * s.tier : (s.id === 10 ? 20 : 2 * s.tier);
+function validateBuild(state: BuildState): BuildState {
+  const points = { ...state.points };
+  let excess = totalAttributes(points) - (state.budget ?? state.level);
+  for (const stat of [...statKeys].reverse()) {
+    if (excess <= 0) break;
+    const refund = Math.min(points[stat], excess);
+    points[stat] -= refund;
+    excess -= refund;
+  }
+  const next = { ...state, points };
   return {
-    id: s.id,
-    name: s.name,
-    nameRu: ru ? ru[0] : s.name,
-    descRu: ru ? ru[1] : s.description,
-    branch: s.branch as GameAttributeName,
-    tier: s.tier,
-    type: s.type as 'active' | 'passive',
-    manaCost,
-    dojoEnergy: s.dojoEnergy,
+    ...next,
+    rings: next.rings.map(slot => slot && slot.ring.minLevel <= next.level ? slot : null),
+    skills: next.skills.map(slot => slot && skillAvailable(slot.id, next) ? slot : null),
   };
-});
-
-const STAT_CONFIG: { key: StatKey; nameRu: string; nameEn: string; descRu: string; descEn: string }[] = [
-  { key: 'strength', nameRu: 'Сила', nameEn: 'Strength', descRu: '+0,065 урона за очко', descEn: '+0.065 hit damage per point' },
-  { key: 'agility', nameRu: 'Ловкость', nameEn: 'Agility', descRu: '+0,7% уклонения (макс. 70%)', descEn: '+0.7% dodge (max 70%)' },
-  { key: 'wisdom', nameRu: 'Мудрость', nameEn: 'Wisdom', descRu: '+0,7% крита (макс. 70%), +20 маны', descEn: '+0.7% crit (max 70%), +20 mana' },
-  { key: 'endurance', nameRu: 'Выносливость', nameEn: 'Endurance', descRu: '+2 HP за очко', descEn: '+2 HP per point' },
-];
-
-const PRESETS = [
-  { id: 'balanced', nameRu: 'Сбалансированный', nameEn: 'Balanced', icon: '⚖️' },
-  { id: 'crit_mage', nameRu: 'Крит-маг', nameEn: 'Crit Caster', icon: '🔮' },
-  { id: 'berserk', nameRu: 'Берсерк', nameEn: 'Berserker', icon: '⚔️' },
-  { id: 'dodger', nameRu: 'Уворотчик', nameEn: 'Dodger', icon: '🌪️' },
-  { id: 'tank', nameRu: 'Танк', nameEn: 'Tank', icon: '🛡️' },
-  { id: 'reset', nameRu: 'Сбросить', nameEn: 'Reset', icon: '🔄' },
-] as const;
+}
 
 export function BuildConstructor() {
   const { locale } = useGuideLocale();
-  const en = locale === 'en';
-
-  const [level, setLevel] = useState<number>(20);
-  const [allocated, setAllocated] = useState<Record<StatKey, number>>({
-    strength: 0,
-    agility: 0,
-    wisdom: 0,
-    endurance: 0,
-  });
-
-  const [rings, setRings] = useState<EquippedRing[]>([
-    { ringId: null, enchant: 0 },
-    { ringId: null, enchant: 0 },
-    { ringId: null, enchant: 0 },
-  ]);
-
-  const [selectedSkills, setSelectedSkills] = useState<(number | null)[]>([null, null, null]);
-
-  // Modal pickers state
-  const [pickerSlot, setPickerSlot] = useState<{ type: 'ring' | 'skill'; slotIndex: number } | null>(null);
-
-  // Formatting helpers
-  const formatOne = useMemo(() => new Intl.NumberFormat(en ? 'en-US' : 'ru-RU', { maximumFractionDigits: 1 }), [en]);
-  const formatInt = useMemo(() => new Intl.NumberFormat(en ? 'en-US' : 'ru-RU', { maximumFractionDigits: 0 }), [en]);
-
-  // Points calculation
-  const allocatedTotal = allocated.strength + allocated.agility + allocated.wisdom + allocated.endurance;
-  const remainingPoints = level - allocatedTotal;
-
-  // Ring stat bonuses
-  const ringBonuses = useMemo(() => {
-    const bonuses: Record<'strength' | 'agility' | 'wisdom', number> = {
-      strength: 0,
-      agility: 0,
-      wisdom: 0,
-    };
-    for (const slot of rings) {
-      if (!slot.ringId) continue;
-      const ring = RINGS_CATALOG.find(r => r.id === slot.ringId);
-      if (ring) {
-        bonuses[ring.stat] += ring.baseBonus + slot.enchant;
-      }
-    }
-    return bonuses;
-  }, [rings]);
-
-  // Effective stats (allocated base points + ring bonuses)
-  const effectiveStats = useMemo(() => ({
-    strength: allocated.strength + ringBonuses.strength,
-    agility: allocated.agility + ringBonuses.agility,
-    wisdom: allocated.wisdom + ringBonuses.wisdom,
-    endurance: allocated.endurance,
-  }), [allocated, ringBonuses]);
-
-  // Battle combat stats HUD from domain/combat.ts
-  const combatHUD = useMemo(() => {
-    return battleStats(
-      level,
-      effectiveStats.strength,
-      effectiveStats.agility,
-      effectiveStats.wisdom,
-      effectiveStats.endurance
-    );
-  }, [level, effectiveStats]);
-
-  // Level change handler with auto-refund if spent points exceed new level
-  function handleLevelChange(newLevel: number) {
-    const clamped = Math.max(1, Math.min(100, Math.trunc(newLevel) || 1));
-    setLevel(clamped);
-    const total = allocated.strength + allocated.agility + allocated.wisdom + allocated.endurance;
-    if (total > clamped) {
-      let excess = total - clamped;
-      const next = { ...allocated };
-      const order: StatKey[] = ['endurance', 'wisdom', 'agility', 'strength'];
-      for (const key of order) {
-        if (excess <= 0) break;
-        const deduct = Math.min(next[key], excess);
-        next[key] -= deduct;
-        excess -= deduct;
-      }
-      setAllocated(next);
-    }
-  }
-
-  // Stat point modification
-  function modifyStat(stat: StatKey, delta: number) {
-    lightHaptic();
-    setAllocated(prev => {
-      const current = prev[stat];
-      if (delta > 0) {
-        const allowed = Math.min(delta, remainingPoints);
-        if (allowed <= 0) return prev;
-        return { ...prev, [stat]: current + allowed };
-      } else {
-        const allowed = Math.min(Math.abs(delta), current);
-        if (allowed <= 0) return prev;
-        return { ...prev, [stat]: current - allowed };
-      }
+  const lang = locale === 'en' ? 1 : 0;
+  const copy = (ru: string, en: string) => lang ? en : ru;
+  const [state, setState] = useState(initialBuild);
+  const [budgetDraft, setBudgetDraft] = useState<string | null>(null);
+  const [picker, setPicker] = useState<Picker | null>(null);
+  const levelRef = useRef<HTMLSelectElement>(null);
+  const guideRef = useRef<HTMLHeadingElement>(null);
+  const spent = totalAttributes(state.points);
+  const budget = state.budget ?? state.level;
+  const left = budget - spent;
+  const total = { ...state.points };
+  for (const stat of statKeys) total[stat] += state.buffs[stat];
+  for (const slot of state.rings) if (slot) total[slot.ring.attribute] += slot.ring.bonus + slot.enchant;
+  const results = battleStats(state.level, total.strength, total.agility, total.wisdom, total.endurance);
+  const nameOf = (skill: typeof combatSkills[number]) => lang ? skill.name : skill.title;
+  const update = (change: Partial<BuildState>) => setState(s => validateBuild({ ...s, ...change }));
+  const updateAttribute = (stat: StatKey, getAmount: (current: number) => number) => {
+    setState(s => {
+      const current = s.points[stat];
+      const max = (s.budget ?? s.level) - totalAttributes(s.points) + current;
+      const value = Math.min(max, Math.max(0, getAmount(current)));
+      return validateBuild({ ...s, points: { ...s.points, [stat]: value } });
     });
-  }
-
-  // Ring enchant stepper
-  function modifyRingEnchant(slotIndex: number, delta: number) {
+  };
+  const step = (stat: StatKey, delta: number) => {
     lightHaptic();
-    setRings(prev => {
-      const copy = [...prev];
-      const slot = copy[slotIndex];
-      if (!slot.ringId) return prev;
-      const nextEnchant = Math.max(0, Math.min(20, slot.enchant + delta));
-      copy[slotIndex] = { ...slot, enchant: nextEnchant };
-      return copy;
+    updateAttribute(stat, current => current + delta);
+  };
+
+  function applyPreset(build: typeof builds[number]) {
+    lightHaptic();
+    const next: BuildState = { ...state, points: presetAttributes(build, state.level, budget) };
+    next.rings = build.rings.map(attribute => {
+      const ring = ringCatalog.filter(ring => ring.attribute === attribute && ring.minLevel <= state.level)
+        .sort((a, b) => b.tier - a.tier)[0];
+      return ring ? { ring, enchant: 0 } : null;
     });
+    const readySkills = build.skills.filter(id => skillAvailable(id, next));
+    next.skills = emptySlots.map((_, i) => readySkills[i] ? { id: readySkills[i], level: 1 } : null);
+    setState(next);
+    levelRef.current?.focus();
   }
 
-  // Ring equip / unequip
-  function equipRing(slotIndex: number, ringId: string | null) {
-    lightHaptic();
-    setRings(prev => {
-      const copy = [...prev];
-      copy[slotIndex] = { ringId, enchant: ringId ? copy[slotIndex]?.enchant || 0 : 0 };
-      return copy;
-    });
-    setPickerSlot(null);
-  }
+  return <div className="buildConstructor">
+    <section className="card buildPanel" aria-labelledby="build-level-title">
+      <div className="buildHeading">
+        <h2 id="build-level-title">{copy('Калькулятор билда', 'Build calculator')}</h2>
+        <button type="button" className="buildTextButton" onClick={() => {
+          lightHaptic();
+          setState(initialBuild(state.level, state.budget, state.buffs));
+        }}>{copy('Сбросить билд', 'Reset build')}</button>
+      </div>
+      <button className="buildGuideLink" type="button" onClick={() => {
+        lightHaptic();
+        guideRef.current?.focus({ preventScroll: true });
+        guideRef.current?.scrollIntoView({ block: 'start' });
+      }}>{copy('Руководство по билдам', 'Build guide')} <span className="rowChevron" aria-hidden="true"/></button>
+      <div className="buildSetup">
+        <label className="field">{copy('Уровень совы', 'Owl level')}
+          <select ref={levelRef} value={state.level} onChange={event => update({ level: Number(event.target.value) })}>
+            {Array.from({ length: maxLevel }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
+          </select>
+        </label>
+        <div className="buildBudget"><small>{copy('Свободно очков', 'Unspent points')}</small><strong>{left} <small>/ {budget}</small></strong></div>
+      </div>
 
-  // Skill equip / unequip
-  function equipSkill(slotIndex: number, skillId: number | null) {
-    lightHaptic();
-    setSelectedSkills(prev => {
-      const copy = [...prev];
-      copy[slotIndex] = skillId;
-      return copy;
-    });
-    setPickerSlot(null);
-  }
-
-  // Archetype preset loader
-  function applyPreset(presetId: typeof PRESETS[number]['id']) {
-    lightHaptic();
-    if (presetId === 'reset') {
-      setAllocated({ strength: 0, agility: 0, wisdom: 0, endurance: 0 });
-      setRings([
-        { ringId: null, enchant: 0 },
-        { ringId: null, enchant: 0 },
-        { ringId: null, enchant: 0 },
-      ]);
-      setSelectedSkills([null, null, null]);
-      return;
-    }
-
-    if (presetId === 'balanced') {
-      const q = Math.floor(level / 4);
-      const rem = level - q * 3;
-      setAllocated({ strength: q, agility: q, wisdom: q, endurance: rem });
-      setRings([
-        { ringId: 'ring-str-2', enchant: 3 },
-        { ringId: 'ring-ag-2', enchant: 3 },
-        { ringId: 'ring-wit-2', enchant: 3 },
-      ]);
-      setSelectedSkills([2, 3, 4]); // Power Punch, Healing, Nutshell Aegis
-    } else if (presetId === 'crit_mage') {
-      const wis = Math.floor(level * 0.70);
-      const agi = Math.floor(level * 0.15);
-      const end = level - wis - agi;
-      setAllocated({ strength: 0, agility: agi, wisdom: wis, endurance: end });
-      setRings([
-        { ringId: 'ring-wit-3', enchant: 5 },
-        { ringId: 'ring-wit-3', enchant: 5 },
-        { ringId: 'ring-wit-2', enchant: 3 },
-      ]);
-      setSelectedSkills([1, 14, 20]); // Lightning, Echoing Blow, Phase Shift
-    } else if (presetId === 'berserk') {
-      const str = Math.floor(level * 0.80);
-      const end = level - str;
-      setAllocated({ strength: str, agility: 0, wisdom: 0, endurance: end });
-      setRings([
-        { ringId: 'ring-str-3', enchant: 5 },
-        { ringId: 'ring-str-3', enchant: 5 },
-        { ringId: 'ring-str-2', enchant: 3 },
-      ]);
-      setSelectedSkills([13, 2, 15]); // Berserk Howl, Power Punch, Double Down
-    } else if (presetId === 'dodger') {
-      const agi = Math.floor(level * 0.80);
-      const end = level - agi;
-      setAllocated({ strength: 0, agility: agi, wisdom: 0, endurance: end });
-      setRings([
-        { ringId: 'ring-ag-3', enchant: 5 },
-        { ringId: 'ring-ag-3', enchant: 5 },
-        { ringId: 'ring-ag-2', enchant: 3 },
-      ]);
-      setSelectedSkills([8, 5, 6]); // Evada Kedabra, Toxic Spores, Snowball
-    } else if (presetId === 'tank') {
-      const end = Math.floor(level * 0.80);
-      const str = Math.floor(level * 0.10);
-      const wis = level - end - str;
-      setAllocated({ strength: str, agility: 0, wisdom: wis, endurance: end });
-      setRings([
-        { ringId: 'ring-str-3', enchant: 5 },
-        { ringId: 'ring-ag-3', enchant: 5 },
-        { ringId: 'ring-wit-3', enchant: 5 },
-      ]);
-      setSelectedSkills([4, 19, 18]); // Nutshell Aegis, Iron Will, Vampire Fang
-    }
-  }
-
-  return (
-    <div className="buildConstructor">
-      {/* Intro & Overview */}
-      <section className="card buildIntroCard">
-        <div className="buildIntroHead">
-          <div>
-            <h2>{en ? 'Interactive Build Constructor' : 'Конструктор боевых билдов'}</h2>
-            <p className="caption">
-              {en
-                ? 'Allocate stat points, equip rings with enchants, and craft your optimal skill loadout with real-time battle stats.'
-                : 'Распределяй очки атрибутов, надевай кольца с заточкой и собирай набор из трёх боевых навыков с расчётом параметров в реальном времени.'}
-            </p>
-          </div>
-        </div>
-
-        {/* Quick Archetype Presets */}
-        <div className="buildPresetSection">
-          <span className="buildSectionLabel">{en ? 'Archetype Presets' : 'Готовые архетипы:'}</span>
-          <div className="buildPresetGrid" role="group" aria-label="Готовые архетипы">
-            {PRESETS.map(p => (
-              <button
-                key={p.id}
-                type="button"
-                className={`buildPresetBtn ${p.id === 'reset' ? 'buildPresetReset' : ''}`}
-                onClick={() => applyPreset(p.id)}
-              >
-                <span className="buildPresetIcon" aria-hidden="true">{p.icon}</span>
-                <span>{en ? p.nameEn : p.nameRu}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Level Selector & Remaining Points Banner */}
-      <section className="card buildLevelCard">
-        <div className="buildLevelHeader">
-          <div className="buildLevelTitleGroup">
-            <span className="buildLevelLabel">{en ? 'Owl Level' : 'Уровень совы'}</span>
-            <strong className="buildLevelValue">{level}</strong>
-          </div>
-          <div className={`buildPointsBadge ${remainingPoints > 0 ? 'buildPointsPositive' : 'buildPointsSpent'}`}>
-            <span>{en ? 'Unspent Points:' : 'Осталось очков:'}</span>
-            <b>{remainingPoints}</b>
-          </div>
-        </div>
-
-        <div className="buildLevelControls">
-          <div className="buildLevelSliderRow">
-            <input
-              type="range"
-              min={1}
-              max={100}
-              value={level}
-              onChange={e => handleLevelChange(Number(e.target.value))}
-              className="buildSlider"
-              aria-label={en ? 'Owl level slider' : 'Ползунок уровня совы'}
-            />
-          </div>
-
-          <div className="buildQuickLevels">
-            {[10, 20, 30, 50, 75, 100].map(lvl => (
-              <button
-                key={lvl}
-                type="button"
-                className={`buildQuickLvlBtn ${level === lvl ? 'active' : ''}`}
-                onClick={() => {
-                  lightHaptic();
-                  handleLevelChange(lvl);
-                }}
-              >
-                {lvl} ур.
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Real-time Combat HUD */}
-      <section className="card buildHudCard">
-        <div className="buildCardHeader">
-          <GameGlyph name="fight" />
-          <div>
-            <h3>{en ? 'Battle Parameters (HUD)' : 'Боевые параметры (HUD)'}</h3>
-            <small>{en ? 'Calculated via official game formulas' : 'Расчёт по боевым формулам Not Wise'}</small>
-          </div>
-        </div>
-
-        <div className="buildHudGrid" aria-live="polite">
-          {/* Health */}
-          <div className="buildHudItem buildHudHp">
-            <div className="buildHudItemTop">
-              <GameSymbol name="heart" size={20} />
-              <span>{en ? 'Health' : 'Здоровье'}</span>
+      <div className="buildAttributes">
+        {statKeys.map(stat => {
+          const bonus = total[stat] - state.points[stat];
+          return <div className="buildAttributeRow" key={stat}>
+            <GameAttribute name={stat}/>
+            <span><strong>{statLabels[stat][lang]}</strong>
+              {bonus > 0 && <small>{copy('С бонусами', 'With bonuses')} {total[stat]} (+{bonus})</small>}</span>
+            <div className="buildStepper">
+              <button type="button" aria-label={copy('Уменьшить', 'Decrease') + ' · ' + statLabels[stat][lang]}
+                disabled={state.points[stat] === 0} onClick={() => step(stat, -1)}>−</button>
+              <AttributeInput name={statLabels[stat][lang]} value={state.points[stat]} onCommit={value => updateAttribute(stat, () => value)}/>
+              <button type="button" aria-label={copy('Увеличить', 'Increase') + ' · ' + statLabels[stat][lang]}
+                disabled={left === 0} onClick={() => step(stat, 1)}>+</button>
             </div>
-            <strong className="buildHudVal">{formatInt.format(combatHUD.health)} HP</strong>
-            <small className="buildHudSub">20 + 3×ур. + 2×вын.</small>
-          </div>
+          </div>;
+        })}
+      </div>
 
-          {/* Mana */}
-          <div className="buildHudItem buildHudMana">
-            <div className="buildHudItemTop">
-              <GameSymbol name="bolt" size={20} />
-              <span>{en ? 'Mana' : 'Мана'}</span>
-            </div>
-            <strong className="buildHudVal">{formatInt.format(combatHUD.mana)}</strong>
-            <small className="buildHudSub">200 + 20×мудр.</small>
-          </div>
+      <BattleReadout stats={results}/>
+      <p className="caption buildReadoutNote">{copy('Урон показан до блока, округления и прочих эффектов.', 'Damage is shown before blocks, rounding and other effects.')}</p>
+      <details className="mediaDetails buildAdvanced">
+        <summary><strong>{copy('Свои очки и временные баффы', 'Custom points and temporary buffs')}</strong></summary>
+        <p className="caption">{copy('Укажи свой общий запас очков, если он отличается от уровня. Баффы осады и книги прибавляются к боевым параметрам, а доступ к навыкам зависит от вложенных очков.', 'Enter your actual point total if it differs from your level. Siege and book buffs affect combat stats. Only invested points unlock skills.')}</p>
+        <label className="field">{copy('Всего очков для распределения', 'Total points to allocate')}
+          <input value={budgetDraft ?? state.budget ?? ''} placeholder={String(state.level)} inputMode="numeric" maxLength={3}
+            onChange={event => setBudgetDraft(event.target.value.replace(/\D/g, ''))}
+            onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur(); }}
+            onBlur={() => {
+              if (budgetDraft !== null) update({ budget: budgetDraft === '' ? null : Number(budgetDraft) });
+              setBudgetDraft(null);
+            }}/>
+        </label>
+        <small>{copy('Очки меняются после выхода из поля.', 'Points update when you leave the field.')}</small>
+        <div className="calculatorGrid">{statKeys.map(stat => <label className="field" key={stat}>
+          <span><GameAttribute name={stat}/> {statLabels[stat][lang]}</span>
+          <input value={state.buffs[stat] || ''} placeholder="0" inputMode="numeric" maxLength={3}
+            onChange={event => update({ buffs: { ...state.buffs, [stat]: Number(event.target.value.replace(/\D/g, '')) } })}/>
+        </label>)}</div>
+      </details>
+    </section>
 
-          {/* Base Hit Damage */}
-          <div className="buildHudItem buildHudHit">
-            <div className="buildHudItemTop">
-              <GameSymbol name="swords" size={20} />
-              <span>{en ? 'Base Hit' : 'Базовый урон'}</span>
-            </div>
-            <strong className="buildHudVal">{formatOne.format(combatHUD.hit)} HP</strong>
-            <small className="buildHudSub">1.35 + 0.065×сил. + 0.1875×ур.</small>
-          </div>
+    <section className="card buildPanel" aria-labelledby="build-rings-title">
+      <h2 id="build-rings-title">{copy('Кольца', 'Rings')}</h2>
+      <p className="caption">{copy('Три слота. Заточка добавляет по одному очку к атрибуту кольца.', 'Three slots. Each sharpening level adds one point to the ring’s attribute.')}</p>
+      {state.rings.map((slot, i) => <div className="buildEquip" key={i}>
+        <button type="button" className="buildEquipMain" onClick={() => { lightHaptic(); setPicker({ kind: 'ring', slot: i }); }}>
+          <GameArt path={ringArt(slot?.ring.id ?? 'ring-wit-1')} size={34}/>
+          <span><strong>{slot ? slot.ring.title : copy('Выбрать кольцо', 'Choose ring') + ' ' + (i + 1)}</strong>
+            {slot && <small>+{slot.ring.bonus + slot.enchant} · {statLabels[slot.ring.attribute][lang]}</small>}</span>
+          <span className="rowChevron" aria-hidden="true"/>
+        </button>
+        {slot && <label className="field buildEquipLevel">{copy('Заточка', 'Sharpening')}
+          <select aria-label={copy('Заточка кольца', 'Ring sharpening') + ' ' + (i + 1)} value={slot.enchant}
+            onChange={event => update({ rings: replaceSlot(state.rings, i, { ...slot, enchant: Number(event.target.value) }) })}>
+            {Array.from({ length: 21 }, (_, value) => <option key={value} value={value}>+{value}</option>)}
+          </select>
+        </label>}
+      </div>)}
+    </section>
 
-          {/* Dodge % */}
-          <div className="buildHudItem buildHudDodge">
-            <div className="buildHudItemTop">
-              <GameGlyph name="leaf" />
-              <span>{en ? 'Dodge' : 'Уклонение'}</span>
-            </div>
-            <strong className="buildHudVal">{formatOne.format(combatHUD.dodge)}%</strong>
-            <small className="buildHudSub">+0,7%×ловк. (макс. 70%)</small>
-          </div>
+    <section className="card buildPanel" aria-labelledby="build-skills-title">
+      <h2 id="build-skills-title">{copy('Навыки в бою', 'Combat skills')}</h2>
+      <p className="caption">{copy('До трёх навыков. Каждая ступень требует вложенного очка своей ветки.', 'Up to three skills. Each tier requires an invested point in its branch.')}</p>
+      {state.skills.map((slot, i) => {
+        const skill = slot && skillById.get(slot.id);
+        return <div className="buildEquip" key={i}>
+          <button type="button" className="buildEquipMain" onClick={() => { lightHaptic(); setPicker({ kind: 'skill', slot: i }); }}>
+            {skill ? <GameArt path={skillArt(skill.id)} size={34}/> : <GameGlyph name="lightning"/>}
+            <span><strong>{skill ? nameOf(skill) : copy('Выбрать навык', 'Choose skill') + ' ' + (i + 1)}</strong>
+              {skill && <small>{skillMana(skill.tier, passive(skill), skill.id === 10)} {passive(skill)
+                ? copy('маны за срабатывание', 'mana per trigger')
+                : copy('маны · ', 'mana · ') + skillCooldown(skill.tier) + copy(' с перезарядки', ' s cooldown')}</small>}
+            </span>
+            <span className="rowChevron" aria-hidden="true"/>
+          </button>
+          {slot && skill && <>
+            <label className="field buildEquipLevel">{copy('Уровень', 'Level')}
+              <select aria-label={copy('Уровень навыка', 'Skill level') + ' ' + nameOf(skill)} value={slot.level}
+                onChange={event => update({ skills: replaceSlot(state.skills, i, { ...slot, level: Number(event.target.value) }) })}>
+                {Array.from({ length: 21 }, (_, value) => <option key={value} value={value + 1}>{value + 1}</option>)}
+              </select>
+            </label>
+            <p className="buildSkillEffect">{skillEffect(skill.id, slot.level, state.level, lang).map(row => row.join(' ')).join(' · ')}</p>
+          </>}
+        </div>;
+      })}
+    </section>
 
-          {/* Crit % */}
-          <div className="buildHudItem buildHudCrit">
-            <div className="buildHudItemTop">
-              <GameGlyph name="sparkles" />
-              <span>{en ? 'Critical' : 'Крит (×2.0)'}</span>
-            </div>
-            <strong className="buildHudVal">{formatOne.format(combatHUD.crit)}%</strong>
-            <small className="buildHudSub">+0,7%×мудр. (макс. 70%)</small>
-          </div>
-        </div>
-      </section>
+    <section className="card buildPanel buildGuide" aria-labelledby="build-guide-title">
+      <h2 id="build-guide-title" ref={guideRef} tabIndex={-1}>{copy('Руководство по билдам', 'Build guide')}</h2>
+      <p className="caption">{copy('Выбери стиль боя и примени сборку к своему уровню. Калькулятор подберёт доступные кольца и навыки. Если очков не хватает, часть навыков останется закрыта.', 'Choose a play style and apply it at your level. The calculator selects available rings and skills. Skills you cannot afford stay locked.')}</p>
+      {builds.map(build => {
+        const requirements = requiredAttributes(build.skills);
+        return <details className="mediaDetails buildGuideEntry" key={build.id}>
+          <summary><GameArt path={skillArt(build.skills[2])} size={33}/><span><strong>{build.name[lang]}</strong><small>{build.role[lang]}</small></span></summary>
+          <p>{build.play[lang]}</p>
+          <div className="buildGuideSkills">{build.skills.map(id => {
+            const skill = skillById.get(id)!;
+            return <span key={id}><GameArt path={skillArt(id)} size={22}/>{nameOf(skill)}</span>;
+          })}</div>
+          <p className="caption">{copy('Очки для всех трёх навыков', 'Points for all three skills')} · {statKeys.filter(stat => requirements[stat] > 0).map(stat => statLabels[stat][lang] + ' ' + requirements[stat]).join(' + ')}</p>
+          <button className="secondary" type="button" onClick={() => applyPreset(build)}>{copy('Применить билд', 'Apply build')}</button>
+        </details>;
+      })}
+      <p className="caption">{copy('Сборки — примеры применения навыков. В рейтинговом бою результат зависит от соперника, блока и действий игроков.', 'These builds illustrate skill combinations. Ranked results depend on the opponent, guard and decisions during the fight.')}</p>
+    </section>
 
-      {/* Base Stat Allocation */}
-      <section className="card buildStatsCard">
-        <div className="buildCardHeader">
-          <GameGlyph name="shield" />
-          <div>
-            <h3>{en ? 'Attribute Points Allocation' : 'Распределение очков характеристик'}</h3>
-            <small>
-              {en
-                ? `1 point per owl level (${remainingPoints} unspent)`
-                : `1 очко за каждый уровень совы (свободно: ${remainingPoints})`}
-            </small>
-          </div>
-        </div>
+    {picker && <BuildPicker key={picker.kind} title={picker.kind === 'ring' ? copy('Выбрать кольцо', 'Choose ring') : copy('Выбрать навык', 'Choose skill')}
+      closeLabel={copy('Закрыть', 'Close')} onClose={() => setPicker(null)}>
+      <div className="buildPickerOptions">
+        {(picker.kind === 'ring' ? state.rings[picker.slot] : state.skills[picker.slot]) && <button className="buildTextButton"
+          type="button" onClick={() => {
+            lightHaptic();
+            update(picker.kind === 'ring' ? { rings: replaceSlot(state.rings, picker.slot, null) } : { skills: replaceSlot(state.skills, picker.slot, null) });
+            setPicker(null);
+          }}>{copy('Освободить слот', 'Clear slot')}</button>}
+        {picker.kind === 'ring' ? ringCatalog.map(ring => {
+          const locked = ring.minLevel > state.level;
+          return <PickerOption key={ring.id} art={ringArt(ring.id)} title={ring.title}
+            meta={'+' + ring.bonus + ' · ' + statLabels[ring.attribute][lang] + ' · ' + copy('с уровня ', 'level ') + ring.minLevel}
+            disabled={locked} selected={state.rings[picker.slot]?.ring.id === ring.id} onSelect={() => {
+              lightHaptic();
+              const equipped = state.rings[picker.slot];
+              update({ rings: replaceSlot(state.rings, picker.slot, equipped?.ring.id === ring.id ? equipped : { ring, enchant: 0 }) });
+              setPicker(null);
+            }}/>;
+        }) : <SkillPickerOptions state={state} slot={picker.slot} lang={lang} onSelect={id => {
+          lightHaptic();
+          const equipped = state.skills[picker.slot];
+          update({ skills: replaceSlot(state.skills, picker.slot, equipped?.id === id ? equipped : { id, level: 1 }) });
+          setPicker(null);
+        }}/>}
+      </div>
+    </BuildPicker>}
+  </div>;
+}
 
-        <div className="buildStatList">
-          {STAT_CONFIG.map(st => {
-            const basePts = allocated[st.key];
-            const ringBonus = st.key !== 'endurance' ? ringBonuses[st.key] : 0;
-            const effective = basePts + ringBonus;
+function AttributeInput({ name, value, onCommit }: { name: string; value: number; onCommit: (value: number) => void }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  return <input aria-label={name} inputMode="numeric" maxLength={3} value={draft ?? value}
+    onFocus={event => event.currentTarget.select()}
+    onChange={event => setDraft(event.target.value.replace(/\D/g, ''))}
+    onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur(); }}
+    onBlur={() => {
+      if (draft !== null) onCommit(Number(draft));
+      setDraft(null);
+    }}/>;
+}
 
-            return (
-              <div className="buildStatRow" key={st.key}>
-                <div className="buildStatInfo">
-                  <div className="buildStatNameRow">
-                    <GameAttribute name={st.key} />
-                    <strong>{en ? st.nameEn : st.nameRu}</strong>
-                  </div>
-                  <span className="buildStatDesc">{en ? st.descEn : st.descRu}</span>
-                  <div className="buildStatBreakdown">
-                    <span>{en ? 'Base:' : 'База:'} <b>{basePts}</b></span>
-                    {ringBonus > 0 && (
-                      <span className="buildStatRingBonus">
-                        +<b>{ringBonus}</b> {en ? 'rings' : 'кольца'}
-                      </span>
-                    )}
-                    <span className="buildStatTotal">
-                      = <b>{effective}</b> {en ? 'total' : 'итог'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="buildStatSteppers">
-                  <button
-                    type="button"
-                    className="buildStepBtn"
-                    disabled={basePts <= 0}
-                    onClick={() => modifyStat(st.key, -1)}
-                    aria-label={`Уменьшить ${st.nameRu} на 1`}
-                  >
-                    −
-                  </button>
-                  <span className="buildStatCurrent">{basePts}</span>
-                  <button
-                    type="button"
-                    className="buildStepBtn"
-                    disabled={remainingPoints <= 0}
-                    onClick={() => modifyStat(st.key, 1)}
-                    aria-label={`Увеличить ${st.nameRu} на 1`}
-                  >
-                    +
-                  </button>
-                  <button
-                    type="button"
-                    className="buildStepQuickBtn"
-                    disabled={remainingPoints <= 0}
-                    onClick={() => modifyStat(st.key, 5)}
-                    aria-label={`Увеличить ${st.nameRu} на 5`}
-                  >
-                    +5
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Equipment: 3 Ring Slots */}
-      <section className="card buildEquipmentCard">
-        <div className="buildCardHeader">
-          <GameGlyph name="treasure" />
-          <div>
-            <h3>{en ? 'Equipment: Rings (3 Slots)' : 'Экипировка: Кольца (3 слота)'}</h3>
-            <small>
-              {en
-                ? 'Select rings and sharpen them up to +20 (+1 attribute per enchant level)'
-                : 'Выбирай кольца и усиливай заточкой до +20 (+1 к атрибуту за ур. заточки)'}
-            </small>
-          </div>
-        </div>
-
-        <div className="buildRingGrid">
-          {rings.map((slot, idx) => {
-            const ringDef = slot.ringId ? RINGS_CATALOG.find(r => r.id === slot.ringId) : null;
-            const totalRingStat = ringDef ? ringDef.baseBonus + slot.enchant : 0;
-            const statNameRu = ringDef
-              ? ringDef.stat === 'strength'
-                ? 'Сила'
-                : ringDef.stat === 'agility'
-                ? 'Ловкость'
-                : 'Мудрость'
-              : '';
-            const statNameEn = ringDef ? ringDef.stat : '';
-
-            return (
-              <div className="buildRingSlotCard" key={idx}>
-                <div className="buildSlotHeader">
-                  <span className="buildSlotIdx">{en ? `Ring #${idx + 1}` : `Кольцо #${idx + 1}`}</span>
-                  {ringDef && (
-                    <button
-                      type="button"
-                      className="buildSlotClearBtn"
-                      onClick={() => equipRing(idx, null)}
-                      aria-label="Снять кольцо"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-
-                {ringDef ? (
-                  <div className="buildRingSlotContent">
-                    <button
-                      type="button"
-                      className="buildRingThumbBtn"
-                      onClick={() => {
-                        lightHaptic();
-                        setPickerSlot({ type: 'ring', slotIndex: idx });
-                      }}
-                    >
-                      <GameArt path={`/game/items/${ringDef.id}.webp`} size={46} />
-                      <div className="buildRingNameGroup">
-                        <strong>{en ? ringDef.nameEn : ringDef.nameRu}</strong>
-                        <span className="buildRingTierBadge">Тир {ringDef.tier}</span>
-                      </div>
-                    </button>
-
-                    <div className="buildRingBonusRow">
-                      <span className="buildRingBonusTag">
-                        +{totalRingStat} {en ? statNameEn : statNameRu}
-                      </span>
-                      <small className="buildRingBaseNote">
-                        (база {ringDef.baseBonus} + {slot.enchant})
-                      </small>
-                    </div>
-
-                    <div className="buildEnchantRow">
-                      <span className="buildEnchantLabel">{en ? 'Sharpening:' : 'Заточка:'}</span>
-                      <div className="buildEnchantSteppers">
-                        <button
-                          type="button"
-                          className="buildStepBtn buildEnchantBtn"
-                          disabled={slot.enchant <= 0}
-                          onClick={() => modifyRingEnchant(idx, -1)}
-                          aria-label="Уменьшить заточку"
-                        >
-                          −
-                        </button>
-                        <span className="buildEnchantVal">+{slot.enchant}</span>
-                        <button
-                          type="button"
-                          className="buildStepBtn buildEnchantBtn"
-                          disabled={slot.enchant >= 20}
-                          onClick={() => modifyRingEnchant(idx, 1)}
-                          aria-label="Увеличить заточку"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    className="buildEmptySlotBtn"
-                    onClick={() => {
-                      lightHaptic();
-                      setPickerSlot({ type: 'ring', slotIndex: idx });
-                    }}
-                  >
-                    <span className="buildEmptySlotIcon">💍</span>
-                    <span>{en ? '+ Equip Ring' : '+ Надеть кольцо'}</span>
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Combat Skill Loadout: 3 Slots */}
-      <section className="card buildSkillsCard">
-        <div className="buildCardHeader">
-          <GameGlyph name="lightning" />
-          <div>
-            <h3>{en ? 'Combat Skills Loadout (3 Slots)' : 'Набор боевых навыков (3 слота)'}</h3>
-            <small>
-              {en
-                ? 'Equip up to 3 skills for battle from the 4 combat branches'
-                : 'В бой можно взять до трёх навыков из четырёх веток атрибутов'}
-            </small>
-          </div>
-        </div>
-
-        <div className="buildSkillSlotGrid">
-          {selectedSkills.map((skillId, idx) => {
-            const skill = skillId ? ALL_SKILLS.find(s => s.id === skillId) : null;
-            const branchRu = skill
-              ? skill.branch === 'strength'
-                ? 'Сила'
-                : skill.branch === 'agility'
-                ? 'Ловкость'
-                : skill.branch === 'wisdom'
-                ? 'Мудрость'
-                : 'Выносливость'
-              : '';
-
-            return (
-              <div className="buildSkillSlotCard" key={idx}>
-                <div className="buildSlotHeader">
-                  <span className="buildSlotIdx">{en ? `Skill Slot #${idx + 1}` : `Слот навыка #${idx + 1}`}</span>
-                  {skill && (
-                    <button
-                      type="button"
-                      className="buildSlotClearBtn"
-                      onClick={() => equipSkill(idx, null)}
-                      aria-label="Снять навык"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-
-                {skill ? (
-                  <div className="buildSkillSlotContent">
-                    <button
-                      type="button"
-                      className="buildSkillSlotItemBtn"
-                      onClick={() => {
-                        lightHaptic();
-                        setPickerSlot({ type: 'skill', slotIndex: idx });
-                      }}
-                    >
-                      <GameArt path={`/game/skills/${skill.id}.png`} size={46} />
-                      <div className="buildSkillSlotText">
-                        <strong>{en ? skill.name : skill.nameRu}</strong>
-                        <div className="buildSkillBadges">
-                          <span className="buildSkillBranchBadge">
-                            <GameAttribute name={skill.branch} /> {branchRu}
-                          </span>
-                          <span className="buildSkillTierBadge">Ступень {skill.tier}</span>
-                        </div>
-                      </div>
-                    </button>
-
-                    <div className="buildSkillMetaRow">
-                      <span className="buildSkillManaTag">
-                        {skill.type === 'active' ? '⚡ ' : '🛡️ '}
-                        {skill.manaCost} {en ? 'mana' : 'маны'}
-                      </span>
-                      <span className="buildSkillTypeTag">
-                        {skill.type === 'active'
-                          ? en ? 'Active' : 'Активный'
-                          : en ? 'Passive' : 'Пассивный'}
-                      </span>
-                    </div>
-
-                    <p className="buildSkillSlotDesc">{skill.descRu}</p>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    className="buildEmptySlotBtn"
-                    onClick={() => {
-                      lightHaptic();
-                      setPickerSlot({ type: 'skill', slotIndex: idx });
-                    }}
-                  >
-                    <span className="buildEmptySlotIcon">✨</span>
-                    <span>{en ? '+ Select Skill' : '+ Выбрать навык'}</span>
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Ring Picker Modal */}
-      {pickerSlot?.type === 'ring' && (
-        <RingPickerModal
-          slotIndex={pickerSlot.slotIndex}
-          currentRingId={rings[pickerSlot.slotIndex].ringId}
-          onSelect={ringId => equipRing(pickerSlot.slotIndex, ringId)}
-          onClose={() => setPickerSlot(null)}
-          en={en}
-        />
-      )}
-
-      {/* Skill Picker Modal */}
-      {pickerSlot?.type === 'skill' && (
-        <SkillPickerModal
-          slotIndex={pickerSlot.slotIndex}
-          currentSkillId={selectedSkills[pickerSlot.slotIndex]}
-          alreadySelectedIds={selectedSkills.filter((id, i): id is number => id !== null && i !== pickerSlot.slotIndex)}
-          allocatedBranchPoints={allocated}
-          onSelect={skillId => equipSkill(pickerSlot.slotIndex, skillId)}
-          onClose={() => setPickerSlot(null)}
-          en={en}
-        />
-      )}
+function BuildPicker({ title, closeLabel, onClose, children }: { title: string; closeLabel: string; onClose: () => void; children: ReactNode }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useModal(ref, true);
+  return <dialog className="modal buildPickerModal" ref={ref} aria-labelledby="build-picker-title"
+    onCancel={event => { event.preventDefault(); onClose(); }}
+    onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
+    <div className="dialogBody">
+      <header className="buildHeading"><h2 id="build-picker-title" data-dialog-title tabIndex={-1}>{title}</h2>
+        <button className="close" type="button" aria-label={closeLabel} onClick={onClose}>×</button></header>
+      {children}
     </div>
-  );
+  </dialog>;
 }
 
-// -----------------------------------------------------------------------------
-// Ring Picker Modal Component
-// -----------------------------------------------------------------------------
-interface RingPickerModalProps {
-  slotIndex: number;
-  currentRingId: string | null;
-  onSelect: (ringId: string | null) => void;
-  onClose: () => void;
-  en: boolean;
+function SkillPickerOptions({ state, slot, lang, onSelect }: { state: BuildState; slot: number; lang: number; onSelect: (id: number) => void }) {
+  const [branch, setBranch] = useState<StatKey>(() => {
+    const equipped = state.skills[slot];
+    return (equipped && skillById.get(equipped.id)?.branch) || statKeys.find(stat => state.points[stat] > 0) || 'strength';
+  });
+  return <>
+    <div className="buildBranchFilter choiceBar" role="group" aria-label={lang ? 'Skill branches' : 'Ветки навыков'}>
+      {statKeys.map(stat => <button key={stat} type="button" aria-pressed={branch === stat} onClick={() => setBranch(stat)}>
+        <GameAttribute name={stat}/>{statLabels[stat][lang]}
+      </button>)}
+    </div>
+    {orderedSkills.filter(skill => skill.branch === branch).map(skill => {
+      const selected = state.skills[slot]?.id === skill.id;
+      const used = !selected && state.skills.some(item => item?.id === skill.id);
+      const available = skillAvailable(skill.id, state);
+      const requirement = state.level < 2 ? (lang ? 'From owl level 2' : 'Со 2-го уровня совы')
+        : lang ? `Invest ${skill.tier} points in ${statLabels[branch][lang]}` : `Вложено очков в ветку ${state.points[branch]} из ${skill.tier}`;
+      return <PickerOption key={skill.id} art={skillArt(skill.id)} title={lang ? skill.name : skill.title}
+        meta={used ? (lang ? 'Already equipped' : 'Уже в наборе') : available ? (lang ? skill.effect.split('.')[0].replace(/\{[^}]+\}/g, '…') : skill.summary) : requirement}
+        disabled={used || !available} selected={selected} onSelect={() => onSelect(skill.id)}/>;
+    })}
+  </>;
 }
 
-function RingPickerModal({ slotIndex, currentRingId, onSelect, onClose, en }: RingPickerModalProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const [filterStat, setFilterStat] = useState<string>('all');
-  useModal(dialogRef, true);
-
-  const filteredRings = useMemo(() => {
-    if (filterStat === 'all') return RINGS_CATALOG;
-    return RINGS_CATALOG.filter(r => r.stat === filterStat);
-  }, [filterStat]);
-
-  return (
-    <dialog
-      className="modal buildPickerModal"
-      ref={dialogRef}
-      aria-labelledby="ring-modal-title"
-      onCancel={e => {
-        e.preventDefault();
-        onClose();
-      }}
-      onClick={e => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="dialogBody buildPickerBody">
-        <div className="tokenRatesDialogHeader">
-          <h2 id="ring-modal-title" data-dialog-title tabIndex={-1}>
-            {en ? `Choose Ring for Slot #${slotIndex + 1}` : `Выбор кольца (Слот #${slotIndex + 1})`}
-          </h2>
-          <button className="close" onClick={onClose} aria-label="Закрыть">
-            ×
-          </button>
-        </div>
-
-        {/* Filter chips */}
-        <div className="buildFilterChips" role="tablist">
-          {[
-            ['all', en ? 'All' : 'Все'],
-            ['strength', en ? 'Strength' : 'Сила'],
-            ['agility', en ? 'Agility' : 'Ловкость'],
-            ['wisdom', en ? 'Wisdom' : 'Мудрость'],
-          ].map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              className={`buildChipBtn ${filterStat === key ? 'active' : ''}`}
-              onClick={() => {
-                lightHaptic();
-                setFilterStat(key);
-              }}
-            >
-              {key !== 'all' && <GameAttribute name={key as GameAttributeName} />}
-              <span>{label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Catalog List */}
-        <div className="buildPickerList">
-          {currentRingId && (
-            <button
-              type="button"
-              className="buildPickerItem buildPickerClearItem"
-              onClick={() => onSelect(null)}
-            >
-              <span className="buildPickerClearIcon">✕</span>
-              <div>
-                <strong>{en ? 'Unequip Ring' : 'Снять кольцо'}</strong>
-                <small>{en ? 'Leave slot empty' : 'Освободить этот слот'}</small>
-              </div>
-            </button>
-          )}
-
-          {filteredRings.map(ring => {
-            const isEquipped = currentRingId === ring.id;
-            const statRu = ring.stat === 'strength' ? 'Сила' : ring.stat === 'agility' ? 'Ловкость' : 'Мудрость';
-
-            return (
-              <button
-                key={ring.id}
-                type="button"
-                className={`buildPickerItem ${isEquipped ? 'buildPickerItemActive' : ''}`}
-                onClick={() => onSelect(ring.id)}
-              >
-                <GameArt path={`/game/items/${ring.id}.webp`} size={44} />
-                <div className="buildPickerItemInfo">
-                  <div className="buildPickerItemTitleRow">
-                    <strong>{en ? ring.nameEn : ring.nameRu}</strong>
-                    <span className="buildRingTierBadge">Тир {ring.tier}</span>
-                  </div>
-                  <div className="buildPickerItemStats">
-                    <span className="buildPickerBonusText">
-                      +{ring.baseBonus} {en ? ring.stat : statRu}
-                    </span>
-                    <small>Мин. уровень {ring.reqLevel}</small>
-                  </div>
-                </div>
-                {isEquipped && <span className="buildPickerCheck">✓</span>}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </dialog>
-  );
-}
-
-// -----------------------------------------------------------------------------
-// Skill Picker Modal Component
-// -----------------------------------------------------------------------------
-interface SkillPickerModalProps {
-  slotIndex: number;
-  currentSkillId: number | null;
-  alreadySelectedIds: number[];
-  allocatedBranchPoints: Record<StatKey, number>;
-  onSelect: (skillId: number | null) => void;
-  onClose: () => void;
-  en: boolean;
-}
-
-function SkillPickerModal({
-  slotIndex,
-  currentSkillId,
-  alreadySelectedIds,
-  allocatedBranchPoints,
-  onSelect,
-  onClose,
-  en,
-}: SkillPickerModalProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const [filterBranch, setFilterBranch] = useState<string>('all');
-  useModal(dialogRef, true);
-
-  const filteredSkills = useMemo(() => {
-    if (filterBranch === 'all') return ALL_SKILLS;
-    return ALL_SKILLS.filter(s => s.branch === filterBranch);
-  }, [filterBranch]);
-
-  return (
-    <dialog
-      className="modal buildPickerModal"
-      ref={dialogRef}
-      aria-labelledby="skill-modal-title"
-      onCancel={e => {
-        e.preventDefault();
-        onClose();
-      }}
-      onClick={e => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="dialogBody buildPickerBody">
-        <div className="tokenRatesDialogHeader">
-          <h2 id="skill-modal-title" data-dialog-title tabIndex={-1}>
-            {en ? `Choose Skill for Slot #${slotIndex + 1}` : `Выбор навыка (Слот #${slotIndex + 1})`}
-          </h2>
-          <button className="close" onClick={onClose} aria-label="Закрыть">
-            ×
-          </button>
-        </div>
-
-        {/* Branch filter tabs */}
-        <div className="buildFilterChips" role="tablist">
-          {[
-            ['all', en ? 'All' : 'Все'],
-            ['strength', en ? 'Strength' : 'Сила'],
-            ['agility', en ? 'Agility' : 'Ловкость'],
-            ['wisdom', en ? 'Wisdom' : 'Мудрость'],
-            ['endurance', en ? 'Endurance' : 'Выносливость'],
-          ].map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              className={`buildChipBtn ${filterBranch === key ? 'active' : ''}`}
-              onClick={() => {
-                lightHaptic();
-                setFilterBranch(key);
-              }}
-            >
-              {key !== 'all' && <GameAttribute name={key as GameAttributeName} />}
-              <span>{label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Skills list */}
-        <div className="buildPickerList">
-          {currentSkillId && (
-            <button
-              type="button"
-              className="buildPickerItem buildPickerClearItem"
-              onClick={() => onSelect(null)}
-            >
-              <span className="buildPickerClearIcon">✕</span>
-              <div>
-                <strong>{en ? 'Empty Slot' : 'Освободить слот'}</strong>
-                <small>{en ? 'Remove skill from this slot' : 'Снять навык из этого слота'}</small>
-              </div>
-            </button>
-          )}
-
-          {filteredSkills.map(skill => {
-            const isEquippedHere = currentSkillId === skill.id;
-            const isEquippedElsewhere = alreadySelectedIds.includes(skill.id);
-            const branchPts = allocatedBranchPoints[skill.branch as StatKey] || 0;
-            const meetsTierReq = branchPts >= skill.tier;
-
-            return (
-              <button
-                key={skill.id}
-                type="button"
-                disabled={isEquippedElsewhere}
-                className={`buildPickerItem ${isEquippedHere ? 'buildPickerItemActive' : ''} ${
-                  isEquippedElsewhere ? 'buildPickerItemDisabled' : ''
-                }`}
-                onClick={() => onSelect(skill.id)}
-              >
-                <GameArt path={`/game/skills/${skill.id}.png`} size={44} />
-                <div className="buildPickerItemInfo">
-                  <div className="buildPickerItemTitleRow">
-                    <strong>{en ? skill.name : skill.nameRu}</strong>
-                    <div className="buildSkillBadges">
-                      <span className="buildSkillBranchBadge">
-                        <GameAttribute name={skill.branch} />
-                      </span>
-                      <span className="buildSkillTierBadge">Тир {skill.tier}</span>
-                    </div>
-                  </div>
-
-                  <p className="buildPickerItemDesc">{skill.descRu}</p>
-
-                  <div className="buildPickerSkillMeta">
-                    <span className="buildSkillManaTag">
-                      {skill.type === 'active' ? '⚡ ' : '🛡️ '}
-                      {skill.manaCost} {en ? 'mana' : 'маны'}
-                    </span>
-                    {!meetsTierReq && (
-                      <span className="buildSkillTierWarn">
-                        {en
-                          ? `Req: ${skill.tier} branch pts (${branchPts} alloc.)`
-                          : `Реком.: ${skill.tier} очк. в ветке (вложено ${branchPts})`}
-                      </span>
-                    )}
-                    {isEquippedElsewhere && (
-                      <span className="buildSkillAlreadyEquipped">
-                        {en ? 'Already in loadout' : 'Уже в наборе'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {isEquippedHere && <span className="buildPickerCheck">✓</span>}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </dialog>
-  );
+function PickerOption({ art, title, meta, disabled, selected, onSelect }: {
+  art: string; title: string; meta: string; disabled: boolean; selected: boolean; onSelect: () => void;
+}) {
+  return <button className="buildPickerOption" aria-pressed={selected} disabled={disabled} type="button" onClick={onSelect}>
+    <GameArt path={art} size={36}/><span><strong>{title}</strong><small>{meta}</small></span>
+    {selected && <span aria-hidden="true">✓</span>}
+  </button>;
 }

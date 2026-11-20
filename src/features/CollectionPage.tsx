@@ -82,7 +82,7 @@ export function CollectionPage() {
         const published = editionFor(id);
         return <details className="mediaDetails marketCollection" key={id} id={'album-' + id} open={hash === '#album-' + id || undefined}>
           <summary><AlbumLogo id={id} size={48}/>
-            <span><strong>{title}</strong><small>{typeof quote?.supply === 'number' ? `Сминчено ${format.format(quote.supply)}` : 'Выпуск NFT'}{quote?.floor ? <> · <Price value={quote.floor} currency="gram" from/></> : null}</small></span>
+            <span><strong>{title}</strong><small>{typeof quote?.supply === 'number' ? `Сминчено ${format.format(quote.supply)}` : 'Выпуск NFT'}{quote?.floor ? <> · <Price value={quote.floor} currency="gram" from usdLayout="inline"/></> : null}</small></span>
           </summary>
           <p>{typeof quote?.supply === 'number' ? `Сминчено на Getgems: ${format.format(quote.supply)} из ${format.format(published.edition)}.` : `Лимит коллекции: ${format.format(published.edition)} наборов в TON.`}</p>
           <a className="textLink" href={`https://getgems.io/collection/${stickerData.collectionByAlbum[id]}`} target="_blank" rel="noreferrer">Открыть на Getgems</a>

@@ -3,9 +3,6 @@ import { estimateGramForStars } from '../domain/purchase-prices';
 import { tokenMarket } from './marketData';
 import { Price } from './Price';
 
-const dollars = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
-const smallDollars = new Intl.NumberFormat('ru-RU', { maximumSignificantDigits: 2 });
-
 function useGramRate() {
   const { data, stale, pending } = tokenMarket.useSnapshot();
   const quote = data?.items.find(row => row.symbol === 'GRAM');
@@ -33,14 +30,4 @@ export function GramEstimate({ stars, showUnavailable, purpose }: { stars: numbe
 
 export function StarsAndGram({ stars }: { stars: number }) {
   return <span className="starsAndGram"><Price value={stars} currency="stars"/><GramEstimate stars={stars}/></span>;
-}
-
-export function MintUsdEstimate({ gram }: { gram: number }) {
-  const { usd, stale } = useGramRate();
-  if (usd === null) return null;
-  const value = gram * usd;
-  if (!Number.isFinite(value) || value < 0) return null;
-  return <RateEstimate stale={stale}>
-    <span className="nativeUsdEstimate">≈ {value > 0 && value < .01 ? smallDollars.format(value) + ' $' : dollars.format(value)}</span>
-  </RateEstimate>;
 }
