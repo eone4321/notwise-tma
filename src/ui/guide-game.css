@@ -1217,6 +1217,26 @@ dialog.modal.itemHelpSheet::backdrop { background: #0006; }
 .siegeRoundExample p { font-size: 12px; color: var(--muted); }
 .siegeRoundExample p + p { margin-top: 6px; }
 .siegePayoutExample > summary small { color: var(--muted); }
+.siegePowerList, .memoList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.siegePowerList li, .memoList li {
+  display: grid;
+  gap: 2px;
+  padding-top: 9px;
+  border-top: 1px solid var(--game-panel-line);
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.siegePowerList li:first-child, .memoList li:first-child { padding-top: 0; border-top: 0; }
+.siegePowerList strong, .memoList strong { color: var(--text); font-size: 13.5px; }
+.siegePowerList b { color: var(--gold); }
+.memoLinks { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
 
 .buildSetup { margin-block-start: 8px; }
 .buildPresetBar {

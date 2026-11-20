@@ -28,21 +28,34 @@ function SiegeTotals({ totals }: { totals: typeof siegeRewardTotals }) {
   </dl>;
 }
 
-function SiegeRewards({ onChatVisit }: { onChatVisit?: () => void }) {
-  return <section className="card siegeRewards" id="siege-rewards">
-    <h2>Награды за осаду</h2>
-    <ol className="siegeRewardRules">
-      <li><strong>Удержите участок до конца раунда.</strong> У каждого участка одна награда: монеты, серебро сквада или усиление. Тапни по участку на карте, чтобы увидеть, что он даёт.</li>
-      <li><strong>Атакуй в раунде, чтобы получить награду.</strong> Учитываются все участки, которые сквад удержал к концу раунда с твоим участием в атаке.</li>
-      <li><strong>Забери выплату в День празднования.</strong> Игра складывает награды за такие раунды. Усиления действуют 24 часа с получения.</li>
-    </ol>
-    <div className="siegeRoundExample">
-      <h3>Почему в отчёте может быть 40 территорий</h3>
-      <p>Один участок может принести награду в каждом раунде. Например, Янтарная роща даёт 500 монет. Если сквад удержал её два раунда и ты атаковал в обоих, за рощу придёт 1 000 монет.</p>
-      <p><strong>20 участков × 2 раунда = 40 удержаний</strong> в отчёте. Два полных раунда по этой карте дают 7 000 монет, 1 400 серебра и усиления: +6 мудрости, +2 выносливости, +4 ловкости и +4 силы.</p>
+function SiegePowerCard() {
+  return <section className="card siegePowerCard">
+    <div className="mediaHeading">
+      <GameArt path="/game/ui/fight-vs.png" size={42}/>
+      <div>
+        <h2>Откуда берётся мощь в осаде</h2>
+        <p>Мощь даёт заработанный <strong>SP</strong>, а не опыт (XP).</p>
+      </div>
     </div>
+    <ul className="siegePowerList">
+      <li><strong>Курс ~1 мощь за 100 SP.</strong> Например, около 2 610 SP дают <b>26 мощи</b>, а 5 684 SP — <b>57 мощи</b>.</li>
+      <li><strong>Как копить быстрее:</strong> тренируйся в Додзё (обычные удары и прожатие экипированных навыков по чучелу платят SP) и используй навыки в боях.</li>
+      <li><strong>Запас между раундами не сгорает:</strong> ты сам выбираешь, сколько доступной мощи вложить в атаку или защиту участка.</li>
+    </ul>
+  </section>;
+}
+
+function SiegeRulesCard({ onChatVisit }: { onChatVisit?: () => void }) {
+  return <section className="card siegeRewards" id="siege-rewards">
+    <h2>Правила и награды осады</h2>
+    <ol className="siegeRewardRules">
+      <li><strong>3 раунда по 8 часов.</strong> К концу каждого раунда территорию и её награду забирает сквад, вложивший больше всего мощи (при ничьей земля остаётся нейтральной).</li>
+      <li><strong>Атака по цепочке.</strong> Бить и защищать можно только свои участки и соседние с ними (либо нейтральные на старте).</li>
+      <li><strong>Обязательно вложи мощь в раунде.</strong> Награда начисляется только за те раунды, в которых ты лично участвовал в атаке или защите, и если твой сквад удержал участок до конца раунда.</li>
+      <li><strong>Сбор в мирное время.</strong> После окончания осады нажми <b>«Забрать»</b> — накопленные монеты, серебро сквада и суточные баффы (+1/+2 к статам) сразу упадут на аккаунт. Баффы действуют 24 часа с момента сбора.</li>
+    </ol>
     <details className="mediaDetails siegePayoutExample">
-      <summary><span><strong>Сколько дают все 20 участков</strong><small>Пример удержания всей карты за один раунд</small></span></summary>
+      <summary><span><strong>Пул всей карты за 1 раунд</strong><small>Если один сквад удержит все 20 участков</small></span></summary>
       <SiegeTotals totals={siegeRewardTotals}/>
     </details>
     <a className="secondary siegeChat" href={communityChat} onClick={() => { onChatVisit?.(); trackGuide('action:chat'); }}>
@@ -53,19 +66,19 @@ function SiegeRewards({ onChatVisit }: { onChatVisit?: () => void }) {
 
 export function SquadPage({ gameEntry, onChatVisit }: { gameEntry: string; onChatVisit?: () => void }) {
   const { pathname } = useLocation();
-  if (pathname === '/squads/war') return <><SiegeRewards onChatVisit={onChatVisit}/><SquadMap/><section className="card squadIntro">
-    <h2>Как участвовать в осаде</h2>
-    <ol className="referralSteps">
-      <li>Вступи в сквад. С 4-го уровня откроется карта осады.</li>
-      <li>Выбери территорию и атакуй в текущем раунде. В сутки три раунда по 8 часов.</li>
-      <li>После раунда награду получает сквад, который удержал территорию.</li>
-      <li>В день празднования забери награду за раунды, в которых ты атаковал. Усиление действует 24 часа после получения.</li>
-    </ol>
-    <DetailLink to="/squads/shop" className="textLink">Магазин за серебро сквада</DetailLink>
-  </section></>;
+  if (pathname === '/squads/war') {
+    return <>
+      <SiegePowerCard/>
+      <SquadMap/>
+      <SiegeRulesCard onChatVisit={onChatVisit}/>
+      <section className="card">
+        <DetailLink to="/squads/shop" className="textLink">Открыть магазин за серебро сквада</DetailLink>
+      </section>
+    </>;
+  }
   if (pathname === '/squads/shop') return <section className="card">
     <div className="mediaHeading"><span className="silverCoin"><GameArt path="/game/items/wise-coin.webp" size={40}/></span>
-      <div><h2>Магазин сквада</h2><p>С 3-го уровня. Серебро можно заработать в осаде.</p></div>
+      <div><h2>Магазин сквада</h2><p>С 3-го уровня. Серебро добывается за удержание территорий в осаде.</p></div>
     </div>
     <ul className="compactList">{squadShop.map(item => <li className="mediaRow" key={item.id}>
       <GameArt path={`/game/items/${item.id}.webp`} size={38}/>
@@ -82,15 +95,17 @@ export function SquadPage({ gameEntry, onChatVisit }: { gameEntry: string; onCha
     </nav>
     <section className="card squadIntro">
       <img src={artSrc('/game/war/siege-header.webp')} alt="" />
-      <h2>Осада и территории</h2>
-      <p>Сквады доступны с 3-го уровня, война — с 4-го. Один раунд длится 8 часов. В конце раунда награду получает сквад, который удерживает территорию.</p>
-      <DetailLink className="textLink" to="/squads/war">Как участвовать и забрать награду</DetailLink>
+      <h2>Сквады и осады</h2>
+      <p>Вступить в сквад можно с <strong>3-го уровня</strong>, участвовать в осаде — с <strong>4-го</strong>. Осада идёт 3 раунда по 8 часов, победители получают монеты, серебро сквада и временные баффы к характеристикам.</p>
     </section>
-    <SiegeRewards onChatVisit={onChatVisit}/>
+    <SiegePowerCard/>
     <SquadMap/>
+    <SiegeRulesCard onChatVisit={onChatVisit}/>
     <section className="card">
-      <div className="mediaHeading"><GameArt path="/game/items/lighter.webp" size={45}/><h2>Ежедневный ритуал</h2></div>
-      <p>Одно благословение тратит заряд зажигалки. Если ритуал выполняет половина сквада, участники получают бонус на сутки.</p>
+      <div className="mediaHeading"><GameArt path="/game/items/lighter.webp" size={45}/>
+        <div><h2>Ежедневный ритуал</h2><p>Общий клановый бафф на 24 часа.</p></div>
+      </div>
+      <p>Одно благословение тратит 1 заряд Зажигалки. Если ритуал выполняет половина участников сквада, бонус активируется для всего клана на сутки.</p>
       <p><strong>Зажигалка в Лавке · {shopPrice('lighter')}</strong></p>
     </section>
   </>;

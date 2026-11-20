@@ -127,19 +127,50 @@ export function OwlPage() {
 export function CarePage() {
   return <>
     <section className="card feedingCard">
-      <div className="mediaHeading"><GameArt path={itemPath('croissant.webp')} size={48}/>
-        <div><h2>Сытость</h2><p>Покорми сову хотя бы раз в три дня.</p></div>
+      <div className="mediaHeading"><GameArt path={itemPath('book.webp')} size={46}/>
+        <div><h2>Памятка на каждый день</h2><p>Главные таймеры, лимиты и механики игры в одном месте.</p></div>
       </div>
-      <dl className="compactList">
-        <div className="mediaRow"><dt>Максимум</dt><dd>20</dd></div>
-        <div className="mediaRow"><dt>Для полёта</dt><dd>от 10</dd></div>
-        <div className="mediaRow"><dt>Любимая еда</dt><dd>×2 сытости</dd></div>
-      </dl>
-      <DetailLink className="textLink" to="/assets/care">Еда и лекарства</DetailLink>
+      <ul className="memoList">
+        <li>
+          <strong>Сытость совы (раз в 3 дня)</strong>
+          <span>Максимум 20, для полёта нужно от 10. Любимая еда даёт ×2 сытости. Если не кормить 3 дня — штраф на 24 ч: монеты и опыт ×0.5, реген HP и энергии вдвое медленнее.</span>
+        </li>
+        <li>
+          <strong>Бесплатные сбросы в 00:00 UTC</strong>
+          <span>Раз в день можно бесплатно восстановить всю энергию, запустить до 3 ракет в полёте, решить Загадку книги (до ×3 наград за серию и +5 мудрости на 24 ч) и зажечь ритуал сквада.</span>
+        </li>
+        <li>
+          <strong>Хитрости полёта (Суши и Ракеты)</strong>
+          <span>Первые две суши снимают по 20% монет забега, зато третья прибавляет +20% к остатку и открывает стикер Sushi Master. Три ракеты за один полёт открывают секрет Phoenix.</span>
+        </li>
+      </ul>
+      <DetailLink className="textLink" to="/assets/care">Вся еда и лекарства</DetailLink>
     </section>
+
     <section className="card feedingCard">
-      <div className="mediaHeading"><GameArt path="/game/items/first-aid-kit.webp" size={38}/><h2>Голод</h2></div>
-      <p>За три дня без еды сова получает штраф на 24 ч. Монет и опыта становится вдвое меньше, а здоровье и энергия восстанавливаются вдвое медленнее.</p>
+      <h2>Бой, прокачка и осада</h2>
+      <ul className="memoList">
+        <li>
+          <strong>Потолок статов — 70% на 100 очках</strong>
+          <span>Выше 100 ловкости (уклонение) и 100 мудрости (крит) шансы не растут — лишняя мудрость даёт только +20 маны за очко. В бой можно взять до 3 навыков; мана за бой не восстанавливается.</span>
+        </li>
+        <li>
+          <strong>Боевая мощь при осаде = твой SP</strong>
+          <span>Личная мощь для захвата территорий растёт от заработанных SP в Додзё и боях (ориентир: ~1 мощь за 100 SP).</span>
+        </li>
+        <li>
+          <strong>Сбросы и заморозка XP</strong>
+          <span>Чиллер замораживает получение XP (удобно фармить SP/монеты на своём уровне), Дискета сохраняет XP перед перерождением, Морфер сбрасывает статы и навыки без потери SP.</span>
+        </li>
+        <li>
+          <strong>Защита от рейдов</strong>
+          <span>Победитель забирает 3% монет. После 3 проигранных защит включается щит, пока владелец сам не вернётся в игру.</span>
+        </li>
+      </ul>
+      <div className="memoLinks">
+        <DetailLink className="textLink" to="/combat/builds">Калькулятор билдов</DetailLink>
+        <DetailLink className="textLink" to="/squads">Сквады и осада</DetailLink>
+      </div>
     </section>
   </>;
 }

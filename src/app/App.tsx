@@ -36,7 +36,7 @@ const sections = [
   ['Секреты', '/secrets'], ['Капсулы', '/capsules'], ['Яйца и скины', '/owl'],
   ['Коллекции', '/collections'], ['Бои и навыки', '/combat'], ['Предметы', '/assets'],
   ['Экосистема', '/ecosystem'], ['Пригласить друзей', '/referrals'],
-  ['Кормление', '/care'], ['Режимы игры', '/modes'],
+  ['Памятка', '/care'], ['Режимы игры', '/modes'],
 ] as const;
 type Item={id:number;name:string;description:string;short_descr:string;rarity:number;kind?:string;key?:string};
 function App() {
@@ -255,7 +255,7 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
   <OwlPrices/>
   <section className="homeGameActions" aria-label={en ? 'Gameplay' : 'Об игре'}>
     <Link to="/modes"><GameArt path="/game/ui/fight-vs.png" size={34}/><span>{en ? 'Game modes' : 'Режимы игры'}</span><span className="rowChevron" aria-hidden="true"/></Link>
-    <Link to="/care"><GameArt path="/game/items/croissant.webp" size={34}/><span>{en ? 'Feeding' : 'Кормление'}</span><span className="rowChevron" aria-hidden="true"/></Link>
+    <Link to="/care"><GameArt path="/game/items/book.webp" size={34}/><span>{en ? 'Cheat sheet' : 'Памятка'}</span><span className="rowChevron" aria-hidden="true"/></Link>
   </section>
   <div className="sectionHeading"><div><h2>{en ? 'Explore' : 'Что ищешь?'}</h2></div></div>
   <div className="guideGrid">{homeTiles.map(tile => {
