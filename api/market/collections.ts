@@ -8,6 +8,7 @@ export default async function handler(request: Request) {
   if (request.method !== 'GET') return new Response(null, { status: 405 });
   try {
     const [items, rate] = await Promise.all([collectionQuotes(), gramToUsdt().catch(() => null)]);
+    if (!items.length) return Response.json({ items }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
     const albumIssue = Object.fromEntries(publishing.albums.map(item => [item.id, item.remaining]));
     try {
       const input = JSON.parse(process.env.GAME_ALBUM_ISSUE_JSON || '{}');
@@ -19,7 +20,7 @@ export default async function handler(request: Request) {
       }
     } catch { /* Availability can only come from a verified game snapshot. */ }
     return Response.json({ items, gramToUsdt: rate, albumIssue }, {
-      headers: { 'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=1200' },
+      headers: { 'Cache-Control': 'public, max-age=0, s-maxage=45' },
     });
   } catch {
     return Response.json({ items: [] }, { status: 503 });

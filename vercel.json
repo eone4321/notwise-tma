@@ -10,10 +10,23 @@
       "schedule": "*/15 * * * *",
       "function": "api/owl-sales-scheduled",
       "timezone": "UTC"
+    },
+    "market-floors": {
+      "schedule": "*/15 * * * *",
+      "function": "api/market-scheduled",
+      "timezone": "UTC"
     }
   },
   "functions": {
     "api/owl-sales-scheduled.ts": {
+      "maxDuration": 60,
+      "experimentalTriggers": [
+        {
+          "type": "schedule/v1beta"
+        }
+      ]
+    },
+    "api/market-scheduled.ts": {
       "maxDuration": 60,
       "experimentalTriggers": [
         {

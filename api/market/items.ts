@@ -17,6 +17,6 @@ export default async function handler(request: Request) {
     }
   } catch { /* The last verified standard fees are still available. */ }
   return Response.json({ ...snapshot, mintQuotes }, {
-    headers: { 'Cache-Control': snapshot.status === 'ready' ? 'public, s-maxage=900, stale-while-revalidate=900' : 'public, s-maxage=45' },
+    headers: { 'Cache-Control': snapshot.status === 'unavailable' ? 'no-store' : 'public, max-age=0, s-maxage=45' },
   });
 }
