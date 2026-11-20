@@ -1,6 +1,7 @@
 import { AlbumLogo } from '../ui/AlbumLogo';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router';
+import { AnimatePresence, motion } from 'motion/react';
 import { GameArt } from '../ui/GameArt';
 import { GameAttribute, GameGlyph } from '../ui/GameGlyph';
 import { Price } from './Price';
@@ -29,6 +30,7 @@ import {
 } from './marketCatalog';
 import { useGuideLocale } from './guideLocale';
 import { lightHaptic, telegramPopup } from '../telegram/client';
+import { artSrc } from '../ui/warmArt';
 import { channelInvite } from '../domain/guide-links';
 import { authData, profileRequest } from './guideProfile';
 import { useGuideNavigation } from '../app/navigation';
@@ -903,61 +905,82 @@ export function MarketChartsPage() {
       )}
 
       {/* CryptoOne Subscription Gate */}
-      {subState === 'required' && (
-        <div
-          className="radarSheetBackdrop radarSubGateBackdrop"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="market-sub-title"
-        >
-          <div className="radarSheetPanel radarSubGatePanel">
-            <div className="radarSheetHandle" aria-hidden="true" />
-            <div className="radarSubGateHead">
-              <img src="/brand/cryptoone-channel.jpg" alt="" width="44" height="44" className="radarSubGateAvatar" />
-              <div>
-                <h2 id="market-sub-title">
-                  {en ? 'Market analytics is for CryptoOne subscribers only' : 'Аналитика маркета только для подписчиков CryptoOne'}
-                </h2>
-                <p>
-                  {en
-                    ? 'Subscribe to @cryptoeone to unlock floor charts, Getgems listings, and self-enchant cost insights.'
-                    : 'Подпишись на канал @cryptoeone, чтобы открыть графики флора, лоты Getgems и расчёт себестоимости заточки.'}
-                </p>
-              </div>
+      <AnimatePresence>
+        {subState === 'required' && (
+          <motion.div
+            className="radarSubGateBackdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="market-sub-title"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.22 }}
+          >
+            <div className="radarSubGateWrap">
+              <motion.img
+                className="radarSubGateHamster"
+                src={artSrc('/brand/hamster.png')}
+                width="640"
+                height="694"
+                alt={en ? 'CryptoOne Hamster' : 'Хомяк CryptoOne'}
+                initial={{ y: 48, opacity: 0, scale: 0.9 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: 36, opacity: 0, scale: 0.94 }}
+                transition={{ duration: 0.36, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
+              />
+              <motion.div
+                className="radarSubGateDialog"
+                initial={{ y: 18, opacity: 0, scale: 0.96 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: 14, opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="radarSubGateHead">
+                  <h2 id="market-sub-title">
+                    {en ? 'Market analytics is for CryptoOne subscribers only' : 'Аналитика маркета только для подписчиков CryptoOne'}
+                  </h2>
+                  <p>
+                    {en
+                      ? 'Subscribe to @cryptoeone to unlock floor charts, Getgems listings, and self-enchant cost insights.'
+                      : 'Подпишись на канал @cryptoeone, чтобы открыть графики флора, лоты Getgems и расчёт себестоимости заточки.'}
+                  </p>
+                </div>
+                {subMessage && <p className="radarSubGateStatus" role="status">{subMessage}</p>}
+                <div className="radarSubGateActions">
+                  <button
+                    type="button"
+                    className="primary"
+                    onClick={() => {
+                      lightHaptic();
+                      const tg = telegramPopup();
+                      if (tg?.openTelegramLink) tg.openTelegramLink(channelInvite);
+                      else window.open(channelInvite, '_blank', 'noopener,noreferrer');
+                    }}
+                  >
+                    {en ? 'Subscribe' : 'Подписаться'}
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary"
+                    disabled={subBusy}
+                    onClick={() => void verifyChannelSubscription()}
+                  >
+                    {subBusy ? (en ? 'Checking…' : 'Проверяем…') : (en ? 'Check subscription' : 'Проверить подписку')}
+                  </button>
+                  <button
+                    type="button"
+                    className="radarSubGateBack"
+                    onClick={() => { lightHaptic(); navigation.back(); }}
+                  >
+                    {en ? 'Back' : 'Назад'}
+                  </button>
+                </div>
+              </motion.div>
             </div>
-            {subMessage && <p className="radarSubGateStatus" role="status">{subMessage}</p>}
-            <div className="radarSubGateActions">
-              <button
-                type="button"
-                className="primary"
-                onClick={() => {
-                  lightHaptic();
-                  const tg = telegramPopup();
-                  if (tg?.openTelegramLink) tg.openTelegramLink(channelInvite);
-                  else window.open(channelInvite, '_blank', 'noopener,noreferrer');
-                }}
-              >
-                {en ? 'Subscribe' : 'Подписаться'}
-              </button>
-              <button
-                type="button"
-                className="secondary"
-                disabled={subBusy}
-                onClick={() => void verifyChannelSubscription()}
-              >
-                {subBusy ? (en ? 'Checking…' : 'Проверяем…') : (en ? 'Check subscription' : 'Проверить подписку')}
-              </button>
-              <button
-                type="button"
-                className="radarSubGateBack"
-                onClick={() => { lightHaptic(); navigation.back(); }}
-              >
-                {en ? 'Back' : 'Назад'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
