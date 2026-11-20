@@ -22,16 +22,30 @@ function lockPage() {
   };
 }
 
-export function useModal(dialog: RefObject<HTMLDialogElement | null>, open: boolean) {
+export function useModal(dialog: RefObject<HTMLDialogElement | null>, open: boolean, allowFallback = false) {
   useLayoutEffect(() => {
     const element = dialog.current;
     if (!open || !element) return;
     const release = lockPage();
-    element.showModal();
+    try {
+      element.showModal();
+    } catch (error) {
+      if (!allowFallback) {
+        release();
+        throw error;
+      }
+      element.dataset.modalFallback = 'true';
+      element.setAttribute('open', '');
+    }
     element.querySelector<HTMLElement>('[data-dialog-title]')?.focus({ preventScroll: true });
     return () => {
-      if (element.open) element.close();
+      if (element.dataset.modalFallback) {
+        element.removeAttribute('open');
+        delete element.dataset.modalFallback;
+      } else if (element.open) {
+        element.close();
+      }
       release();
     };
-  }, [dialog, open]);
+  }, [dialog, open, allowFallback]);
 }

@@ -342,9 +342,8 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
             return <button key={i} type="button" className="buildLoadoutSlot"
               data-filled={Boolean(equipped) || undefined}
               data-locked={locked || undefined}
-              aria-haspopup={locked ? undefined : 'dialog'}
+              aria-haspopup="dialog"
               aria-label={equipped ? ringName(equipped.ring, lang) : locked ? copy('Кольца с 5-го уровня', 'Rings from level 5') : copy('Выбрать кольцо', 'Choose ring') + ' ' + (i + 1)}
-              disabled={locked}
               onClick={() => { lightHaptic(); setPicker({ kind: 'ring', slot: i }); }}>
               {equipped ? <>
                 <GameArt path={ringArt(equipped.ring.id)} size={42}/>
@@ -838,11 +837,11 @@ function BuildPicker({ title, closeLabel, onClose, children }: {
   const ref = useRef<HTMLDialogElement>(null);
   const animation = useRef<Animation | null>(null);
   const titleId = useId();
-  useModal(ref, true);
+  useModal(ref, true, true);
   useLayoutEffect(() => {
     const dialog = ref.current;
     if (!dialog || typeof dialog.animate !== 'function' || buildSheetReduceMotion()) return;
-    animation.current = dialog.animate([{ translate: '0 100%' }, { translate: '0 0' }],
+    animation.current = dialog.animate([{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }],
       { duration: 460, easing: buildSheetEasing });
     return () => animation.current?.cancel();
   }, []);
@@ -850,11 +849,11 @@ function BuildPicker({ title, closeLabel, onClose, children }: {
   function close() {
     const dialog = ref.current;
     if (!dialog || dialog.dataset.closing) return;
-    const from = getComputedStyle(dialog).translate;
+    const from = getComputedStyle(dialog).transform;
     animation.current?.cancel();
     if (typeof dialog.animate !== 'function' || buildSheetReduceMotion()) { onClose(); return; }
     dialog.dataset.closing = 'true';
-    animation.current = dialog.animate([{ translate: from }, { translate: '0 100%' }],
+    animation.current = dialog.animate([{ transform: from }, { transform: 'translateY(100%)' }],
       { duration: 360, easing: buildSheetEasing, fill: 'forwards' });
     animation.current.finished.then(onClose, () => {});
   }

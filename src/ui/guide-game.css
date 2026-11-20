@@ -1376,6 +1376,10 @@ dialog.modal.buildPickerModal[open] {
   box-shadow: 0 -12px 48px #0008;
   animation: none;
 }
+dialog.modal.buildPickerModal[data-modal-fallback] {
+  z-index: 1000;
+  box-shadow: 0 0 0 100vmax #0006;
+}
 dialog.modal.buildPickerModal::backdrop { background: #0006; }
 @media (prefers-reduced-motion: no-preference) {
   .buildPickerModal::backdrop { animation: itemSheetDim 460ms cubic-bezier(.32,.72,0,1) both; }
