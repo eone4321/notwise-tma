@@ -1,8 +1,8 @@
 import { redis } from './redis.js';
 import { getgemsHistory, getgemsItemLink, notAddress, owlCollection, salesFromTrace, tonTransfers, type OwlSale } from './owl-sales-feed.js';
 import { disableBotDelivery, saleSubscribers, salesStart, type SaleScope } from './guide-notifications.js';
-import markets from '../src/features/market-collections.json';
-import stickers from '../src/features/sticker-data.json';
+import markets from '../src/features/market-collections.json' with { type: 'json' };
+import stickers from '../src/features/sticker-data.json' with { type: 'json' };
 import { tonRates, usdtAddress } from './ton-rates.js';
 
 const prefix = 'notwise:owl-sales:v1:';
