@@ -101,9 +101,9 @@
 }
 .heroActions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1.35fr 1fr;
   align-items: stretch;
-  gap: 7px;
+  gap: 8px;
 }
 .gameHero .heroActions > :is(a, button) {
   position: relative;
@@ -140,6 +140,20 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   box-shadow: none;
+}
+.heroActions .heroBuilds, [data-theme="graphite"] .heroActions .heroBuilds {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 22%, var(--game-tile)), var(--game-tile));
+  border: 1px solid color-mix(in srgb, var(--gold) 62%, var(--game-panel-line));
+  color: #ffe8b8;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--gold) 16%, transparent), inset 0 1px 0 rgba(255, 240, 200, 0.16);
+}
+.heroActions .heroBuilds .gameGlyph {
+  color: var(--gold);
+  font-size: 16px;
+}
+.heroActions .heroBuilds:active {
+  border-color: var(--gold);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 30%, var(--game-tile)), var(--game-tile));
 }
 .launchMark {
   display: block;
@@ -1709,3 +1723,31 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .buildEquippedTop small { display: block; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 .buildEquippedEffect { margin: 0; font-size: 12px; color: var(--lavender); line-height: 1.4; }
 .buildEquippedCard .buildPickerLevel { margin: 0; padding: 4px 0 0; background: transparent; }
+
+.buildIconShare {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--gold);
+  font-size: 15px;
+}
+.buildIconShare:active { border-color: var(--gold); }
+.buildSharedNotice {
+  margin: 0;
+  padding: 7px 10px;
+  border-radius: 9px;
+  border: 1px solid color-mix(in srgb, #9fd59b 40%, var(--game-panel-line));
+  background: color-mix(in srgb, #9fd59b 10%, var(--game-tile));
+  color: #9fd59b;
+  font-size: 12px;
+  font-weight: 600;
+}
+.buildPreviewHead { margin-bottom: 4px; }
+.buildShareBody { display: grid; gap: 10px; }
+.buildShareSummary { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.buildShareActions { display: grid; gap: 7px; }
+.buildShareActions > :is(button, a) { width: 100%; min-block-size: 44px; margin: 0; }

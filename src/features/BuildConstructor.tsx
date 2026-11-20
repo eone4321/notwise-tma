@@ -1,16 +1,20 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { battleStats, skillCooldown, skillMana, startingAttribute } from '../domain/combat';
 import { GameArt } from '../ui/GameArt';
 import { GameAttribute, GameGlyph } from '../ui/GameGlyph';
+import { copyLink } from '../ui/copyLink';
 import { useModal } from '../ui/useModal';
 import { lightHaptic } from '../telegram/client';
 import { trackGuide } from './guideAnalytics';
 import { useGuideLocale } from './guideLocale';
+import { guideShareUrl, shareGuide } from './guideProfile';
 import progression from './owl-progression.json';
 import { BattleReadout, skillEffect } from './BattleReadout';
 import {
-  activeAttributes, applyBuildPreset, builds, combatSkills, emptyAttributes, requiredAttributes, ringCatalog,
-  skillAvailable, skillById, statKeys, statLabels, totalAttributes, type StatKey, type BuildState, type Ring,
+  activeAttributes, applyBuildPreset, builds, combatSkills, decodeBuildCode, emptyAttributes, encodeBuildCode,
+  requiredAttributes, ringCatalog, skillAvailable, skillById, statKeys, statLabels, totalAttributes,
+  validateBuild, type StatKey, type BuildState, type Ring,
 } from './combat-builds';
 import { practiceKey, reviewBuild, type PracticeResult } from './combat-analysis';
 
@@ -69,36 +73,39 @@ function replaceSlot<T>(slots: T[], index: number, value: T) {
   return slots.map((slot, i) => i === index ? value : slot);
 }
 
-function validateBuild(state: BuildState): BuildState {
-  const points = { ...state.points };
-  let excess = totalAttributes(points) - (state.budget ?? state.level);
-  for (const stat of [...statKeys].reverse()) {
-    if (excess <= 0) break;
-    const refund = Math.min(points[stat], excess);
-    points[stat] -= refund;
-    excess -= refund;
-  }
-  const next = { ...state, points };
-  return {
-    ...next,
-    rings: next.rings.map(slot => slot && slot.ring.minLevel <= next.level ? slot : null),
-    skills: next.skills.map(slot => slot && skillAvailable(slot.id, next) ? slot : null),
-  };
-}
-
 export function BuildConstructor() {
   const { locale } = useGuideLocale();
   const lang = locale === 'en' ? 1 : 0;
   const copy = (ru: string, en: string) => lang ? en : ru;
-  const [state, setState] = useState(readBuild);
+  const { search } = useLocation();
+  const navigate = useNavigate();
+  const initialShared = useMemo(() => {
+    const token = new URLSearchParams(search).get('build');
+    return token ? decodeBuildCode(token, maxLevel) : null;
+  }, []);
+  const [state, setState] = useState(() => initialShared ?? readBuild());
+  const [sharedBanner, setSharedBanner] = useState(() => Boolean(initialShared));
   const [practice, setPractice] = useState<PracticeResult | 'waiting' | 'error' | null>(null);
   const [comparison, setComparison] = useState<PracticeResult | null>(null);
   const [showAllBuilds, setShowAllBuilds] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const worker = useRef<Worker | null>(null);
 
   useEffect(() => {
     trackGuide('build:open');
   }, []);
+  useEffect(() => {
+    const token = new URLSearchParams(search).get('build');
+    if (!token) return;
+    const decoded = decodeBuildCode(token, maxLevel);
+    if (decoded) {
+      setState(decoded);
+      setSharedBanner(true);
+      setPractice(null);
+      setComparison(null);
+    }
+    navigate('/combat/builds', { replace: true });
+  }, [search, navigate]);
   useEffect(() => {
     try { localStorage.setItem(buildStorage, JSON.stringify(state)); } catch { /* Storage is optional. */ }
   }, [state]);
@@ -206,16 +213,22 @@ export function BuildConstructor() {
           <span className="buildBudgetPill" data-empty={left === 0 || undefined}>
             {left === 0 ? copy('✓ 0 очк.', '✓ 0 pts') : copy(`Свободно: ${left}`, `Free: ${left}`)}
           </span>
+          <button type="button" className="buildIconShare" title={copy('Поделиться сборкой', 'Share build')}
+            aria-label={copy('Поделиться сборкой', 'Share build')} onClick={() => { lightHaptic(); setShareOpen(true); }}>
+            <GameGlyph name="share"/>
+          </button>
           <button type="button" className="buildIconReset" title={copy('Сбросить билд', 'Reset build')}
             aria-label={copy('Сбросить билд', 'Reset build')} onClick={() => {
               lightHaptic();
               resetPractice();
               setComparison(null);
               setBudgetDraft(null);
+              setSharedBanner(false);
               setState(initialBuild());
             }}>↺</button>
         </div>
       </div>
+      {sharedBanner && <p className="buildSharedNotice">✓ {copy('Загружена сборка по ссылке — можешь проверить в боях или подстроить под себя.', 'Shared build loaded — test in duels or tweak stats.')}</p>}
 
       <div className="buildLoadoutStage">
         <div className="buildLoadoutCol">
@@ -325,7 +338,13 @@ export function BuildConstructor() {
     </section>
 
     <section className="card buildPanel buildPreview" aria-labelledby="build-results-title">
-      <h2 id="build-results-title">{copy('Итоги в бою и баланс', 'Combat stats & check')}</h2>
+      <div className="buildHeading buildPreviewHead">
+        <h2 id="build-results-title">{copy('Итоги в бою и баланс', 'Combat stats & check')}</h2>
+        <button type="button" className="buildPillButton" onClick={() => { lightHaptic(); setShareOpen(true); }}>
+          <GameGlyph name="share"/>
+          {copy('Поделиться', 'Share')}
+        </button>
+      </div>
       <BattleReadout stats={results}/>
       <BuildAnalysis state={state} lang={lang}/>
     </section>
@@ -462,7 +481,53 @@ export function BuildConstructor() {
         }}/>}
       </div>
     </BuildPicker>}
+    {shareOpen && <BuildShareDialog state={state} lang={lang} presetName={selectedPreset?.name[lang]}
+      close={() => setShareOpen(false)}/>}
   </div>;
+}
+
+function BuildShareDialog({ state, lang, presetName, close }: {
+  state: BuildState; lang: number; presetName?: string; close: () => void;
+}) {
+  const copy = (ru: string, en: string) => lang ? en : ru;
+  const field = useRef<HTMLInputElement>(null);
+  const [feedback, setFeedback] = useState('');
+  const code = encodeBuildCode(state);
+  const url = `${guideShareUrl().split('?')[0]}?startapp=${code}`;
+  const total = activeAttributes(state);
+  const summary = lang
+    ? `NOT Wise build (${presetName ? `${presetName}, ` : ''}Lv.${state.level}): STR ${total.strength} · AGI ${total.agility} · END ${total.endurance} · WIS ${total.wisdom}`
+    : `Сборка в NOT Wise (${presetName ? `${presetName}, ` : ''}${state.level} ур.): Сил ${total.strength} · Ловк ${total.agility} · Вын ${total.endurance} · Мдр ${total.wisdom}`;
+
+  async function copyUrl() {
+    lightHaptic();
+    const ok = await copyLink(url, field.current);
+    if (ok) trackGuide('build:share_copy');
+    setFeedback(ok ? copy('Ссылка на сборку скопирована.', 'Build link copied.')
+      : copy('Ссылка выделена — нажми «Копировать».', 'Link selected — tap Copy.'));
+  }
+
+  return <BuildPicker title={copy('Поделиться сборкой', 'Share build')} closeLabel={copy('Закрыть', 'Close')} onClose={close}>
+    <div className="buildShareBody">
+      <p className="buildShareSummary">{summary}</p>
+      <label className="field shareLink">
+        <span className="sr-only">{copy('Ссылка на сборку', 'Build link')}</span>
+        <input ref={field} readOnly value={url} onFocus={event => event.currentTarget.select()}/>
+      </label>
+      <div className="buildShareActions">
+        <button className="primary" type="button" onClick={() => {
+          lightHaptic();
+          trackGuide('build:share_send');
+          void shareGuide(url, summary);
+          close();
+        }}>{copy('Отправить в Telegram', 'Send in Telegram')}</button>
+        <button className="secondary" type="button" onClick={() => void copyUrl()}>
+          {copy('Скопировать ссылку', 'Copy link')}
+        </button>
+      </div>
+      {feedback && <p className="supportStatus" role="status">{feedback}</p>}
+    </div>
+  </BuildPicker>;
 }
 
 function AttributeInput({ name, value, onCommit }: { name: string; value: number; onCommit: (value: number) => void }) {

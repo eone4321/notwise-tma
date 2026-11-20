@@ -156,6 +156,131 @@ export function skillAvailable(id: number, { level, points }: BuildState) {
   return !!skill && level >= 2 && points[skill.branch] >= skill.tier;
 }
 
+export function validateBuild(state: BuildState): BuildState {
+  const points = { ...state.points };
+  let excess = totalAttributes(points) - (state.budget ?? state.level);
+  for (const stat of [...statKeys].reverse()) {
+    if (excess <= 0) break;
+    const refund = Math.min(points[stat], excess);
+    points[stat] -= refund;
+    excess -= refund;
+  }
+  const next = { ...state, points };
+  return {
+    ...next,
+    rings: next.rings.map(slot => slot && slot.ring.minLevel <= next.level ? slot : null),
+    skills: next.skills.map(slot => slot && skillAvailable(slot.id, next) ? slot : null),
+  };
+}
+
+function writeVarint(out: number[], value: number) {
+  let v = Math.max(0, Math.floor(value));
+  while (v >= 0x80) {
+    out.push((v & 0x7f) | 0x80);
+    v >>>= 7;
+  }
+  out.push(v);
+}
+
+function readVarint(bytes: Uint8Array, offset: { i: number }): number | null {
+  let result = 0;
+  let shift = 0;
+  while (offset.i < bytes.length && shift < 28) {
+    const byte = bytes[offset.i++];
+    result |= (byte & 0x7f) << shift;
+    if ((byte & 0x80) === 0) return result;
+    shift += 7;
+  }
+  return null;
+}
+
+/** Encode a build into a compact Telegram startapp-safe token (`b_...`). */
+export function encodeBuildCode(state: BuildState): string {
+  const bytes: number[] = [1];
+  writeVarint(bytes, state.level);
+  writeVarint(bytes, state.budget === null ? 0 : state.budget + 1);
+  for (const stat of statKeys) writeVarint(bytes, state.points[stat]);
+  const hasBuffs = totalAttributes(state.buffs) > 0;
+  bytes.push(hasBuffs ? 1 : 0);
+  if (hasBuffs) for (const stat of statKeys) writeVarint(bytes, state.buffs[stat]);
+  for (const slot of state.rings) {
+    if (!slot) { bytes.push(0); continue; }
+    const idx = ringCatalog.findIndex(item => item.id === slot.ring.id);
+    if (idx < 0) bytes.push(0);
+    else bytes.push(idx + 1, Math.min(20, Math.max(0, slot.enchant)));
+  }
+  for (const slot of state.skills) {
+    if (!slot) { bytes.push(0); continue; }
+    bytes.push(slot.id, Math.min(21, Math.max(1, slot.level)));
+  }
+  let binary = '';
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return 'b_' + btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/** Decode a shared build token (`b_...`) back into a validated BuildState. */
+export function decodeBuildCode(code: string, maxLevel = 150): BuildState | null {
+  if (!/^b_[A-Za-z0-9_-]{6,80}$/.test(code)) return null;
+  try {
+    const base64 = code.slice(2).replace(/-/g, '+').replace(/_/g, '/');
+    const pad = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+    const binary = atob(pad);
+    const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+    const cur = { i: 0 };
+    if (bytes[cur.i++] !== 1) return null;
+
+    const level = readVarint(bytes, cur);
+    const budgetRaw = readVarint(bytes, cur);
+    if (!level || level < 1 || level > maxLevel || budgetRaw === null || budgetRaw > 1000) return null;
+    const budget = budgetRaw === 0 ? null : budgetRaw - 1;
+
+    const points = { ...emptyAttributes };
+    for (const stat of statKeys) {
+      const value = readVarint(bytes, cur);
+      if (value === null || value > 999) return null;
+      points[stat] = value;
+    }
+
+    const buffs = { ...emptyAttributes };
+    const hasBuffs = bytes[cur.i++];
+    if (hasBuffs !== 0 && hasBuffs !== 1) return null;
+    if (hasBuffs === 1) {
+      for (const stat of statKeys) {
+        const value = readVarint(bytes, cur);
+        if (value === null || value > 999) return null;
+        buffs[stat] = value;
+      }
+    }
+
+    const rings: (EquippedRing | null)[] = [null, null, null];
+    for (let s = 0; s < 3; s++) {
+      const idx = bytes[cur.i++];
+      if (idx === undefined) return null;
+      if (idx === 0) continue;
+      const ring = ringCatalog[idx - 1];
+      const enchant = bytes[cur.i++];
+      if (!ring || enchant === undefined || enchant > 20) return null;
+      rings[s] = { ring, enchant };
+    }
+
+    const skills: (EquippedSkill | null)[] = [null, null, null];
+    const used = new Set<number>();
+    for (let s = 0; s < 3; s++) {
+      const id = bytes[cur.i++];
+      if (id === undefined) return null;
+      if (id === 0) continue;
+      const skillLevel = bytes[cur.i++];
+      if (!skillById.has(id) || used.has(id) || !skillLevel || skillLevel < 1 || skillLevel > 21) return null;
+      used.add(id);
+      skills[s] = { id, level: skillLevel };
+    }
+
+    return validateBuild({ level, budget, points, buffs, rings, skills });
+  } catch {
+    return null;
+  }
+}
+
 export function applyBuildPreset(build: Build, state: BuildState): BuildState {
   const budget = state.budget ?? state.level;
   const chosen: number[] = [];
