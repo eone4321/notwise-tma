@@ -79,7 +79,11 @@ function enchantValue(raw: string, max: number) {
 function readSavedSkinCalc(): SavedSkinCalc {
   try {
     const key = scopedStorageKey(skinCalcStorage);
-    const raw = JSON.parse(sessionStorage.getItem(key) ?? sessionStorage.getItem(skinCalcStorage) ?? 'null');
+    const rawStr = sessionStorage.getItem(key)
+      ?? localStorage.getItem(key)
+      ?? sessionStorage.getItem(skinCalcStorage)
+      ?? localStorage.getItem(skinCalcStorage);
+    const raw = JSON.parse(rawStr ?? 'null');
     if (raw && typeof raw === 'object' && raw.selection && typeof raw.selection === 'object') {
       const sel: SkinSelection = { ...emptySkinSelection };
       for (const slot of slotOrder) {
@@ -95,7 +99,13 @@ function readSavedSkinCalc(): SavedSkinCalc {
       return { selection: sel, enchant, gear: { rings, artifact, league }, presetId };
     }
   } catch { /* ignore */ }
-  return { selection: { ...emptySkinSelection }, enchant: '', gear: defaultGear, presetId: null };
+  const home = readHomeOwlSkin();
+  return {
+    selection: home.isCustom ? { ...home.selection } : { ...emptySkinSelection },
+    enchant: '',
+    gear: defaultGear,
+    presetId: null,
+  };
 }
 
 function pickRandomTrait(slot: SkinSlotKey, allowEmpty: boolean): string | null {
@@ -135,7 +145,10 @@ export function SkinFarmCalculator({
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(scopedStorageKey(skinCalcStorage), JSON.stringify({ selection, enchant, gear, presetId }));
+      const key = scopedStorageKey(skinCalcStorage);
+      const payload = JSON.stringify({ selection, enchant, gear, presetId });
+      sessionStorage.setItem(key, payload);
+      localStorage.setItem(key, payload);
     } catch { /* ignore */ }
     onSelectionChange?.(selection);
   }, [selection, enchant, gear, presetId, onSelectionChange]);
@@ -187,7 +200,7 @@ export function SkinFarmCalculator({
     setPresetId(null);
   }
 
-  async function lookupSkinById() {
+  async function lookupSkinById(requestClose?: () => void) {
     const id = Number(skinIdInput.replace(/\D/g, ''));
     if (!Number.isInteger(id) || id < 1 || id > 10285) {
       setSkinIdError(copy('Укажи номер от 1 до 10285', 'Enter an ID from 1 to 10285'));
@@ -202,8 +215,10 @@ export function SkinFarmCalculator({
         setSkinIdError(copy('Скин с таким номером не найден', 'Skin ID not found'));
         return;
       }
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       applyPreset(id, found);
-      setPresetModalOpen(false);
+      if (requestClose) requestClose();
+      else setPresetModalOpen(false);
     } catch {
       setSkinIdError(copy('Не удалось загрузить базу скинов', 'Could not load skin rig data'));
     } finally {
@@ -373,9 +388,16 @@ export function SkinFarmCalculator({
           <button type="button" aria-label={copy('Уменьшить заточку', 'Decrease enchant')}
             disabled={enchantLevel <= 0}
             onClick={() => { lightHaptic(); setEnchant(enchantLevel <= 1 ? '' : String(enchantLevel - 1)); }}>−</button>
-          <input aria-label={copy('Уровень заточки скина', 'Skin enchant level')}
-            value={enchant} placeholder="0" inputMode="numeric" maxLength={2}
-            onChange={event => setEnchant(enchantValue(event.target.value, 20))}/>
+          <select
+            className="skinEnchantSelect"
+            aria-label={copy('Выбрать уровень заточки скина', 'Choose skin enchant level')}
+            value={enchantLevel}
+            onChange={event => { lightHaptic(); const v = Number(event.target.value); setEnchant(v > 0 ? String(v) : ''); }}
+          >
+            {Array.from({ length: 21 }, (_, lvl) => (
+              <option key={lvl} value={lvl}>{lvl === 0 ? '0' : `+${lvl}`}</option>
+            ))}
+          </select>
           <button type="button" aria-label={copy('Увеличить заточку', 'Increase enchant')}
             disabled={enchantLevel >= 20}
             onClick={() => { lightHaptic(); setEnchant(String(enchantLevel + 1)); }}>+</button>
@@ -413,9 +435,16 @@ export function SkinFarmCalculator({
             <button type="button" aria-label={copy('Уменьшить заточку колец', 'Decrease ring enchant')}
               disabled={ringLevel <= 0}
               onClick={() => { lightHaptic(); setGear({ ...gear, rings: ringLevel <= 1 ? '' : String(ringLevel - 1) }); }}>−</button>
-            <input aria-label={copy('Сумма заточек колец', 'Total ring enchant')}
-              value={gear.rings} placeholder="0" inputMode="numeric" maxLength={2}
-              onChange={event => setGear({ ...gear, rings: enchantValue(event.target.value, 60) })}/>
+            <select
+              className="skinEnchantSelect"
+              aria-label={copy('Выбрать сумму заточек колец', 'Choose total ring enchant')}
+              value={ringLevel}
+              onChange={event => { lightHaptic(); const v = Number(event.target.value); setGear({ ...gear, rings: v > 0 ? String(v) : '' }); }}
+            >
+              {Array.from({ length: 61 }, (_, lvl) => (
+                <option key={lvl} value={lvl}>{lvl === 0 ? '0' : `+${lvl}`}</option>
+              ))}
+            </select>
             <button type="button" aria-label={copy('Увеличить заточку колец', 'Increase ring enchant')}
               disabled={ringLevel >= 60}
               onClick={() => { lightHaptic(); setGear({ ...gear, rings: String(ringLevel + 1) }); }}>+</button>
@@ -478,7 +507,7 @@ export function SkinFarmCalculator({
       closeLabel={copy('Закрыть', 'Close')}
       onClose={() => setPresetModalOpen(false)}>
       {requestClose => <>
-        <form className="skinIdLookup" onSubmit={event => { event.preventDefault(); void lookupSkinById(); }}>
+        <form className="skinIdLookup" onSubmit={event => { event.preventDefault(); void lookupSkinById(requestClose); }}>
           <input value={skinIdInput} inputMode="numeric" maxLength={5}
             placeholder={copy('№ скина (например 5405)', 'Skin ID (e.g. 5405)')}
             onChange={event => { setSkinIdInput(event.target.value.replace(/\D/g, '')); setSkinIdError(''); }}/>

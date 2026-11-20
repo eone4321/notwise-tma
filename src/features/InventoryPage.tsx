@@ -36,8 +36,7 @@ const marketEggs = marketCollections.find(item => item.id === 'eggs')!;
 const itemMintGram: Readonly<Partial<Record<number, number>>> = publishing.itemMintGram;
 
 export function OwlPage() {
-  const { pathname, state } = useLocation();
-  const keepParent = state?.guideDetail === true;
+  const { pathname } = useLocation();
   const [, , slug] = pathname.split('/');
   const egg = eggs.find(item => pathname === '/owl/' + item.slug);
   const drops = egg ? dropsFor(egg.id) : [];
@@ -46,8 +45,8 @@ export function OwlPage() {
   const isEggIndex = ['/owl', '/owl/shop', '/owl/loot'].includes(pathname);
   return <>
     {!egg && <nav className="choiceBar profileTabs owlTabs" aria-label="Яйца и скины">
-      <Link to="/owl" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isEggIndex ? 'page' : undefined}><GameArt path="/game/items/egg.webp" size={16}/>Яйца</Link>
-      <Link to="/owl/skins" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={slug === 'skins' ? 'page' : undefined}><GameGlyph name="skin"/>Скины и жетоны</Link>
+      <Link to="/owl" replace aria-current={isEggIndex ? 'page' : undefined}><GameArt path="/game/items/egg.webp" size={16}/>Яйца</Link>
+      <Link to="/owl/skins" replace aria-current={slug === 'skins' ? 'page' : undefined}><GameGlyph name="skin"/>Скины и жетоны</Link>
     </nav>}
     {isEggIndex && <>
       <section className="card leanList eggSources">

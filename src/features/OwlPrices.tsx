@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import useEmblaCarousel from 'embla-carousel-react';
+import AutoScroll from 'embla-carousel-auto-scroll';
 import { Price } from './Price';
 import { DetailLink } from '../ui/DetailLink';
 import { artSrc } from '../ui/warmArt';
@@ -28,44 +29,22 @@ const fmtFloor = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
 
 export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}) {
   const { data: market, pending } = collectionMarket.useSnapshot();
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const pauseUntilRef = useRef(0);
-  const draggingRef = useRef(false);
-
-  useEffect(() => {
-    if (only) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    let raf = 0;
-    let carry = 0;
-    let last = performance.now();
-
-    const step = (now: number) => {
-      const dt = Math.min(48, now - last);
-      last = now;
-      const el = scrollerRef.current;
-      if (el && !draggingRef.current && now >= pauseUntilRef.current) {
-        const half = el.scrollWidth / 2;
-        if (half > 0) {
-          carry += (dt / 1000) * 26;
-          if (carry >= 1) {
-            const px = Math.floor(carry);
-            carry -= px;
-            el.scrollLeft += px;
-            if (el.scrollLeft >= half) {
-              el.scrollLeft -= half;
-            }
-          }
-        }
-      }
-      raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [only]);
-
-  const pauseAutoScroll = (ms = 2400) => {
-    pauseUntilRef.current = performance.now() + ms;
-  };
+  const [emblaRef] = useEmblaCarousel(
+    {
+      loop: true,
+      dragFree: true,
+      align: 'start',
+      containScroll: false,
+    },
+    [
+      AutoScroll({
+        speed: 0.85,
+        startDelay: 0,
+        stopOnInteraction: false,
+        stopOnMouseEnter: true,
+      }),
+    ],
+  );
 
   // Subpage single-collection mode stays unchanged
   if (only) {
@@ -102,38 +81,11 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
     );
   }
 
-  // Home screen: "Маркет и графики цен" hero + smooth left-scrolling square collections marquee
-  const renderSquareCard = (item: typeof marqueeCollections[number], dupKey: string) => {
-    const quote = market?.items.find(({ id }) => id === item.id);
-    const floor = quote?.floor ?? 0;
-    const hasPrice = Number.isFinite(floor) && floor > 0;
-    return (
-      <DetailLink
-        key={`${dupKey}-${item.id}`}
-        to={`/collections/charts?slug=${encodeURIComponent(item.slug)}`}
-        className="homeColTile"
-        onClick={() => lightHaptic()}
-      >
-        <span className="homeColSquare">
-          <img src={artSrc(`/brand/collections/${item.id}.png`)} alt="" width="52" height="52" loading="lazy" />
-        </span>
-        <strong className="homeColName">{item.label}</strong>
-        <span className="homeColFloor">
-          {hasPrice ? `от ${fmtFloor.format(floor)}` : (pending && !market ? '…' : '—')}
-          {hasPrice && <img src={artSrc('/brand/tokens/gram.png')} alt="GRAM" width="12" height="12" />}
-        </span>
-      </DetailLink>
-    );
-  };
-
   return (
     <section className="card homeMarketHub" aria-labelledby="owl-market">
       <DetailLink to="/collections/charts" className="homeMarketBanner" onClick={() => lightHaptic()}>
         <div className="homeMarketBannerHead">
-          <div>
-            <h2 id="owl-market">Маркет и графики цен</h2>
-            <p>Флоры Getgems по заточке +0…+20 и живые лоты</p>
-          </div>
+          <h2 id="owl-market">Маркет и графики цен</h2>
           <span className="homeMarketCta">
             <span>Открыть</span>
             <span className="rowChevron" aria-hidden="true" />
@@ -173,25 +125,35 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
       </DetailLink>
 
       <div
-        ref={scrollerRef}
-        className="homeColMarquee"
+        ref={emblaRef}
+        className="homeColMarquee emblaViewport"
         aria-label="Коллекции NOT Wise на Getgems"
         aria-busy={!market && pending}
-        onTouchStart={() => { draggingRef.current = true; pauseAutoScroll(2800); }}
-        onTouchEnd={() => { draggingRef.current = false; pauseAutoScroll(2200); }}
-        onTouchCancel={() => { draggingRef.current = false; pauseAutoScroll(2200); }}
-        onPointerDown={e => { if (e.pointerType !== 'touch') { draggingRef.current = true; pauseAutoScroll(2800); } }}
-        onPointerUp={() => { draggingRef.current = false; pauseAutoScroll(2200); }}
-        onPointerCancel={() => { draggingRef.current = false; pauseAutoScroll(2200); }}
-        onWheel={() => pauseAutoScroll(2400)}
       >
-        <div className="homeColTrack">
-          <div className="homeColGroup">
-            {marqueeCollections.map(item => renderSquareCard(item, 'a'))}
-          </div>
-          <div className="homeColGroup" aria-hidden="true">
-            {marqueeCollections.map(item => renderSquareCard(item, 'b'))}
-          </div>
+        <div className="homeColTrack emblaContainer">
+          {marqueeCollections.map(item => {
+            const quote = market?.items.find(({ id }) => id === item.id);
+            const floor = quote?.floor ?? 0;
+            const hasPrice = Number.isFinite(floor) && floor > 0;
+            return (
+              <div className="emblaSlide" key={item.id}>
+                <DetailLink
+                  to={`/collections/charts?slug=${encodeURIComponent(item.slug)}`}
+                  className="homeColTile"
+                  onClick={() => lightHaptic()}
+                >
+                  <span className="homeColSquare">
+                    <img src={artSrc(`/brand/collections/${item.id}.png`)} alt="" width="56" height="56" draggable={false} />
+                  </span>
+                  <strong className="homeColName">{item.label}</strong>
+                  <span className="homeColFloor">
+                    {hasPrice ? `от ${fmtFloor.format(floor)}` : (pending && !market ? '…' : '—')}
+                    {hasPrice && <img src={artSrc('/brand/tokens/gram.png')} alt="GRAM" width="12" height="12" draggable={false} />}
+                  </span>
+                </DetailLink>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

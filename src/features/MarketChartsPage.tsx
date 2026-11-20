@@ -102,8 +102,12 @@ export function MarketChartsPage() {
   const railRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const activeEl = railRef.current?.querySelector<HTMLElement>('.radarEnchantChip.isActive');
-    activeEl?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    const rail = railRef.current;
+    if (!rail || enchant === null) return;
+    const activeEl = rail.querySelector<HTMLElement>('.radarEnchantChip.isActive');
+    if (!activeEl) return;
+    const targetLeft = Math.max(0, activeEl.offsetLeft - (rail.clientWidth - activeEl.offsetWidth) / 2);
+    rail.scrollTo({ left: targetLeft, behavior: 'smooth' });
   }, [enchant, selectedSlug]);
 
   const { data: explorer, pending: explorerPending } = explorerMarket.useSnapshot();
@@ -548,7 +552,7 @@ export function MarketChartsPage() {
           <InteractiveFloorChart
             points={seriesPoints}
             range={range}
-            loading={historyLoading && !seriesPoints.length}
+            loading={(historyLoading || (explorerPending && !explorer)) && seriesPoints.length === 0}
             canSwitchToCurve={Boolean(asset.enchantable && curvePoints.length >= 2)}
             onSwitchToCurve={() => { lightHaptic(); setChartMode('curve'); }}
           />
@@ -757,7 +761,14 @@ function InteractiveFloorChart({
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   if (loading) {
-    return <div className="radarChartEmpty"><p>Загружаем историю флора…</p></div>;
+    return (
+      <div className="radarChartSkeleton" role="status" aria-label="Загружаем график">
+        <div className="radarSkeletonBars" aria-hidden="true">
+          <span /><span /><span /><span /><span />
+        </div>
+        <p>Загружаем график…</p>
+      </div>
+    );
   }
 
   if (points.length === 0) {

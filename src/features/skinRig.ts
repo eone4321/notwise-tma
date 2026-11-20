@@ -212,7 +212,10 @@ export function readHomeOwlSkin(): { selection: SkinSelection; isCustom: boolean
   return { selection: { ...defaultHomeOwlSkin }, isCustom: false };
 }
 
+let cloudHydrated = false;
+
 export function saveHomeOwlSkin(selection: SkinSelection | null): void {
+  cloudHydrated = true;
   const key = scopedStorageKey(homeOwlStorageKey);
   const cloud = telegramCloudStorage();
   try {
@@ -230,8 +233,15 @@ export function saveHomeOwlSkin(selection: SkinSelection | null): void {
 }
 
 export function hydrateHomeOwlFromCloud(onHydrate: (selection: SkinSelection) => void): void {
+  if (cloudHydrated) return;
+  // Never overwrite an already saved local custom skin with a potentially stale CloudStorage read.
+  if (readHomeOwlSkin().isCustom) {
+    cloudHydrated = true;
+    return;
+  }
   const cloud = telegramCloudStorage();
   if (!cloud?.getItem) return;
+  cloudHydrated = true;
   try {
     cloud.getItem(homeOwlStorageKey, (err, value) => {
       if (err || !value) return;
