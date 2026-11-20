@@ -2037,3 +2037,494 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   .skinQuickChip { gap: 3px; padding: 4px; font-size: 10px; }
   .skinQuickChip img { width: 21px; height: 21px; }
 }
+
+/* Squads & Siege interactive UX */
+.squadNav { margin-bottom: 10px; }
+.squadNav a { font-size: 12.5px; }
+
+.squadIntroCard { overflow: hidden; }
+.squadScrollBanner {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin: -4px auto 8px;
+  max-width: 280px;
+}
+.squadHeroImg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 112px;
+  object-fit: contain;
+}
+.squadScrollBanner h2 {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding-bottom: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  font-weight: 900;
+  color: #fff3d2;
+  text-shadow: 0 2px 6px rgba(10, 8, 16, 0.9);
+  pointer-events: none;
+}
+.squadIntroLead {
+  margin: 0 0 2px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.squadKpiGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.squadKpiTile {
+  display: grid;
+  gap: 2px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+}
+.squadKpiTile span { font-size: 11.5px; color: var(--muted); }
+.squadKpiTile strong { font-size: 14px; color: var(--gold); font-weight: 800; }
+.squadKpiTile small { font-size: 11px; color: var(--muted); line-height: 1.3; }
+
+.siegeCalcCard .mediaHeading { margin-bottom: 12px; }
+.siegeCalcBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: stretch;
+}
+.siegeSpField {
+  display: grid;
+  gap: 5px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+}
+.siegeSpField > span { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.siegeSpInputRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.siegeSpInputRow input {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-panel);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.siegeSpInputRow input:focus { outline: none; border-color: var(--gold); }
+.siegeSpUnit { font-size: 12px; font-weight: 700; color: var(--muted); flex: none; }
+
+.siegePowerOutput {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: linear-gradient(155deg, rgba(255, 211, 128, 0.14), rgba(140, 109, 212, 0.1));
+  border: 1px solid rgba(255, 211, 128, 0.4);
+}
+.siegePowerOutput small { font-size: 11px; color: var(--muted); }
+.siegePowerOutput strong { font-size: 17px; color: var(--gold); font-weight: 900; }
+.siegePowerOutput span { font-size: 10.5px; color: var(--muted); line-height: 1.25; }
+
+.siegePresetRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+.siegePresetRow button {
+  margin: 0;
+  width: auto;
+  min-height: 32px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.siegePresetRow button[aria-pressed="true"] {
+  border-color: var(--gold);
+  background: rgba(255, 211, 128, 0.16);
+  color: var(--gold);
+}
+
+.siegeTipsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.siegeTipTile {
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+}
+.siegeTipTile strong { display: block; font-size: 12.5px; margin-bottom: 3px; color: var(--text); }
+.siegeTipTile p { margin: 0; font-size: 11.5px; color: var(--muted); line-height: 1.38; }
+
+.squadMapHeader h2 { margin: 0 0 3px; }
+.squadMapSub { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); }
+
+.squadMapFilters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.squadMapFilters button {
+  margin: 0;
+  width: 100%;
+  min-height: 34px;
+  padding: 4px 5px;
+  border-radius: 9px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.squadMapFilters button[aria-pressed="true"] {
+  border-color: var(--lavender);
+  background: rgba(170, 144, 247, 0.2);
+  color: var(--text);
+}
+
+.squadMapStage {
+  padding: 10px 8px 8px;
+  border-radius: 12px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  margin-bottom: 10px;
+}
+.squadMapCard .squadMap g[data-reward-group="coins"] polygon {
+  fill: rgba(255, 198, 92, 0.22);
+  stroke: rgba(255, 211, 128, 0.65);
+}
+.squadMapCard .squadMap g[data-reward-group="silver"] polygon {
+  fill: rgba(160, 174, 224, 0.24);
+  stroke: rgba(196, 208, 248, 0.65);
+}
+.squadMapCard .squadMap g[data-reward-group="stats"] polygon {
+  fill: rgba(94, 209, 152, 0.25);
+  stroke: rgba(140, 238, 187, 0.72);
+}
+.squadMapCard .squadMap g[data-dim="true"] polygon { opacity: 0.24; }
+.squadMapCard .squadMap g[data-dim="true"] circle { opacity: 0.24; }
+.squadMapCard .squadMap g[data-neighbor="true"] polygon {
+  stroke: #b59dff;
+  stroke-width: 1.8;
+  stroke-dasharray: 3 1.5;
+  opacity: 1;
+}
+.squadMapCard .squadMap g[data-neighbor="true"] circle { fill: #d7c8ff; opacity: 1; }
+.squadMapCard .squadMap g[aria-pressed="true"] polygon {
+  fill: rgba(255, 211, 128, 0.78);
+  stroke: #fff1b8;
+  stroke-width: 2;
+  opacity: 1;
+}
+.squadMapCard .squadMap g[aria-pressed="true"] circle { fill: #fff6d1; opacity: 1; }
+
+.squadMapLegend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 12px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.squadMapLegend span { display: inline-flex; align-items: center; gap: 5px; }
+.legendDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.legendDot.isSelected { background: #ffd380; border: 1px solid #fff1b8; }
+.legendDot.isNeighbor { background: transparent; border: 1.5px dashed #b59dff; }
+.legendDot.isCoins { background: rgba(255, 198, 92, 0.55); border: 1px solid rgba(255, 211, 128, 0.8); }
+.legendDot.isStats { background: rgba(94, 209, 152, 0.55); border: 1px solid rgba(140, 238, 187, 0.8); }
+
+.squadMapInspector {
+  padding: 10px 11px;
+  border-radius: 12px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.squadMapInspectorHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.squadMapInspectorHead strong { display: block; font-size: 15px; }
+.squadMapInspectorHead small { display: block; font-size: 11.5px; color: var(--muted); }
+.squadMapRewardPill {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+  padding: 5px 9px;
+  border-radius: 9px;
+  background: var(--game-panel);
+  border: 1px solid var(--game-panel-line);
+  flex: none;
+}
+.squadMapRewardPill span { font-size: 10.5px; color: var(--muted); }
+.squadMapRewardPill strong { display: inline-flex; align-items: center; gap: 4px; font-size: 13.5px; color: var(--gold); }
+
+.squadMapTags { display: flex; flex-wrap: wrap; gap: 6px; }
+.squadMapBadge {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+.squadMapBadge.isEntry {
+  background: rgba(94, 209, 152, 0.16);
+  color: #8eeebb;
+  border: 1px solid rgba(94, 209, 152, 0.42);
+}
+.squadMapBadge.isInner {
+  background: rgba(170, 144, 247, 0.14);
+  color: #cbbaff;
+  border: 1px solid rgba(170, 144, 247, 0.34);
+}
+
+.squadNeighborsBar { display: grid; gap: 5px; }
+.squadNeighborsLabel { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.squadNeighborChips { display: flex; flex-wrap: wrap; gap: 6px; }
+.squadNeighborChip {
+  margin: 0;
+  width: auto;
+  min-height: 30px;
+  padding: 4px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(181, 157, 255, 0.45);
+  background: rgba(181, 157, 255, 0.12);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.squadNeighborChip:hover { border-color: var(--gold); }
+
+.siegeSectionHead h2 { margin: 0 0 3px; }
+.siegeSectionHead p { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); }
+
+.siegeTimelineStrip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  margin-bottom: 9px;
+  font-size: 11px;
+  color: var(--muted);
+  overflow-x: auto;
+}
+.siegeTimelineStrip span:not(.timelineArrow) {
+  padding: 3px 6px;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+.siegeTimelineStrip span.isActive {
+  background: rgba(255, 211, 128, 0.2);
+  color: var(--gold);
+  font-weight: 800;
+}
+.timelineArrow { opacity: 0.45; font-size: 11px; }
+
+.siegeStageTabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.siegeStageTabs button {
+  margin: 0;
+  width: 100%;
+  min-height: 38px;
+  padding: 5px 6px;
+  border-radius: 9px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.siegeStageTabs button[aria-selected="true"] {
+  border-color: var(--gold);
+  background: rgba(255, 211, 128, 0.16);
+  color: var(--gold);
+}
+
+.siegeStagePanel {
+  padding: 11px;
+  border-radius: 11px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  margin-bottom: 10px;
+}
+.siegeStagePanel h3 { margin: 0 0 9px; font-size: 14px; color: var(--text); }
+.siegeStageList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+}
+.siegeStageList li {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+.siegeStageIcon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--game-panel);
+  font-size: 14px;
+}
+.siegeStageList strong { display: block; font-size: 13px; color: var(--text); margin-bottom: 1px; }
+.siegeStageList p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.4; }
+.siegeChatBtn { margin-top: 2px; }
+
+.ritualCard .mediaHeading { margin-bottom: 11px; }
+.ritualStatsRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 10px;
+}
+.ritualStatsRow > div {
+  padding: 8px 9px;
+  border-radius: 10px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  display: grid;
+  gap: 2px;
+}
+.ritualStatsRow span { font-size: 11px; color: var(--muted); }
+.ritualStatsRow strong { font-size: 13px; color: var(--gold); font-weight: 800; }
+
+.ritualMeterBox {
+  padding: 10px 11px;
+  border-radius: 11px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  margin-bottom: 10px;
+  display: grid;
+  gap: 8px;
+}
+.ritualMeterHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+}
+.ritualStatus { font-size: 11.5px; font-weight: 700; }
+.ritualStatus.isReady { color: #8eeebb; }
+.ritualStatus.isPending { color: var(--gold); }
+
+.ritualProgressTrack {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--game-panel);
+  overflow: visible;
+}
+.ritualProgressFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #b59dff, #ffd380);
+  transition: width 180ms ease;
+}
+.ritualProgressFill.isReady {
+  background: linear-gradient(90deg, #5ed198, #8eeebb);
+}
+.ritualThresholdMark {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: #fff;
+  opacity: 0.75;
+  border-radius: 2px;
+}
+
+.ritualPresetBar {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+}
+.ritualPresetBar button {
+  margin: 0;
+  width: 100%;
+  min-height: 30px;
+  border-radius: 7px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-panel);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ritualPresetBar button[aria-pressed="true"] {
+  border-color: var(--lavender);
+  background: rgba(170, 144, 247, 0.22);
+  color: var(--text);
+}
+
+.ritualNotes {
+  display: grid;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.ritualNotes p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.ritualNotes b { color: var(--text); }
+.ritualShopLink { margin-top: 2px; }
+
+@media (max-width: 360px) {
+  .siegeCalcBody, .siegeTipsGrid { grid-template-columns: 1fr; }
+  .squadMapFilters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ritualStatsRow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .siegeStageTabs button { font-size: 11px; padding-inline: 4px; }
+}
