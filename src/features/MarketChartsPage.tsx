@@ -679,17 +679,33 @@ export function MarketChartsPage() {
             </span>
           </div>
           {en ? (
-            <p>
-              Expected self-enchant cost to <b>+{enchant}</b> (including burn risk):{' '}
-              <b>≈ {fmtNum.format(buyVsEnchant.expectedGram)} GRAM</b>{' '}
-              <span>(~{buyVsEnchant.expectedRings} {buyVsEnchant.isSkin ? 'skins' : 'rings'} and ~{buyVsEnchant.expectedScrolls} scrolls).</span>
-            </p>
+            buyVsEnchant.survivalChance >= 99.99 ? (
+              <p>
+                Self-enchant cost to <b>+{enchant}</b> (100% safe, no burn risk):{' '}
+                <b>≈ {fmtNum.format(buyVsEnchant.expectedGram)} GRAM</b>{' '}
+                <span>(1 {buyVsEnchant.isSkin ? 'skin' : 'ring'} + {enchant} {enchant === 1 ? 'scroll' : 'scrolls'}).</span>
+              </p>
+            ) : (
+              <p>
+                Expected self-enchant cost to <b>+{enchant}</b> with burn risk from +4 ({Math.round(buyVsEnchant.survivalChance)}% survival from +0):{' '}
+                <b>≈ {fmtNum.format(buyVsEnchant.expectedGram)} GRAM</b>{' '}
+                <span>(~{buyVsEnchant.expectedRings} {buyVsEnchant.isSkin ? 'skins' : 'rings'} and ~{buyVsEnchant.expectedScrolls} scrolls).</span>
+              </p>
+            )
           ) : (
-            <p>
-              Себестоимость заточки до <b>+{enchant}</b> с учётом риска сгорания:{' '}
-              <b>≈ {fmtNum.format(buyVsEnchant.expectedGram)} GRAM</b>{' '}
-              <span>(~{buyVsEnchant.expectedRings} {buyVsEnchant.isSkin ? 'скинов' : 'колец'} и ~{buyVsEnchant.expectedScrolls} заточек).</span>
-            </p>
+            buyVsEnchant.survivalChance >= 99.99 ? (
+              <p>
+                Себестоимость заточки до <b>+{enchant}</b> (100% шанс, без сгорания):{' '}
+                <b>≈ {fmtNum.format(buyVsEnchant.expectedGram)} GRAM</b>{' '}
+                <span>(1 {buyVsEnchant.isSkin ? 'скин' : 'кольцо'} + {enchant} {enchant === 1 ? 'заточка' : 'заточки'}).</span>
+              </p>
+            ) : (
+              <p>
+                Себестоимость заточки до <b>+{enchant}</b> с учётом риска сгорания с +4 (шанс дойти с +0: {Math.round(buyVsEnchant.survivalChance)}%):{' '}
+                <b>≈ {fmtNum.format(buyVsEnchant.expectedGram)} GRAM</b>{' '}
+                <span>(~{buyVsEnchant.expectedRings} {buyVsEnchant.isSkin ? 'скинов' : 'колец'} и ~{buyVsEnchant.expectedScrolls} заточек).</span>
+              </p>
+            )
           )}
           <p className="radarInsightPrices">
             {en ? (

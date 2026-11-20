@@ -140,10 +140,28 @@ export function SkinFarmCalculator({
   const [presetId, setPresetId] = useState<number | null>(saved.presetId);
   const [activeTab, setActiveTab] = useState<SkinSlotKey>('body');
   const [presetModalOpen, setPresetModalOpen] = useState(false);
+  const [leagueOpen, setLeagueOpen] = useState(false);
+  const leagueRef = useRef<HTMLDivElement>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [skinIdInput, setSkinIdInput] = useState('');
   const [skinIdError, setSkinIdError] = useState('');
   const [lookingUpId, setLookingUpId] = useState(false);
+
+  useEffect(() => {
+    if (!leagueOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (leagueRef.current && !leagueRef.current.contains(event.target as Node)) setLeagueOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setLeagueOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [leagueOpen]);
 
   useEffect(() => {
     const syncHome = () => setHomeSkin(readHomeOwlSkin().selection);
@@ -482,26 +500,83 @@ export function SkinFarmCalculator({
           <span className="wardrobeTogglePill">{gear.artifact ? '✓ +10%' : '+10%'}</span>
         </button>
 
-        <label className="wardrobeLeagueBlock">
+        <div className="wardrobeLeagueBlock" ref={leagueRef}>
           <span className="wardrobeLeagueHead">
             <span>🏆 {copy('Боевая лига', 'Battle league')}</span>
             {gear.league > 0 && <strong>+{gear.league}%</strong>}
           </span>
-          <select className="wardrobeLeagueSelect" value={gear.league} onChange={event => {
-            lightHaptic();
-            const league = Number(event.target.value);
-            setGear(current => ({ ...current, league }));
-          }}>
-            <option value={0}>{copy('Без бонуса лиги', 'No league bonus')}</option>
-            {battleLeagues.map(([name, mmr], index) => (
-              <option key={name} value={index + 1}>
-                {name} · {mmr.toLocaleString(locale)} MMR
-              </option>
-            ))}
-          </select>
-        </label>
+          <button
+            type="button"
+            className="wardrobeLeagueTrigger"
+            aria-haspopup="listbox"
+            aria-expanded={leagueOpen}
+            onClick={() => { lightHaptic(); setLeagueOpen(open => !open); }}
+          >
+            <span className="wardrobeLeagueTriggerText">
+              {gear.league > 0 ? (() => {
+                const [name, mmr] = battleLeagues[gear.league - 1];
+                return <>
+                  <strong>{name}</strong>
+                  <small>{mmr.toLocaleString(locale)}+ MMR</small>
+                </>;
+              })() : (
+                <strong>{copy('Без бонуса лиги', 'No league bonus')}</strong>
+              )}
+            </span>
+            <span className="wardrobeLeagueTriggerRight">
+              <span className="wardrobeLeaguePct">+{gear.league}%</span>
+              <span className="wardrobeLeagueCaret" aria-hidden="true">{leagueOpen ? '▴' : '▾'}</span>
+            </span>
+          </button>
+          {leagueOpen && (
+            <div className="wardrobeLeagueMenu" role="listbox" aria-label={copy('Выбор боевой лиги', 'Choose battle league')}>
+              <button
+                type="button"
+                role="option"
+                className="wardrobeLeagueOption"
+                aria-selected={gear.league === 0}
+                onClick={() => {
+                  lightHaptic();
+                  setGear(current => ({ ...current, league: 0 }));
+                  setLeagueOpen(false);
+                }}
+              >
+                <span className="wardrobeLeagueOptionName">
+                  <strong>{copy('Без бонуса лиги', 'No league bonus')}</strong>
+                </span>
+                <span className="wardrobeLeagueOptionMeta">+0%</span>
+              </button>
+              {battleLeagues.map(([name, mmr], index) => {
+                const value = index + 1;
+                const selected = gear.league === value;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    role="option"
+                    className="wardrobeLeagueOption"
+                    aria-selected={selected}
+                    onClick={() => {
+                      lightHaptic();
+                      setGear(current => ({ ...current, league: value }));
+                      setLeagueOpen(false);
+                    }}
+                  >
+                    <span className="wardrobeLeagueOptionName">
+                      <strong>{name}</strong>
+                      <small>{mmr.toLocaleString(locale)}+ MMR</small>
+                    </span>
+                    <span className="wardrobeLeagueOptionMeta">+{value}%</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-        <DetailLink to="/assets/gear" className="textLink skinEnchantLink">{copy('Таблица шансов заточки', 'Enchant odds table')}</DetailLink>
+        <div className="skinEnchantLinkRow">
+          <DetailLink to="/assets/gear" className="textLink skinEnchantLink">{copy('Таблица шансов заточки', 'Enchant odds table')}</DetailLink>
+        </div>
       </div>
     </details>
 

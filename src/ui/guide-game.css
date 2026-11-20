@@ -2253,7 +2253,8 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 }
 .skinEnchantStep input:focus,
 .skinEnchantSelect:focus { outline: none; border-color: var(--gold); }
-.skinEnchantLink { justify-self: start; width: fit-content; max-width: 100%; margin-top: 2px; min-height: 38px; font-size: 12.5px; }
+.skinEnchantLinkRow { display: flex; align-items: center; justify-content: flex-start; }
+.skinEnchantLink { display: inline-flex; width: fit-content; max-width: 100%; margin-top: 2px; min-height: 36px; font-size: 12.5px; flex: 0 0 auto; }
 
 .skinOptionRow { grid-template-columns: 32px minmax(0, 1fr) auto; }
 .skinOptionIcon { display: grid; place-items: center; width: 28px; height: 28px; font-size: 18px; }
@@ -3302,18 +3303,103 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 }
 .wardrobeLeagueHead span { color: var(--muted); font-weight: 700; }
 .wardrobeLeagueHead strong { color: var(--gold); font-size: 12.5px; }
-.wardrobeLeagueSelect {
+.wardrobeLeagueTrigger {
   width: 100%;
   min-width: 0;
   min-height: 42px;
-  padding: 6px 9px;
+  margin: 0;
+  padding: 7px 10px;
   border: 1px solid var(--game-panel-line);
-  border-radius: 8px;
+  border-radius: 9px;
   background: var(--game-tile);
   color: var(--text);
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  text-align: start;
 }
-.wardrobeLeagueSelect:focus-visible { outline: 2px solid var(--gold); }
+.wardrobeLeagueTrigger[aria-expanded="true"] {
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--game-panel-line));
+}
+.wardrobeLeagueTrigger:focus-visible { outline: 2px solid var(--gold); }
+.wardrobeLeagueTriggerText {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+.wardrobeLeagueTriggerText strong { font-size: 13.5px; font-weight: 700; color: var(--text); }
+.wardrobeLeagueTriggerText small { font-size: 11.5px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.wardrobeLeagueTriggerRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+.wardrobeLeaguePct {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.wardrobeLeagueCaret {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1;
+}
+.wardrobeLeagueMenu {
+  display: grid;
+  gap: 3px;
+  max-height: 228px;
+  overflow-y: auto;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  overscroll-behavior: contain;
+}
+.wardrobeLeagueOption {
+  width: 100%;
+  margin: 0;
+  min-height: 36px;
+  padding: 6px 9px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  text-align: start;
+}
+.wardrobeLeagueOption:hover {
+  background: color-mix(in srgb, var(--game-panel) 80%, transparent);
+}
+.wardrobeLeagueOption[aria-selected="true"] {
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--game-panel-line));
+  background: color-mix(in srgb, var(--gold) 14%, var(--game-panel));
+}
+.wardrobeLeagueOptionName {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+.wardrobeLeagueOptionName strong { font-size: 13px; font-weight: 700; }
+.wardrobeLeagueOptionName small { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.wardrobeLeagueOptionMeta {
+  flex: none;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
 .wardrobeLeagueRail {
   display: flex;
   gap: 6px;
