@@ -28,7 +28,10 @@ import {
   type RingTier,
 } from './marketCatalog';
 import { useGuideLocale } from './guideLocale';
-import { lightHaptic } from '../telegram/client';
+import { lightHaptic, telegramPopup } from '../telegram/client';
+import { channelInvite } from '../domain/guide-links';
+import { authData, profileRequest } from './guideProfile';
+import { useGuideNavigation } from '../app/navigation';
 
 type HistoryRange = '24h' | '7d' | '30d' | 'all';
 type ChartMode = 'history' | 'curve';
@@ -159,6 +162,62 @@ export function MarketChartsPage() {
   const { data: explorer, pending: explorerPending } = explorerMarket.useSnapshot();
   const { data: itemsSnap } = itemMarket.useSnapshot();
   const { data: tokens } = tokenMarket.useSnapshot();
+
+  const navigation = useGuideNavigation();
+  const [subState, setSubState] = useState<'checking' | 'granted' | 'required'>(() => {
+    try {
+      const raw = JSON.parse(sessionStorage.getItem('notwise.guide.market-sub.v1') ?? 'null');
+      if (raw?.ok === true && typeof raw.ts === 'number' && Date.now() - raw.ts < 15 * 60_000) return 'granted';
+    } catch { /* ignore */ }
+    return authData() ? 'checking' : 'required';
+  });
+  const [subBusy, setSubBusy] = useState(false);
+  const [subMessage, setSubMessage] = useState('');
+
+  useEffect(() => {
+    if (subState !== 'checking') return;
+    if (!authData()) {
+      setSubState('required');
+      return;
+    }
+    const abort = new AbortController();
+    profileRequest<{ subscribed?: boolean }>({ action: 'check_subscription' }, abort.signal)
+      .then(res => {
+        if (res?.subscribed) {
+          try { sessionStorage.setItem('notwise.guide.market-sub.v1', JSON.stringify({ ok: true, ts: Date.now() })); } catch { /* ignore */ }
+          setSubState('granted');
+        } else {
+          setSubState('required');
+        }
+      })
+      .catch(() => {
+        if (!abort.signal.aborted) setSubState('required');
+      });
+    return () => abort.abort();
+  }, [subState]);
+
+  async function verifyChannelSubscription() {
+    lightHaptic();
+    if (!authData()) {
+      setSubMessage(en ? 'Open the guide in Telegram to verify your @cryptoeone subscription.' : 'Открой гайд в Telegram, чтобы проверить подписку на @cryptoeone.');
+      return;
+    }
+    setSubBusy(true);
+    setSubMessage('');
+    try {
+      const res = await profileRequest<{ subscribed?: boolean }>({ action: 'check_subscription' });
+      if (res?.subscribed) {
+        try { sessionStorage.setItem('notwise.guide.market-sub.v1', JSON.stringify({ ok: true, ts: Date.now() })); } catch { /* ignore */ }
+        setSubState('granted');
+      } else {
+        setSubMessage(en ? 'Subscription to @cryptoeone not found yet. Subscribe and tap "Check subscription".' : 'Подписка на @cryptoeone пока не найдена. Подпишись на канал и нажми «Проверить подписку».');
+      }
+    } catch {
+      setSubMessage(en ? 'Could not verify subscription right now. Please try again in a moment.' : 'Не удалось проверить подписку. Попробуй ещё раз через пару секунд.');
+    } finally {
+      setSubBusy(false);
+    }
+  }
 
   useEffect(() => {
     explorerMarket.refresh();
@@ -311,14 +370,14 @@ export function MarketChartsPage() {
       .map(b => ({ enchant: b.enchant, floor: b.floor, count: b.count }));
   }, [asset.enchantable, assetBuckets]);
 
-  // Buy vs Enchant insight for rings & skins at +1..+12 using live Getgems prices of base item + enchant scroll
+  // Buy vs Enchant insight for rings & skins at +1..+12 using the exact +0 floor of THIS model + enchanter scroll floor
   const buyVsEnchant = useMemo(() => {
     const isRing = asset.category === 'rings';
     const isSkin = asset.slug === 'owl-skin';
     if ((!isRing && !isSkin) || enchant === null || enchant <= 0 || enchant > 12 || !liveFloor) return null;
-    const baseFloor = assetBuckets?.get(0)?.floor
-      ?? (isSkin ? cols?.items.find(c => c.id === 'skins')?.floor : itemsSnap?.items.find(i => i.id === asset.slug)?.floor)
-      ?? 0;
+    // Use ONLY the +0 floor of this specific model (never fall back to overall market floor across higher enchants).
+    const baseFloor = assetBuckets?.get(0)?.floor ?? 0;
+    if (!(baseFloor > 0)) return null;
     const scrollSlug = isSkin ? 'scroll-enchant-skin' : 'scroll-enchant-ring';
     const scrollFloor = bucketsBySlug.get(scrollSlug)?.get(0)?.floor
       ?? itemsSnap?.items.find(i => i.id === scrollSlug)?.floor ?? 0;
@@ -326,7 +385,7 @@ export function MarketChartsPage() {
     if (!calc) return null;
     const diffPct = ((liveFloor - calc.expectedGram) / calc.expectedGram) * 100;
     return { ...calc, baseFloor, scrollFloor, diffPct, isSkin };
-  }, [asset, enchant, liveFloor, assetBuckets, cols, itemsSnap, bucketsBySlug]);
+  }, [asset, enchant, liveFloor, assetBuckets, itemsSnap, bucketsBySlug]);
 
   // Lots sorted (supports "Все" across all enchant levels + single enchant level)
   const sortedLots: (ExplorerLot & { enchant: number })[] = useMemo(() => {
@@ -841,6 +900,63 @@ export function MarketChartsPage() {
       {/* Info Bottom-Sheet */}
       {infoOpen && (
         <MarketInfoSheet en={en} onClose={() => setInfoOpen(false)} />
+      )}
+
+      {/* CryptoOne Subscription Gate */}
+      {subState === 'required' && (
+        <div
+          className="radarSheetBackdrop radarSubGateBackdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="market-sub-title"
+        >
+          <div className="radarSheetPanel radarSubGatePanel">
+            <div className="radarSheetHandle" aria-hidden="true" />
+            <div className="radarSubGateHead">
+              <img src="/brand/cryptoone-channel.jpg" alt="" width="44" height="44" className="radarSubGateAvatar" />
+              <div>
+                <h2 id="market-sub-title">
+                  {en ? 'Market analytics is for CryptoOne subscribers only' : 'Аналитика маркета только для подписчиков CryptoOne'}
+                </h2>
+                <p>
+                  {en
+                    ? 'Subscribe to @cryptoeone to unlock floor charts, Getgems listings, and self-enchant cost insights.'
+                    : 'Подпишись на канал @cryptoeone, чтобы открыть графики флора, лоты Getgems и расчёт себестоимости заточки.'}
+                </p>
+              </div>
+            </div>
+            {subMessage && <p className="radarSubGateStatus" role="status">{subMessage}</p>}
+            <div className="radarSubGateActions">
+              <button
+                type="button"
+                className="primary"
+                onClick={() => {
+                  lightHaptic();
+                  const tg = telegramPopup();
+                  if (tg?.openTelegramLink) tg.openTelegramLink(channelInvite);
+                  else window.open(channelInvite, '_blank', 'noopener,noreferrer');
+                }}
+              >
+                {en ? 'Subscribe' : 'Подписаться'}
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                disabled={subBusy}
+                onClick={() => void verifyChannelSubscription()}
+              >
+                {subBusy ? (en ? 'Checking…' : 'Проверяем…') : (en ? 'Check subscription' : 'Проверить подписку')}
+              </button>
+              <button
+                type="button"
+                className="radarSubGateBack"
+                onClick={() => { lightHaptic(); navigation.back(); }}
+              >
+                {en ? 'Back' : 'Назад'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

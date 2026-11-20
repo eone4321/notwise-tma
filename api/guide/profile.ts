@@ -318,6 +318,8 @@ export default async function handler(request: Request) {
       return json({ ok: true });
     }
     if (action === 'check_subscription') {
+      const allowed = await redis(['SET', namespace + 'sub-check:' + id, '1', 'NX', 'EX', 2]).catch(() => 'OK');
+      if (!allowed) return json({ error: 'rate_limited' }, 429);
       const subscribed = await channelMember(id, token).catch(() => null);
       return subscribed === null ? json({ error: 'subscription_unavailable' }, 503) : json({ subscribed });
     }

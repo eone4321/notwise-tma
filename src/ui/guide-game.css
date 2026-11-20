@@ -3539,7 +3539,86 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   width: 100%;
 }
 .settingsResetDanger,
-[data-theme="graphite"] .settingsResetDanger {
+[data-theme="graphite"] .settingsVersionCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 16px;
+}
+.settingsVersionLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.settingsVersionBadge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--gold) 42%, var(--game-panel-line));
+  background: color-mix(in srgb, var(--gold) 14%, var(--game-panel));
+  color: var(--gold);
+  font-size: 12.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.radarSubGateBackdrop {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.radarSubGatePanel {
+  padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  display: grid;
+  gap: 14px;
+}
+.radarSubGateHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.radarSubGateAvatar {
+  flex: none;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid color-mix(in srgb, var(--gold) 35%, var(--game-panel-line));
+}
+.radarSubGateHead h2 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  line-height: 1.25;
+  color: var(--text);
+}
+.radarSubGateHead p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.radarSubGateStatus {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gold) 12%, var(--game-panel));
+  border: 1px solid color-mix(in srgb, var(--gold) 34%, var(--game-panel-line));
+  color: var(--text);
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+.radarSubGateActions {
+  display: grid;
+  gap: 8px;
+}
+.radarSubGateBack {
+  margin: 0;
+  min-height: 38px;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.settingsResetDanger {
   background: #d94848;
   border-color: #f26d6d;
   color: #fff;
