@@ -332,7 +332,7 @@ export function MarketChartsPage() {
   useEffect(() => {
     const controller = new AbortController();
     const startedAt = performance.now();
-    const minLoaderMs = 420;
+    const minLoaderMs = 900;
     let timer = 0;
     setHistoryLoading(true);
     const enc = asset.enchantable ? (enchant === null ? 'all' : String(enchant)) : '0';
@@ -615,35 +615,66 @@ export function MarketChartsPage() {
           </div>
 
           <div className="radarPriceRow">
-            <div className="radarPriceMain">
-              {liveFloor ? (
-                <>
-                  <strong className="radarFloorVal">
-                    {fmtNum.format(liveFloor)}
-                    <span className="radarCurrency">GRAM</span>
-                  </strong>
-                  {gramUsd && (
-                    <span className="radarUsdVal">≈ {fmtUsd.format(liveFloor * gramUsd)}</span>
-                  )}
-                </>
+            <AnimatePresence mode="wait" initial={false}>
+              {historyLoading ? (
+                <motion.div
+                  key="price-skeleton"
+                  className="radarPriceRowInner"
+                  initial={{ opacity: 0.4 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <div className="radarPriceMain">
+                    <span className="radarShimmerPill isFloor" aria-hidden="true" />
+                    <span className="radarShimmerPill isUsd" aria-hidden="true" />
+                  </div>
+                  <div className="radarBadges">
+                    <span className="radarShimmerPill isBadge" aria-hidden="true" />
+                    <span className="radarShimmerPill isBadge" aria-hidden="true" />
+                  </div>
+                </motion.div>
               ) : (
-                <strong className="radarFloorVal radarFloorEmpty">
-                  {explorerPending && !explorer ? (en ? 'Loading…' : 'Загрузка…') : (en ? 'No lots' : 'Нет лотов')}
-                </strong>
+                <motion.div
+                  key="price-live"
+                  className="radarPriceRowInner"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <div className="radarPriceMain">
+                    {liveFloor ? (
+                      <>
+                        <strong className="radarFloorVal">
+                          {fmtNum.format(liveFloor)}
+                          <span className="radarCurrency">GRAM</span>
+                        </strong>
+                        {gramUsd && (
+                          <span className="radarUsdVal">≈ {fmtUsd.format(liveFloor * gramUsd)}</span>
+                        )}
+                      </>
+                    ) : (
+                      <strong className="radarFloorVal radarFloorEmpty">
+                        {explorerPending && !explorer ? (en ? 'Loading…' : 'Загрузка…') : (en ? 'No lots' : 'Нет лотов')}
+                      </strong>
+                    )}
+                  </div>
+                  <div className="radarBadges">
+                    {periodChange !== null && chartMode === 'history' && (
+                      <span className={`radarDelta ${periodChange > 0 ? 'isUp' : periodChange < 0 ? 'isDown' : ''}`}>
+                        {periodChange > 0 ? '+' : ''}{periodChange.toFixed(1)}%
+                      </span>
+                    )}
+                    {typeof liveCount === 'number' && liveCount > 0 && (
+                      <span className="radarLotsBadge">
+                        {asset.slug.startsWith('col:') ? `${fmtInt.format(liveCount)} NFT` : pluralLots(liveCount, en)}
+                      </span>
+                    )}
+                  </div>
+                </motion.div>
               )}
-            </div>
-            <div className="radarBadges">
-              {periodChange !== null && chartMode === 'history' && (
-                <span className={`radarDelta ${periodChange > 0 ? 'isUp' : periodChange < 0 ? 'isDown' : ''}`}>
-                  {periodChange > 0 ? '+' : ''}{periodChange.toFixed(1)}%
-                </span>
-              )}
-              {typeof liveCount === 'number' && liveCount > 0 && (
-                <span className="radarLotsBadge">
-                  {asset.slug.startsWith('col:') ? `${fmtInt.format(liveCount)} NFT` : pluralLots(liveCount, en)}
-                </span>
-              )}
-            </div>
+            </AnimatePresence>
           </div>
         </div>
 
@@ -714,27 +745,39 @@ export function MarketChartsPage() {
         <div className="radarStatsRow">
           <div>
             <small>{chartMode === 'curve' ? (en ? 'Min (+0)' : 'Мин. (+0)') : `${en ? 'Min' : 'Мин.'} (${activeRangeLabel})`}</small>
-            <strong>
-              {chartMode === 'curve'
-                ? (curvePoints.length ? `${formatGramCompact(Math.min(...curvePoints.map(p => p.floor)), en)} GRAM` : '—')
-                : (statMin ? `${formatGramCompact(statMin, en)} GRAM` : '—')}
-            </strong>
+            {historyLoading ? (
+              <span className="radarShimmerPill isStat" aria-hidden="true" />
+            ) : (
+              <strong className="radarStatValueFade">
+                {chartMode === 'curve'
+                  ? (curvePoints.length ? `${formatGramCompact(Math.min(...curvePoints.map(p => p.floor)), en)} GRAM` : '—')
+                  : (statMin ? `${formatGramCompact(statMin, en)} GRAM` : '—')}
+              </strong>
+            )}
           </div>
           <div>
             <small>{chartMode === 'curve' ? (en ? 'Max enchant' : 'Макс. заточка') : `${en ? 'Max' : 'Макс.'} (${activeRangeLabel})`}</small>
-            <strong>
-              {chartMode === 'curve'
-                ? (curvePoints.length ? `${formatGramCompact(Math.max(...curvePoints.map(p => p.floor)), en)} GRAM` : '—')
-                : (statMax ? `${formatGramCompact(statMax, en)} GRAM` : '—')}
-            </strong>
+            {historyLoading ? (
+              <span className="radarShimmerPill isStat" aria-hidden="true" />
+            ) : (
+              <strong className="radarStatValueFade">
+                {chartMode === 'curve'
+                  ? (curvePoints.length ? `${formatGramCompact(Math.max(...curvePoints.map(p => p.floor)), en)} GRAM` : '—')
+                  : (statMax ? `${formatGramCompact(statMax, en)} GRAM` : '—')}
+              </strong>
+            )}
           </div>
           <div>
             <small>{asset.slug.startsWith('col:') ? (en ? 'Minted' : 'Выпущено') : (en ? 'Listed' : 'В продаже')}</small>
-            <strong>
-              {typeof liveCount === 'number' && liveCount > 0
-                ? (asset.slug.startsWith('col:') ? `${fmtInt.format(liveCount)} NFT` : pluralLots(liveCount, en))
-                : '0'}
-            </strong>
+            {historyLoading ? (
+              <span className="radarShimmerPill isStat" aria-hidden="true" />
+            ) : (
+              <strong className="radarStatValueFade">
+                {typeof liveCount === 'number' && liveCount > 0
+                  ? (asset.slug.startsWith('col:') ? `${fmtInt.format(liveCount)} NFT` : pluralLots(liveCount, en))
+                  : '0'}
+              </strong>
+            )}
           </div>
         </div>
       </section>
@@ -1019,30 +1062,6 @@ function InteractiveFloorChart({
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
-  if (loading) {
-    return (
-      <div className="radarChartSkeleton" role="status" aria-label={en ? 'Loading chart' : 'Загружаем график'}>
-        <div className="radarSkeletonBars" aria-hidden="true">
-          <span /><span /><span /><span /><span />
-        </div>
-        <p>{en ? 'Loading chart…' : 'Загружаем график…'}</p>
-      </div>
-    );
-  }
-
-  if (points.length === 0) {
-    return (
-      <div className="radarChartEmpty">
-        <p>{en ? 'No data for this enchant level in the selected range.' : 'Нет данных по этому уровню заточки за выбранный период.'}</p>
-        {canSwitchToCurve && (
-          <button type="button" className="radarInlineAction" onClick={onSwitchToCurve}>
-            {en ? `View prices by enchant level (+0…+${maxActiveEnchant})` : `Смотреть цены по уровням заточки (+0…+${maxActiveEnchant})`}
-          </button>
-        )}
-      </div>
-    );
-  }
-
   const width = 320;
   const height = 148;
   const padX = 12;
@@ -1052,8 +1071,8 @@ function InteractiveFloorChart({
   const innerH = height - padTop - padBottom;
 
   const floors = points.map(p => p.floor);
-  const minVal = Math.min(...floors);
-  const maxVal = Math.max(...floors);
+  const minVal = points.length ? Math.min(...floors) : 0;
+  const maxVal = points.length ? Math.max(...floors) : 0;
   const span = maxVal - minVal || Math.max(minVal * 0.12, 1);
   const yMin = Math.max(0, minVal - span * 0.15);
   const yMax = maxVal + span * 0.15;
@@ -1088,8 +1107,49 @@ function InteractiveFloorChart({
   };
 
   return (
-    <div className="radarChartBox">
-      {active && (
+    <AnimatePresence mode="wait" initial={false}>
+      {loading ? (
+        <motion.div
+          key="chart-skeleton"
+          className="radarChartSkeleton"
+          role="status"
+          aria-label={en ? 'Loading chart' : 'Загружаем график'}
+          initial={{ opacity: 0.45 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="radarSkeletonBars" aria-hidden="true">
+            <span /><span /><span /><span /><span />
+          </div>
+          <p>{en ? 'Loading chart…' : 'Загружаем график…'}</p>
+        </motion.div>
+      ) : points.length === 0 ? (
+        <motion.div
+          key="chart-empty"
+          className="radarChartEmpty"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <p>{en ? 'No data for this enchant level in the selected range.' : 'Нет данных по этому уровню заточки за выбранный период.'}</p>
+          {canSwitchToCurve && (
+            <button type="button" className="radarInlineAction" onClick={onSwitchToCurve}>
+              {en ? `View prices by enchant level (+0…+${maxActiveEnchant})` : `Смотреть цены по уровням заточки (+0…+${maxActiveEnchant})`}
+            </button>
+          )}
+        </motion.div>
+      ) : (
+        <motion.div
+          key="chart-live"
+          className="radarChartBox"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {active && (
         <div className="radarScrubTooltip">
           <strong>{fmtNum.format(active.pt.floor)} GRAM</strong>
           <span>{formatShortTime(active.pt.ts, range, en)}{active.pt.count > 0 ? ` · ${pluralLots(active.pt.count, en)}` : ''}</span>
@@ -1165,17 +1225,19 @@ function InteractiveFloorChart({
         )}
       </svg>
 
-      {points.length === 1 && (
-        <div className="radarSinglePointNote">
-          <span>{en ? 'Only one price point available so far.' : 'Пока доступна одна точка цены.'}</span>
-          {canSwitchToCurve && (
-            <button type="button" className="radarInlineAction" onClick={onSwitchToCurve}>
-              {en ? 'By enchant level →' : 'По уровням заточки →'}
-            </button>
+          {points.length === 1 && (
+            <div className="radarSinglePointNote">
+              <span>{en ? 'Only one price point available so far.' : 'Пока доступна одна точка цены.'}</span>
+              {canSwitchToCurve && (
+                <button type="button" className="radarInlineAction" onClick={onSwitchToCurve}>
+                  {en ? 'By enchant level →' : 'По уровням заточки →'}
+                </button>
+              )}
+            </div>
           )}
-        </div>
+        </motion.div>
       )}
-    </div>
+    </AnimatePresence>
   );
 }
 

@@ -5100,8 +5100,53 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 
 
 /* Chart Shimmer Loader (fixed height to prevent layout shift on open) */
+.radarPriceRowInner {
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+}
+.radarShimmerPill {
+  display: inline-block;
+  border-radius: 8px;
+  background: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--game-panel) 92%, var(--text)) 25%,
+    color-mix(in srgb, var(--gold) 18%, var(--game-tile)) 50%,
+    color-mix(in srgb, var(--game-panel) 92%, var(--text)) 75%
+  );
+  background-size: 220% 100%;
+  animation: radarShimmerSweep 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+.radarShimmerPill.isFloor {
+  width: 128px;
+  height: 28px;
+}
+.radarShimmerPill.isUsd {
+  width: 68px;
+  height: 14px;
+  margin-top: 2px;
+}
+.radarShimmerPill.isBadge {
+  width: 56px;
+  height: 22px;
+  border-radius: 999px;
+}
+.radarShimmerPill.isStat {
+  width: 70px;
+  height: 18px;
+  margin-top: 3px;
+}
+.radarStatValueFade {
+  animation: radarChartFadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .radarChartSkeleton {
-  min-height: 154px;
+  position: relative;
+  overflow: hidden;
+  min-height: 162px;
   border-radius: 12px;
   background: var(--game-tile);
   border: 1px solid var(--game-panel-line);
@@ -5110,6 +5155,15 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   align-content: center;
   gap: 10px;
   padding: 16px;
+}
+.radarChartSkeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 211, 128, 0.07) 50%, transparent 70%);
+  background-size: 220% 100%;
+  animation: radarShimmerSweep 1.7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
 }
 .radarChartSkeleton p {
   margin: 0;
@@ -5126,18 +5180,22 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .radarSkeletonBars span {
   width: 8px;
   border-radius: 4px;
-  background: linear-gradient(180deg, rgba(255, 204, 119, 0.7), rgba(255, 204, 119, 0.15));
-  animation: radarBarPulse 1.15s ease-in-out infinite;
+  background: linear-gradient(180deg, rgba(255, 204, 119, 0.72), rgba(255, 204, 119, 0.16));
+  animation: radarBarPulse 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 .radarSkeletonBars span:nth-child(1) { height: 18px; animation-delay: 0s; }
-.radarSkeletonBars span:nth-child(2) { height: 30px; animation-delay: 0.12s; }
-.radarSkeletonBars span:nth-child(3) { height: 22px; animation-delay: 0.24s; }
-.radarSkeletonBars span:nth-child(4) { height: 38px; animation-delay: 0.36s; }
-.radarSkeletonBars span:nth-child(5) { height: 44px; animation-delay: 0.48s; }
+.radarSkeletonBars span:nth-child(2) { height: 30px; animation-delay: 0.15s; }
+.radarSkeletonBars span:nth-child(3) { height: 22px; animation-delay: 0.3s; }
+.radarSkeletonBars span:nth-child(4) { height: 38px; animation-delay: 0.45s; }
+.radarSkeletonBars span:nth-child(5) { height: 44px; animation-delay: 0.6s; }
 
 @keyframes radarBarPulse {
-  0%, 100% { opacity: 0.35; transform: scaleY(0.85); }
+  0%, 100% { opacity: 0.32; transform: scaleY(0.84); }
   50% { opacity: 1; transform: scaleY(1); }
+}
+@keyframes radarShimmerSweep {
+  0% { background-position: 160% 0; }
+  100% { background-position: -60% 0; }
 }
 
 
