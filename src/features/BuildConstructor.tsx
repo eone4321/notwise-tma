@@ -17,6 +17,32 @@ import {
   validateBuild, type StatKey, type BuildState, type Ring,
 } from './combat-builds';
 import { practiceKey, reviewBuild, type PracticeResult } from './combat-analysis';
+import { OwlSkinCanvas } from './OwlSkinCanvas';
+import {
+  emptySkinSelection, findTrait, skinPresets, skinRarityForSelection, type SkinSelection,
+} from './skinRig';
+
+const defaultCombatOwl: SkinSelection =
+  skinPresets.find(preset => preset.id === 7895)?.selection ?? { ...emptySkinSelection, body: 'Golden', chest: 'NOT_Chain', glasses: 'Las_vegas' };
+
+function readCombatOwlSkin(): SkinSelection {
+  try {
+    const raw = JSON.parse(sessionStorage.getItem('notwise.guide.skin-calc.v1') ?? 'null');
+    if (raw && typeof raw === 'object' && raw.selection && typeof raw.selection === 'object') {
+      const next: SkinSelection = { ...emptySkinSelection };
+      let hasAny = false;
+      for (const slot of ['body', 'chest', 'hat', 'glasses', 'eyes'] as const) {
+        const val = raw.selection[slot];
+        if (typeof val === 'string' && findTrait(slot, val)) {
+          next[slot] = val;
+          hasAny = true;
+        }
+      }
+      if (hasAny) return next;
+    }
+  } catch { /* fallback */ }
+  return defaultCombatOwl;
+}
 
 type Picker = { kind: 'ring' | 'skill'; slot: number };
 const maxLevel = progression.current.length - 1;
@@ -145,6 +171,8 @@ export function BuildConstructor() {
       state.rings.every((slot, i) => slot?.ring.id === preset.rings[i]?.ring.id && slot?.enchant === preset.rings[i]?.enchant) &&
       state.skills.every((slot, i) => slot?.id === preset.skills[i]?.id && slot?.level === preset.skills[i]?.level);
   })?.id, [state]);
+  const [combatOwl] = useState<SkinSelection>(readCombatOwlSkin);
+  const owlRarity = skinRarityForSelection(combatOwl);
 
   const [budgetDraft, setBudgetDraft] = useState<string | null>(null);
   const [picker, setPicker] = useState<Picker | null>(null);
@@ -215,10 +243,6 @@ export function BuildConstructor() {
           <span className="buildBudgetPill" data-empty={left === 0 || undefined}>
             {left === 0 ? copy('✓ 0 очк.', '✓ 0 pts') : copy(`Свободно: ${left}`, `Free: ${left}`)}
           </span>
-          <button type="button" className="buildIconShare" title={copy('Поделиться сборкой', 'Share build')}
-            aria-label={copy('Поделиться сборкой', 'Share build')} onClick={() => { lightHaptic(); setShareOpen(true); }}>
-            <GameGlyph name="share"/>
-          </button>
           <button type="button" className="buildIconReset" title={copy('Сбросить билд', 'Reset build')}
             aria-label={copy('Сбросить билд', 'Reset build')} onClick={() => {
               lightHaptic();
@@ -255,8 +279,8 @@ export function BuildConstructor() {
         </div>
 
         <div className="buildLoadoutHero">
-          <div className="buildLoadoutOwl">
-            <GameArt path="/game/skins/7895.png" size={104}/>
+          <div className="buildLoadoutOwl" data-rarity={owlRarity}>
+            <OwlSkinCanvas selection={combatOwl} size={132}/>
           </div>
           <a href="#build-results-title" className="buildLoadoutStatus" data-ok={warningCount === 0 || undefined}
             onClick={event => {
@@ -291,6 +315,11 @@ export function BuildConstructor() {
           })}
         </div>
       </div>
+
+      <button type="button" className="secondary buildShareHeroBtn" onClick={() => { lightHaptic(); setShareOpen(true); }}>
+        <GameGlyph name="share"/>
+        <span>{copy('Поделиться сборкой', 'Share this build')}</span>
+      </button>
 
       <div className="buildStatGrid" role="group" aria-label={copy('Распределение очков', 'Attribute points')}>
         {statKeys.map(stat => {
