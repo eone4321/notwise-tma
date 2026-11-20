@@ -1,4 +1,4 @@
-import { getgemsItemLink } from './owl-sales-feed.js';
+import { itemCollectionMarketUrl, itemIdToSlug } from '../src/domain/item-market-links.js';
 import { redis } from './redis.js';
 import collections from '../src/features/market-collections.js';
 import stickers from '../src/features/sticker-data.js';
@@ -8,9 +8,16 @@ const api = 'https://api.getgems.io/public-api/v1';
 const addresses = [...collections, ...stickers.collectionByAlbum.flatMap((address, index) =>
   address ? [{ id: 'album-' + index, address }] : [])];
 const itemsCollection = collections.find(row => row.id === 'items')!.address;
-const snapshotKey = 'notwise:getgems:market:v1';
+const snapshotKey = 'notwise:getgems:market:v2';
 const lockKey = snapshotKey + ':lock';
 const interval = 15 * 60_000;
+const freshWindow = 20 * 60_000;
+
+const webHeaders: HeadersInit = {
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9',
+};
 
 type CollectionQuote = {
   id: string; address: string; floor: number | null; supply: number | null; updatedAt: string | null; available: boolean;
@@ -19,8 +26,11 @@ type Listing = { id: string; floor: number; href: string };
 type ItemSource = 'getgems' | 'toncenter' | 'getgems-on-chain';
 type ItemsSnapshot = { items: Listing[]; status: 'ready' | 'stale' | 'unavailable'; updatedAt?: string; source?: ItemSource };
 type MarketSnapshot = { collections: CollectionQuote[]; items: ItemsSnapshot; attemptedAt: number };
-type TonItem = { address?: string; metadata?: { image?: string; name?: string };
-  sale?: { market?: { address?: string }; price?: { currency_type?: string; decimals?: number; value?: string } } };
+type TonItem = {
+  address?: string;
+  metadata?: { image?: string; name?: string };
+  sale?: { market?: { address?: string }; price?: { currency_type?: string; decimals?: number; value?: string } };
+};
 
 let memory: MarketSnapshot | null = null;
 let refreshInFlight: Promise<MarketSnapshot | null> | null = null;
@@ -65,26 +75,58 @@ function nameToSlug(name: unknown): string | undefined {
   if (n.includes('flask') && n.includes('full')) return 'flask-full';
 }
 
-function itemSlug(image: unknown, name: unknown) {
+function itemSlug(image: unknown, name: unknown, contentUri?: unknown) {
   if (typeof image === 'string') {
-    const match = /^https:\/\/cdn\.notwise\.co\/nft\/items\/img\/([\w-]+)\.(?:png|webp)(?:[?#]|$)/i.exec(image);
+    const match = /\/items\/img\/([\w-]+)\.(?:png|webp)(?:[?#]|$)/i.exec(image);
     if (match?.[1]) return match[1].toLowerCase();
+  }
+  if (typeof contentUri === 'string') {
+    const match = /\/items\/(\d+)\//i.exec(contentUri);
+    if (match?.[1]) {
+      const slug = itemIdToSlug[Number(match[1])];
+      if (slug) return slug;
+    }
   }
   return nameToSlug(name);
 }
 
-function addPrice(prices: Map<string, Listing>, image: unknown, name: unknown, nano: unknown, nft: unknown) {
-  const id = itemSlug(image, name);
+function addPrice(prices: Map<string, Listing>, image: unknown, name: unknown, nano: unknown, nft: unknown, contentUri?: unknown) {
+  const id = itemSlug(image, name, contentUri);
   if (!id || typeof nano !== 'string' || !/^\d{1,24}$/.test(nano) ||
       typeof nft !== 'string' || !/^(?:[A-Za-z0-9_-]{48}|0:[0-9a-f]{64})$/i.test(nft)) return;
   const floor = Number(nano) / 1e9;
   if (floor > 0 && floor < (prices.get(id)?.floor ?? Infinity)) {
-    prices.set(id, { id, floor, href: getgemsItemLink(nft, itemsCollection) });
+    prices.set(id, { id, floor, href: itemCollectionMarketUrl(itemsCollection, id) });
   }
+}
+
+async function fetchGetgemsWebStats(address: string): Promise<{ floor: number | null; supply: number | null } | null> {
+  const response = await fetch(`https://getgems.io/collection/${address}`, {
+    headers: webHeaders,
+    signal: AbortSignal.timeout(7000),
+  });
+  if (!response.ok) return null;
+  const html = await response.text();
+  const match = /<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/.exec(html);
+  if (!match?.[1]) return null;
+  const rootQuery = JSON.parse(match[1])?.props?.pageProps?.gqlCache?.ROOT_QUERY;
+  if (!rootQuery || typeof rootQuery !== 'object') return null;
+  const statsKey = Object.keys(rootQuery).find(key => key.startsWith('alphaNftCollectionStats('));
+  const stats = statsKey ? rootQuery[statsKey] : null;
+  if (!stats || typeof stats.floorPrice !== 'number' || !Number.isFinite(stats.floorPrice) || stats.floorPrice < 0) {
+    return null;
+  }
+  const supply = Number.isSafeInteger(stats.itemsCount) && stats.itemsCount >= 0 ? stats.itemsCount as number : null;
+  return { floor: stats.floorPrice > 0 ? stats.floorPrice : null, supply };
 }
 
 async function collectionQuote(entry: typeof addresses[number], previous?: CollectionQuote): Promise<CollectionQuote> {
   try {
+    // Getgems SSR stats match the live marketplace floor; public-api basic-info can lag behind actual listings.
+    const web = await fetchGetgemsWebStats(entry.address).catch(() => null);
+    if (web) {
+      return { ...entry, floor: web.floor, supply: web.supply, available: true, updatedAt: new Date().toISOString() };
+    }
     const response = await fetch(`${api}/collection/basic-info/${entry.address}`, { signal: AbortSignal.timeout(5500) });
     if (!response.ok) throw new Error('Collection unavailable');
     const result = (await response.json())?.response;
@@ -158,10 +200,11 @@ async function onChainListings(supply: number | null) {
 }
 
 type TonCenterMeta = { token_info?: { type?: string; image?: string; name?: string }[] };
-type TonCenterItem = { address: string; on_sale?: boolean; sale_contract_address?: string };
+type TonCenterItem = { address: string; on_sale?: boolean; sale_contract_address?: string; content?: { uri?: string } };
 type TonCenterSale = {
   type?: string; address?: string; nft_address?: string; marketplace_address?: string;
   details?: { is_complete?: boolean; full_price?: string };
+  nft_item?: { content?: { uri?: string } };
 };
 
 async function toncenterJson<T>(url: URL, token: string): Promise<T> {
@@ -174,7 +217,7 @@ async function toncenterListings(token: string, supply: number | null) {
   const base = 'https://toncenter.com/api/v3/nft/';
   const pageSize = 1000;
   const limit = supply === null ? 6 : Math.ceil(supply / pageSize) + 2;
-  const listed = new Map<string, { address: string; image?: string; name?: string }>();
+  const listed = new Map<string, { address: string; image?: string; name?: string; contentUri?: string }>();
   const seen = new Set<string>();
   let finished = false;
   for (let page = 0; page < limit; page++) {
@@ -187,7 +230,9 @@ async function toncenterListings(token: string, supply: number | null) {
       seen.add(row.address);
       if (!row.on_sale || !row.sale_contract_address) continue;
       const meta = data.metadata?.[row.address]?.token_info?.find(entry => entry.type === 'nft_items');
-      listed.set(row.sale_contract_address.toLowerCase(), { address: row.address, image: meta?.image, name: meta?.name });
+      listed.set(row.sale_contract_address.toLowerCase(), {
+        address: row.address, image: meta?.image, name: meta?.name, contentUri: row.content?.uri,
+      });
     }
     if (data.nft_items.length < pageSize) { finished = true; break; }
   }
@@ -206,7 +251,14 @@ async function toncenterListings(token: string, supply: number | null) {
       const item = listed.get(sale.address.toLowerCase());
       if (!item || sale.nft_address?.toLowerCase() !== item.address.toLowerCase()) continue;
       const meta = data.metadata?.[item.address]?.token_info?.find(entry => entry.type === 'nft_items');
-      addPrice(prices, item.image ?? meta?.image, item.name ?? meta?.name, sale.details.full_price, item.address);
+      addPrice(
+        prices,
+        item.image ?? meta?.image,
+        item.name ?? meta?.name,
+        sale.details.full_price,
+        item.address,
+        item.contentUri ?? sale.nft_item?.content?.uri,
+      );
     }
   }
   return [...prices.values()];
@@ -258,8 +310,9 @@ async function refresh(previous: MarketSnapshot | null) {
       return previous?.items.updatedAt ? { ...previous.items, status: 'stale' as const } : { items: [], status: 'unavailable' as const };
     });
     const remaining = addresses.filter(row => row.id !== 'items');
-    for (let i = 0; i < remaining.length; i += 8) {
-      rows.push(...await Promise.all(remaining.slice(i, i + 8).map(fetchQuote)));
+    for (let i = 0; i < remaining.length; i += 4) {
+      if (i) await new Promise(resolve => setTimeout(resolve, 120));
+      rows.push(...await Promise.all(remaining.slice(i, i + 4).map(fetchQuote)));
     }
     const items = await itemsTask;
     const byId = new Map([itemQuote, ...rows].map(row => [row.id, row]));
@@ -291,12 +344,12 @@ export async function refreshMarket() {
 export async function collectionQuotes(): Promise<CollectionQuote[]> {
   const snapshot = await market();
   return (snapshot?.collections ?? []).map(row => ({
-    ...row, available: row.available && !!row.updatedAt && Date.now() - Date.parse(row.updatedAt) < interval,
+    ...row, available: row.available && !!row.updatedAt && Date.now() - Date.parse(row.updatedAt) < freshWindow,
   }));
 }
 
 export async function itemQuotes(): Promise<ItemsSnapshot> {
   const result = (await market())?.items;
   if (!result) return { items: [], status: 'unavailable' };
-  return result.updatedAt && Date.now() - Date.parse(result.updatedAt) >= interval ? { ...result, status: 'stale' } : result;
+  return result.updatedAt && Date.now() - Date.parse(result.updatedAt) >= freshWindow ? { ...result, status: 'stale' } : result;
 }

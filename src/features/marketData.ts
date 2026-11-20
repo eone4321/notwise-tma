@@ -81,7 +81,7 @@ export const tokenMarket = resource<{items: TokenQuote[]}>('/api/market/tokens',
   }),
 }));
 
-export const collectionMarket = resource<Collections>('/api/market/collections?schema=2', 300_000, (old, next) => ({
+export const collectionMarket = resource<Collections>('/api/market/collections?schema=3', 120_000, (old, next) => ({
   items: next.items.map(item => {
     const previous = old?.items.find(row => row.id === item.id);
     if (item.available !== false) return item;
@@ -97,7 +97,7 @@ export const itemMarket = resource<{
   updatedAt?: string;
   source?: 'getgems' | 'toncenter' | 'getgems-on-chain';
   mintQuotes?: Record<string, number>;
-}>('/api/market/items?schema=4', 120_000, (old, next) =>
+}>('/api/market/items?schema=5', 120_000, (old, next) =>
   next.status === 'unavailable' && old?.items.length ? { ...old, status: 'stale' } : next);
 
 export function startMarketUpdates() {

@@ -19,6 +19,7 @@ import shopItems from './shop-data.json';
 import skinParts from './skin-parts.json';
 import { SkinFarmCalculator } from './SkinFarmCalculator';
 import { emptySkin } from './skin-examples';
+import { itemCollectionMarketUrl } from '../domain/item-market-links';
 
 const eggs = [
   { id: 17, slug: 'mystery', file: 'egg.webp', name: 'Загадочное яйцо', note: 'Также выпадает из капсул', source: 'Лавка или капсулы', reward: 'Еда, лекарства, оформление, обычный жетон скина и чиллер.' },
@@ -32,7 +33,6 @@ const eggs = [
 type Egg = typeof eggs[number];
 
 const marketEggs = marketCollections.find(item => item.id === 'eggs')!;
-const itemsMarketUrl = 'https://getgems.io/collection/' + marketCollections.find(item => item.id === 'items')!.address;
 const itemMintGram: Readonly<Partial<Record<number, number>>> = publishing.itemMintGram;
 
 export function OwlPage() {
@@ -335,9 +335,13 @@ function InventoryRow({ item, id, collectionFloor, collectionStale }: { item: Ca
   const level = item.minLevel ?? offer?.required_level;
   const price = item.price ?? (offer && { value: offer.price, currency: offer.currency as Currency });
   const floor = collectionFloor ?? listing?.floor;
-  const latest = market?.updatedAt ? Date.now() - Date.parse(market.updatedAt) < 15 * 60_000 : true;
+  const latest = market?.updatedAt ? Date.now() - Date.parse(market.updatedAt) < 20 * 60_000 : true;
   const staleFloor = !!floor && (collectionFloor !== undefined ? collectionStale : (stale || market?.status === 'stale' || !latest));
-  const marketUrl = listing?.href ?? (item.marketAddress ? 'https://getgems.io/collection/' + item.marketAddress : gameId ? itemsMarketUrl : undefined);
+  const marketUrl = item.marketAddress
+    ? 'https://getgems.io/collection/' + item.marketAddress
+    : gameId
+      ? itemCollectionMarketUrl(itemsCollection.address, marketKey)
+      : listing?.href;
   const floorLabel = staleFloor ? 'Последний флор' : floor ? 'Getgems'
     : gameId && market?.status === 'ready' && latest && market.source === 'getgems' ? 'Нет лотов' : 'Getgems';
   const source = item.source + (level ? ` · с ${level}-го ур.` : '');
