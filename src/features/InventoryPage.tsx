@@ -127,15 +127,15 @@ export function OwlPage() {
 }
 
 const energyTiers = [
-  { range: 'Ур. 0–4', fight: 10, flight: 200, sp: '2 ⚡' },
-  { range: 'Ур. 5–9', fight: 20, flight: 250, sp: '2 ⚡' },
-  { range: 'Ур. 10–14', fight: 30, flight: 300, sp: '2 ⚡' },
-  { range: 'Ур. 15–19', fight: 40, flight: 350, sp: '2 ⚡' },
-  { range: 'Ур. 20–24', fight: 50, flight: 400, sp: '2 ⚡' },
-  { range: 'Ур. 25–29', fight: 60, flight: 450, sp: '2 ⚡' },
-  { range: 'Ур. 30–34', fight: 70, flight: 500, sp: '2 ⚡' },
-  { range: 'Ур. 35–39', fight: 80, flight: 550, sp: '2 ⚡' },
-  { range: 'Ур. 40–44', fight: 90, flight: 600, sp: '2 ⚡' },
+  { range: 'Ур. 0–4', fight: 10, flight: 200, sp: '2–4 SP' },
+  { range: 'Ур. 5–9', fight: 20, flight: 250, sp: '5–9 SP' },
+  { range: 'Ур. 10–14', fight: 30, flight: 300, sp: '10–14 SP' },
+  { range: 'Ур. 15–19', fight: 40, flight: 350, sp: '15–19 SP' },
+  { range: 'Ур. 20–24', fight: 50, flight: 400, sp: '20–24 SP' },
+  { range: 'Ур. 25–29', fight: 60, flight: 450, sp: '25–29 SP' },
+  { range: 'Ур. 30–34', fight: 70, flight: 500, sp: '30–34 SP' },
+  { range: 'Ур. 35–39', fight: 80, flight: 550, sp: '35–39 SP' },
+  { range: 'Ур. 40–44', fight: 90, flight: 600, sp: '40–44 SP' },
 ] as const;
 
 export function CarePage() {
@@ -234,8 +234,9 @@ export function CarePage() {
 
         <div className="memoNote">
           <div className="memoLines">
-            <p>В Додзё фарм SP открывается со 2-го уровня и всегда стоит <b>2 ⚡ за удар</b>.</p>
-            <p>Чтобы не переплачивать за бои, включай <b>Холодильник XP</b> на границе ступеней (ур. 4, 9, 14, 19).</p>
+            <p>В Додзё (со 2-го ур.) удар стоит <b>2 ⚡</b> и даёт <b>SP = твой уровень</b> (крит Bang — <b>×2</b>).</p>
+            <p>Чем выше уровень, тем больше SP с одного удара, но тем дороже бои и полёты.</p>
+            <p>Если хочешь дёшево драться, включай <b>Холодильник XP</b> на границе ступеней (ур. 4, 9, 14, 19).</p>
           </div>
         </div>
       </section>

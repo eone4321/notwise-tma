@@ -110,11 +110,11 @@ else
     account.inviter = inviter
     redis.call('ZADD', ARGV[6] .. inviter, now, ARGV[1])
   end
-  redis.call('ZADD', KEYS[2], now, ARGV[1])
 end
 account.name = ARGV[2]
 account.avatar = ARGV[9] ~= '' and ARGV[9] or nil
 account.seenAt = now
+redis.call('ZADD', KEYS[2], now, ARGV[1])
 if ARGV[7] == 'save' then
   account.gameLink = ARGV[8]
   account.gameLinkVerified = true
@@ -134,10 +134,22 @@ const invitedPrefix = namespace + 'invited:';
 const pageSize = 30;
 
 async function members(key: string, offset: number) {
-  const [ids, total] = await Promise.all([
-    redis<string[]>(['ZREVRANGE', key, offset, offset + pageSize - 1]),
-    redis<number>(['ZCARD', key]),
-  ]);
+  const total = await redis<number>(['ZCARD', key]);
+  // For the global admin list, sort all accounts by seenAt DESC so recently active users are always first,
+  // including users who visited before ZADD started updating on seenAt.
+  if (key === membersKey && total > 0 && total <= 2500) {
+    const rawList = await redis<string[]>(['HVALS', accountsKey]);
+    const all: Member[] = [];
+    for (const raw of rawList ?? []) {
+      try {
+        const { id, name, avatar, joinedAt, seenAt } = JSON.parse(raw) as Account;
+        all.push({ id, name, avatar, joinedAt, seenAt: seenAt || joinedAt });
+      } catch { /* skip malformed */ }
+    }
+    all.sort((a, b) => (b.seenAt - a.seenAt) || (b.joinedAt - a.joinedAt));
+    return { items: all.slice(offset, offset + pageSize), total: all.length };
+  }
+  const ids = await redis<string[]>(['ZREVRANGE', key, offset, offset + pageSize - 1]);
   const accounts = ids.length ? await redis<(string | null)[]>(['HMGET', accountsKey, ...ids]) : [];
   const items: Member[] = accounts.flatMap(raw => {
     if (!raw) return [];

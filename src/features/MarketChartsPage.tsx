@@ -700,7 +700,7 @@ export function MarketChartsPage() {
       {asset.category === 'collections' && (
         <section className="card radarLotsCard">
           <p className="caption" style={{ margin: 0 }}>
-            Для коллекций отслеживается минимальный флор и общее количество выпущенных NFT на Getgems каждый час.
+            Минимальный флор и объём коллекции на Getgems.
           </p>
           <a
             className="radarGetgemsBtn"
@@ -897,7 +897,7 @@ function InteractiveFloorChart({
 
       {points.length === 1 && (
         <div className="radarSinglePointNote">
-          <span>История накапливается каждый час — сейчас показан актуальный срез.</span>
+          <span>Пока доступна одна точка цены.</span>
           {canSwitchToCurve && (
             <button type="button" className="radarInlineAction" onClick={onSwitchToCurve}>
               Кривая заточки →
@@ -1178,13 +1178,13 @@ function MarketInfoSheet({ onClose }: { onClose: () => void }) {
         </div>
         <div className="radarInfoBody">
           <p>
-            <strong>Отслеживание по заточке (+0…+20):</strong> каждые 15 минут сервер сканирует активные лоты на Getgems, разбирает уровень заточки из названия (например, <code>Wooden Ring of Strength +6</code>) и сохраняет минимальный флор в историю.
+            <strong>Флор по заточке (+0…+20):</strong> минимальная актуальная цена на Getgems отдельно для каждого уровня заточки.
           </p>
           <p>
-            <strong>Кривая заточки:</strong> показывает, как растёт минимальная цена предмета от +0 к высоким уровням прямо сейчас.
+            <strong>Кривая заточки:</strong> наглядно показывает, как растёт минимальная цена предмета от +0 к высоким уровням.
           </p>
           <p>
-            <strong>Купить vs точить:</strong> для колец с заточкой рассчитывается математическая себестоимость самостоятельной заточки с учётом риска сгорания после +3.
+            <strong>Купить vs точить:</strong> сравнивает цену готового предмета со средней себестоимостью самостоятельной заточки с учётом риска сгорания после +3.
           </p>
         </div>
       </div>
