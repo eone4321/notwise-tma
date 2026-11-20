@@ -36,7 +36,7 @@ function resource<T extends { items: unknown[] }>(
     update({ ...state, pending: true });
     fetching = (async () => {
       try {
-        const response = await fetch(endpoint, { signal: AbortSignal.timeout(6500) });
+        const response = await fetch(endpoint, { signal: AbortSignal.timeout(14_000) });
         if (!response.ok) throw new Error('market unavailable');
         const quote = await response.json();
         if (!Array.isArray(quote?.items)) throw new Error('empty market');
@@ -134,6 +134,7 @@ export function startMarketUpdates() {
     tokenMarket.refresh();
     collectionMarket.refresh();
     itemMarket.refresh();
+    explorerMarket.refresh();
   };
   refresh();
   const timer = window.setInterval(refresh, 60_000);

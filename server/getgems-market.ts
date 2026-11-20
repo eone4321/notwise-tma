@@ -1,4 +1,5 @@
 import { itemCollectionMarketUrl, itemIdToSlug } from '../src/domain/item-market-links.js';
+import { getgemsNftUrl } from '../src/domain/ton-address.js';
 import { redis } from './redis.js';
 import collections from '../src/features/market-collections.js';
 import stickers from '../src/features/sticker-data.js';
@@ -154,7 +155,7 @@ function recordListing(
   if (price < bucket.floor) bucket.floor = price;
 
   const displayName = typeof name === 'string' && name.trim() ? name.trim() : (enchant > 0 ? `${id} +${enchant}` : id);
-  const lot: ExplorerLot = { address: nft, name: displayName, price, href: `https://getgems.io/nft/${nft}` };
+  const lot: ExplorerLot = { address: nft, name: displayName, price, href: getgemsNftUrl(nft) };
   // Keep top 12 cheapest lots per (slug, enchant) bucket.
   if (bucket.lots.length < 12) {
     bucket.lots.push(lot);

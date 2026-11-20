@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router';
 import { GameArt } from '../ui/GameArt';
 import { GameAttribute, GameGlyph } from '../ui/GameGlyph';
 import { Price } from './Price';
+import { getgemsNftUrl } from '../domain/ton-address';
 import {
   collectionMarket,
   explorerMarket,
@@ -111,8 +112,15 @@ export function MarketChartsPage() {
   const { data: tokens } = tokenMarket.useSnapshot();
 
   useEffect(() => {
-    explorerMarket.refresh(true);
+    explorerMarket.refresh();
   }, []);
+
+  // Auto-retry once if explorer came back empty during a cold server refresh
+  useEffect(() => {
+    if (explorerPending || (explorer?.items && explorer.items.length > 0)) return;
+    const t = window.setTimeout(() => explorerMarket.refresh(true), 2500);
+    return () => window.clearTimeout(t);
+  }, [explorerPending, explorer]);
 
   const asset: MarketAsset = marketAssetBySlug.get(selectedSlug) ?? marketCatalog[0];
   const category = asset.category;
@@ -630,7 +638,7 @@ export function MarketChartsPage() {
                 <a
                   key={lot.address}
                   className="radarLotRow"
-                  href={lot.href}
+                  href={getgemsNftUrl(lot.address)}
                   target="_blank"
                   rel="noreferrer"
                 >
