@@ -157,7 +157,7 @@ return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathn
 <AnimatePresence>{hamster && <motion.aside className="hamster" role="status"
   initial={{y:110,opacity:0}} animate={{y:0,opacity:1}} exit={{y:110,opacity:0}} transition={{duration:.22}}>
   <p className="hamsterSpeech">{english ? '*#$@#, go poke yourself %*!' : '*#$@#, себя потыкай %*!'}</p>
-  <img src={artSrc('/brand/hamster.png')} width="640" height="694" alt={english ? "CryptoOne Hamster" : "Хомяк CryptoOne"}/>
+  <img src={artSrc('/brand/hamster.png')} width="520" height="564" alt={english ? "CryptoOne Hamster" : "Хомяк CryptoOne"}/>
 </motion.aside>}</AnimatePresence></div></GuideProgress>}
 function Dock({ english: en, disabled = false, hamster, locked, onHamster, onShortTap }: { english: boolean; disabled?: boolean; hamster: boolean; locked: boolean; onHamster: () => void; onShortTap?: () => void }) {
   const location = useLocation();

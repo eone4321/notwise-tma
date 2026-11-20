@@ -31,9 +31,10 @@ import {
 import { useGuideLocale } from './guideLocale';
 import { lightHaptic, telegramPopup } from '../telegram/client';
 import { artSrc } from '../ui/warmArt';
-import { channelInvite } from '../domain/guide-links';
 import { authData, profileRequest } from './guideProfile';
 import { useGuideNavigation } from '../app/navigation';
+
+const marketSubscribeUrl = 'https://t.me/+Q2SrPBHP8vRmMmNi';
 
 type HistoryRange = '24h' | '7d' | '30d' | 'all';
 type ChartMode = 'history' | 'curve';
@@ -921,8 +922,8 @@ export function MarketChartsPage() {
               <motion.img
                 className="radarSubGateHamster"
                 src={artSrc('/brand/hamster.png')}
-                width="640"
-                height="694"
+                width="520"
+                height="564"
                 alt={en ? 'CryptoOne Hamster' : 'Хомяк CryptoOne'}
                 initial={{ y: 48, opacity: 0, scale: 0.9 }}
                 animate={{ y: 0, opacity: 1, scale: 1 }}
@@ -954,8 +955,8 @@ export function MarketChartsPage() {
                     onClick={() => {
                       lightHaptic();
                       const tg = telegramPopup();
-                      if (tg?.openTelegramLink) tg.openTelegramLink(channelInvite);
-                      else window.open(channelInvite, '_blank', 'noopener,noreferrer');
+                      if (tg?.openTelegramLink) tg.openTelegramLink(marketSubscribeUrl);
+                      else window.open(marketSubscribeUrl, '_blank', 'noopener,noreferrer');
                     }}
                   >
                     {en ? 'Subscribe' : 'Подписаться'}
