@@ -144,14 +144,15 @@
 .heroActions .openGame.primary, [data-theme="graphite"] .heroActions .openGame.primary {
   min-block-size: 46px;
   font-size: 13px;
-  background: #ffe6b7;
-  color: #1d1511;
-  border: 1px solid #fff0d2;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 22%, var(--game-tile)), var(--game-tile));
+  border: 1px solid color-mix(in srgb, var(--gold) 58%, var(--game-panel-line));
+  color: #ffe8b8;
   border-radius: 12px;
-  box-shadow: inset 0 1px #fff7e4, 0 8px 14px #0a070946;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--gold) 16%, transparent), inset 0 1px 0 rgba(255, 240, 200, 0.16);
 }
 .heroActions .openGame.primary:active {
-  filter: brightness(1.06);
+  border-color: var(--gold);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 30%, var(--game-tile)), var(--game-tile));
 }
 .heroActions .secondary {
   background: var(--game-tile);
@@ -290,9 +291,12 @@
 .profileTabs .gameGlyph { font-size: 14px; }
 .choiceBar.combatTabs { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
 .combatTabs > a:nth-child(2) { padding-inline: 8px; }
+.choiceBar.capsuleTabs { display: grid; grid-template-columns: minmax(0, 1.26fr) minmax(0, 1.12fr) minmax(0, 0.92fr); }
+.choiceBar.capsuleTabs > a { padding-inline: 8px; white-space: nowrap; }
 @media (max-width: 365px) {
   .profileTabs .gameGlyph { font-size: 12px; }
   .profileTabs > :is(a, button) { font-size: 11px; gap: 4px; }
+  .choiceBar.capsuleTabs > a { padding-inline: 6px; font-size: 11px; }
 }
 
 .albumLogo {
@@ -427,30 +431,27 @@
 }
 .homeGameActions a {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) 8px;
+  grid-template-columns: 34px minmax(0, 1fr) 8px;
   gap: 8px;
   align-items: center;
   padding: 8px 10px;
   min-height: 54px;
-  border: 1px solid #fff0d2;
+  border: 1px solid color-mix(in srgb, var(--gold) 52%, var(--game-panel-line));
   border-radius: 12px;
-  background: #ffe6b7;
-  color: #1d1511;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 20%, var(--game-tile)), var(--game-tile));
+  color: #ffe8b8;
   font-size: 13px;
-  font-weight: 800;
-  line-height: 1.18;
-  box-shadow: inset 0 1px #fff7e4, 0 8px 14px #0a070946;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--gold) 14%, transparent), inset 0 1px 0 rgba(255, 240, 200, 0.14);
 }
-.homeGameActions a .gameArt {
-  background: #1c1612;
-  border-radius: 9px;
-  padding: 3px;
-  box-sizing: border-box;
+.homeGameActions a:active {
+  border-color: var(--gold);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 28%, var(--game-tile)), var(--game-tile));
 }
-.homeGameActions a:active { filter: brightness(1.06); transform: scale(0.99); }
-.homeGameActions .rowChevron { width: 6px; height: 6px; border-color: #1d1511; }
+.homeGameActions .rowChevron { width: 6px; height: 6px; border-color: var(--gold); }
 @media (max-width: 350px) {
-  .homeGameActions a { font-size: 12px; gap: 6px; padding-inline: 7px; }
+  .homeGameActions a { font-size: 12px; gap: 6px; padding-inline: 8px; }
 }
 .feedingCard dl .mediaRow { justify-content: space-between; }
 .feedingCard dl dd { margin: 0; color: var(--gold); font-weight: 700; text-align: right; }
@@ -1677,7 +1678,8 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .buildLoadoutOwl > .gameArt { border-radius: 0; overflow: visible; max-width: 100%; max-height: 100%; }
 .buildLoadoutOwl img { width: 100%; height: 100%; object-fit: contain; object-position: bottom center; }
 .buildShareHeroBtn {
-  min-height: 40px;
+  margin: 0;
+  min-height: 42px;
   font-size: 13px;
   border-color: color-mix(in srgb, var(--gold) 40%, var(--game-panel-line));
   color: var(--gold);
@@ -2590,18 +2592,44 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 }
 
 /* Wardrobe-Shelf Skins Calculator & Simplified Squad steps */
-.wardrobeCard { display: grid; gap: 11px; }
+.wardrobeCard { display: grid; gap: 10px; }
+.wardrobeCard .buildLoadoutTop {
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+.wardrobeCard .buildLoadoutControls {
+  min-width: 0;
+  gap: 6px;
+}
+.wardrobeCard .skinRarityPill,
+.wardrobeCard .buildPresetChip {
+  min-height: 32px;
+  padding: 0 9px;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.wardrobeCard .buildPresetChip {
+  gap: 5px;
+}
+.wardrobeCard .buildLoadoutRight {
+  flex: none;
+  gap: 5px;
+}
+.wardrobeCard .buildIconReset {
+  width: 32px;
+  height: 32px;
+}
 .wardrobeActionIcon {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   margin: 0;
   padding: 0;
-  border-radius: 10px;
+  border-radius: 999px;
   border: 1px solid var(--game-panel-line);
   background: var(--game-tile);
-  font-size: 16px;
+  font-size: 15px;
   cursor: pointer;
 }
 .wardrobeActionIcon:active { border-color: var(--gold); transform: scale(0.95); }
@@ -2610,8 +2638,8 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   position: relative;
   display: grid;
   justify-items: center;
-  gap: 10px;
-  padding: 16px 12px 12px;
+  gap: 12px;
+  padding: 14px 10px 10px;
   border-radius: 14px;
   border: 1px solid var(--game-panel-line);
   background: radial-gradient(circle at 50% 42%, rgba(255, 211, 128, 0.14) 0%, var(--game-tile) 74%);
@@ -2626,28 +2654,48 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   background: radial-gradient(circle at 50% 42%, rgba(255, 211, 128, 0.22) 0%, var(--game-tile) 74%);
 }
 .wardrobeOwl {
-  width: clamp(134px, 37vw, 162px);
-  height: clamp(134px, 37vw, 162px);
+  width: clamp(134px, 37vw, 158px);
+  height: clamp(134px, 37vw, 158px);
 }
 .wardrobeStageHud {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  gap: 8px;
 }
-.wardrobeBonusPill {
+.wardrobeBonusPill,
+.wardrobeStageHud .skinJettonMatch {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 5px 11px;
-  border-radius: 999px;
+  min-width: 0;
+  min-height: 38px;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 10px;
   background: var(--game-panel);
-  border: 1px solid color-mix(in srgb, var(--gold) 50%, var(--game-panel-line));
-  font-size: 13.5px;
+  border: 1px solid var(--game-panel-line);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+.wardrobeBonusPill {
+  border-color: color-mix(in srgb, var(--gold) 50%, var(--game-panel-line));
   color: var(--gold);
 }
-.wardrobeBonusPill strong { font-weight: 900; font-variant-numeric: tabular-nums; }
+.wardrobeStageHud .skinJettonMatch {
+  color: var(--text);
+}
+.wardrobeBonusPill strong,
+.wardrobeStageHud .skinJettonMatch span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wardrobeBonusPill strong { font-weight: 800; font-variant-numeric: tabular-nums; }
 
 .wardrobeSlotTabs {
   display: grid;
