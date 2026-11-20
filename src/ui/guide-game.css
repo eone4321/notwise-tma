@@ -1590,8 +1590,14 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 [data-theme="graphite"] .buildCollapseSummary::after { border-color: var(--gold); }
 
 .buildLoadoutCard { display: grid; grid-template-columns: minmax(0, 1fr); gap: 11px; }
-.buildLoadoutCard .buildLoadoutTop { flex-wrap: wrap; }
-.buildLoadoutCard .buildLoadoutControls { max-width: 100%; }
+.buildLoadoutCard .buildLoadoutControls { flex: 0 1 auto; }
+@media (max-width: 430px) {
+  .buildLoadoutCard :is(.buildLoadoutTop, .buildLoadoutControls, .buildLoadoutRight) { gap: 3px; }
+  .buildLoadoutCard :is(.buildPresetChip, .buildBudgetPill) { padding-inline: 5px; }
+  .buildLoadoutCard .buildPresetChip { flex: 0 1 auto; }
+  .buildLoadoutCard .buildPresetChip > span:nth-child(2) { min-width: 0; }
+  .buildConstructor[data-level-pending] .buildLevelPill select { max-width: 76px; }
+}
 .buildLoadoutTop { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 5px; }
 .buildLoadoutControls, .buildLoadoutRight { display: flex; align-items: center; gap: 5px; min-width: 0; }
 .buildLoadoutRight { flex: none; }
