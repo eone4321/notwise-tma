@@ -215,8 +215,8 @@ export function BuildConstructor() {
       </button>
 
       <div className="buildAllocationHeading">
-        <h3>{copy('Распределение вложенных очков', 'Invested attribute points')}</h3>
-        <p className="caption">{copy('Вводи очки, вложенные в ветку (они открывают навыки). Справа от названия показан итог с базой 3, кольцами и баффами.', 'Enter points invested per branch (these unlock skills). The total next to each name includes base 3, rings and buffs.')}</p>
+        <h3>{copy('Распределение очков', 'Attribute points')}</h3>
+        <p className="caption">{copy('В полях справа — значения совы без колец и баффов (старт — 3). Навыки открываются за очки сверх базы 3.', 'Values on the right match your owl before rings and buffs (base 3). Skills unlock from points above base 3.')}</p>
       </div>
       <div className="buildAttributes">
         {statKeys.map(stat => {
@@ -226,13 +226,13 @@ export function BuildConstructor() {
             <GameAttribute name={stat}/>
             <span>
               <strong>{statLabels[stat][lang]} <output aria-label={copy('Итого', 'Total') + ' · ' + statLabels[stat][lang]}>{total[stat]}</output></strong>
-              <small>{startingAttribute} {copy('база', 'base')} + {invested} {copy('очк.', 'pts')}{bonus > 0 && ` + ${bonus} ${copy('бонус', 'bonus')}`}</small>
+              <small>{startingAttribute} {copy('база', 'base')} + {invested} {copy('влож.', 'pts')}{bonus > 0 && ` + ${bonus} ${copy('бонус', 'bonus')}`}</small>
             </span>
             <div className="buildStepper">
               <button type="button" aria-label={copy('Уменьшить', 'Decrease') + ' · ' + statLabels[stat][lang]}
                 disabled={invested === 0} onClick={() => step(stat, -1)}>−</button>
-              <AttributeInput name={copy('Вложено очков · ', 'Invested points · ') + statLabels[stat][lang]}
-                value={invested} onCommit={value => updateAttribute(stat, () => value)}/>
+              <AttributeInput name={copy('Без бонусов · ', 'Before bonuses · ') + statLabels[stat][lang]}
+                value={startingAttribute + invested} onCommit={value => updateAttribute(stat, () => value - startingAttribute)}/>
               <button type="button" aria-label={copy('Увеличить', 'Increase') + ' · ' + statLabels[stat][lang]}
                 disabled={left === 0} onClick={() => step(stat, 1)}>+</button>
             </div>
@@ -460,8 +460,9 @@ function SkillPickerOptions({ state, slot, lang, onSelect }: { state: BuildState
       const selected = state.skills[slot]?.id === skill.id;
       const used = !selected && state.skills.some(item => item?.id === skill.id);
       const available = skillAvailable(skill.id, state);
+      const need = skill.tier - state.points[branch];
       const requirement = state.level < 2 ? (lang ? 'From owl level 2' : 'Со 2-го уровня совы')
-        : lang ? `Invest ${skill.tier} points in ${statLabels[branch][lang]}` : `Нужно ${skill.tier} очк. в ветке (сейчас ${state.points[branch]})`;
+        : lang ? `Invest +${need} more in ${statLabels[branch][lang]}` : `Нужно ещё +${need} очк. в ветку`;
       return <PickerOption key={skill.id} art={skillArt(skill.id)} title={lang ? skill.name : skill.title}
         meta={used ? (lang ? 'Already equipped' : 'Уже в наборе') : available ? (lang ? skill.effect.split('.')[0].replace(/\{[^}]+\}/g, '…') : skill.summary) : requirement}
         disabled={used || !available} selected={selected} onSelect={() => onSelect(skill.id)}/>;
