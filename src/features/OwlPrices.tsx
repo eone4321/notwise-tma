@@ -38,7 +38,7 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
     },
     [
       AutoScroll({
-        speed: 0.85,
+        speed: 0.35,
         startDelay: 0,
         stopOnInteraction: false,
         stopOnMouseEnter: true,
@@ -85,7 +85,10 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
     <section className="card homeMarketHub" aria-labelledby="owl-market">
       <DetailLink to="/collections/charts" className="homeMarketBanner" onClick={() => lightHaptic()}>
         <div className="homeMarketBannerHead">
-          <h2 id="owl-market">Маркет и графики цен</h2>
+          <div>
+            <h2 id="owl-market">Маркет и графики цен</h2>
+            <p>Онлайн данные с Getgems</p>
+          </div>
           <span className="homeMarketCta">
             <span>Открыть</span>
             <span className="rowChevron" aria-hidden="true" />

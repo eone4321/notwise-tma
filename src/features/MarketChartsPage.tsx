@@ -129,13 +129,15 @@ export function MarketChartsPage() {
   const asset: MarketAsset = marketAssetBySlug.get(selectedSlug) ?? marketCatalog[0];
   const category = asset.category;
 
-  // Sync URL params softly without pushing history spam
+  // Sync URL params softly only when actually changed
   useEffect(() => {
     const next = new URLSearchParams();
     next.set('slug', asset.slug);
     if (asset.enchantable && enchant !== null) next.set('enchant', String(enchant));
-    setSearchParams(next, { replace: true });
-  }, [asset.slug, asset.enchantable, enchant, setSearchParams]);
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [asset.slug, asset.enchantable, enchant, searchParams, setSearchParams]);
 
   // If switching to non-enchantable asset, reset enchant & mode
   useEffect(() => {
@@ -209,7 +211,7 @@ export function MarketChartsPage() {
 
   // Fetch historical points for the selected (slug, enchant, range)
   const [historyPoints, setHistoryPoints] = useState<HistoryPoint[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -552,7 +554,7 @@ export function MarketChartsPage() {
           <InteractiveFloorChart
             points={seriesPoints}
             range={range}
-            loading={(historyLoading || (explorerPending && !explorer)) && seriesPoints.length === 0}
+            loading={historyLoading}
             canSwitchToCurve={Boolean(asset.enchantable && curvePoints.length >= 2)}
             onSwitchToCurve={() => { lightHaptic(); setChartMode('curve'); }}
           />

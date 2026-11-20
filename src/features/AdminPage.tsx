@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { guideActions, guideBuilds, guidePages, type GuideEvent } from '../domain/guide-events';
 import { authData, profileRequest, type GuideMember } from './guideProfile';
 import { collectionMarket, itemMarket, tokenMarket } from './marketData';
+import { saveHomeOwlSkin } from './skinRig';
 
 const date = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' });
 const timeOnly = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -37,7 +38,7 @@ type MarketStatus = {
     itemSource?: string;
   } | null;
 };
-type Tab = 'analytics' | 'award_stats' | 'admin' | 'market_status';
+type Tab = 'analytics' | 'award_stats' | 'admin' | 'market_status' | 'reset';
 
 export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null }) {
   const [tab, setTab] = useState<Tab>('analytics');
@@ -50,7 +51,7 @@ export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null })
   const canAccess = Boolean(authData()) && profile?.isAdmin !== false;
 
   useEffect(() => {
-    if (!canAccess) return;
+    if (!canAccess || tab === 'reset') return;
     const abort = new AbortController();
     profileRequest<Members | Report | Awards | MarketStatus>({ action: tab, offset }, abort.signal).then(setResult).catch(reason => {
       if (!abort.signal.aborted) setError(reason.message);
@@ -90,8 +91,9 @@ export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null })
         <button aria-pressed={tab === 'market_status'} onClick={() => open('market_status')}>Парсер цен</button>
         <button aria-pressed={tab === 'award_stats'} onClick={() => open('award_stats')}>Достижения</button>
         <button aria-pressed={tab === 'admin'} onClick={() => open('admin')}>Пользователи</button>
+        <button aria-pressed={tab === 'reset'} onClick={() => open('reset')}>Сброс</button>
       </nav>
-      {error ? <section className="card"><p>Не удалось загрузить данные.</p>
+      {tab === 'reset' ? <AdminResetPanel/> : error ? <section className="card"><p>Не удалось загрузить данные.</p>
         <button className="secondary" onClick={() => { setError(''); setAttempt(value => value + 1); }}>Повторить</button>
       </section> : !result ? <section className="card"><p role="status">Загружаем данные…</p></section> :
         'days' in result ? <Analytics days={result.days}/> :
@@ -273,4 +275,126 @@ function Analytics({ days }: { days: Daily[] }) {
         <div key={key}><dt>{label}</dt><dd>{number.format(count('action', key))}</dd></div>)}
     </dl></section>
   </>;
+}
+
+
+type ResetTargetId = 'onboarding' | 'home_owl' | 'skin_calc' | 'build_calc' | 'secrets' | 'market_cache' | 'appearance' | 'views';
+
+const resetOptions: { id: ResetTargetId; title: string; desc: string }[] = [
+  { id: 'onboarding', title: 'Онбординг', desc: 'Подсказки навигации и выбора темы при первом входе' },
+  { id: 'home_owl', title: 'Сова на обложке', desc: 'Сброс выбранного скина на главном экране (локально и в CloudStorage)' },
+  { id: 'skin_calc', title: 'Калькулятор скинов', desc: 'Выбранные детали, заточка и пресет' },
+  { id: 'build_calc', title: 'Калькулятор билдов', desc: 'Сохранённые статы, кольца, навыки и фильтры' },
+  { id: 'secrets', title: 'Секреты (окно 1 ⭐)', desc: 'Снова покажет шутку с оплатой 1 ⭐ при открытии секретов' },
+  { id: 'market_cache', title: 'Кэш маркета и графиков', desc: 'Локально закэшированные флоры, лоты и курсы токенов' },
+  { id: 'appearance', title: 'Тема и язык', desc: 'Сброс темы оформления и языка интерфейса' },
+  { id: 'views', title: 'Позиции скролла', desc: 'Запомненные позиции прокрутки и раскрытые списки' },
+];
+
+function removeMatchingKeys(storage: Storage, test: (key: string) => boolean) {
+  const keys: string[] = [];
+  for (let i = 0; i < storage.length; i++) {
+    const k = storage.key(i);
+    if (k && test(k)) keys.push(k);
+  }
+  for (const k of keys) storage.removeItem(k);
+}
+
+function AdminResetPanel() {
+  const [selected, setSelected] = useState<Set<ResetTargetId>>(() => new Set(['onboarding']));
+  const [status, setStatus] = useState('');
+
+  const toggle = (id: ResetTargetId) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const allSelected = selected.size === resetOptions.length;
+
+  function applyReset() {
+    if (selected.size === 0) return;
+    try {
+      if (selected.has('onboarding')) {
+        localStorage.removeItem('notwise.guide.dock.v1');
+        localStorage.removeItem('notwise.guide.theme-tip.v1');
+      }
+      if (selected.has('home_owl')) {
+        saveHomeOwlSkin(null);
+      }
+      if (selected.has('skin_calc')) {
+        removeMatchingKeys(localStorage, k => k.startsWith('notwise.guide.skin-calc'));
+        removeMatchingKeys(sessionStorage, k => k.startsWith('notwise.guide.skin-calc'));
+      }
+      if (selected.has('build_calc')) {
+        removeMatchingKeys(localStorage, k => k.startsWith('notwise.guide.combat-build') || k.startsWith('notwise.guide.builds.'));
+        removeMatchingKeys(sessionStorage, k => k.startsWith('notwise.guide.combat-build') || k.startsWith('notwise.guide.builds.'));
+      }
+      if (selected.has('secrets')) {
+        localStorage.removeItem('notwise.guide.secrets.v1');
+        sessionStorage.removeItem('notwise.guide.secrets.v1');
+      }
+      if (selected.has('market_cache')) {
+        removeMatchingKeys(localStorage, k => k.startsWith('notwise.market.'));
+      }
+      if (selected.has('appearance')) {
+        localStorage.removeItem('notwise.guide.theme');
+        localStorage.removeItem('notwise.guide.language');
+      }
+      if (selected.has('views')) {
+        removeMatchingKeys(sessionStorage, k => k.startsWith('notwise.guide.views.'));
+      }
+      setStatus('Выбранные данные сброшены — перезагружаем…');
+      window.setTimeout(() => window.location.reload(), 450);
+    } catch {
+      setStatus('Не удалось очистить часть данных.');
+    }
+  }
+
+  return (
+    <section className="card adminResetCard">
+      <div className="adminResetHead">
+        <div>
+          <h2>Выборочный сброс</h2>
+          <p className="caption" style={{ margin: 0 }}>Отметь пункты, которые нужно сбросить на твоём устройстве.</p>
+        </div>
+        <button
+          type="button"
+          className="secondary adminResetToggleAll"
+          onClick={() => setSelected(allSelected ? new Set() : new Set(resetOptions.map(o => o.id)))}
+        >
+          {allSelected ? 'Снять всё' : 'Выбрать всё'}
+        </button>
+      </div>
+
+      <div className="adminResetList">
+        {resetOptions.map(opt => (
+          <label className="adminResetRow" key={opt.id}>
+            <input
+              type="checkbox"
+              checked={selected.has(opt.id)}
+              onChange={() => toggle(opt.id)}
+            />
+            <span>
+              <strong>{opt.title}</strong>
+              <small>{opt.desc}</small>
+            </span>
+          </label>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        className="primary"
+        disabled={selected.size === 0}
+        onClick={applyReset}
+      >
+        Сбросить выбранное ({selected.size})
+      </button>
+      {status && <p className="supportStatus" role="status">{status}</p>}
+    </section>
+  );
 }
