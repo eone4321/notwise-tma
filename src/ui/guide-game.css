@@ -35,23 +35,44 @@
 .gameAttribute > span { grid-area: 1 / 1; font: inherit; }
 
 .gameHero {
-  --hero-image-height: clamp(164px, 44vw, 218px);
+  --hero-image-height: clamp(134px, 36vw, 174px);
   position: relative;
-  gap: 9px;
-  padding: 14px;
+  gap: 8px;
+  padding: 13px;
   border-color: var(--game-panel-line);
   background: var(--hero-ground);
   border-radius: 16px;
 }
+.heroSquadPill {
+  position: absolute;
+  top: 11px;
+  right: 11px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-block-size: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--gold) 36%, rgba(255, 255, 255, 0.14));
+  background: rgba(12, 16, 30, 0.72);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--gold);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.heroSquadPill:active { border-color: var(--gold); background: rgba(20, 26, 46, 0.9); }
 .gameHero .heroImage {
   inset: 0 0 auto auto;
-  object-position: 55% 13%;
-  height: calc(var(--hero-image-height) + 58px);
-  width: 86%;
+  object-position: 55% 15%;
+  height: calc(var(--hero-image-height) + 46px);
+  width: 84%;
   max-width: none;
   filter: saturate(.94);
   mask-image:
-    radial-gradient(ellipse at 63% 42%, #000 34%, #000d 50%, transparent 82%),
+    radial-gradient(ellipse at 63% 44%, #000 34%, #000d 50%, transparent 82%),
     linear-gradient(90deg, transparent, #000 24%, #000 84%, transparent),
     linear-gradient(180deg, transparent, #000 9%, #000 65%, transparent 98%);
   mask-composite: intersect;
@@ -60,28 +81,27 @@
   background: linear-gradient(90deg, var(--hero-ground) 4%, color-mix(in srgb, var(--hero-ground) 94%, transparent) 26%, transparent 76%);
 }
 .gameHero .heroCopy {
-  width: min(62%, 290px);
-  min-height: calc(var(--hero-image-height) - 14px);
+  width: min(64%, 290px);
+  min-height: calc(var(--hero-image-height) - 10px);
   align-content: center;
   color: var(--hero-text);
 }
 .heroCopy h1 {
-  font-size: clamp(29px, 8.1vw, 43px);
+  font-size: clamp(27px, 7.6vw, 40px);
   line-height: 1.03;
   letter-spacing: -.05em;
-  margin-block-end: 9px;
+  margin-block-end: 7px;
 }
 .heroCopy h1 > span { display: block; }
 .heroCopy .heroSub {
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 12.5px;
+  line-height: 1.4;
   color: #d5dae4;
-  max-width: 18ch;
+  max-width: 19ch;
 }
 .heroActions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: 1fr;
   align-items: stretch;
   gap: 7px;
 }
@@ -91,10 +111,10 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-block-size: 48px;
-  padding: 8px 6px;
+  min-block-size: 44px;
+  padding: 8px 8px;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
   line-height: 1.2;
   text-align: center;
@@ -105,6 +125,9 @@
   margin: 0;
 }
 .heroActions .openGame, [data-theme="graphite"] .heroActions .openGame {
+  grid-column: 1 / -1;
+  min-block-size: 46px;
+  font-size: 14px;
   background: #ffe6b7;
   color: #1d1511;
   border: 1px solid #fff0d2;
@@ -1427,12 +1450,22 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   margin: 0;
   padding: 0 4px 0 2px;
   border: 0;
+  border-radius: 999px;
   background: transparent;
   color: var(--gold);
   font-size: 13px;
   font-weight: 800;
   box-shadow: none;
 }
+.buildLevelPill select:focus,
+.buildLevelPill select:focus-visible,
+.buildInlineSelect:focus,
+.buildInlineSelect:focus-visible { outline: none; }
+.buildLevelPill:focus-within {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 26%, transparent);
+}
+.buildInlineSelect:focus-visible { border-color: var(--gold); }
 .buildPresetChip {
   display: inline-flex;
   align-items: center;
@@ -1544,17 +1577,20 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 
 .buildLoadoutHero { display: flex; flex-direction: column; align-items: center; gap: 9px; }
 .buildLoadoutOwl {
-  display: grid;
-  place-items: center;
-  width: clamp(104px, 28vw, 126px);
-  height: clamp(104px, 28vw, 126px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: clamp(106px, 28vw, 128px);
+  height: clamp(106px, 28vw, 128px);
+  padding-top: 6px;
   border-radius: 50%;
   border: 2px solid color-mix(in srgb, var(--gold) 55%, var(--game-panel-line));
   background: radial-gradient(circle, color-mix(in srgb, var(--gold) 18%, transparent) 0%, var(--game-panel) 74%);
   box-shadow: 0 0 24px color-mix(in srgb, var(--gold) 16%, transparent);
   overflow: hidden;
 }
-.buildLoadoutOwl img { width: 100%; height: 100%; object-fit: contain; }
+.buildLoadoutOwl > .gameArt { border-radius: 0; overflow: visible; max-width: 100%; max-height: 100%; }
+.buildLoadoutOwl img { width: 100%; height: 100%; object-fit: contain; object-position: bottom center; }
 .buildLoadoutStatus {
   display: inline-flex;
   align-items: center;
@@ -1596,6 +1632,18 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   text-overflow: ellipsis;
 }
 .buildStatName .gameAttribute { font-size: 17px; flex: none; }
+.buildStatBadges { display: inline-flex; align-items: center; gap: 3px; flex: none; }
+.buildStatCap {
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #f18d82 18%, transparent);
+  color: #f18d82;
+  font-size: 10px;
+  font-weight: 800;
+}
+.buildVerdict[data-tier="high"] { color: #9fd59b; font-weight: 700; }
+.buildVerdict[data-tier="mid"] { color: var(--gold); font-weight: 700; }
+.buildVerdict[data-tier="low"] { color: #f18d82; font-weight: 700; }
 .buildStatBonus {
   flex: none;
   padding: 1px 6px;

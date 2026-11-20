@@ -241,7 +241,7 @@ export function BuildConstructor() {
 
         <div className="buildLoadoutHero">
           <div className="buildLoadoutOwl">
-            <GameArt path="/game/skins/5405.svg" size={96}/>
+            <GameArt path="/game/skins/7895.png" size={104}/>
           </div>
           <a href="#build-results-title" className="buildLoadoutStatus" data-ok={warningCount === 0 || undefined}>
             {warningCount === 0
@@ -277,10 +277,14 @@ export function BuildConstructor() {
           const invested = state.points[stat];
           const bonus = total[stat] - invested - startingAttribute;
           const pct = Math.min(100, Math.round((total[stat] * 100) / statBarScale));
+          const capped = (stat === 'agility' || stat === 'wisdom') && total[stat] > 100;
           return <div className="buildStatCard" key={stat} data-stat={stat}>
             <div className="buildStatTop">
               <span className="buildStatName"><GameAttribute name={stat}/>{statLabels[stat][lang]}</span>
-              {bonus > 0 && <span className="buildStatBonus" title={copy('Бонус от колец и баффов', 'Bonus from rings & buffs')}>+{bonus}</span>}
+              <span className="buildStatBadges">
+                {capped && <span className="buildStatCap" title={copy('Потолок 70% достигнут на 100 очках', '70% cap reached at 100')}>70%</span>}
+                {bonus > 0 && <span className="buildStatBonus" title={copy('Бонус от колец и баффов', 'Bonus from rings & buffs')}>+{bonus}</span>}
+              </span>
             </div>
             <div className="buildStatMid">
               <div className="buildStatValueWrap">
@@ -614,14 +618,16 @@ function BuildPractice({ result, comparison, lang, save, clear, state }: {
       ? copy('У тебя уже есть ответ на частые удары. Прибереги его под серию соперника.', 'You already have an answer to frequent hits. Save it for enemy combos.')
       : copy('Попробуй Статический щит для ответного урона или Снежок для замедления атак.', 'Try Static Shield for retaliation, or Snowball to slow attacks.'),
   };
+  const verdict = overall >= 58 ? copy('Выше базы', 'Above meta') : overall >= 48 ? copy('На равных с метой', 'Even with meta') : copy('Сложные матчапы', 'Tough matchups');
   const canCompareFullBuilds = state.level >= 5 && (state.budget ?? state.level) >= 8;
   return <div className="buildPracticeResult">
     <div className="buildOverallWinrate">
       <div>
-        <small>{copy('Общий винрейт', 'Overall winrate')}</small>
+        <small>{copy('Спарринг с 4 эталонами · ', 'Vs 4 meta presets · ')}<span className="buildVerdict" data-tier={overall >= 58 ? 'high' : overall >= 48 ? 'mid' : 'low'}>{verdict}</span></small>
         <p className="caption">
           {result.skillLevel !== undefined && copy(`Навыки врагов ${result.skillLevel} ур.`, `Opponent skills lvl ${result.skillLevel}`)}
           {result.enchant !== undefined && copy(` · заточка +${result.enchant}`, ` · +${result.enchant}`)}
+          {copy(' (50% = уровень меты)', ' (50% = meta parity)')}
         </p>
       </div>
       <div className="buildOverallValue">

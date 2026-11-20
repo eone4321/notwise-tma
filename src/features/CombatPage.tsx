@@ -8,9 +8,9 @@ import { GameSymbol } from '../ui/GameSymbol';
 import { GameArt } from '../ui/GameArt';
 import { skillCopy } from './skill-copy';
 import skillLevels from './skill-levels.json';
-import { BattleReadout, skillEffect } from './BattleReadout';
+import { skillEffect } from './BattleReadout';
 import { battleLeagues } from './battle-leagues';
-import { battleStats, skillHpMultiplier, skillCooldown, skillMana, startingAttribute } from '../domain/combat';
+import { skillHpMultiplier, skillCooldown, skillMana } from '../domain/combat';
 import { BuildConstructor } from './BuildConstructor';
 
 export function SpBadge({ value }: { value?: number | string }) {
@@ -194,7 +194,6 @@ function CombatStats() {
         <p>{detail}</p>
       </details>)}
     </section>
-    <BattleStatsCalculator/>
     <section className="card"><h2>Улучшения совы</h2>
       <p>Перки — постоянные улучшения совы за <SpBadge/> (очки навыков). У каждого улучшения свой уровень.</p>
       <ul className="compactList owlUpgrades">
@@ -221,30 +220,6 @@ function CombatStats() {
       </details>
     </section>
   </>;
-}
-
-const statInputs = [
-  ['level', 'Уровень совы'], ['strength', 'Сила'], ['agility', 'Ловкость'],
-  ['wisdom', 'Мудрость'], ['endurance', 'Выносливость'],
-] as const;
-
-function BattleStatsCalculator() {
-  const base = String(startingAttribute);
-  const [input, setInput] = useState({ level: '20', strength: base, agility: base, wisdom: base, endurance: base });
-  const stats = battleStats(Number(input.level), Number(input.strength), Number(input.agility), Number(input.wisdom), Number(input.endurance));
-
-  return <details className="card mediaDetails calculator battleCalculator" id="battle-calculator">
-    <summary><GameGlyph name="fight"/><span><strong>Боевой калькулятор</strong><small>Здоровье, мана и урон</small></span></summary>
-    <p className="caption">Введи итоговые атрибуты из профиля совы. Как точка отсчёта в каждом поле стоит базовое значение 3.</p>
-    <div className="calculatorGrid">
-      {statInputs.map(([key, label]) => <label className="field" key={key}><span>{key !== 'level' && <GameAttribute name={key}/>} {label}</span>
-        <input inputMode="numeric" value={input[key]} placeholder="0" maxLength={4}
-          onChange={event => setInput({ ...input, [key]: event.target.value.replace(/\D/g, '') })}/>
-      </label>)}
-    </div>
-    <BattleReadout stats={stats}/>
-    <p className="caption">Обычный удар показан до округления, блока и других эффектов. Итог также зависит от действий соперника.</p>
-  </details>;
 }
 
 function FlightDetails() {

@@ -224,6 +224,10 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
 ] as const;
  return <>
   <section className="gameHero">
+    <a className="heroSquadPill" href={squadLink} onClick={() => { lightHaptic(); onSquadVisit(); }}>
+      <span className="squadMark" aria-hidden="true"/>
+      <span>{en ? 'Our squad' : 'Наш сквад'}</span>
+    </a>
     <div className="heroCopy"><h1>{en ? <>NOT Wise <span>Guide</span></> : <>Гайд по <span>NOT Wise</span></>}</h1><p className="heroSub">{en ? 'Loot, combat and owl care.' : 'Награды, бои и уход за совой.'}</p></div>
     <img className="heroImage" src={artSrc('/brand/notwise-home.jpg')} width="1170" height="1200" alt=""/>
     <div className="heroActions">
@@ -239,15 +243,11 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
       )}
       <Link className="secondary heroBuilds" to="/combat/builds" onClick={() => { lightHaptic(); trackGuide('action:builds'); }}>
         <GameGlyph name="fight"/>
-        <span>{en ? 'Builds' : 'Собрать билд'}</span>
-        </Link>
-      <a className="secondary" href={squadLink} onClick={() => { lightHaptic(); onSquadVisit(); }}>
-        <span className="squadMark" aria-hidden="true"/>
-        {en ? 'Our squad' : 'Наш сквад'}
-      </a>
+        <span>{en ? 'Build calculator' : 'Собрать билд'}</span>
+      </Link>
       <button className="heroShare secondary" aria-haspopup="dialog" onClick={() => { lightHaptic(); setShare(true); }}>
         <GameGlyph name="share"/>
-        {en ? 'Share guide' : 'Поделиться гайдом'}
+        <span>{en ? 'Share' : 'Поделиться'}</span>
       </button>
     </div>
   </section>
