@@ -16,7 +16,10 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
 
   return <section className="card owlMarket" aria-labelledby="owl-market">
     <div className="marketHeading"><h2 id="owl-market">{only === 'eggs' ? 'Цена NFT-яйца' : only === 'items' ? 'Цена NFT-предметов' : 'Цены на NFT в Not Wise'}</h2>
-    {!only && <DetailLink className="marketAll" to="/collections/market">См. все<span className="sr-only"> коллекции</span></DetailLink>}</div>
+    {!only && <div className="marketHeadingLinks">
+      <DetailLink className="marketAll marketChartsLink" to="/collections/charts">Графики</DetailLink>
+      <DetailLink className="marketAll" to="/collections/market">См. все<span className="sr-only"> коллекции</span></DetailLink>
+    </div>}</div>
 
     <div className="owlMarketList" aria-busy={!market && pending}>
       {featured.filter(item => only ? item.id === only : item.id !== 'eggs').map(item => {

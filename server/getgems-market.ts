@@ -8,7 +8,11 @@ const api = 'https://api.getgems.io/public-api/v1';
 const addresses = [...collections, ...stickers.collectionByAlbum.flatMap((address, index) =>
   address ? [{ id: 'album-' + index, address }] : [])];
 const itemsCollection = collections.find(row => row.id === 'items')!.address;
+const skinsCollection = collections.find(row => row.id === 'skins')!.address;
 const snapshotKey = 'notwise:getgems:market:v2';
+const explorerKey = 'notwise:getgems:explorer:v1';
+const historyPrefix = 'notwise:getgems:hist:v1:';
+const historyRetentionSec = 90 * 86400;
 const lockKey = snapshotKey + ':lock';
 const interval = 15 * 60_000;
 const freshWindow = 20 * 60_000;
@@ -28,6 +32,17 @@ type Listing = { id: string; floor: number; href: string };
 type ItemSource = 'getgems' | 'toncenter' | 'getgems-on-chain';
 type ItemsSnapshot = { items: Listing[]; status: 'ready' | 'stale' | 'unavailable'; updatedAt?: string; source?: ItemSource };
 type MarketSnapshot = { collections: CollectionQuote[]; items: ItemsSnapshot; attemptedAt: number };
+export type ExplorerLot = { address: string; name: string; price: number; href: string };
+export type ExplorerBucket = {
+  slug: string; enchant: number; floor: number; count: number; lots: ExplorerLot[];
+  change24h?: number | null; change7d?: number | null;
+};
+export type ExplorerSnapshot = {
+  updatedAt: string | null; status: 'ready' | 'stale' | 'unavailable'; source?: ItemSource; buckets: ExplorerBucket[];
+};
+export type HistoryPoint = { ts: number; floor: number; count: number };
+export type HistoryRange = '24h' | '7d' | '30d' | 'all';
+type CrawlResult = { items: Listing[]; buckets: ExplorerBucket[] };
 type TonItem = {
   address?: string;
   metadata?: { image?: string; name?: string };
@@ -35,7 +50,16 @@ type TonItem = {
 };
 
 let memory: MarketSnapshot | null = null;
+let memoryExplorer: ExplorerSnapshot | null = null;
 let refreshInFlight: Promise<MarketSnapshot | null> | null = null;
+
+function parseEnchant(name: unknown): number {
+  if (typeof name !== 'string') return 0;
+  const match = /\+(\d{1,2})\s*$/.exec(name.trim());
+  if (!match) return 0;
+  const level = Number(match[1]);
+  return Number.isSafeInteger(level) && level >= 0 && level <= 20 ? level : 0;
+}
 
 function nameToSlug(name: unknown): string | undefined {
   if (typeof name !== 'string') return;
@@ -92,14 +116,59 @@ function itemSlug(image: unknown, name: unknown, contentUri?: unknown) {
   return nameToSlug(name);
 }
 
-function addPrice(prices: Map<string, Listing>, image: unknown, name: unknown, nano: unknown, nft: unknown, contentUri?: unknown) {
-  const id = itemSlug(image, name, contentUri);
+type BucketAccumulator = {
+  slug: string; enchant: number; floor: number; count: number; seen: Set<string>; lots: ExplorerLot[];
+};
+
+function recordListing(
+  prices: Map<string, Listing>,
+  buckets: Map<string, BucketAccumulator>,
+  image: unknown,
+  name: unknown,
+  nano: unknown,
+  nft: unknown,
+  contentUri?: unknown,
+  forcedSlug?: string,
+) {
+  const id = forcedSlug ?? itemSlug(image, name, contentUri);
   if (!id || typeof nano !== 'string' || !/^\d{1,24}$/.test(nano) ||
       typeof nft !== 'string' || !/^(?:[A-Za-z0-9_-]{48}|0:[0-9a-f]{64})$/i.test(nft)) return;
-  const floor = Number(nano) / 1e9;
-  if (floor > 0 && floor < (prices.get(id)?.floor ?? Infinity)) {
-    prices.set(id, { id, floor, href: itemCollectionMarketUrl(itemsCollection, id) });
+  const price = Number(nano) / 1e9;
+  if (!(price > 0) || !Number.isFinite(price)) return;
+
+  if (!forcedSlug && price < (prices.get(id)?.floor ?? Infinity)) {
+    prices.set(id, { id, floor: price, href: itemCollectionMarketUrl(itemsCollection, id) });
   }
+
+  const enchant = parseEnchant(name);
+  const key = `${id}:${enchant}`;
+  let bucket = buckets.get(key);
+  if (!bucket) {
+    bucket = { slug: id, enchant, floor: price, count: 0, seen: new Set(), lots: [] };
+    buckets.set(key, bucket);
+  }
+  const addrKey = nft.toLowerCase();
+  if (bucket.seen.has(addrKey)) return;
+  bucket.seen.add(addrKey);
+  bucket.count += 1;
+  if (price < bucket.floor) bucket.floor = price;
+
+  const displayName = typeof name === 'string' && name.trim() ? name.trim() : (enchant > 0 ? `${id} +${enchant}` : id);
+  const lot: ExplorerLot = { address: nft, name: displayName, price, href: `https://getgems.io/nft/${nft}` };
+  // Keep top 12 cheapest lots per (slug, enchant) bucket.
+  if (bucket.lots.length < 12) {
+    bucket.lots.push(lot);
+    bucket.lots.sort((a, b) => a.price - b.price);
+  } else if (price < bucket.lots[bucket.lots.length - 1].price) {
+    bucket.lots[bucket.lots.length - 1] = lot;
+    bucket.lots.sort((a, b) => a.price - b.price);
+  }
+}
+
+function finalizeBuckets(buckets: Map<string, BucketAccumulator>): ExplorerBucket[] {
+  return [...buckets.values()]
+    .map(({ slug, enchant, floor, count, lots }) => ({ slug, enchant, floor, count, lots }))
+    .sort((a, b) => a.slug.localeCompare(b.slug) || a.enchant - b.enchant);
 }
 
 async function fetchGetgemsWebStats(address: string): Promise<{ floor: number | null; supply: number | null } | null> {
@@ -143,13 +212,18 @@ async function collectionQuote(entry: typeof addresses[number], previous?: Colle
   }
 }
 
-async function getgemsListings(token: string, supply: number | null) {
-  const prices = new Map<string, Listing>();
+async function getgemsCollectionCrawl(
+  token: string,
+  collectionAddress: string,
+  maxPages: number,
+  prices: Map<string, Listing>,
+  buckets: Map<string, BucketAccumulator>,
+  forcedSlug?: string,
+) {
   const seen = new Set<string>();
-  const maxPages = supply === null ? 40 : Math.ceil(supply / 100) + 3;
   let cursor: string | null = null;
   for (let page = 0; page < maxPages; page++) {
-    const url = new URL(`${api}/nfts/on-sale/${itemsCollection}`);
+    const url = new URL(`${api}/nfts/on-sale/${collectionAddress}`);
     url.searchParams.set('limit', '100');
     if (cursor) url.searchParams.set('after', cursor);
     const response = await fetch(url, { headers: { Authorization: token }, signal: AbortSignal.timeout(5000) });
@@ -158,15 +232,25 @@ async function getgemsListings(token: string, supply: number | null) {
     if (!Array.isArray(result?.items)) throw new Error('Invalid Getgems page');
     for (const row of result.items) {
       if (row?.sale?.type === 'FixPriceSale' && ['TON', 'GRAM'].includes(row.sale.currency)) {
-        addPrice(prices, row.image, row.name, row.sale.fullPrice, row.address);
+        recordListing(prices, buckets, row.image, row.name, row.sale.fullPrice, row.address, undefined, forcedSlug);
       }
     }
-    if (result.cursor === null) return [...prices.values()];
+    if (result.cursor === null) return;
     if (typeof result.cursor !== 'string' || !result.cursor || seen.has(result.cursor)) throw new Error('Invalid Getgems cursor');
     cursor = result.cursor;
     seen.add(result.cursor);
   }
-  throw new Error('Getgems listing crawl incomplete');
+  if (!forcedSlug) throw new Error('Getgems listing crawl incomplete');
+}
+
+async function getgemsListings(token: string, supply: number | null): Promise<CrawlResult> {
+  const prices = new Map<string, Listing>();
+  const buckets = new Map<string, BucketAccumulator>();
+  const maxPages = supply === null ? 40 : Math.ceil(supply / 100) + 3;
+  await getgemsCollectionCrawl(token, itemsCollection, maxPages, prices, buckets);
+  // Best-effort crawl of NOT Wise: Skins for enchanted skin floor tracking.
+  await getgemsCollectionCrawl(token, skinsCollection, 15, prices, buckets, 'owl-skin').catch(() => null);
+  return { items: [...prices.values()], buckets: finalizeBuckets(buckets) };
 }
 
 async function tonPage(offset: number): Promise<TonItem[]> {
@@ -183,8 +267,9 @@ async function tonPage(offset: number): Promise<TonItem[]> {
   throw new Error('On-chain listing page unavailable');
 }
 
-async function onChainListings(supply: number | null) {
+async function onChainListings(supply: number | null): Promise<CrawlResult> {
   const prices = new Map<string, Listing>();
+  const buckets = new Map<string, BucketAccumulator>();
   const seen = new Set<string>();
   const maxPages = supply === null ? 40 : Math.ceil(supply / 100) + 3;
   for (let page = 0; page < maxPages; page++) {
@@ -196,10 +281,10 @@ async function onChainListings(supply: number | null) {
         seen.add(row.address);
       }
       if (row.sale?.market?.address === marketWallet && row.sale.price?.currency_type === 'native' && row.sale.price.decimals === 9) {
-        addPrice(prices, row.metadata?.image, row.metadata?.name, row.sale.price.value, row.address);
+        recordListing(prices, buckets, row.metadata?.image, row.metadata?.name, row.sale.price.value, row.address);
       }
     }
-    if (rows.length < 100) return [...prices.values()];
+    if (rows.length < 100) return { items: [...prices.values()], buckets: finalizeBuckets(buckets) };
   }
   throw new Error('On-chain listing crawl incomplete');
 }
@@ -244,6 +329,7 @@ async function toncenterListings(token: string, supply: number | null) {
   if (!finished) throw new Error('TON Center item crawl incomplete');
 
   const prices = new Map<string, Listing>();
+  const buckets = new Map<string, BucketAccumulator>();
   const contracts = [...listed.keys()];
   for (let i = 0; i < contracts.length; i += 40) {
     if (i) await new Promise(resolve => setTimeout(resolve, 150));
@@ -256,8 +342,9 @@ async function toncenterListings(token: string, supply: number | null) {
       const item = listed.get(sale.address.toLowerCase());
       if (!item || sale.nft_address?.toLowerCase() !== item.address.toLowerCase()) continue;
       const meta = data.metadata?.[item.address]?.token_info?.find(entry => entry.type === 'nft_items');
-      addPrice(
+      recordListing(
         prices,
+        buckets,
         item.image ?? meta?.image,
         item.name ?? meta?.name,
         sale.details.full_price,
@@ -266,15 +353,20 @@ async function toncenterListings(token: string, supply: number | null) {
       );
     }
   }
-  return [...prices.values()];
+  return { items: [...prices.values()], buckets: finalizeBuckets(buckets) };
 }
 
-async function freshItems(supply: number | null): Promise<ItemsSnapshot> {
+type FreshItemsResult = { snapshot: ItemsSnapshot; buckets: ExplorerBucket[] | null };
+
+async function freshItems(supply: number | null): Promise<FreshItemsResult> {
   const token = process.env.GETGEMS_READ_TOKEN;
   if (token) {
     try {
-      const items = await getgemsListings(token, supply);
-      return { items, updatedAt: new Date().toISOString(), status: 'ready', source: 'getgems' };
+      const crawled = await getgemsListings(token, supply);
+      return {
+        snapshot: { items: crawled.items, updatedAt: new Date().toISOString(), status: 'ready', source: 'getgems' },
+        buckets: crawled.buckets,
+      };
     } catch (error) {
       console.warn('Getgems item API unavailable', error instanceof Error ? error.message : '');
     }
@@ -282,13 +374,20 @@ async function freshItems(supply: number | null): Promise<ItemsSnapshot> {
   const toncenterToken = process.env.TONCENTER_API_KEY;
   if (toncenterToken) {
     try {
-      const items = await toncenterListings(toncenterToken, supply);
-      return { items, updatedAt: new Date().toISOString(), status: 'ready', source: 'toncenter' };
+      const crawled = await toncenterListings(toncenterToken, supply);
+      return {
+        snapshot: { items: crawled.items, updatedAt: new Date().toISOString(), status: 'ready', source: 'toncenter' },
+        buckets: crawled.buckets,
+      };
     } catch (error) {
       console.warn('TON Center item API unavailable', error instanceof Error ? error.message : '');
     }
   }
-  return { items: await onChainListings(supply), updatedAt: new Date().toISOString(), status: 'ready', source: 'getgems-on-chain' };
+  const crawled = await onChainListings(supply);
+  return {
+    snapshot: { items: crawled.items, updatedAt: new Date().toISOString(), status: 'ready', source: 'getgems-on-chain' },
+    buckets: crawled.buckets,
+  };
 }
 
 async function storedMarket(): Promise<MarketSnapshot | null> {
@@ -298,6 +397,37 @@ async function storedMarket(): Promise<MarketSnapshot | null> {
     if (data && Array.isArray(data.collections) && Array.isArray(data.items?.items) && data.attemptedAt >= (memory?.attemptedAt ?? 0)) memory = data;
   } catch { /* A running instance can still serve its last snapshot. */ }
   return memory;
+}
+
+async function storedExplorer(): Promise<ExplorerSnapshot | null> {
+  try {
+    const raw = await redis<string | null>(['GET', explorerKey]);
+    const data: ExplorerSnapshot | null = raw ? JSON.parse(raw) : null;
+    if (data && Array.isArray(data.buckets)) memoryExplorer = data;
+  } catch { /* Fallback to in-memory snapshot. */ }
+  return memoryExplorer;
+}
+
+async function recordHistory(attemptedAt: number, buckets: ExplorerBucket[] | null, cols: CollectionQuote[]) {
+  const hourKey = String(Math.floor(attemptedAt / 3_600_000));
+  const entries: { key: string; val: string }[] = [];
+  for (const b of buckets ?? []) {
+    if (b.floor > 0 && Number.isFinite(b.floor)) {
+      entries.push({ key: `${historyPrefix}${b.slug}:${b.enchant}`, val: `${b.floor}|${b.count}` });
+    }
+  }
+  for (const col of cols) {
+    if (col.available && col.floor && col.floor > 0 && Number.isFinite(col.floor)) {
+      entries.push({ key: `${historyPrefix}col:${col.id}:0`, val: `${col.floor}|${col.supply ?? 0}` });
+    }
+  }
+  for (let i = 0; i < entries.length; i += 12) {
+    const chunk = entries.slice(i, i + 12);
+    await Promise.all(chunk.map(async ({ key, val }) => {
+      await redis(['HSET', key, hourKey, val]).catch(() => null);
+      await redis(['EXPIRE', key, historyRetentionSec]).catch(() => null);
+    }));
+  }
 }
 
 async function refresh(previous: MarketSnapshot | null) {
@@ -310,21 +440,37 @@ async function refresh(previous: MarketSnapshot | null) {
     const rows: CollectionQuote[] = [];
     const fetchQuote = (entry: typeof addresses[number]) => collectionQuote(entry, old.get(entry.id));
     const itemQuote = await fetchQuote(addresses.find(row => row.id === 'items')!);
-    const itemsTask = freshItems(itemQuote.supply).catch(error => {
+    const itemsTask = freshItems(itemQuote.supply).catch((error): FreshItemsResult => {
       console.warn('NOT Wise item floor unavailable', error instanceof Error ? error.message : '');
-      return previous?.items.updatedAt ? { ...previous.items, status: 'stale' as const } : { items: [], status: 'unavailable' as const };
+      const fallback: ItemsSnapshot = previous?.items.updatedAt
+        ? { ...previous.items, status: 'stale' as const }
+        : { items: [], status: 'unavailable' as const };
+      return { snapshot: fallback, buckets: null };
     });
     const remaining = addresses.filter(row => row.id !== 'items');
     for (let i = 0; i < remaining.length; i += 4) {
       if (i) await new Promise(resolve => setTimeout(resolve, 120));
       rows.push(...await Promise.all(remaining.slice(i, i + 4).map(fetchQuote)));
     }
-    const items = await itemsTask;
+    const itemsResult = await itemsTask;
     const byId = new Map([itemQuote, ...rows].map(row => [row.id, row]));
-    const snapshot = { collections: addresses.map(entry => byId.get(entry.id)!), items, attemptedAt };
+    const allCols = addresses.map(entry => byId.get(entry.id)!);
+    const snapshot = { collections: allCols, items: itemsResult.snapshot, attemptedAt };
     memory = snapshot;
+    if (itemsResult.buckets) {
+      memoryExplorer = {
+        updatedAt: itemsResult.snapshot.updatedAt ?? new Date(attemptedAt).toISOString(),
+        status: itemsResult.snapshot.status,
+        source: itemsResult.snapshot.source,
+        buckets: itemsResult.buckets,
+      };
+    }
     if (locked === 'OK') {
       await redis(['SET', snapshotKey, JSON.stringify(snapshot), 'EX', 86400]);
+      if (memoryExplorer) {
+        await redis(['SET', explorerKey, JSON.stringify(memoryExplorer), 'EX', 86400]).catch(() => null);
+      }
+      await recordHistory(attemptedAt, itemsResult.buckets, allCols).catch(() => null);
     }
     return snapshot;
   } finally {
@@ -343,7 +489,8 @@ export async function refreshMarket() {
   const snapshot = await market(true);
   const available = snapshot?.collections.filter(row => row.available).length ?? 0;
   return { collections: available, total: addresses.length, itemTypes: snapshot?.items.items.length ?? 0,
-    itemsStatus: snapshot?.items.status, itemSource: snapshot?.items.source };
+    itemsStatus: snapshot?.items.status, itemSource: snapshot?.items.source,
+    explorerBuckets: memoryExplorer?.buckets.length ?? 0 };
 }
 
 export async function collectionQuotes(): Promise<CollectionQuote[]> {
@@ -357,6 +504,59 @@ export async function itemQuotes(): Promise<ItemsSnapshot> {
   const result = (await market())?.items;
   if (!result) return { items: [], status: 'unavailable' };
   return result.updatedAt && Date.now() - Date.parse(result.updatedAt) >= freshWindow ? { ...result, status: 'stale' } : result;
+}
+
+function parseHistoryHash(raw: Record<string, string> | string[] | null): HistoryPoint[] {
+  if (!raw) return [];
+  const entries: [string, string][] = Array.isArray(raw)
+    ? Array.from({ length: Math.floor(raw.length / 2) }, (_, i) => [raw[i * 2], raw[i * 2 + 1]])
+    : Object.entries(raw);
+  const points: HistoryPoint[] = [];
+  for (const [hourStr, val] of entries) {
+    const hour = Number(hourStr);
+    if (!Number.isSafeInteger(hour) || hour <= 0 || typeof val !== 'string') continue;
+    const [floorStr, countStr] = val.split('|');
+    const floor = Number(floorStr);
+    const count = Number(countStr ?? '0');
+    if (floor > 0 && Number.isFinite(floor)) {
+      points.push({ ts: hour * 3_600_000, floor, count: Number.isFinite(count) ? count : 0 });
+    }
+  }
+  points.sort((a, b) => a.ts - b.ts);
+  return points;
+}
+
+export async function marketExplorer(): Promise<ExplorerSnapshot> {
+  await market();
+  const explorer = await storedExplorer();
+  if (!explorer) {
+    return { updatedAt: null, status: 'unavailable', buckets: [] };
+  }
+  const stale = !!explorer.updatedAt && Date.now() - Date.parse(explorer.updatedAt) >= freshWindow;
+  return {
+    ...explorer,
+    status: stale && explorer.status === 'ready' ? 'stale' : explorer.status,
+  };
+}
+
+export async function marketHistory(
+  slug: string,
+  enchant: number,
+  range: HistoryRange,
+): Promise<{ slug: string; enchant: number; range: HistoryRange; points: HistoryPoint[] }> {
+  const safeSlug = /^[a-z0-9:-]{1,48}$/.test(slug) ? slug : '';
+  const safeEnchant = Number.isSafeInteger(enchant) && enchant >= 0 && enchant <= 20 ? enchant : 0;
+  if (!safeSlug) return { slug: '', enchant: 0, range, points: [] };
+  const key = `${historyPrefix}${safeSlug}:${safeEnchant}`;
+  let points: HistoryPoint[] = [];
+  try {
+    const raw = await redis<Record<string, string> | string[] | null>(['HGETALL', key]);
+    points = parseHistoryHash(raw);
+  } catch { /* Redis unavailable */ }
+  const now = Date.now();
+  const windowMs = range === '24h' ? 86_400_000 : range === '7d' ? 7 * 86_400_000 : range === '30d' ? 30 * 86_400_000 : Infinity;
+  const filtered = Number.isFinite(windowMs) ? points.filter(p => now - p.ts <= windowMs) : points;
+  return { slug: safeSlug, enchant: safeEnchant, range, points: filtered };
 }
 
 export async function marketDiagnostics() {

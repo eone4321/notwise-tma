@@ -2,6 +2,7 @@ import { DetailLink } from '../ui/DetailLink';
 import publishing from '../domain/game-publishing.json';
 import { Price } from './Price';
 import { collectionMarket } from './marketData';
+import { MarketChartsPage } from './MarketChartsPage';
 import { Link, useLocation } from 'react-router';
 import stickers from '../../public/data/all_100_stickers.json';
 import marketPacks from '../../public/data/stickers.json';
@@ -44,6 +45,7 @@ export function CollectionPage() {
   const albumNumber = Number(pathname.match(/albums\/(\d+)$/)?.[1]);
   const album = albumNumber >= 1 && albumNumber <= albums.length ? albumNumber : null;
   const marketView = pathname === '/collections/market';
+  const chartsView = pathname === '/collections/charts';
   const { data: market, pending } = collectionMarket.useSnapshot();
 
   const matches = album === null ? [] : [...stickers.filter(item => stickerAlbum(item.id) === album)].sort((a, b) => (a.rarity ?? 0) - (b.rarity ?? 0) || a.id - b.id);
@@ -58,11 +60,12 @@ export function CollectionPage() {
   const theme = themes[title] ?? marketPacks.packs.find(pack => pack.name === 'NOT Wise: ' + title)?.theme;
   const total = album === null ? stickers.length : matches.length;
   return <>
-    {album === null && <nav className="choiceBar profileTabs" aria-label="Раздел коллекций">
-      <Link to="/collections" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={!marketView ? 'page' : undefined}><GameGlyph name="gift"/>Стикеры</Link>
-      <Link to="/collections/market" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={marketView ? 'page' : undefined}><GameGlyph name="treasure"/>NFT на Getgems</Link>
+    {album === null && <nav className="choiceBar profileTabs collectionTabs3" aria-label="Раздел коллекций">
+      <Link to="/collections" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={!marketView && !chartsView ? 'page' : undefined}><GameGlyph name="gift"/>Стикеры</Link>
+      <Link to="/collections/market" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={marketView ? 'page' : undefined}><GameGlyph name="treasure"/>Getgems</Link>
+      <Link to="/collections/charts" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={chartsView ? 'page' : undefined}><GameGlyph name="sparkles"/>Графики</Link>
     </nav>}
-    {marketView ? <section className="card marketCollections" aria-busy={!market && pending}>
+    {chartsView ? <MarketChartsPage/> : marketView ? <section className="card marketCollections" aria-busy={!market && pending}>
       {marketCollections.map(item => {
         const quote = quotesById.get(item.id);
         const floor = quote?.floor;
@@ -76,7 +79,10 @@ export function CollectionPage() {
           </summary>
           <p>{purpose[item.id]}</p>
           {typeof quote?.supply === 'number' && <small>Выпущено {format.format(quote.supply)} NFT в коллекции</small>}
-          <div><a className="textLink" href={`https://getgems.io/collection/${item.address}`} target="_blank" rel="noreferrer">Открыть на Getgems</a></div>
+          <div className="marketCollectionLinks">
+            <a className="textLink" href={`https://getgems.io/collection/${item.address}`} target="_blank" rel="noreferrer">Открыть на Getgems</a>
+            <DetailLink className="textLink" to={`/collections/charts?slug=${encodeURIComponent(item.id === 'skins' ? 'owl-skin' : 'col:' + item.id)}`}>График флора</DetailLink>
+          </div>
           {item.id === 'genesis' && <a className="textLink" href="https://t.me/NotWiseGuideBot?start=owl_sales">Уведомления о продажах</a>}
         </details>;
       })}

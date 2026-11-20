@@ -3432,3 +3432,952 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .buildRingEnchantCard {
   margin-top: 2px;
 }
+
+
+/* =====================================================================
+   Market Radar & Enchant-Aware Floor Price Charts
+   ===================================================================== */
+
+.collectionTabs3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.collectionTabs3 a {
+  padding-inline: 6px;
+  font-size: 13px;
+}
+
+.marketHeadingLinks {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.marketChartsLink {
+  color: var(--gold);
+  font-weight: 700;
+}
+.marketCollectionLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.marketRadar {
+  display: grid;
+  gap: 10px;
+}
+
+.radarCatTabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+}
+.radarCatTabs button {
+  margin: 0;
+  width: 100%;
+  min-height: 34px;
+  padding: 4px 4px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+.radarCatTabs button.isActive {
+  background: color-mix(in srgb, var(--gold) 15%, var(--game-panel));
+  border-color: color-mix(in srgb, var(--gold) 45%, var(--game-panel-line));
+  color: var(--gold);
+}
+
+.radarSelectorBar {
+  margin: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--game-panel);
+  border: 1px solid var(--game-panel-line);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.12s ease;
+}
+.radarSelectorBar:active {
+  transform: scale(0.99);
+}
+.radarSelectorIcon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  display: grid;
+  place-items: center;
+}
+.radarSelectorText {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+.radarSelectorText strong {
+  font-size: 14.5px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.radarSelectorText small {
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.radarSelectorAction {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 9px;
+  border-radius: 9px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.radarRingMatrix {
+  display: grid;
+  gap: 6px;
+}
+.radarPillRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.radarPill {
+  margin: 0;
+  width: 100%;
+  min-height: 36px;
+  padding: 5px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.radarPill.isActive {
+  background: color-mix(in srgb, var(--gold) 14%, var(--game-panel));
+  border-color: color-mix(in srgb, var(--gold) 50%, var(--game-panel-line));
+  color: var(--text);
+}
+.radarTierPill.isActive {
+  color: var(--gold);
+}
+
+.radarEnchantWrap {
+  display: grid;
+  gap: 6px;
+}
+.radarEnchantHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 2px;
+  font-size: 12px;
+}
+.radarEnchantHeader > span {
+  color: var(--muted);
+  font-weight: 600;
+}
+.radarEnchantHeader > small {
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.radarRailViewport {
+  position: relative;
+  overflow: hidden;
+  border-radius: 11px;
+}
+.radarRailViewport::before,
+.radarRailViewport::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 22px;
+  pointer-events: none;
+  z-index: 2;
+}
+.radarRailViewport::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--bg), transparent);
+}
+.radarRailViewport::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--bg), transparent);
+}
+
+.radarEnchantRail {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 10px 4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.radarEnchantRail::-webkit-scrollbar {
+  display: none;
+}
+
+.radarEnchantChip {
+  margin: 0;
+  width: auto;
+  flex: none;
+  min-width: 48px;
+  min-height: 36px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.radarEnchantChip.hasLots {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--gold) 26%, var(--game-panel-line));
+}
+.radarEnchantChip.isActive {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #14120e;
+}
+.radarEnchantChip.isActive .radarChipCount {
+  background: rgba(20, 18, 14, 0.22);
+  color: #14120e;
+}
+.radarChipCount {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgba(255, 204, 119, 0.16);
+  color: var(--gold);
+}
+
+.radarHeroCard {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+.radarHeroTop {
+  display: grid;
+  gap: 4px;
+}
+.radarHeroMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.radarHeroLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.radarPriceRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.radarPriceMain {
+  display: grid;
+  gap: 2px;
+}
+.radarFloorVal {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.05;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.radarFloorEmpty {
+  font-size: 20px;
+  color: var(--muted);
+}
+.radarCurrency {
+  font-size: 13px;
+  font-weight: 800;
+  color: color-mix(in srgb, var(--gold) 78%, var(--text));
+  letter-spacing: 0.02em;
+}
+.radarUsdVal {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.radarBadges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.radarDelta {
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--game-tile);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.radarDelta.isUp {
+  background: rgba(82, 209, 138, 0.16);
+  color: #6ee7a0;
+}
+.radarDelta.isDown {
+  background: rgba(242, 107, 107, 0.16);
+  color: #ff8c8c;
+}
+.radarLotsBadge {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.radarChartControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.radarModeSwitch {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 9px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+}
+.radarModeSwitch button {
+  margin: 0;
+  width: auto;
+  min-height: 28px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.radarModeSwitch button.isActive {
+  background: var(--game-panel);
+  color: var(--text);
+}
+.radarModeCaption {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.radarRangePills {
+  display: inline-flex;
+  gap: 3px;
+}
+.radarRangePills button {
+  margin: 0;
+  width: auto;
+  min-height: 28px;
+  padding: 3px 8px;
+  border-radius: 7px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.radarRangePills button.isActive {
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--game-panel-line));
+  background: color-mix(in srgb, var(--gold) 15%, var(--game-panel));
+  color: var(--gold);
+}
+
+.radarChartBox {
+  position: relative;
+  border-radius: 12px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  padding: 6px 4px 4px;
+  touch-action: none;
+}
+.radarSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+}
+.radarGridLine {
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+.radarLinePath {
+  fill: none;
+  stroke: #ffcc77;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.radarCrosshair {
+  stroke: rgba(255, 204, 119, 0.55);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 2;
+}
+.radarAxisText {
+  fill: rgba(255, 255, 255, 0.45);
+  font-size: 9.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.radarAxisText.isActive {
+  fill: #ffcc77;
+  font-weight: 800;
+}
+.radarScrubTooltip {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  z-index: 3;
+  display: grid;
+  gap: 1px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: rgba(17, 17, 18, 0.92);
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, var(--game-panel-line));
+  pointer-events: none;
+}
+.radarScrubTooltip strong {
+  font-size: 13px;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.radarScrubTooltip span {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.radarSinglePointNote,
+.radarCurveHint {
+  margin: 0;
+  padding: 6px 10px 8px;
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.35;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.radarChartEmpty {
+  min-height: 120px;
+  border-radius: 12px;
+  background: var(--game-tile);
+  border: 1px dashed var(--game-panel-line);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  padding: 16px;
+  text-align: center;
+}
+.radarChartEmpty p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.radarInlineAction {
+  margin: 0;
+  width: auto;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, var(--game-panel-line));
+  background: color-mix(in srgb, var(--gold) 14%, var(--game-panel));
+  color: var(--gold);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.radarStatsRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.radarStatsRow > div {
+  padding: 8px 9px;
+  border-radius: 10px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  display: grid;
+  gap: 2px;
+}
+.radarStatsRow small {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+.radarStatsRow strong {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.radarInsightCard {
+  padding: 12px 13px;
+  display: grid;
+  gap: 6px;
+}
+.radarInsightCard.isCheaper {
+  border-color: rgba(110, 231, 160, 0.35);
+  background: linear-gradient(155deg, rgba(82, 209, 138, 0.08), var(--game-panel));
+}
+.radarInsightCard.isPricier {
+  border-color: rgba(255, 204, 119, 0.32);
+}
+.radarInsightHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.radarInsightHead strong {
+  font-size: 13.5px;
+  color: var(--text);
+}
+.radarInsightTag {
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 204, 119, 0.14);
+  color: var(--gold);
+}
+.radarInsightCard.isCheaper .radarInsightTag {
+  background: rgba(82, 209, 138, 0.18);
+  color: #79eaa7;
+}
+.radarInsightCard p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.radarInsightCard p b {
+  color: var(--text);
+}
+
+.radarLotsCard {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+.radarLotsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.radarLotsHeader h2 {
+  margin: 0;
+  font-size: 16px;
+}
+.radarLotsHeader small {
+  display: block;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.radarSortBtn {
+  margin: 0;
+  width: auto;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--text);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.radarLotsList {
+  display: grid;
+  gap: 7px;
+}
+.radarLotRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+}
+.radarLotRow:active {
+  border-color: var(--gold);
+}
+.radarLotIcon {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: var(--game-panel);
+  display: grid;
+  place-items: center;
+}
+.radarLotInfo {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+.radarLotInfo strong {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.radarLotInfo small {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.radarLotPrice {
+  flex: none;
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+}
+.radarLotPrice small {
+  font-size: 10.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.radarEmptyLots {
+  display: grid;
+  gap: 8px;
+  padding: 10px 0 4px;
+}
+.radarEmptyLots p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.radarSuggestedEnchants {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.radarSuggestedEnchants > span {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.radarSuggestedEnchants button {
+  margin: 0;
+  width: auto;
+  min-height: 28px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--gold) 36%, var(--game-panel-line));
+  background: color-mix(in srgb, var(--gold) 12%, var(--game-tile));
+  color: var(--gold);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.radarGetgemsBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 8px 14px;
+  border-radius: 11px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* Bottom-Sheet Drawer (smooth slide-up & slide-down) */
+.radarSheetBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(8, 8, 10, 0.68);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: radarFadeIn 0.2s ease both;
+}
+.radarSheetBackdrop.isClosing {
+  animation: radarFadeOut 0.22s ease both;
+}
+.radarSheetPanel {
+  width: min(520px, 100%);
+  max-height: 82dvh;
+  background: var(--game-panel);
+  border-top: 1px solid var(--game-panel-line);
+  border-radius: 20px 20px 0 0;
+  padding: 10px 14px calc(16px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: radarSlideUp 0.26s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.radarSheetBackdrop.isClosing .radarSheetPanel {
+  animation: radarSlideDown 0.22s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.radarSheetHandle {
+  flex: none;
+  width: 38px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  margin: 0 auto 2px;
+}
+.radarSheetHeader {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.radarSheetHeader h2 {
+  margin: 0;
+  font-size: 16.5px;
+}
+.radarSheetDone {
+  margin: 0;
+  width: auto;
+  min-height: 32px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, var(--game-panel-line));
+  background: color-mix(in srgb, var(--gold) 14%, var(--game-tile));
+  color: var(--gold);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.radarSearchField {
+  flex: none;
+  display: block;
+}
+.radarSearchField input {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 11px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--text);
+  font-size: 14px;
+}
+.radarSearchField input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+.radarSheetCats {
+  flex: none;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 0;
+}
+.radarSheetCats::-webkit-scrollbar {
+  display: none;
+}
+.radarSheetCats button {
+  margin: 0;
+  width: auto;
+  flex: none;
+  min-height: 30px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.radarSheetCats button.isActive {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 16%, var(--game-panel));
+  color: var(--gold);
+}
+.radarSheetList {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: grid;
+  gap: 6px;
+  padding-bottom: 6px;
+}
+.radarSheetRow {
+  margin: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.radarSheetRow.isSelected {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 10%, var(--game-tile));
+}
+.radarSheetRowIcon {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: var(--game-panel);
+  display: grid;
+  place-items: center;
+}
+.radarSheetRowMeta {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+.radarSheetRowMeta strong {
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.radarSheetRowMeta small {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.radarSheetRowPrice {
+  flex: none;
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.radarSheetRowPrice strong {
+  font-size: 12.5px;
+  color: var(--gold);
+}
+.radarSheetRowPrice small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.radarSheetEmpty {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 20px 8px;
+  margin: 0;
+}
+.radarInfoBody {
+  display: grid;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.radarInfoBody p {
+  margin: 0;
+}
+.radarInfoBody strong {
+  color: var(--text);
+}
+.radarInfoBody code {
+  color: var(--gold);
+  font-size: 12px;
+}
+
+@keyframes radarFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes radarFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes radarSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes radarSlideDown {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}

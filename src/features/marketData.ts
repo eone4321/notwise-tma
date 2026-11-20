@@ -100,6 +100,34 @@ export const itemMarket = resource<{
 }>('/api/market/items?schema=5', 120_000, (old, next) =>
   next.status === 'unavailable' && old?.items.length ? { ...old, status: 'stale' } : next);
 
+export type ExplorerLot = { address: string; name: string; price: number; href: string };
+export type ExplorerBucket = {
+  slug: string;
+  enchant: number;
+  floor: number;
+  count: number;
+  lots: ExplorerLot[];
+  change24h?: number | null;
+  change7d?: number | null;
+};
+export type ExplorerResponse = {
+  items: ExplorerBucket[];
+  buckets?: ExplorerBucket[];
+  updatedAt: string | null;
+  status: 'ready' | 'stale' | 'unavailable';
+  source?: 'getgems' | 'toncenter' | 'getgems-on-chain';
+};
+
+export const explorerMarket = resource<ExplorerResponse>(
+  '/api/market/explorer?schema=1',
+  120_000,
+  (old, next) => {
+    const buckets = Array.isArray(next.buckets) ? next.buckets : next.items;
+    if (next.status === 'unavailable' && old?.items.length) return { ...old, status: 'stale' };
+    return { ...next, items: buckets, buckets };
+  },
+);
+
 export function startMarketUpdates() {
   const refresh = () => {
     if (document.hidden) return;
