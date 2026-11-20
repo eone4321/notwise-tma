@@ -994,7 +994,7 @@
 .buildBudget { display: grid; gap: 2px; justify-items: end; padding-block-end: 2px; }
 .buildBudget > small, .buildBudget strong small { color: var(--muted); font-size: 11px; }
 .buildBudget strong { color: var(--gold); font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1.15; }
-.buildAttributes { margin-block: 10px; border-block: 1px solid var(--game-panel-line); }
+.buildAttributes { margin-block: 10px 0; border-top: 1px solid var(--game-panel-line); border-bottom: 0; }
 .buildAttributeRow, .buildEquipMain, .buildPickerOption {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -1056,10 +1056,12 @@
 .buildReadout dt :is(.gameAttribute, .gameGlyph) { font-size: 18px; }
 .buildReadout dd { margin: 0; color: var(--text); font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .buildPanel > .caption { margin-block: 5px 8px; }
-.buildAdvanced { margin-block-start: 4px; }
+.buildAdvanced { margin-block-start: 0; padding-bottom: 0; border-top-color: var(--game-panel-line); }
+.buildAdvanced[open] { padding-bottom: 4px; }
 .buildAdvanced > summary, .buildGuideEntry > summary { min-block-size: 46px; font-size: 13px; }
 .buildAdvanced > small { color: var(--muted); }
-.buildEquip { display: grid; gap: 2px; padding-block: 3px; }
+.buildEquip { display: grid; gap: 2px; padding-block: 5px; }
+.buildEquip:last-child { padding-block-end: 0; }
 .buildEquipMain { grid-template-columns: 34px minmax(0, 1fr) 9px; width: 100%; min-height: 49px; border-radius: 8px; }
 .buildEquipMain > .gameGlyph { justify-self: center; }
 .buildEquipMain:only-child { grid-column: 1 / -1; }
@@ -1201,8 +1203,27 @@ dialog.modal.itemHelpSheet::backdrop { background: #0006; }
   color: var(--gold);
   font-size: 18px;
 }
-.buildPickerModal .dialogBody { padding: 0; }
-.buildPickerModal .buildHeading { margin-block-end: 12px; }
+dialog.modal.buildPickerModal[open] {
+  position: fixed;
+  inset: calc(var(--top-inset) + 8px) 16px calc(var(--bottom-inset) + 12px);
+  width: min(400px, calc(100% - 32px));
+  max-height: calc(100dvh - var(--top-inset) - var(--bottom-inset) - 20px);
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.buildPickerModal .dialogBody {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+.buildPickerModal .buildHeading, .buildPickerModal .buildPresetNote { flex: none; }
+.buildPickerModal .buildHeading { margin-block-end: 10px; }
+.buildPickerOptions { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-inline-end: 2px; }
 .buildPickerLevel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 76px;
@@ -1249,6 +1270,7 @@ dialog.modal.itemHelpSheet::backdrop { background: #0006; }
 .profileTabs > :is(a, button), .buildPickerOption { -webkit-tap-highlight-color: transparent; }
 .buildMatchups { display: grid; margin: 8px 0; font-size: 13px; }
 .buildMatchups > div { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 0; border-block-end: 1px solid var(--game-panel-line); }
+.buildMatchups > div:last-child { border-block-end: 0; }
 .buildMatchups dd { margin: 0; color: var(--gold); text-align: end; font-weight: 700; white-space: nowrap; }
 .buildMatchups small { font-size: 11px; font-weight: 500; }
 
@@ -1351,3 +1373,34 @@ dialog.modal.itemHelpSheet::backdrop { background: #0006; }
 .combatTipsList li:first-child { padding-top: 0; border-top: 0; }
 .combatTipsList strong { font-size: 13px; color: var(--gold); }
 .combatTipsList span { font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+details.buildCollapsePanel {
+  border: 1px solid var(--game-panel-line);
+  padding: 14px;
+}
+details.buildCollapsePanel:not([open]) { padding-bottom: 14px; }
+.buildCollapseSummary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 0;
+  list-style: none;
+  cursor: pointer;
+}
+.buildCollapseSummary::-webkit-details-marker { display: none; }
+.buildCollapseSummary h2 { margin: 0; margin-inline-end: auto; }
+.buildCollapseSummary::after {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  flex: none;
+  margin-inline: 2px 4px;
+  border: solid var(--lavender);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+  transition: transform 160ms ease-out;
+}
+details.buildCollapsePanel[open] > .buildCollapseSummary::after { transform: rotate(225deg); }
+details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px; }
+[data-theme="graphite"] .buildCollapseSummary::after { border-color: var(--gold); }

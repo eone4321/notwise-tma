@@ -260,31 +260,11 @@ export function BuildConstructor() {
       </details>
     </section>
 
-    <section className="card buildPanel" aria-labelledby="build-rings-title">
-      <div className="buildHeading">
-        <h2 id="build-rings-title">{copy('2. Кольца', '2. Rings')}</h2>
-        {state.level >= 5 && <span className="buildSlotCounter">{state.rings.filter(Boolean).length}/3</span>}
-      </div>
-      <p className="caption">{state.level < 5 ? copy('Кольца открываются с 5-го уровня совы.', 'Rings unlock at owl level 5.') : copy('Тапни по слоту для выбора кольца, справа сразу настраивается заточка.', 'Tap a slot to pick a ring; adjust sharpening directly on the right.')}</p>
-      {state.level >= 5 && state.rings.map((slot, i) => <div className="buildEquip buildEquipInline" key={i}>
-        <button type="button" className="buildEquipMain" aria-haspopup="dialog" onClick={() => { lightHaptic(); setPicker({ kind: 'ring', slot: i }); }}>
-          {slot ? <GameArt path={ringArt(slot.ring.id)} size={34}/> : <span className="buildEmptySlot" aria-hidden="true">+</span>}
-          <span><strong>{slot ? ringName(slot.ring, lang) : copy('Выбрать кольцо', 'Choose ring') + ' ' + (i + 1)}</strong>
-            {slot && <small>+{slot.ring.bonus + slot.enchant} {copy('к ', 'to ')}{statLabels[slot.ring.attribute][lang].toLowerCase()}</small>}</span>
-          {!slot && <span className="rowChevron" aria-hidden="true"/>}
-        </button>
-        {slot && <select className="buildInlineSelect" aria-label={copy('Заточка кольца', 'Ring sharpening') + ' ' + (i + 1)}
-          value={slot.enchant} onChange={event => update({ rings: replaceSlot(state.rings, i, { ...slot, enchant: Number(event.target.value) }) })}>
-          {Array.from({ length: 21 }, (_, lvl) => <option key={lvl} value={lvl}>+{lvl}</option>)}
-        </select>}
-      </div>)}
-    </section>
-
-    <section className="card buildPanel" aria-labelledby="build-skills-title">
-      <div className="buildHeading">
-        <h2 id="build-skills-title">{copy('3. Навыки в бою', '3. Combat skills')}</h2>
+    <details className="card buildPanel buildCollapsePanel" open aria-labelledby="build-skills-title">
+      <summary className="buildCollapseSummary">
+        <h2 id="build-skills-title">{copy('2. Навыки в бою', '2. Combat skills')}</h2>
         {state.level >= 2 && <span className="buildSlotCounter">{state.skills.filter(Boolean).length}/3</span>}
-      </div>
+      </summary>
       <p className="caption">{state.level < 2 ? copy('Навыки открываются со 2-го уровня совы.', 'Skills unlock at owl level 2.') : copy('Ступень навыка требует столько же вложенных очков в его ветке. Справа сразу меняется уровень навыка.', 'Skill tier requires matching branch points. Adjust skill level on the right.')}</p>
       {state.level >= 2 && state.skills.map((slot, i) => {
         const skill = slot && skillById.get(slot.id);
@@ -305,7 +285,27 @@ export function BuildConstructor() {
           {slot && skill && <p className="buildSkillEffect">{skillEffect(skill.id, slot.level, state.level, lang).map(row => row.join(' ')).join(' · ')}</p>}
         </div>;
       })}
-    </section>
+    </details>
+
+    <details className="card buildPanel buildCollapsePanel" open aria-labelledby="build-rings-title">
+      <summary className="buildCollapseSummary">
+        <h2 id="build-rings-title">{copy('3. Кольца', '3. Rings')}</h2>
+        {state.level >= 5 && <span className="buildSlotCounter">{state.rings.filter(Boolean).length}/3</span>}
+      </summary>
+      <p className="caption">{state.level < 5 ? copy('Кольца открываются с 5-го уровня совы.', 'Rings unlock at owl level 5.') : copy('Тапни по слоту для выбора кольца, справа сразу настраивается заточка.', 'Tap a slot to pick a ring; adjust sharpening directly on the right.')}</p>
+      {state.level >= 5 && state.rings.map((slot, i) => <div className="buildEquip buildEquipInline" key={i}>
+        <button type="button" className="buildEquipMain" aria-haspopup="dialog" onClick={() => { lightHaptic(); setPicker({ kind: 'ring', slot: i }); }}>
+          {slot ? <GameArt path={ringArt(slot.ring.id)} size={34}/> : <span className="buildEmptySlot" aria-hidden="true">+</span>}
+          <span><strong>{slot ? ringName(slot.ring, lang) : copy('Выбрать кольцо', 'Choose ring') + ' ' + (i + 1)}</strong>
+            {slot && <small>+{slot.ring.bonus + slot.enchant} {copy('к ', 'to ')}{statLabels[slot.ring.attribute][lang].toLowerCase()}</small>}</span>
+          {!slot && <span className="rowChevron" aria-hidden="true"/>}
+        </button>
+        {slot && <select className="buildInlineSelect" aria-label={copy('Заточка кольца', 'Ring sharpening') + ' ' + (i + 1)}
+          value={slot.enchant} onChange={event => update({ rings: replaceSlot(state.rings, i, { ...slot, enchant: Number(event.target.value) }) })}>
+          {Array.from({ length: 21 }, (_, lvl) => <option key={lvl} value={lvl}>+{lvl}</option>)}
+        </select>}
+      </div>)}
+    </details>
 
     <section className="card buildPanel buildPreview" aria-labelledby="build-results-title">
       <h2 id="build-results-title">{copy('4. Итоги в бою и баланс', '4. Combat stats & check')}</h2>

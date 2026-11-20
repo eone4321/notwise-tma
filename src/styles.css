@@ -149,7 +149,7 @@ details > p { margin: 4px 0 8px; }
 .secondary { background: var(--raised); color: var(--text); border: 1px solid var(--line); }
 .joke { padding: 12px; border: 1px solid #705f99; border-radius: 12px; background: #2a2041; }
 .joke a { display: inline-flex; align-items: center; min-height: 44px; color: var(--gold); font-weight: 700; }
-.modal { width: min(400px, calc(100% - 32px)); max-height: 85dvh; margin: auto; padding: 20px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 20px; }
+.modal { width: min(400px, calc(100% - 32px)); max-height: min(85dvh, calc(100dvh - var(--top-inset) - var(--bottom-inset) - 24px)); margin: auto; padding: 20px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 20px; }
 .modal::backdrop { background: #05070bd9; }
 .close { float: right; width: 44px; min-height: 44px; font-size: 23px; }
 .gameDock {
