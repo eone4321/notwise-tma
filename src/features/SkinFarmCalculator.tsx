@@ -9,10 +9,10 @@ import { battleLeagues } from './battle-leagues';
 import { useGuideLocale } from './guideLocale';
 import { OwlSkinCanvas } from './OwlSkinCanvas';
 import {
-  emptySkinSelection, findTrait, loadSkinRigData, matchingJetton, rarityLabels,
-  selectionFromSkinId, skinBonusForSelection, skinPartBonus, skinPresets,
-  skinRarityForSelection, skinSlotMeta, skinTraitsBySlot,
-  type SkinSelection, type SkinSlotKey,
+  defaultHomeOwlSkin, emptySkinSelection, findTrait, loadSkinRigData, matchingJetton,
+  rarityLabels, readHomeOwlSkin, sameSkinSelection, saveHomeOwlSkin, selectionFromSkinId,
+  skinBonusForSelection, skinPartBonus, skinPresets, skinRarityForSelection,
+  skinSlotMeta, skinTraitsBySlot, type SkinSelection, type SkinSlotKey,
 } from './skinRig';
 
 type SavedSkinCalc = {
@@ -114,6 +114,7 @@ export function SkinFarmCalculator({
 
   const [saved] = useState<SavedSkinCalc>(readSavedSkinCalc);
   const [selection, setSelection] = useState<SkinSelection>(saved.selection);
+  const [homeSkin, setHomeSkin] = useState<SkinSelection>(() => readHomeOwlSkin().selection);
   const [enchant, setEnchant] = useState(saved.enchant);
   const [gear, setGear] = useState(saved.gear);
   const [presetId, setPresetId] = useState<number | null>(saved.presetId);
@@ -203,6 +204,20 @@ export function SkinFarmCalculator({
 
   const activeTraits = skinTraitsBySlot[activeTab];
   const equippedInTab = findTrait(activeTab, selection[activeTab]);
+  const isOnHome = sameSkinSelection(selection, homeSkin);
+  const isDefaultHome = sameSkinSelection(selection, defaultHomeOwlSkin);
+  const ringLevel = Number(gear.rings) || 0;
+
+  function handleSetHome() {
+    lightHaptic();
+    if (isOnHome && !isDefaultHome) {
+      saveHomeOwlSkin(null);
+      setHomeSkin({ ...defaultHomeOwlSkin });
+      return;
+    }
+    saveHomeOwlSkin(selection);
+    setHomeSkin({ ...selection });
+  }
 
   return <section className="card buildPanel wardrobeCard" id="skin-calculator" aria-labelledby="farm-title" tabIndex={-1}>
     <div className="buildLoadoutTop">
@@ -244,6 +259,14 @@ export function SkinFarmCalculator({
           <GameArt path={`/game/items/${jetton.file}`} size={16}/>
           <span>{copy(jetton.ru, jetton.en)}</span>
         </a>
+        <button
+          type="button"
+          className="wardrobeHomeBtn"
+          data-active={isOnHome || undefined}
+          onClick={handleSetHome}
+        >
+          <span>{isOnHome ? copy('✓ На главной', '✓ On Home') : copy('🏠 На главную', '🏠 Set on Home')}</span>
+        </button>
       </div>
     </div>
 
@@ -357,27 +380,81 @@ export function SkinFarmCalculator({
       </div>
     </div>
 
-    <details className="mediaDetails farmExtras" id="farm-equipment">
+    <details className="mediaDetails farmExtras wardrobeExtrasCard" id="farm-equipment">
       <summary>
         <GameGlyph name="shield"/>
         <strong>{copy('Кольца, артефакт и лига', 'Rings, artifact & league')}</strong>
         {extras > 0 && <b className="farmExtrasValue">+{extras}%</b>}
       </summary>
-      <div className="calculatorGrid">
-        <label className="field">{copy('Сумма заточек колец', 'Total ring enchant')}
-          <input value={gear.rings} inputMode="numeric" maxLength={2} placeholder="0"
-            onChange={event => setGear({ ...gear, rings: enchantValue(event.target.value, 60) })}/>
-        </label>
-        <label className="field">{copy('Боевая лига', 'Battle league')}
-          <select value={gear.league} onChange={event => setGear({ ...gear, league: Number(event.target.value) })}>
-            <option value={0}>{copy('Без бонуса', 'No bonus')}</option>
-            {battleLeagues.map(([name], index) => <option key={name} value={index + 1}>{name} +{index + 1}%</option>)}
-          </select>
-        </label>
+      <div className="wardrobeExtrasBody">
+        <div className="wardrobeExtraRow">
+          <div className="wardrobeExtraInfo">
+            <GameArt path="/game/items/ring-wit-3.webp" size={28}/>
+            <div>
+              <strong>{copy('Заточка колец', 'Ring enchantments')}</strong>
+              <small>{ringLevel > 0 ? `+${5 * ringLevel}% ${copy('к монетам', 'coin bonus')}` : copy('+5% за каждый +1 (до 60)', '+5% per +1 (max 60)')}</small>
+            </div>
+          </div>
+          <div className="buildStatStep skinEnchantStep">
+            <button type="button" aria-label={copy('Уменьшить заточку колец', 'Decrease ring enchant')}
+              disabled={ringLevel <= 0}
+              onClick={() => { lightHaptic(); setGear({ ...gear, rings: ringLevel <= 1 ? '' : String(ringLevel - 1) }); }}>−</button>
+            <input aria-label={copy('Сумма заточек колец', 'Total ring enchant')}
+              value={gear.rings} placeholder="0" inputMode="numeric" maxLength={2}
+              onChange={event => setGear({ ...gear, rings: enchantValue(event.target.value, 60) })}/>
+            <button type="button" aria-label={copy('Увеличить заточку колец', 'Increase ring enchant')}
+              disabled={ringLevel >= 60}
+              onClick={() => { lightHaptic(); setGear({ ...gear, rings: String(ringLevel + 1) }); }}>+</button>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="wardrobeArtifactBtn"
+          aria-pressed={gear.artifact}
+          onClick={() => { lightHaptic(); setGear({ ...gear, artifact: !gear.artifact }); }}
+        >
+          <span className="wardrobeExtraInfo">
+            <GameArt path="/game/items/montmorillonite.webp" size={28}/>
+            <span>
+              <strong>{copy('Монтмориллонит', 'Montmorillonite')}</strong>
+              <small>{copy('Полное HP и +10% к монетам', 'Full HP & +10% coins')}</small>
+            </span>
+          </span>
+          <span className="wardrobeTogglePill">{gear.artifact ? '✓ +10%' : '+10%'}</span>
+        </button>
+
+        <div className="wardrobeLeagueBlock">
+          <div className="wardrobeLeagueHead">
+            <span>🏆 {copy('Боевая лига', 'Battle league')}</span>
+            <strong>{gear.league > 0 ? `${battleLeagues[gear.league - 1][0]} +${gear.league}%` : copy('Без бонуса', 'None')}</strong>
+          </div>
+          <div className="wardrobeLeagueRail" role="group" aria-label={copy('Боевая лига', 'Battle league')}>
+            <button
+              type="button"
+              className="wardrobeLeagueChip"
+              aria-pressed={gear.league === 0}
+              onClick={() => { lightHaptic(); setGear({ ...gear, league: 0 }); }}
+            >
+              {copy('Нет', 'None')}
+            </button>
+            {battleLeagues.map(([name], index) => {
+              const lvl = index + 1;
+              return <button
+                key={name}
+                type="button"
+                className="wardrobeLeagueChip"
+                aria-pressed={gear.league === lvl}
+                onClick={() => { lightHaptic(); setGear({ ...gear, league: gear.league === lvl ? 0 : lvl }); }}
+              >
+                {name} <small>+{lvl}%</small>
+              </button>;
+            })}
+          </div>
+        </div>
+
+        <DetailLink to="/assets/gear" className="textLink skinEnchantLink">{copy('Таблица шансов заточки', 'Enchant odds table')}</DetailLink>
       </div>
-      <label className="farmArtifact"><input type="checkbox" checked={gear.artifact}
-        onChange={event => setGear({ ...gear, artifact: event.target.checked })}/> {copy('Монтмориллонит +10%', 'Montmorillonite +10%')}</label>
-      <DetailLink to="/assets/gear" className="textLink skinEnchantLink">{copy('Таблица шансов заточки', 'Enchant odds table')}</DetailLink>
     </details>
 
     {presetModalOpen && <SkinModal

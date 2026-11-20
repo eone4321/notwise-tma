@@ -138,6 +138,55 @@ export const skinPresets: readonly SkinPreset[] = [
   },
 ];
 
+export const defaultHomeOwlSkin: SkinSelection =
+  skinPresets.find(preset => preset.id === 7895)?.selection ?? {
+    body: 'Golden',
+    chest: 'NOT_Chain',
+    glasses: 'Las_vegas',
+    hat: null,
+    eyes: null,
+  };
+
+export const homeOwlStorageKey = 'notwise.guide.home-owl.v1';
+
+export function sanitizeSkinSelection(raw: unknown): SkinSelection | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const record = raw as Record<string, unknown>;
+  const next: SkinSelection = { ...emptySkinSelection };
+  let hasAny = false;
+  for (const slot of ['body', 'chest', 'hat', 'glasses', 'eyes'] as const) {
+    const val = record[slot];
+    if (typeof val === 'string' && findTrait(slot, val)) {
+      next[slot] = val;
+      hasAny = true;
+    }
+  }
+  return hasAny ? next : null;
+}
+
+export function sameSkinSelection(a: SkinSelection, b: SkinSelection): boolean {
+  return (['body', 'chest', 'hat', 'glasses', 'eyes'] as const).every(slot => (a[slot] ?? null) === (b[slot] ?? null));
+}
+
+export function readHomeOwlSkin(): { selection: SkinSelection; isCustom: boolean } {
+  try {
+    const raw = JSON.parse(localStorage.getItem(homeOwlStorageKey) ?? 'null');
+    const clean = sanitizeSkinSelection(raw);
+    if (clean) return { selection: clean, isCustom: true };
+  } catch { /* fallback */ }
+  return { selection: { ...defaultHomeOwlSkin }, isCustom: false };
+}
+
+export function saveHomeOwlSkin(selection: SkinSelection | null): void {
+  try {
+    if (selection === null || sameSkinSelection(selection, defaultHomeOwlSkin)) {
+      localStorage.removeItem(homeOwlStorageKey);
+    } else {
+      localStorage.setItem(homeOwlStorageKey, JSON.stringify(selection));
+    }
+  } catch { /* ignore */ }
+}
+
 export function findTrait(slot: SkinSlotKey, key: string | null) {
   if (!key) return undefined;
   return skinTraitsBySlot[slot].find(option => option.key === key);

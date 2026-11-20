@@ -19,29 +19,16 @@ import {
 import { practiceKey, reviewBuild, type PracticeResult } from './combat-analysis';
 import { OwlSkinCanvas } from './OwlSkinCanvas';
 import {
-  emptySkinSelection, findTrait, skinPresets, skinRarityForSelection, type SkinSelection,
+  readHomeOwlSkin, sanitizeSkinSelection, skinRarityForSelection, type SkinSelection,
 } from './skinRig';
-
-const defaultCombatOwl: SkinSelection =
-  skinPresets.find(preset => preset.id === 7895)?.selection ?? { ...emptySkinSelection, body: 'Golden', chest: 'NOT_Chain', glasses: 'Las_vegas' };
 
 function readCombatOwlSkin(): SkinSelection {
   try {
     const raw = JSON.parse(sessionStorage.getItem('notwise.guide.skin-calc.v1') ?? 'null');
-    if (raw && typeof raw === 'object' && raw.selection && typeof raw.selection === 'object') {
-      const next: SkinSelection = { ...emptySkinSelection };
-      let hasAny = false;
-      for (const slot of ['body', 'chest', 'hat', 'glasses', 'eyes'] as const) {
-        const val = raw.selection[slot];
-        if (typeof val === 'string' && findTrait(slot, val)) {
-          next[slot] = val;
-          hasAny = true;
-        }
-      }
-      if (hasAny) return next;
-    }
+    const sessionSkin = sanitizeSkinSelection(raw?.selection);
+    if (sessionSkin) return sessionSkin;
   } catch { /* fallback */ }
-  return defaultCombatOwl;
+  return readHomeOwlSkin().selection;
 }
 
 type Picker = { kind: 'ring' | 'skill'; slot: number };

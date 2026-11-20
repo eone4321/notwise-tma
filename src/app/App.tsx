@@ -21,6 +21,8 @@ import { CarePage, InventoryPage, OwlPage } from '../features/InventoryPage';
 import { CombatPage } from '../features/CombatPage';
 import { CollectionPage } from '../features/CollectionPage';
 import { CapsulePage } from '../features/CapsulePage';
+import { OwlSkinCanvas } from '../features/OwlSkinCanvas';
+import { readHomeOwlSkin } from '../features/skinRig';
 import { achievementActions } from '../features/inventory';
 import {useEffect,useRef,useState}from'react';
 import{Link,Navigate,useLocation,useNavigate}from'react-router';
@@ -201,6 +203,7 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
   english: boolean; profile: GuideProfile | null; profileFailed: boolean; retryProfile: () => void; onChatVisit: () => void; onSquadVisit: () => void;
 }) {
  const [share, setShare] = useState(false);
+ const [homeOwl] = useState(readHomeOwlSkin);
  const fromInvite = authData() && /^g_[a-f0-9]{32}$/.test(telegramPopup()?.initDataUnsafe?.start_param ?? '');
  const homeTiles = [
   { path: '/secrets', icon: '/game/stickers/9.webp', art: '/game/stickers/42.webp',
@@ -231,7 +234,9 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
       <span>{en ? 'Our squad' : 'Наш сквад'}</span>
     </a>
     <div className="heroCopy"><h1>{en ? <>NOT Wise <span>Guide</span></> : <>Гайд по <span>NOT Wise</span></>}</h1><p className="heroSub">{en ? 'Loot, combat and owl care.' : 'Награды, бои и уход за совой.'}</p></div>
-    <img className="heroImage" src={artSrc('/brand/notwise-home.jpg')} width="1170" height="1200" alt=""/>
+    <div className="heroOwlStage" aria-hidden="true">
+      <OwlSkinCanvas selection={homeOwl.selection} size={184}/>
+    </div>
     <div className="heroActions">
       {fromInvite && !profile ? (
         <button className="primary openGame" disabled={!profileFailed} onClick={retryProfile}>
