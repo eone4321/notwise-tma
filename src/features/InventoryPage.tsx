@@ -127,15 +127,15 @@ export function OwlPage() {
 }
 
 const energyTiers = [
-  { range: 'Ур. 0–4', fight: 10, flight: 200 },
-  { range: 'Ур. 5–9', fight: 20, flight: 250 },
-  { range: 'Ур. 10–14', fight: 30, flight: 300 },
-  { range: 'Ур. 15–19', fight: 40, flight: 350 },
-  { range: 'Ур. 20–24', fight: 50, flight: 400 },
-  { range: 'Ур. 25–29', fight: 60, flight: 450 },
-  { range: 'Ур. 30–34', fight: 70, flight: 500 },
-  { range: 'Ур. 35–39', fight: 80, flight: 550 },
-  { range: 'Ур. 40–44', fight: 90, flight: 600 },
+  { range: 'Ур. 0–4', fight: 10, flight: 200, sp: '2 ⚡' },
+  { range: 'Ур. 5–9', fight: 20, flight: 250, sp: '2 ⚡' },
+  { range: 'Ур. 10–14', fight: 30, flight: 300, sp: '2 ⚡' },
+  { range: 'Ур. 15–19', fight: 40, flight: 350, sp: '2 ⚡' },
+  { range: 'Ур. 20–24', fight: 50, flight: 400, sp: '2 ⚡' },
+  { range: 'Ур. 25–29', fight: 60, flight: 450, sp: '2 ⚡' },
+  { range: 'Ур. 30–34', fight: 70, flight: 500, sp: '2 ⚡' },
+  { range: 'Ур. 35–39', fight: 80, flight: 550, sp: '2 ⚡' },
+  { range: 'Ур. 40–44', fight: 90, flight: 600, sp: '2 ⚡' },
 ] as const;
 
 export function CarePage() {
@@ -172,21 +172,34 @@ export function CarePage() {
             <span className="memoRowIcon"><GameArt path={itemPath('lighter.webp')} size={26}/></span>
             <div>
               <strong>Сбросы в 00:00 UTC</strong>
-              <p>Бесплатное восстановление всей энергии, 3 ракеты в полёте, Загадка книги (до ×3 за серию и +5 мудрости на 24 ч) и ритуал сквада.</p>
+              <div className="memoLines">
+                <p>Бесплатное полное восстановление энергии.</p>
+                <p>3 бесплатные ракеты для полёта.</p>
+                <p>Загадка книги — до ×3 за серию и +5 мудрости на 24 ч.</p>
+                <p>Ежедневный ритуал сквада.</p>
+              </div>
             </div>
           </div>
           <div className="memoRow">
             <span className="memoRowIcon"><GameArt path={itemPath('croissant.webp')} size={26}/></span>
             <div>
               <strong>Сытость — раз в 3 дня</strong>
-              <p>Макс. 20, для полёта нужно от 10. Любимая еда даёт ×2. Без еды 3 дня — штраф на 24 ч: монеты и опыт ×0.5, реген HP и энергии вдвое медленнее.</p>
+              <div className="memoLines">
+                <p>Максимум 20, для полёта нужно от 10.</p>
+                <p>Любимая еда даёт ×2 сытости.</p>
+                <p>Без еды 3 дня — штраф на 24 ч: монеты и XP ×0.5, реген HP и энергии в 2 раза медленнее.</p>
+              </div>
             </div>
           </div>
           <div className="memoRow">
             <span className="memoRowIcon"><GameArt path={itemPath('big-black-clock.webp')} size={26}/></span>
             <div>
               <strong>Запас и реген энергии</strong>
-              <p>База: 100 ⚡ и реген 80 ⚡/ч (1 ⚡ за 45 с). Перк Мудрости даёт +100 ⚡ к запасу (до 2 200 ⚡), перк Ловкости ускоряет реген на +3% за ур. (до 130 ⚡/ч).</p>
+              <div className="memoLines">
+                <p>База: 100 ⚡ и реген 80 ⚡/ч (1 ⚡ за 45 с).</p>
+                <p>Перк Мудрости даёт +100 ⚡ к запасу за уровень (до 2 200 ⚡).</p>
+                <p>Перк Ловкости ускоряет реген на +3% за уровень (до 130 ⚡/ч).</p>
+              </div>
             </div>
           </div>
         </div>
@@ -197,29 +210,34 @@ export function CarePage() {
         <div className="memoCardHead">
           <GameArt path={itemPath('chiller.webp')} size={40}/>
           <div>
-            <h2>Стоимость боя и полёта</h2>
+            <h2>Стоимость боя, полёта и фарма SP</h2>
             <p>Бой растёт на +10 ⚡ каждые 5 уровней, полёт — на +50 ⚡</p>
           </div>
         </div>
 
-        <div className="energyGradTable" role="table" aria-label="Стоимость боя и полёта по уровням">
+        <div className="energyGradTable" role="table" aria-label="Стоимость боя, полёта и фарма SP по уровням">
           <div className="energyGradHead" role="row">
             <span role="columnheader">Уровень</span>
             <span role="columnheader">Бой</span>
             <span role="columnheader">Полёт</span>
+            <span role="columnheader">Фарм SP</span>
           </div>
           {energyTiers.map(tier => (
             <div className="energyGradRow" role="row" key={tier.range}>
               <strong role="cell">{tier.range}</strong>
               <span role="cell" className="isGold">{tier.fight} ⚡</span>
               <span role="cell">{tier.flight} ⚡</span>
+              <span role="cell" className="isSp">{tier.sp}</span>
             </div>
           ))}
         </div>
 
-        <p className="memoNote">
-          В Додзё цена фиксированная — <b>2 ⚡ за удар</b>. Чтобы не переплачивать за бои при фарме SP, включай <b>Холодильник XP</b> на границе ступеней (ур. 4, 9, 14, 19).
-        </p>
+        <div className="memoNote">
+          <div className="memoLines">
+            <p>В Додзё фарм SP открывается со 2-го уровня и всегда стоит <b>2 ⚡ за удар</b>.</p>
+            <p>Чтобы не переплачивать за бои, включай <b>Холодильник XP</b> на границе ступеней (ур. 4, 9, 14, 19).</p>
+          </div>
+        </div>
       </section>
 
       <section className="card memoCard">
@@ -235,21 +253,35 @@ export function CarePage() {
             <span className="memoRowIcon"><GameArt path={itemPath('ring-ag-3.webp')} size={26}/></span>
             <div>
               <strong>Потолок статов — 70% на 100 очках</strong>
-              <p>Выше 100 Ловкости (уклонение) и 100 Мудрости (крит) шансы не растут — лишняя Мудрость даёт только +20 маны за очко. В бой берётся до 3 навыков, мана не регенится.</p>
+              <div className="memoLines">
+                <p>Выше 100 Ловкости (уклонение) и 100 Мудрости (крит) шансы не растут.</p>
+                <p>Лишняя Мудрость даёт только +20 маны за очко.</p>
+                <p>В бой берётся до 3 навыков, мана за бой не восстанавливается.</p>
+              </div>
             </div>
           </div>
           <div className="memoRow">
             <span className="memoRowIcon"><GameArt path={itemPath('seba-cola.webp')} size={26}/></span>
             <div>
               <strong>Рейды и защита баланса</strong>
-              <p>Победитель забирает 3% монет. После любого боя действует передышка 5 мин, после 3 проигранных защит — щит до входа в игру, Seba Cola даёт купол на 24 ч.</p>
+              <div className="memoLines">
+                <p>Победитель рейда забирает 3% монет.</p>
+                <p>После любого боя действует передышка 5 минут.</p>
+                <p>После 3 проигранных защит подряд включается щит до входа в игру.</p>
+                <p>Seba Cola даёт защитный купол на 24 ч (спадает при твоей атаке).</p>
+              </div>
             </div>
           </div>
           <div className="memoRow">
             <span className="memoRowIcon"><GameArt path={itemPath('morpher.webp')} size={26}/></span>
             <div>
               <strong>Сбросы и перенос прогресса</strong>
-              <p><b>Холодильник XP</b> морозит опыт из капсул, <b>Морфер</b> сбрасывает статы и навыки без потери SP, <b>Пустая колба SP</b> записывает SP, <b>Пустая дискета XP</b> сохраняет XP перед перерождением.</p>
+              <div className="memoLines">
+                <p><b>Холодильник XP</b> — морозит опыт из капсул.</p>
+                <p><b>Морфер</b> — сбрасывает статы и навыки без потери SP.</p>
+                <p><b>Пустая колба SP</b> — записывает накопленные SP.</p>
+                <p><b>Пустая дискета XP</b> — сохраняет XP перед перерождением.</p>
+              </div>
             </div>
           </div>
         </div>
