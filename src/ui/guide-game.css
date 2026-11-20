@@ -2253,7 +2253,7 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 }
 .skinEnchantStep input:focus,
 .skinEnchantSelect:focus { outline: none; border-color: var(--gold); }
-.skinEnchantLink { margin-top: 2px; min-height: 38px; font-size: 12.5px; }
+.skinEnchantLink { justify-self: start; width: fit-content; max-width: 100%; margin-top: 2px; min-height: 38px; font-size: 12.5px; }
 
 .skinOptionRow { grid-template-columns: 32px minmax(0, 1fr) auto; }
 .skinOptionIcon { display: grid; place-items: center; width: 28px; height: 28px; font-size: 18px; }
@@ -3302,6 +3302,18 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 }
 .wardrobeLeagueHead span { color: var(--muted); font-weight: 700; }
 .wardrobeLeagueHead strong { color: var(--gold); font-size: 12.5px; }
+.wardrobeLeagueSelect {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 6px 9px;
+  border: 1px solid var(--game-panel-line);
+  border-radius: 8px;
+  background: var(--game-tile);
+  color: var(--text);
+  font-size: 16px;
+}
+.wardrobeLeagueSelect:focus-visible { outline: 2px solid var(--gold); }
 .wardrobeLeagueRail {
   display: flex;
   gap: 6px;

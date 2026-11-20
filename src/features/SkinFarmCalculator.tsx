@@ -482,36 +482,24 @@ export function SkinFarmCalculator({
           <span className="wardrobeTogglePill">{gear.artifact ? '✓ +10%' : '+10%'}</span>
         </button>
 
-        <div className="wardrobeLeagueBlock">
-          <div className="wardrobeLeagueHead">
+        <label className="wardrobeLeagueBlock">
+          <span className="wardrobeLeagueHead">
             <span>🏆 {copy('Боевая лига', 'Battle league')}</span>
-            <strong>{gear.league > 0 ? `${battleLeagues[gear.league - 1][0]} +${gear.league}%` : copy('Без бонуса', 'None')}</strong>
-          </div>
-          <div className="wardrobeTrayViewport isLeagueViewport">
-            <div className="wardrobeLeagueRail" role="group" aria-label={copy('Боевая лига', 'Battle league')}>
-              <button
-                type="button"
-                className="wardrobeLeagueChip"
-                aria-pressed={gear.league === 0}
-                onClick={() => { lightHaptic(); setGear({ ...gear, league: 0 }); }}
-              >
-                {copy('Нет', 'None')}
-              </button>
-              {battleLeagues.map(([name], index) => {
-                const lvl = index + 1;
-                return <button
-                  key={name}
-                  type="button"
-                  className="wardrobeLeagueChip"
-                  aria-pressed={gear.league === lvl}
-                  onClick={() => { lightHaptic(); setGear({ ...gear, league: gear.league === lvl ? 0 : lvl }); }}
-                >
-                  {name} <small>+{lvl}%</small>
-                </button>;
-              })}
-            </div>
-          </div>
-        </div>
+            {gear.league > 0 && <strong>+{gear.league}%</strong>}
+          </span>
+          <select className="wardrobeLeagueSelect" value={gear.league} onChange={event => {
+            lightHaptic();
+            const league = Number(event.target.value);
+            setGear(current => ({ ...current, league }));
+          }}>
+            <option value={0}>{copy('Без бонуса лиги', 'No league bonus')}</option>
+            {battleLeagues.map(([name, mmr], index) => (
+              <option key={name} value={index + 1}>
+                {name} · {mmr.toLocaleString(locale)} MMR
+              </option>
+            ))}
+          </select>
+        </label>
 
         <DetailLink to="/assets/gear" className="textLink skinEnchantLink">{copy('Таблица шансов заточки', 'Enchant odds table')}</DetailLink>
       </div>
