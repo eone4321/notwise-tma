@@ -1112,6 +1112,9 @@
 }
 
 .buildConstructor { display: grid; gap: 12px; margin-block-end: 16px; }
+.buildConstructor[data-level-pending] :is([inert] > *, .buildShareHeroBtn, .buildPresetChip, .buildLoadoutRight) {
+  opacity: .32;
+}
 .buildConstructor .buildPanel {
   margin: 0;
   border-radius: 12px;
@@ -5155,3 +5158,27 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   line-height: 1.5;
 }
 .resourceSections p + p { margin-block-start: 8px; }
+
+.ringEnchantBonuses {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.ringEnchantBonuses > div {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+  padding: 7px;
+  border: 1px solid var(--game-panel-line);
+  border-radius: 8px;
+  background: var(--game-tile);
+  font-size: 11px;
+}
+.ringEnchantBonuses strong { color: var(--gold); font-variant-numeric: tabular-nums; }
+.ringEnchantBonuses .gameAttribute { font-size: 16px; }
+.ringEnchantBonuses .wardrobeRiskTrack {
+  grid-column: 1 / -1;
+  margin-block-start: 4px;
+}
+.ringEnchantBonuses .wardrobeRiskFill { background: #65d6a0; }

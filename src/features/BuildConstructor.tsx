@@ -48,11 +48,11 @@ function storedInteger(value: unknown, minimum: number, maximum: number): value 
   return typeof value === 'number' && Number.isInteger(value) && value >= minimum && value <= maximum;
 }
 
-function readBuild(): BuildState {
+function readBuild(): BuildState | null {
   try {
     const key = scopedStorageKey(buildStorage);
     const saved = JSON.parse(localStorage.getItem(key) ?? localStorage.getItem(buildStorage) ?? 'null');
-    if (!saved || !storedInteger(saved.level, 1, maxLevel)) return initialBuild();
+    if (!saved || !storedInteger(saved.level, 1, maxLevel)) return null;
     const budget = storedInteger(saved.budget, 0, 999) ? saved.budget : null;
     const attributes = (value: Record<string, unknown> | undefined) => {
       const result = { ...emptyAttributes };
@@ -78,7 +78,7 @@ function readBuild(): BuildState {
         return { id: slot.id, level: slot.level };
       }),
     });
-  } catch { return initialBuild(); }
+  } catch { return null; }
 }
 
 function initialBuild(): BuildState {
@@ -99,7 +99,9 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
     const token = new URLSearchParams(search).get('build')?.split('--g_')[0];
     return token ? decodeBuildCode(token, maxLevel) : null;
   }, []);
-  const [state, setState] = useState(() => initialShared ?? readBuild());
+  const [initialSelection] = useState(() => initialShared ?? readBuild());
+  const [state, setState] = useState(() => initialSelection ?? initialBuild());
+  const [levelSelected, setLevelSelected] = useState(initialSelection !== null);
   const [sharedBanner, setSharedBanner] = useState(() => Boolean(initialShared));
   const [practice, setPractice] = useState<PracticeResult | 'waiting' | 'error' | null>(null);
   const [comparison, setComparison] = useState<PracticeResult | null>(null);
@@ -118,6 +120,7 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
     const decoded = decodeBuildCode(token, maxLevel);
     if (decoded) {
       setState(decoded);
+      setLevelSelected(true);
       setSharedBanner(true);
       setPractice(null);
       setComparison(null);
@@ -125,8 +128,8 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
     navigate('/combat/builds', { replace: true });
   }, [search, navigate]);
   useEffect(() => {
-    try { localStorage.setItem(scopedStorageKey(buildStorage), JSON.stringify(state)); } catch { /* Storage is optional. */ }
-  }, [state]);
+    try { localStorage.setItem(scopedStorageKey(buildStorage), JSON.stringify(levelSelected ? state : null)); } catch { /* Storage is optional. */ }
+  }, [state, levelSelected]);
   useEffect(() => () => worker.current?.terminate(), []);
 
   const resetPractice = () => {
@@ -258,17 +261,25 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
     + Number(review.rotationCost > 0 && review.mana < review.rotationCost * 2);
   const statBarScale = Math.max(budget + 12, 42);
 
-  return <div className="buildConstructor">
+  return <div className="buildConstructor" data-level-pending={!levelSelected || undefined}>
+      <button type="button" className="secondary buildShareHeroBtn" disabled={!levelSelected} onClick={() => { lightHaptic(); setShareOpen(true); }}>
+        <GameGlyph name="share"/>
+        <span>{copy('Поделиться сборкой', 'Share this build')}</span>
+      </button>
     <section className="card buildPanel buildLoadoutCard" aria-labelledby="build-level-title">
       <div className="buildLoadoutTop">
         <div className="buildLoadoutControls">
           <label className="buildLevelPill" aria-label={copy('Уровень совы', 'Owl level')}>
             <span>{copy('Ур.', 'Lv.')}</span>
-            <select id="build-level-title" value={state.level} onChange={event => update({ level: Number(event.target.value) })}>
+            <select id="build-level-title" value={levelSelected ? state.level : ''} onChange={event => {
+              setLevelSelected(true);
+              update({ level: Number(event.target.value) });
+            }}>
+              <option value="" disabled>{copy('Выбрать', 'Choose')}</option>
               {Array.from({ length: maxLevel }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
             </select>
           </label>
-          <button type="button" className="buildPresetChip" aria-haspopup="dialog" onClick={() => { lightHaptic(); setChoosePreset(true); }}>
+          <button type="button" className="buildPresetChip" disabled={!levelSelected} aria-haspopup="dialog" onClick={() => { lightHaptic(); setChoosePreset(true); }}>
             {selectedPreset ? <GameAttribute name={selectedPreset.icon}/> : <GameGlyph name="sparkles"/>}
             <span>{selectedPreset ? selectedPreset.name[lang] : copy('Готовые', 'Presets')}</span>
             <span className="buildChipCaret" aria-hidden="true">▾</span>
@@ -278,11 +289,11 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
           <span className="buildBudgetPill" data-empty={left === 0 || undefined}>
             {left === 0 ? copy('✓ 0 очк.', '✓ 0 pts') : copy(`Свободно: ${left}`, `Free: ${left}`)}
           </span>
-          <button type="button" className="wardrobeActionIcon calcInfoBtn" title={copy('О калькуляторе билдов', 'About build calculator')}
+          <button type="button" className="wardrobeActionIcon calcInfoBtn" disabled={!levelSelected} title={copy('О калькуляторе билдов', 'About build calculator')}
             aria-label={copy('О калькуляторе билдов', 'About build calculator')} onClick={() => { lightHaptic(); setInfoOpen(true); }}>
             <GameGlyph name="info"/>
           </button>
-          <button type="button" className="buildIconReset" title={copy('Сбросить билд', 'Reset build')}
+          <button type="button" className="buildIconReset" disabled={!levelSelected} title={copy('Сбросить билд', 'Reset build')}
             aria-label={copy('Сбросить билд', 'Reset build')} onClick={() => {
               lightHaptic();
               resetPractice();
@@ -291,10 +302,12 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
               setSharedBanner(false);
               setRingEnchantPreview(0);
               setBulkConfirmLevel(null);
+              setLevelSelected(false);
               setState(initialBuild());
             }}>↺</button>
         </div>
       </div>
+      <div style={{ display: 'contents' }} inert={!levelSelected}>
       {sharedBanner && <p className="buildSharedNotice">✓ {copy('Загружена сборка по ссылке — можешь проверить в боях или подстроить под себя.', 'Shared build loaded — test in duels or tweak stats.')}</p>}
 
       <div className="buildLoadoutStage">
@@ -355,10 +368,7 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
         </div>
       </div>
 
-      <button type="button" className="secondary buildShareHeroBtn" onClick={() => { lightHaptic(); setShareOpen(true); }}>
-        <GameGlyph name="share"/>
-        <span>{copy('Поделиться сборкой', 'Share this build')}</span>
-      </button>
+
 
       <div className="buildStatGrid" role="group" aria-label={copy('Распределение очков', 'Attribute points')}>
         {statKeys.map(stat => {
@@ -392,18 +402,70 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
         })}
       </div>
 
-      <div className="wardrobeEnchantCard buildRingEnchantCard">
+      <details className="mediaDetails buildAdvanced" id="build-advanced">
+        <summary><strong>{copy('Запас очков и баффы (осада, книга)', 'Custom budget and temporary buffs')}</strong></summary>
+        <p className="caption">{copy('По умолчанию доступно 1 очко за уровень. Если у тебя другой запас или действуют усиления от осады/книги, укажи их здесь.', 'Default budget is 1 point per level. Adjust your point pool or add siege/book buffs here.')}</p>
+        <label className="field">{copy('Всего очков для распределения', 'Total points to allocate')}
+          <input value={budgetDraft ?? state.budget ?? ''} placeholder={String(state.level)} inputMode="numeric" maxLength={3}
+            onChange={event => setBudgetDraft(event.target.value.replace(/\D/g, ''))}
+            onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur(); }}
+            onBlur={() => {
+              if (budgetDraft !== null) update({ budget: budgetDraft === '' ? null : Number(budgetDraft) });
+              setBudgetDraft(null);
+            }}/>
+        </label>
+        <div className="calculatorGrid">{statKeys.map(stat => <label className="field" key={stat}>
+          <span><GameAttribute name={stat}/> {statLabels[stat][lang]}</span>
+          <input value={state.buffs[stat] || ''} placeholder="0" inputMode="numeric" maxLength={3}
+            onChange={event => update({ buffs: { ...state.buffs, [stat]: Number(event.target.value.replace(/\D/g, '')) } })}/>
+        </label>)}</div>
+      </details>
+      </div>
+    </section>
+
+    <div style={{ display: 'contents' }} inert={!levelSelected}>
+    <section className="card buildPanel buildPreview" aria-labelledby="build-results-title">
+      <div className="buildHeading buildPreviewHead">
+        <h2 id="build-results-title">{copy('Итоги в бою и баланс', 'Combat stats & check')}</h2>
+        <button type="button" className="buildPillButton" onClick={() => { lightHaptic(); setShareOpen(true); }}>
+          <GameGlyph name="share"/>
+          {copy('Поделиться', 'Share')}
+        </button>
+      </div>
+      <BattleReadout stats={results}/>
+      <BuildAnalysis state={state} lang={lang}/>
+    </section>
+
+      <section className="card buildPanel wardrobeEnchantCard buildRingEnchantCard">
         <div className="skinEnchantBox">
           <div className="skinEnchantHead">
             <div className="skinEnchantMeta">
               <GameArt path="/game/items/scroll-enchant-ring.webp" size={28}/>
-              <strong>{copy('Заточка колец', 'Ring enchant')}</strong>
+              <strong>{copy('Заточка колец (пример)', 'Ring enchant (example)')}</strong>
             </div>
             <b className="skinEnchantBonusTag" data-mixed={hasMixedRingEnchants || undefined}>
               {hasMixedRingEnchants
                 ? copy(`+${minRingEnchant}..+${maxRingEnchant} · разные`, `+${minRingEnchant}–+${maxRingEnchant} · mixed`)
                 : mainEnchantLevel > 0 ? `+${mainEnchantLevel} · +${mainEnchantLevel * 5}%` : '+0%'}
             </b>
+          </div>
+          <div className="ringEnchantBonuses" aria-live="polite">
+            <div>
+              <GameAttribute name="wisdom"/>
+              <span>{copy('Бонус к атрибуту', 'Attribute bonus')}</span>
+              <strong>+{mainEnchantLevel}</strong>
+              <div className="wardrobeRiskTrack" role="meter" aria-label={copy('Бонус к атрибуту', 'Attribute bonus')} aria-valuemin={0} aria-valuemax={20} aria-valuenow={mainEnchantLevel}>
+                <div className="wardrobeRiskFill" data-risk={mainRiskZone} style={{ width: `${mainEnchantLevel * 5}%` }}/>
+              </div>
+            </div>
+            <div>
+              <GameArt path="/game/items/wise-coin.webp" size={16}/>
+              <span>{copy('Монеты', 'Coins')}</span>
+              <strong>+{mainEnchantLevel * 5}%</strong>
+              <div className="wardrobeRiskTrack" role="meter" aria-label={copy('Бонус к монетам', 'Coin bonus')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={mainEnchantLevel * 5}>
+                <div className="wardrobeRiskFill" data-risk={mainRiskZone} style={{ width: `${mainEnchantLevel * 5}%` }}/>
+              </div>
+            </div>
           </div>
           <div className="skinEnchantControls">
             <small className="skinEnchantHint" data-risk={hasMixedRingEnchants ? 'mid' : mainRiskZone}>
@@ -481,39 +543,7 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
             <span>{copy('+4..+20 предмет может сгореть 🔥', '+4..+20 item can burn 🔥')}</span>
           </div>
         </div>
-      </div>
-
-      <details className="mediaDetails buildAdvanced" id="build-advanced">
-        <summary><strong>{copy('Запас очков и баффы (осада, книга)', 'Custom budget and temporary buffs')}</strong></summary>
-        <p className="caption">{copy('По умолчанию доступно 1 очко за уровень. Если у тебя другой запас или действуют усиления от осады/книги, укажи их здесь.', 'Default budget is 1 point per level. Adjust your point pool or add siege/book buffs here.')}</p>
-        <label className="field">{copy('Всего очков для распределения', 'Total points to allocate')}
-          <input value={budgetDraft ?? state.budget ?? ''} placeholder={String(state.level)} inputMode="numeric" maxLength={3}
-            onChange={event => setBudgetDraft(event.target.value.replace(/\D/g, ''))}
-            onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur(); }}
-            onBlur={() => {
-              if (budgetDraft !== null) update({ budget: budgetDraft === '' ? null : Number(budgetDraft) });
-              setBudgetDraft(null);
-            }}/>
-        </label>
-        <div className="calculatorGrid">{statKeys.map(stat => <label className="field" key={stat}>
-          <span><GameAttribute name={stat}/> {statLabels[stat][lang]}</span>
-          <input value={state.buffs[stat] || ''} placeholder="0" inputMode="numeric" maxLength={3}
-            onChange={event => update({ buffs: { ...state.buffs, [stat]: Number(event.target.value.replace(/\D/g, '')) } })}/>
-        </label>)}</div>
-      </details>
-    </section>
-
-    <section className="card buildPanel buildPreview" aria-labelledby="build-results-title">
-      <div className="buildHeading buildPreviewHead">
-        <h2 id="build-results-title">{copy('Итоги в бою и баланс', 'Combat stats & check')}</h2>
-        <button type="button" className="buildPillButton" onClick={() => { lightHaptic(); setShareOpen(true); }}>
-          <GameGlyph name="share"/>
-          {copy('Поделиться', 'Share')}
-        </button>
-      </div>
-      <BattleReadout stats={results}/>
-      <BuildAnalysis state={state} lang={lang}/>
-    </section>
+      </section>
 
     <section className="card buildPanel buildPracticeCard" aria-labelledby="build-practice-title">
       <div className="buildPracticeHead">
@@ -575,6 +605,8 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
         </details>;
       })}
     </section>
+
+    </div>
 
     {choosePreset && <BuildPicker title={copy('Готовые сборки', 'Preset builds')} closeLabel={copy('Закрыть', 'Close')} onClose={() => setChoosePreset(false)}>
       {requestClose => <>
