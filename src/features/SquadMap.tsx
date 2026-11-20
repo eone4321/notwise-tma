@@ -154,9 +154,10 @@ export function SquadMap() {
       </svg>
 
       <div className="squadMapLegend" aria-hidden="true">
-        <span><i className="legendDot isSelected"/>Выбран</span>
+        <span><i className="legendDot isSelected"/>Выбрана</span>
         <span><i className="legendDot isNeighbor"/>Рядом ({neighbors.length})</span>
         <span><i className="legendDot isCoins"/>Монеты</span>
+        <span><i className="legendDot isSilver"/>Серебро</span>
         <span><i className="legendDot isStats"/>Бафф</span>
       </div>
     </div>

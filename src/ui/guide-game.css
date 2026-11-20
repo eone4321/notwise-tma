@@ -66,14 +66,14 @@
 .heroSquadPill:active { border-color: var(--gold); filter: brightness(1.18); scale: .98; }
 .gameHero .heroOwlStage {
   position: absolute;
-  z-index: 0;
-  right: 4px;
-  top: 34px;
-  width: clamp(146px, 41vw, 184px);
-  height: clamp(146px, 41vw, 184px);
+  z-index: 1;
+  right: 16px;
+  top: 28px;
+  width: clamp(134px, 36vw, 158px);
+  height: clamp(134px, 36vw, 158px);
   display: grid;
   place-items: center;
-  pointer-events: none;
+  pointer-events: auto;
 }
 .gameHero .heroOwlStage::before {
   content: "";
@@ -110,6 +110,8 @@
   max-width: 19ch;
 }
 .heroActions {
+  position: relative;
+  z-index: 2;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: stretch;
@@ -420,22 +422,30 @@
 }
 .homeGameActions a {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) 8px;
-  gap: 7px;
+  grid-template-columns: 36px minmax(0, 1fr) 8px;
+  gap: 8px;
   align-items: center;
-  padding: 7px 8px;
-  min-height: 52px;
-  border: 1px solid var(--game-panel-line);
-  border-radius: 10px;
-  background: var(--game-panel);
+  padding: 8px 10px;
+  min-height: 54px;
+  border: 1px solid #fff0d2;
+  border-radius: 12px;
+  background: #ffe6b7;
+  color: #1d1511;
   font-size: 13px;
-  font-weight: 700;
-  line-height: 1.2;
+  font-weight: 800;
+  line-height: 1.18;
+  box-shadow: inset 0 1px #fff7e4, 0 8px 14px #0a070946;
 }
-.homeGameActions a:active, a.inventoryFloor:active { background: var(--game-tile); }
-.homeGameActions .rowChevron { width: 6px; height: 6px; }
+.homeGameActions a .gameArt {
+  background: #1c1612;
+  border-radius: 9px;
+  padding: 3px;
+  box-sizing: border-box;
+}
+.homeGameActions a:active { filter: brightness(1.06); transform: scale(0.99); }
+.homeGameActions .rowChevron { width: 6px; height: 6px; border-color: #1d1511; }
 @media (max-width: 350px) {
-  .homeGameActions a { font-size: 12px; gap: 5px; padding-inline: 6px; }
+  .homeGameActions a { font-size: 12px; gap: 6px; padding-inline: 7px; }
 }
 .feedingCard dl .mediaRow { justify-content: space-between; }
 .feedingCard dl dd { margin: 0; color: var(--gold); font-weight: 700; text-align: right; }
@@ -1926,6 +1936,10 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   height: 100%;
   flex: none;
 }
+.skinOwlRender[data-interactive="true"] {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
 .skinOwlRender:not([data-ready="true"])::before {
   content: "";
   position: absolute;
@@ -2278,9 +2292,9 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px 12px;
+  gap: 5px 9px;
   margin-top: 8px;
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--muted);
 }
 .squadMapLegend span { display: inline-flex; align-items: center; gap: 5px; }
@@ -2293,6 +2307,7 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .legendDot.isSelected { background: #ffd380; border: 1px solid #fff1b8; }
 .legendDot.isNeighbor { background: transparent; border: 1.5px dashed #b59dff; }
 .legendDot.isCoins { background: rgba(255, 198, 92, 0.55); border: 1px solid rgba(255, 211, 128, 0.8); }
+.legendDot.isSilver { background: rgba(160, 174, 224, 0.55); border: 1px solid rgba(196, 208, 248, 0.8); }
 .legendDot.isStats { background: rgba(94, 209, 152, 0.55); border: 1px solid rgba(140, 238, 187, 0.8); }
 
 .squadMapInspector {
@@ -2315,15 +2330,16 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .squadMapRewardPill {
   display: grid;
   justify-items: end;
-  gap: 1px;
-  padding: 5px 9px;
+  gap: 2px;
+  padding: 6px 11px;
   border-radius: 9px;
   background: var(--game-panel);
   border: 1px solid var(--game-panel-line);
   flex: none;
+  white-space: nowrap;
 }
-.squadMapRewardPill span { font-size: 10.5px; color: var(--muted); }
-.squadMapRewardPill strong { display: inline-flex; align-items: center; gap: 4px; font-size: 13.5px; color: var(--gold); }
+.squadMapRewardPill span { font-size: 11px; color: var(--muted); }
+.squadMapRewardPill strong { display: inline-flex; align-items: center; gap: 4px; font-size: 13.5px; color: var(--gold); white-space: nowrap; }
 
 .squadMapTags { display: flex; flex-wrap: wrap; gap: 6px; }
 .squadMapBadge {
@@ -2572,10 +2588,11 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .wardrobeActionIcon:active { border-color: var(--gold); transform: scale(0.95); }
 
 .wardrobeStage {
+  position: relative;
   display: grid;
   justify-items: center;
   gap: 10px;
-  padding: 14px 12px 12px;
+  padding: 16px 12px 12px;
   border-radius: 14px;
   border: 1px solid var(--game-panel-line);
   background: radial-gradient(circle at 50% 42%, rgba(255, 211, 128, 0.14) 0%, var(--game-tile) 74%);
@@ -2824,32 +2841,43 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 }
 .siegeSimpleSteps strong { display: block; font-size: 13px; margin-bottom: 2px; color: var(--text); }
 .siegeSimpleSteps p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.siegeActionPair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.siegeActionPair > a { margin: 0; font-size: 12.5px; padding-inline: 8px; }
+
 .ritualSimpleCopy { margin: 0 0 10px; font-size: 13px; color: var(--muted); line-height: 1.45; }
 
 .careTabs { margin-bottom: 10px; }
 
-.wardrobeHomeBtn {
+.wardrobeCoverPin {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   margin: 0;
   width: auto;
-  min-height: 30px;
-  padding: 4px 11px;
+  min-height: 28px;
+  padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--game-panel-line);
-  background: var(--game-panel);
+  background: color-mix(in srgb, var(--game-panel) 88%, transparent);
   color: var(--text);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
 }
-.wardrobeHomeBtn[data-active="true"] {
+.wardrobeCoverPin[data-active="true"] {
   border-color: color-mix(in srgb, #7fe0a6 55%, var(--game-panel-line));
-  background: rgba(94, 209, 152, 0.14);
+  background: rgba(94, 209, 152, 0.16);
   color: #9af0bc;
 }
-.wardrobeHomeBtn:active { transform: scale(0.96); }
+.wardrobeCoverPin:active { transform: scale(0.95); }
 
 .wardrobeExtrasCard {
   margin-top: 2px;

@@ -241,6 +241,14 @@ export function SkinFarmCalculator({
     </div>
 
     <div className="wardrobeStage" data-rarity={rarity}>
+      <button
+        type="button"
+        className="wardrobeCoverPin"
+        data-active={isOnHome || undefined}
+        onClick={handleSetHome}
+      >
+        <span>{isOnHome ? copy('✓ На обложке', '✓ On cover') : copy('🖼️ На обложку', '🖼️ Set cover')}</span>
+      </button>
       <div className="buildLoadoutOwl wardrobeOwl" data-rarity={rarity}>
         <OwlSkinCanvas selection={selection} size={156}/>
       </div>
@@ -259,14 +267,6 @@ export function SkinFarmCalculator({
           <GameArt path={`/game/items/${jetton.file}`} size={16}/>
           <span>{copy(jetton.ru, jetton.en)}</span>
         </a>
-        <button
-          type="button"
-          className="wardrobeHomeBtn"
-          data-active={isOnHome || undefined}
-          onClick={handleSetHome}
-        >
-          <span>{isOnHome ? copy('✓ На главной', '✓ On Home') : copy('🏠 На главную', '🏠 Set on Home')}</span>
-        </button>
       </div>
     </div>
 

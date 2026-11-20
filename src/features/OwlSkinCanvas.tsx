@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { artSrc } from '../ui/warmArt';
+import { lightHaptic } from '../telegram/client';
 import {
   buildSkinLottieBytes, loadSkinRigData, loadTlottieEngine, type SkinSelection,
 } from './skinRig';
@@ -16,6 +17,7 @@ export function OwlSkinCanvas({
   className?: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const replayRef = useRef<(() => void) | null>(null);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -27,12 +29,18 @@ export function OwlSkinCanvas({
     let raf = 0;
     let timer = 0;
     let engineRef: Awaited<ReturnType<typeof loadTlottieEngine>> | null = null;
+    replayRef.current = null;
 
-    const cleanupAnim = () => {
+    const stopPlayback = () => {
       if (raf) cancelAnimationFrame(raf);
       if (timer) clearTimeout(timer);
       raf = 0;
       timer = 0;
+    };
+
+    const cleanupAnim = () => {
+      stopPlayback();
+      replayRef.current = null;
       if (instance && engineRef) {
         try { engineRef.tlottie_drop(instance); } catch { /* ignore */ }
         instance = 0;
@@ -88,29 +96,43 @@ export function OwlSkinCanvas({
         const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
         if (!animate || reduceMotion || frameCount <= 1) return;
 
-        let position = 0;
-        let lastFrame = 0;
-        let lastTime = 0;
+        const playOnce = () => {
+          if (!active || !instance) return;
+          stopPlayback();
+          let position = 0;
+          let lastFrame = -1;
+          let lastTime = 0;
 
-        const tick = (now: number) => {
-          if (!active) return;
-          if (document.hidden) {
-            lastTime = 0;
-            timer = window.setTimeout(() => { raf = requestAnimationFrame(tick); }, 250);
-            return;
-          }
-          const dt = lastTime ? Math.min(now - lastTime, 100) * 0.001 : 0;
-          lastTime = now;
-          position = (position + dt * frameRate) % frameCount;
-          const nextFrame = position | 0;
-          if (nextFrame !== lastFrame) {
-            lastFrame = nextFrame;
-            drawFrame(nextFrame);
-          }
+          const tick = (now: number) => {
+            if (!active) return;
+            if (document.hidden) {
+              lastTime = 0;
+              timer = window.setTimeout(() => { raf = requestAnimationFrame(tick); }, 250);
+              return;
+            }
+            const dt = lastTime ? Math.min(now - lastTime, 100) * 0.001 : 0;
+            lastTime = now;
+            position += dt * frameRate;
+
+            if (position >= frameCount) {
+              drawFrame(0);
+              stopPlayback();
+              return;
+            }
+
+            const nextFrame = position | 0;
+            if (nextFrame !== lastFrame) {
+              lastFrame = nextFrame;
+              drawFrame(nextFrame);
+            }
+            raf = requestAnimationFrame(tick);
+          };
+
           raf = requestAnimationFrame(tick);
         };
 
-        raf = requestAnimationFrame(tick);
+        replayRef.current = playOnce;
+        playOnce();
       })
       .catch(() => {
         if (!active) return;
@@ -123,7 +145,18 @@ export function OwlSkinCanvas({
     };
   }, [selectionKey, size, animate]);
 
-  return <div className={`skinOwlRender ${className}`} data-ready={ready || undefined}>
+  const handleTap = () => {
+    if (!ready || failed || !replayRef.current) return;
+    lightHaptic();
+    replayRef.current();
+  };
+
+  return <div
+    className={`skinOwlRender ${className}`}
+    data-ready={ready || undefined}
+    data-interactive={ready && !failed ? 'true' : undefined}
+    onClick={handleTap}
+  >
     <canvas ref={canvasRef} className={ready ? 'isReady' : undefined} aria-hidden="true"/>
     {failed && <img src={artSrc('/game/skins/7895.png')} alt="" width={size} height={size}
       className="skinOwlFallback"/>}

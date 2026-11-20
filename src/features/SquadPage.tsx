@@ -37,7 +37,8 @@ function SquadNavTabs({ pathname, keepParent }: { pathname: string; keepParent: 
   </nav>;
 }
 
-function SiegeSimpleRules({ onChatVisit }: { onChatVisit?: () => void }) {
+function SiegeSimpleRules({ onChatVisit, keepParent }: { onChatVisit?: () => void; keepParent: boolean }) {
+  const linkState = keepParent ? { guideDetail: true } : undefined;
   return <section className="card siegeRulesCard" id="siege-rewards">
     <div className="siegeSectionHead">
       <h2>⚔️ Как работает осада</h2>
@@ -48,29 +49,34 @@ function SiegeSimpleRules({ onChatVisit }: { onChatVisit?: () => void }) {
       <li>
         <span className="siegeStepNum">1</span>
         <div>
-          <strong>Захват и защита</strong>
-          <p>Пока у сквада нет земель, атакуйте участки с краю карты. Дальше можно защищать свои и бить соседние земли.</p>
+          <strong>Захват и защита земель</strong>
+          <p>Пока земель нет — атакуй крайние участки карты. Когда появятся свои — защищай их и захватывай соседние.</p>
         </div>
       </li>
       <li>
         <span className="siegeStepNum">2</span>
         <div>
-          <strong>Откуда мощь и как победить</strong>
-          <p>Мощь даёт прокачка в Додзё и боях (чучело + навыки), а не опыт. Землю берёт сквад с наибольшим вкладом за 8 часов; неиспользованная мощь не сгорает.</p>
+          <strong>Откуда берётся мощь</strong>
+          <p>Мощь растёт от прокачки в Додзё (чучело + навыки) и боёв, а не от уровня. Побеждает сквад с большим вкладом за 8 часов; остаток мощи переносится.</p>
         </div>
       </li>
       <li>
         <span className="siegeStepNum">3</span>
         <div>
-          <strong>Награды и баффы</strong>
-          <p>Чтобы получить долю за раунд, вложи в нём хотя бы 1 мощь. После 3-го раунда нажми «Забрать» — баффы к статам включатся на 24 часа.</p>
+          <strong>Когда дают награды и баффы</strong>
+          <p>Вложи в раунде от 1 мощи в удержанный участок. После 3-го раунда нажми «Забрать» — баффы к статам включатся на 24 часа.</p>
         </div>
       </li>
     </ul>
 
-    <a className="secondary siegeChatBtn" href={communityChat} onClick={() => { onChatVisit?.(); trackGuide('action:chat'); }}>
-      <GameGlyph name="chat"/>Чат для планирования осад
-    </a>
+    <div className="siegeActionPair">
+      <Link className="secondary" to="/squads/war" replace state={linkState}>
+        <GameGlyph name="fight"/>Открыть карту земель
+      </Link>
+      <a className="secondary" href={communityChat} onClick={() => { onChatVisit?.(); trackGuide('action:chat'); }}>
+        <GameGlyph name="chat"/>Чат осад
+      </a>
+    </div>
   </section>;
 }
 
@@ -86,12 +92,12 @@ function RitualCard() {
 
     <div className="ritualStatsRow">
       <div><span>Зажигалка</span><strong><Price value={2500} currency="squad_silver"/></strong></div>
-      <div><span>Зарядов</span><strong>🔥 10 дней</strong></div>
+      <div><span>Хватит на</span><strong>🔥 10 дней</strong></div>
       <div><span>Порог</span><strong>50% сквада</strong></div>
     </div>
 
     <p className="ritualSimpleCopy">
-      Когда половина участников сквада зажигает ритуал за день (1 заряд = 250 серебра), весь сквад получает бонус дня на 24 часа. Там же лежат ежедневные задания клана.
+      Когда половина участников сквада зажигает ритуал за день (1 заряд = 250 серебра), весь сквад получает бонус дня на 24 часа. Там же доступны ежедневные задания.
     </p>
 
     <DetailLink className="secondary ritualShopLink" to="/squads/shop">
@@ -132,7 +138,6 @@ export function SquadPage({ gameEntry, onChatVisit }: { gameEntry: string; onCha
     return <>
       <SquadNavTabs pathname={pathname} keepParent={keepParent}/>
       <SquadMap/>
-      <SiegeSimpleRules onChatVisit={onChatVisit}/>
     </>;
   }
 
@@ -160,7 +165,7 @@ export function SquadPage({ gameEntry, onChatVisit }: { gameEntry: string; onCha
         <div className="squadKpiTile">
           <span>⏱️ Длительность</span>
           <strong>3 × 8 часов</strong>
-          <small>затем кнопка «Забрать»</small>
+          <small>затем сбор наград</small>
         </div>
         <div className="squadKpiTile">
           <span>⚡ Мощь осады</span>
@@ -170,13 +175,12 @@ export function SquadPage({ gameEntry, onChatVisit }: { gameEntry: string; onCha
         <div className="squadKpiTile">
           <span>🎯 Для награды</span>
           <strong>От 1 мощи</strong>
-          <small>вложить в раунд и удержать</small>
+          <small>вложить в раунд</small>
         </div>
       </div>
     </section>
 
-    <SquadMap/>
-    <SiegeSimpleRules onChatVisit={onChatVisit}/>
+    <SiegeSimpleRules onChatVisit={onChatVisit} keepParent={keepParent}/>
     <RitualCard/>
   </>;
 }
