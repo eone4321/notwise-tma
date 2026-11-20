@@ -306,9 +306,8 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
             return <button key={i} type="button" className="buildLoadoutSlot"
               data-filled={Boolean(skill) || undefined}
               data-locked={locked || undefined}
-              aria-haspopup={locked ? undefined : 'dialog'}
+              aria-haspopup="dialog"
               aria-label={skill ? nameOf(skill) : locked ? copy('Навыки со 2-го уровня', 'Skills from level 2') : copy('Выбрать навык', 'Choose skill') + ' ' + (i + 1)}
-              disabled={locked}
               onClick={() => { lightHaptic(); setPicker({ kind: 'skill', slot: i }); }}>
               {skill && slot ? <>
                 <GameArt path={skillArt(skill.id)} size={42}/>
@@ -842,7 +841,7 @@ function BuildPicker({ title, closeLabel, onClose, children }: {
   useModal(ref, true);
   useLayoutEffect(() => {
     const dialog = ref.current;
-    if (!dialog || buildSheetReduceMotion()) return;
+    if (!dialog || typeof dialog.animate !== 'function' || buildSheetReduceMotion()) return;
     animation.current = dialog.animate([{ translate: '0 100%' }, { translate: '0 0' }],
       { duration: 460, easing: buildSheetEasing });
     return () => animation.current?.cancel();
@@ -853,7 +852,7 @@ function BuildPicker({ title, closeLabel, onClose, children }: {
     if (!dialog || dialog.dataset.closing) return;
     const from = getComputedStyle(dialog).translate;
     animation.current?.cancel();
-    if (buildSheetReduceMotion()) { onClose(); return; }
+    if (typeof dialog.animate !== 'function' || buildSheetReduceMotion()) { onClose(); return; }
     dialog.dataset.closing = 'true';
     animation.current = dialog.animate([{ translate: from }, { translate: '0 100%' }],
       { duration: 360, easing: buildSheetEasing, fill: 'forwards' });
@@ -878,6 +877,10 @@ function SkillPickerOptions({ state, slot, lang, onSelect }: { state: BuildState
     return (equipped && skillById.get(equipped.id)?.branch) || statKeys.find(stat => state.points[stat] > 0) || 'strength';
   });
   return <>
+    {state.level < 2 && <p className="caption">
+      {lang ? 'To equip a skill, set the owl to level 2 or higher in the calculator.'
+        : 'Чтобы экипировать навык, выставь в калькуляторе уровень совы 2 или выше.'}
+    </p>}
     <div className="buildBranchFilter choiceBar" role="group" aria-label={lang ? 'Skill branches' : 'Ветки навыков'}>
       {statKeys.map(stat => <button key={stat} type="button" aria-pressed={branch === stat} onClick={() => setBranch(stat)}>
         <GameAttribute name={stat}/>{statLabels[stat][lang]}
