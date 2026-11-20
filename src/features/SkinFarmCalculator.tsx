@@ -410,8 +410,8 @@ export function SkinFarmCalculator({
           <span className="wardrobeRiskSafeMark" style={{ left: '15%' }}/>
         </div>
         <div className="wardrobeRiskScale">
-          <span>+0..+3 безопасно</span>
-          <span>+4..+20 риск сгорания 🔥</span>
+          <span>{copy('+0..+3 безопасно', '+0..+3 safe')}</span>
+          <span>{copy('+4..+20 риск сгорания 🔥', '+4..+20 burn risk 🔥')}</span>
         </div>
       </div>
     </div>
@@ -541,8 +541,8 @@ export function SkinFarmCalculator({
       onClose={() => setInfoOpen(false)}>
       {requestClose => <div className="calcInfoSheetBody">
         <p>{copy(
-          'Суммарный процент (+% к монетам) увеличивает добычу золотых монет совы: в полётах, при открытии капсул и в ежедневных активностях.',
-          'Your total coin bonus (+% coins) increases gold coin earnings across flights, capsule openings and daily activities.',
+          'Суммарный процент (+% к монетам) увеличивает добычу золотых монет совы в PvP-боях и полётах (на гарантированные монеты из капсул бонус не действует).',
+          'Your total coin bonus (+% coins) increases gold coin earnings in PvP battles and flights (it does not multiply guaranteed capsule coins).',
         )}</p>
         <div className="calcInfoList">
           <div>
@@ -555,7 +555,7 @@ export function SkinFarmCalculator({
           </div>
           <div>
             <strong>{copy('3. Артефакт и боевая лига', '3. Artifact & battle league')}</strong>
-            <p>{copy('Экипированный Монтмориллонит добавляет +10% к монетам и держит полное HP, а текущая боевая лига даёт ещё от +1% до +6%.', 'Equipped Montmorillonite adds +10% coins and keeps HP full, while your battle league adds +1% to +6%.')}</p>
+            <p>{copy('Экипированный Монтмориллонит добавляет +10% к монетам и держит полное HP, а текущая боевая лига даёт ещё от +1% до +13%.', 'Equipped Montmorillonite adds +10% coins and keeps HP full, while your battle league adds +1% to +13%.')}</p>
           </div>
         </div>
         <button type="button" className="secondary calcInfoDoneBtn" onClick={requestClose}>

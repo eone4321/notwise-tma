@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import tokens from '../../public/data/tokens.json';
 import { tokenMarket, type TokenQuote } from './marketData';
+import { useGuideLocale } from './guideLocale';
 
 const usd = new Intl.NumberFormat('ru-RU', {
   style: 'currency', currency: 'USD', maximumFractionDigits: 2,
@@ -12,6 +13,7 @@ const usd = new Intl.NumberFormat('ru-RU', {
 
 const notUsd = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 });
 const compactUsd = new Intl.NumberFormat('ru-RU', { notation: 'compact', maximumFractionDigits: 1 });
+const compactUsdEn = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
 const smallUsd = new Intl.NumberFormat('ru-RU', { maximumSignificantDigits: 3 });
 
 function formatQuote(symbol: string, price: number) {
@@ -23,10 +25,12 @@ function tokenIcon(symbol: string) {
   return `/brand/tokens/${symbol === 'GRAM' ? 'gram.png' : `${symbol.toLowerCase()}.webp`}`;
 }
 
-export function tokenCapitalization(quote?: TokenQuote) {
-  if (quote?.marketCapUsd) return { label: 'Кап.', value: compactUsd.format(quote.marketCapUsd) + ' $' };
-  if (quote?.fdvUsd) return { label: 'FDV', value: compactUsd.format(quote.fdvUsd) + ' $' };
-  return { label: 'Кап.', value: '—' };
+export function tokenCapitalization(quote?: TokenQuote, en = false) {
+  const fmt = en ? compactUsdEn : compactUsd;
+  const capLabel = en ? 'MCap' : 'Кап.';
+  if (quote?.marketCapUsd) return { label: capLabel, value: fmt.format(quote.marketCapUsd) + ' $' };
+  if (quote?.fdvUsd) return { label: 'FDV', value: fmt.format(quote.fdvUsd) + ' $' };
+  return { label: capLabel, value: '—' };
 }
 
 function useQuotes() {
@@ -40,17 +44,19 @@ function useQuotes() {
   return { rows, usable, pending, stale, reload: () => tokenMarket.refresh(true) };
 }
 
-function QuoteList({ quotes }: { quotes: ReturnType<typeof useQuotes> }) {
+function QuoteList({ quotes, en }: { quotes: ReturnType<typeof useQuotes>; en: boolean }) {
   const { rows, usable, pending, stale, reload } = quotes;
   const updated = usable.find(row => row.fetchedAt)?.fetchedAt;
   return <>
     <ul className="tokenRatesList" aria-busy={pending}>
       {tokens.tokens.map(({ symbol, name }) => {
         const price = usable.find(row => row.symbol === symbol)?.displayPrice ?? '—';
-        const cap = tokenCapitalization(rows.find(row => row.symbol === symbol));
+        const cap = tokenCapitalization(rows.find(row => row.symbol === symbol), en);
         return <li key={symbol}>
           <DetailLink className="tokenRateLink" to={`/ecosystem/tokens#token-${symbol}`}
-            aria-label={`${symbol}, ${price}. ${cap.label} ${cap.value}. Открыть токен`}>
+            aria-label={en
+              ? `${symbol}, ${price}. ${cap.label} ${cap.value}. Open token`
+              : `${symbol}, ${price}. ${cap.label} ${cap.value}. Открыть токен`}>
             <img src={artSrc(tokenIcon(symbol))} alt="" width="30" height="30"/>
             <span className="tokenRateName"><b>{symbol}</b><small>{name}</small></span>
             <span className="quoteNumbers"><strong>{price}</strong><small>{cap.label} {cap.value}</small></span>
@@ -60,21 +66,29 @@ function QuoteList({ quotes }: { quotes: ReturnType<typeof useQuotes> }) {
       })}
     </ul>
     <p className="caption" role="status">
-      {pending && !usable.length ? 'Загружаем котировки…' : !usable.length ? 'Котировки временно недоступны.' : <>
-        {stale || usable.some(row => row.status === 'stale') ? 'Последние сохранённые данные' : 'Обновлено'}
-        {updated && <> · <time dateTime={updated}>{new Date(updated).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time></>}
-      </>}
+      {pending && !usable.length
+        ? (en ? 'Loading rates…' : 'Загружаем котировки…')
+        : !usable.length
+          ? (en ? 'Rates are temporarily unavailable.' : 'Котировки временно недоступны.')
+          : <>
+            {stale || usable.some(row => row.status === 'stale')
+              ? (en ? 'Last saved rates' : 'Последние сохранённые данные')
+              : (en ? 'Updated' : 'Обновлено')}
+            {updated && <> · <time dateTime={updated}>{new Date(updated).toLocaleString(en ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time></>}
+          </>}
     </p>
-    {rows.some(row => row.fdvUsd && !row.marketCapUsd) && <p className="caption fdvNote">FDV — оценка всей эмиссии. Капитализация учитывает токены в обращении.</p>}
-    <button className="refreshBtn" onClick={reload} disabled={pending}>Обновить курсы</button>
+    {rows.some(row => row.fdvUsd && !row.marketCapUsd) && <p className="caption fdvNote">{en ? 'FDV values the total supply. Market cap counts circulating tokens.' : 'FDV — оценка всей эмиссии. Капитализация учитывает токены в обращении.'}</p>}
+    <button className="refreshBtn" onClick={reload} disabled={pending}>{en ? 'Refresh rates' : 'Обновить курсы'}</button>
   </>;
 }
 
 export function TokenQuotes() {
   const quotes = useQuotes();
+  const { locale } = useGuideLocale();
+  const en = locale === 'en';
   return <section className="card" aria-labelledby="token-rates">
-    <h2 id="token-rates">Курсы токенов</h2>
-    <QuoteList quotes={quotes}/>
+    <h2 id="token-rates">{en ? 'Token rates' : 'Курсы токенов'}</h2>
+    <QuoteList quotes={quotes} en={en}/>
   </section>;
 }
 
@@ -82,6 +96,8 @@ let lastTickerIndex = 0;
 
 export function TokenTicker() {
   const quotes = useQuotes();
+  const { locale } = useGuideLocale();
+  const en = locale === 'en';
   const reducedMotion = useReducedMotion();
   const [index, setIndex] = useState(lastTickerIndex);
   const [hovered, setHovered] = useState(false);
@@ -103,7 +119,7 @@ export function TokenTicker() {
 
   const quote = usable.length ? usable[index % usable.length] : undefined;
   return <>
-    <button className="tokenTicker" type="button" aria-label="Курсы токенов" aria-haspopup="dialog"
+    <button className="tokenTicker" type="button" aria-label={en ? 'Token rates' : 'Курсы токенов'} aria-haspopup="dialog"
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
       onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onClick={() => setOpened(true)}>
       <span className="tokenTickerTrack" aria-hidden="true">
@@ -123,10 +139,10 @@ export function TokenTicker() {
       }}>
       <div className="tokenRatesDialogBody">
         <div className="tokenRatesDialogHeader">
-          <h2 id="ticker-rates-title" data-dialog-title tabIndex={-1}>Курсы токенов</h2>
-          <button className="close" type="button" aria-label="Закрыть курсы" onClick={() => setOpened(false)}>×</button>
+          <h2 id="ticker-rates-title" data-dialog-title tabIndex={-1}>{en ? 'Token rates' : 'Курсы токенов'}</h2>
+          <button className="close" type="button" aria-label={en ? 'Close rates' : 'Закрыть курсы'} onClick={() => setOpened(false)}>×</button>
         </div>
-        <QuoteList quotes={quotes}/>
+        <QuoteList quotes={quotes} en={en}/>
       </div>
     </dialog>
   </>;

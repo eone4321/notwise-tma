@@ -67,18 +67,19 @@ export function useGuideScroll() {
       }
     };
 
-    if (pending !== undefined) {
+    if (anchor) {
+      pending = undefined;
+      anchor.scrollIntoView({ block: 'start' });
+    } else if (pending !== undefined) {
       restore();
       if (pending !== undefined) {
         observer = new ResizeObserver(restore);
         observer.observe(main);
       }
-    } else if (anchor) {
-      anchor.scrollIntoView({ block: 'start' });
     } else {
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
-    save();
+    if (!hash || anchor) save();
 
     function interrupt() {
       pending = undefined;
@@ -122,7 +123,7 @@ export function useGuideScroll() {
 const rootTabs = new Set([
   '/owl/shop', '/owl/loot', '/owl/skins', '/combat/stats', '/combat/builds', '/ecosystem/quotes',
   '/ecosystem/tokens', '/collections/market', '/collections/charts', '/support/settings', '/support/achievements', '/secrets/achievements',
-  '/squads/war', '/squads/shop', '/modes', '/lifehacks',
+  '/squads/war', '/squads/shop', '/modes', '/lifehacks', '/item-values',
 ]);
 
 export function parentPath(path: string) {

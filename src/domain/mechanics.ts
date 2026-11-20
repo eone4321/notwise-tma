@@ -1,6 +1,10 @@
 export type Tier = 'dark'|'silver'|'gold';
 export const tiers: Tier[] = ['dark','silver','gold'];
 export const tierNames: Record<Tier,string> = {dark:'Обсидиановая',silver:'Серебряная',gold:'Золотая'};
+export const tierNamesEn: Record<Tier,string> = {dark:'Obsidian',silver:'Silver',gold:'Golden'};
+export function getTierName(tier: Tier, en = false): string {
+  return en ? tierNamesEn[tier] : tierNames[tier];
+}
 export const baseChance: Record<Tier,number> = {dark:1,silver:1.5,gold:5};
 export const duration: Record<Tier,number> = {dark:14_400_000,silver:28_800_000,gold:86_400_000};
 export const starPrice: Record<Tier,number> = {dark:100,silver:500,gold:2500};
@@ -14,11 +18,15 @@ export function chancePerOpening(chancePerDraw: number, drawCounts: readonly num
   const miss = 1 - chancePerDraw / 100;
   return drawCounts.reduce((total, weight, index) => total + weight * (1 - miss ** (index + 1)), 0);
 }
-const percent = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
-const whole = new Intl.NumberFormat('ru-RU');
-export function chanceLabel(value: number) {
+const percentRu = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
+const percentEn = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 });
+const wholeRu = new Intl.NumberFormat('ru-RU');
+const wholeEn = new Intl.NumberFormat('en-US');
+export function chanceLabel(value: number, en = false) {
   if (value === 0) return '0%';
-  if (value < .05) return '≈ 1 из ' + whole.format(Math.round(100 / value));
+  const whole = en ? wholeEn : wholeRu;
+  const percent = en ? percentEn : percentRu;
+  if (value < .05) return (en ? '≈ 1 in ' : '≈ 1 из ') + whole.format(Math.round(100 / value));
   return percent.format(value) + '%';
 }
 export function xpReward(level:number,tier:Tier,xp:number[]){const multi={dark:4,silver:6,gold:14}[tier];return xp[Math.max(1,Math.min(xp.length - 1,level))]*multi;}

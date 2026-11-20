@@ -105,10 +105,22 @@ export const ringStatLabels: Record<RingStat, string> = {
   wit: 'Мудрость',
 };
 
+export const ringStatLabelsEn: Record<RingStat, string> = {
+  str: 'Strength',
+  ag: 'Agility',
+  wit: 'Wisdom',
+};
+
 export const ringTierLabels: Record<RingTier, string> = {
   1: 'Деревянное',
   2: 'Обсидиановое',
   3: 'Золотое',
+};
+
+export const ringTierLabelsEn: Record<RingTier, string> = {
+  1: 'Wooden',
+  2: 'Obsidian',
+  3: 'Golden',
 };
 
 /** Ring stat bonus at a given tier (1..3) and enchant level (0..20). */
@@ -119,7 +131,7 @@ export function ringStatBonus(tier: RingTier, enchant: number): number {
 
 /**
  * Expected number of base rings & scrolls needed to self-enchant to `target`,
- * using the game's enchant success curve (safe up to +3, burn risk from +4: 80%, 70%, 60%, 50%, 40%, 30%, 20%...).
+ * using the game's enchant success curve (safe 100% up to +3, then +4 is 95%, -5% per level down to 15% at +20).
  */
 export function expectedRingEnchantCost(target: number, baseRingFloor: number, scrollFloor: number): {
   expectedGram: number;
@@ -132,8 +144,8 @@ export function expectedRingEnchantCost(target: number, baseRingFloor: number, s
   let scrolls = 0;
   let survival = 1;
   for (let lvl = 1; lvl <= target; lvl++) {
-    // Safe +1..+3 (100%), then +4 is 80%, decreasing by 10% down to 10% floor.
-    const p = lvl <= 3 ? 1 : Math.max(0.1, 1.1 - lvl * 0.1);
+    // Safe +1..+3 (100%), then +4 is 95%, +5 is 90%, +6 is 85%... down to 15% at +20.
+    const p = lvl <= 3 ? 1 : Math.max(0.15, (100 - Math.max(0, lvl - 3) * 5) / 100);
     rings = rings / p;
     scrolls = (scrolls + 1) / p;
     survival *= p;

@@ -14,6 +14,13 @@ void (async () => {
   collectionMarket.refresh();
   const bar = document.querySelector<HTMLProgressElement>('.guideLoading progress');
   const percent = document.querySelector('.guideLoadPercent');
+  try {
+    if (localStorage.getItem('notwise.guide.language') === 'en') {
+      const labelNode = percent?.previousSibling;
+      if (labelNode && labelNode.nodeType === Node.TEXT_NODE) labelNode.textContent = 'Loading guide ';
+      if (bar) bar.setAttribute('aria-label', 'Loading images');
+    }
+  } catch { /* ignore */ }
   const prepareArt = warmArt((loaded, total) => {
     if (bar && total) {
       bar.max = total;

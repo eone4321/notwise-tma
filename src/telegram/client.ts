@@ -37,6 +37,7 @@ export function syncTelegramTheme() {
 export async function bootTelegram() {
   if (booted) return;
   booted = true;
+  applySafeArea();
   syncTelegramTheme();
 
   const platform = launchPlatform();

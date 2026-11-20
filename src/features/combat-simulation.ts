@@ -43,7 +43,9 @@ function fighter(stats: Fighter, guard: number) {
 
 type FighterState = ReturnType<typeof fighter>;
 type QueuedHit = { at: number; target: FighterState } & (
-  { kind: 'raw' | 'reduced'; amount: number } | { kind: 'flurry'; from: FighterState; zone: number }
+  { kind: 'raw' | 'reduced'; amount: number } |
+  { kind: 'super'; from: FighterState; amount: number } |
+  { kind: 'flurry'; from: FighterState; zone: number }
 );
 
 export function simulateDuel(first: Fighter, second: Fighter, seed: number, reverse = false) {
@@ -88,6 +90,13 @@ export function simulateDuel(first: Fighter, second: Fighter, seed: number, reve
     return random() * 100 >= target.stats.dodge;
   }
 
+  function applyHitEffects(source: FighterState, target: FighterState, landed: number) {
+    if (landed <= 0) return;
+    if (source.lift > now) source.hp = Math.min(source.stats.health, source.hp + round(landed * source.liftPct));
+    if (target.reflect > now) damage(source, round(landed * target.reflectPct));
+    if (source.echo > now) queue.push({ kind: 'raw', at: now + 600, target, amount: round(landed * source.echoPct) });
+  }
+
   function strike(source: FighterState, target: FighterState, zone: number, basic: boolean) {
     if (source.poisonTicks && now < source.poisonAt) source.poisonedAttack = true;
     if (!canTarget(target, zone)) {
@@ -111,15 +120,13 @@ export function simulateDuel(first: Fighter, second: Fighter, seed: number, reve
       if (basic) source.streak = 0;
       return;
     }
-    if (source.lift > now) source.hp = Math.min(source.stats.health, source.hp + round(landed * source.liftPct));
-    if (target.reflect > now) damage(source, round(landed * target.reflectPct));
-    if (source.echo > now) queue.push({ kind: 'raw', at: now + 600, target, amount: round(landed * source.echoPct) });
+    applyHitEffects(source, target, landed);
     if (basic && ++source.streak === 3) {
       source.streak = 0;
       const multiplier = 1 - passive(target, 19) / 100;
       target.stunned = Math.max(target.stunned, now + 1500 * multiplier);
       for (const delay of [490, 630, 770, 910]) {
-        queue.push({ kind: 'raw', at: now + delay, target, amount: round(raw * .5 * multiplier) });
+        queue.push({ kind: 'super', at: now + delay, from: source, target, amount: round(raw * .5 * multiplier) });
       }
     }
   }
@@ -231,6 +238,7 @@ export function simulateDuel(first: Fighter, second: Fighter, seed: number, reve
       if (event.at > now) { i++; continue; }
       queue.splice(i, 1);
       if (event.kind === 'flurry') strike(event.from, event.target, event.zone, false);
+      else if (event.kind === 'super') applyHitEffects(event.from, event.target, damage(event.target, event.amount));
       else if (event.kind === 'raw') damage(event.target, event.amount);
       else event.target.hp = Math.max(0, event.target.hp - event.amount);
     }

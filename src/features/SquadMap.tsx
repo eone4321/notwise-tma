@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import territories from './squad-map.json';
 import { GameAttribute, GameGlyph } from '../ui/GameGlyph';
 import { Price } from './Price';
-import { siegeRewardLabels, siegeRewardTotals, territoryRewards } from './siege-rewards';
+import { useGuideLocale } from './guideLocale';
+import { getSiegeRewardLabel, siegeRewardLabels, siegeRewardTotals, territoryRewards } from './siege-rewards';
 
 type Territory = (typeof territories)[number];
 type RewardKind = keyof typeof siegeRewardLabels;
@@ -95,27 +96,33 @@ export function SiegeRewardValue({ kind, amount }: { kind: RewardKind; amount: n
 }
 
 export function SiegeTotals({ totals = siegeRewardTotals }: { totals?: Partial<Record<RewardKind, number>> }) {
+  const { locale } = useGuideLocale();
+  const en = locale === 'en';
   return <dl className="siegeRewardsGrid">
     {(Object.keys(siegeRewardLabels) as RewardKind[]).map(kind => <div key={kind}>
-      <dt>{siegeRewardLabels[kind]}</dt>
+      <dt>{getSiegeRewardLabel(kind, en)}</dt>
       <dd><SiegeRewardValue kind={kind} amount={totals[kind] ?? 0}/></dd>
     </div>)}
   </dl>;
 }
 
-const mapFilterOptions: { id: MapFilter; label: string }[] = [
-  { id: 'all', label: `Все (${counts.total})` },
-  { id: 'coins', label: `Монеты (${counts.coins})` },
-  { id: 'squad_silver', label: `Серебро (${counts.silver})` },
-  { id: 'stats', label: `Баффы (${counts.stats})` },
-];
-
-const nf = new Intl.NumberFormat('ru-RU');
+const nfRu = new Intl.NumberFormat('ru-RU');
+const nfEn = new Intl.NumberFormat('en-US');
 
 export function SquadMap() {
+  const { locale } = useGuideLocale();
+  const en = locale === 'en';
+  const nf = en ? nfEn : nfRu;
   const [selected, setSelected] = useState(territories[0].id);
   const [filter, setFilter] = useState<MapFilter>('all');
   const [roundsHeld, setRoundsHeld] = useState<1 | 2 | 3>(3);
+
+  const mapFilterOptions: { id: MapFilter; label: string }[] = [
+    { id: 'all', label: en ? `All (${counts.total})` : `Все (${counts.total})` },
+    { id: 'coins', label: en ? `Coins (${counts.coins})` : `Монеты (${counts.coins})` },
+    { id: 'squad_silver', label: en ? `Silver (${counts.silver})` : `Серебро (${counts.silver})` },
+    { id: 'stats', label: en ? `Buffs (${counts.stats})` : `Баффы (${counts.stats})` },
+  ];
 
   const territory = byId.get(selected) ?? territories[0];
   const reward = territoryRewards[territory.id];
@@ -133,13 +140,15 @@ export function SquadMap() {
     return next;
   }, [roundsHeld]);
 
+  const territoryName = (item: Territory) => en ? item.label : (territoryLabelsRu[item.id] ?? item.label);
+
   return <section className="card squadMapCard" id="siege-map">
     <div className="squadMapHeader">
-      <h2><GameGlyph name="fight"/>Карта 20 земель</h2>
-      <p className="squadMapSub">Нажимай на треугольники на карте — покажем награду и смежные земли для атаки (пунктир).</p>
+      <h2><GameGlyph name="fight"/>{en ? 'Map of 20 Territories' : 'Карта 20 земель'}</h2>
+      <p className="squadMapSub">{en ? 'Tap triangles on the map to inspect their reward and adjacent territories for attack (dashed outline).' : 'Нажимай на треугольники на карте — покажем награду и смежные земли для атаки (пунктир).'}</p>
     </div>
 
-    <div className="squadMapFilters" role="group" aria-label="Фильтр наград на карте">
+    <div className="squadMapFilters" role="group" aria-label={en ? 'Filter territory rewards on the map' : 'Фильтр наград на карте'}>
       {mapFilterOptions.map(option => <button
         key={option.id}
         type="button"
@@ -149,18 +158,18 @@ export function SquadMap() {
     </div>
 
     <div className="squadMapStage">
-      <svg className="squadMap" viewBox="0 0 184 208" aria-label="Карта из 20 территорий осады">
+      <svg className="squadMap" viewBox="0 0 184 208" aria-label={en ? 'Siege map of 20 territories' : 'Карта из 20 территорий осады'}>
         {territories.map(item => {
           const itemReward = territoryRewards[item.id];
           const isSelected = selected === item.id;
           const isNeighbor = neighborSet.has(item.id);
           const isDimmed = !isSelected && !matchesFilter(itemReward?.[0], filter);
-          const ruName = territoryLabelsRu[item.id] ?? item.label;
+          const name = territoryName(item);
           return <g
             key={item.id}
             role="button"
             tabIndex={0}
-            aria-label={ruName}
+            aria-label={name}
             aria-pressed={isSelected}
             data-reward-group={rewardGroup(itemReward?.[0])}
             data-neighbor={isNeighbor ? 'true' : undefined}
@@ -180,22 +189,26 @@ export function SquadMap() {
       </svg>
 
       <div className="squadMapLegend" aria-hidden="true">
-        <span><i className="legendDot isSelected"/>Выбрана</span>
-        <span><i className="legendDot isNeighbor"/>Соседи ({neighbors.length})</span>
-        <span><i className="legendDot isCoins"/>Монеты</span>
-        <span><i className="legendDot isSilver"/>Серебро</span>
-        <span><i className="legendDot isStats"/>Бафф</span>
+        <span><i className="legendDot isSelected"/>{en ? 'Selected' : 'Выбрана'}</span>
+        <span><i className="legendDot isNeighbor"/>{en ? `Neighbors (${neighbors.length})` : `Соседи (${neighbors.length})`}</span>
+        <span><i className="legendDot isCoins"/>{en ? 'Coins' : 'Монеты'}</span>
+        <span><i className="legendDot isSilver"/>{en ? 'Silver' : 'Серебро'}</span>
+        <span><i className="legendDot isStats"/>{en ? 'Buff' : 'Бафф'}</span>
       </div>
     </div>
 
     <div className="squadMapInspector" aria-live="polite">
       <div className="squadMapInspectorHead">
         <div className="squadInspectorCopy">
-          <strong>{territoryLabelsRu[territory.id] ?? territory.label}</strong>
-          <small>{isEntry ? 'С краю карты — открыта для первого захвата с 0 земель' : 'Внутри леса — атака только от смежной своей земли'}</small>
+          <strong>{territoryName(territory)}</strong>
+          <small>{isEntry
+            ? (en ? 'Map edge — open for initial capture when holding 0 territories' : 'С краю карты — открыта для первого захвата с 0 земель')
+            : (en ? 'Inner forest — can only be attacked from an adjacent territory you hold' : 'Внутри леса — атака только от смежной своей земли')}</small>
         </div>
         {reward && <div className="squadMapRewardPill">
-          <span>{reward[0] === 'coins' || reward[0] === 'squad_silver' ? siegeRewardLabels[reward[0]] : `${siegeRewardLabels[reward[0]]} · 24 ч`}</span>
+          <span>{reward[0] === 'coins' || reward[0] === 'squad_silver'
+            ? getSiegeRewardLabel(reward[0], en)
+            : `${getSiegeRewardLabel(reward[0], en)} · ${en ? '24 h' : '24 ч'}`}</span>
           <strong><SiegeRewardValue kind={reward[0]} amount={reward[1]}/></strong>
         </div>}
       </div>
@@ -204,23 +217,31 @@ export function SquadMap() {
     <details className="mediaDetails siegePayoutExample">
       <summary>
         <span>
-          <strong>Награды всех земель: за раунд и за всю осаду</strong>
-          <small>1 раунд ({counts.total}): {nf.format(coinsTotal)} монет · {nf.format(silverTotal)} серебра · 3 раунда ({counts.total * 3}): до {nf.format(coinsTotal * 3)} монет · {nf.format(silverTotal * 3)} серебра</small>
+          <strong>{en ? 'All-territory rewards: per round and full siege' : 'Награды всех земель: за раунд и за всю осаду'}</strong>
+          <small>{en
+            ? `1 round (${counts.total}): ${nf.format(coinsTotal)} coins · ${nf.format(silverTotal)} silver · 3 rounds (${counts.total * 3}): up to ${nf.format(coinsTotal * 3)} coins · ${nf.format(silverTotal * 3)} silver`
+            : `1 раунд ({counts.total}): ${nf.format(coinsTotal)} монет · ${nf.format(silverTotal)} серебра · 3 раунда (${counts.total * 3}): до ${nf.format(coinsTotal * 3)} монет · ${nf.format(silverTotal * 3)} серебра`.replace('{counts.total}', String(counts.total))}</small>
         </span>
       </summary>
-      <div className="siegeRoundSwitch" role="group" aria-label="Суммарные награды по количеству раундов">
+      <div className="siegeRoundSwitch" role="group" aria-label={en ? 'Total rewards by number of rounds' : 'Суммарные награды по количеству раундов'}>
         {([1, 2, 3] as const).map(num => <button
           key={num}
           type="button"
           aria-pressed={roundsHeld === num}
           onClick={() => setRoundsHeld(num)}
         >
-          {num === 1 ? `1 раунд (${counts.total})` : num === 2 ? `2 раунда (${counts.total * 2})` : `Вся осада · 3 раунда (${counts.total * 3})`}
+          {num === 1
+            ? (en ? `1 round (${counts.total})` : `1 раунд (${counts.total})`)
+            : num === 2
+              ? (en ? `2 rounds (${counts.total * 2})` : `2 раунда (${counts.total * 2})`)
+              : (en ? `Full siege · 3 rounds (${counts.total * 3})` : `Вся осада · 3 раунда (${counts.total * 3})`)}
         </button>)}
       </div>
       <SiegeTotals totals={scaledTotals}/>
       <p className="siegePoolNote">
-        На карте {counts.total} участков, но осада идёт 3 раунда по 8 часов: по итогам каждого раунда удержанные земли начисляют награды в общую копилку осады (монеты, серебро и суточные баффы суммируются). Если сквад удержал все {counts.total} земель в 2 раундах ({counts.total * 2} удержаний) — каждый атаковавший участник получит {nf.format(coinsTotal * 2)} монет, {nf.format(silverTotal * 2)} серебра и ×2 баффов (+6 Мдр, +4 Лов, +4 Сил, +2 Вын). За все 3 раунда ({counts.total * 3} удержаний) максимум составляет {nf.format(coinsTotal * 3)} монет, {nf.format(silverTotal * 3)} серебра и ×3 баффов на 24 часа.
+        {en
+          ? `There are ${counts.total} territories on the map, and a siege runs for three 8-hour rounds: after each round, held territories add their rewards to the shared siege pool (coins, silver, and 24-hour buffs stack). If a squad holds all ${counts.total} territories across 2 rounds (${counts.total * 2} holds), every attacking participant receives ${nf.format(coinsTotal * 2)} coins, ${nf.format(silverTotal * 2)} silver, and ×2 buffs (+6 Wis, +4 Agi, +4 Str, +2 End). Across all 3 rounds (${counts.total * 3} holds), the maximum payout is ${nf.format(coinsTotal * 3)} coins, ${nf.format(silverTotal * 3)} silver, and ×3 buffs for 24 hours.`
+          : `На карте ${counts.total} участков, но осада идёт 3 раунда по 8 часов: по итогам каждого раунда удержанные земли начисляют награды в общую копилку осады (монеты, серебро и суточные баффы суммируются). Если сквад удержал все ${counts.total} земель в 2 раундах (${counts.total * 2} удержаний) — каждый атаковавший участник получит ${nf.format(coinsTotal * 2)} монет, ${nf.format(silverTotal * 2)} серебра и ×2 баффов (+6 Мдр, +4 Лов, +4 Сил, +2 Вын). За все 3 раунда (${counts.total * 3} удержаний) максимум составляет ${nf.format(coinsTotal * 3)} монет, ${nf.format(silverTotal * 3)} серебра и ×3 баффов на 24 часа.`}
       </p>
     </details>
   </section>;

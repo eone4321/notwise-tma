@@ -488,7 +488,7 @@ details > p { margin: 4px 0 8px; }
 .heroActions > :is(a,button) { margin: 0; min-height: 46px; padding: 8px 5px; font-size: 12px; line-height: 1.22; text-align: center; }
 :is(.primary,.secondary,.catalogTile,.guideTile,.logoBtn):active { filter: brightness(1.25); scale: .98; }
 .copyFeedback { min-height: 1.4em; margin-top: 6px; color: var(--lavender); }
-.secretRow { display: flex; gap: 12px; border-top: 1px solid var(--line); padding: 12px 8px; scroll-margin-top: 14px; }
+.secretRow { display: flex; gap: 12px; border-top: 1px solid var(--line); padding: 12px 8px; scroll-margin-top: calc(var(--top-inset) + 14px); }
 .secretRow[data-selected=true] { background: #a98cf523; box-shadow: inset 3px 0 var(--lavender); border-radius: 8px; }
 .secretRow p { margin: 6px 0; }
 .secretCheck { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; color: var(--muted); }
@@ -736,7 +736,7 @@ html { scrollbar-gutter: stable; }
 .progressCounts { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 3px 0 9px; font-size: 13px; }
 .progressCounts span { color: var(--muted); }
 .progressGroup > h2 { font-size: 15px; color: var(--lavender); margin: 12px 0 2px; }
-.secretRow { scroll-margin-top: 12px; }
+.secretRow { scroll-margin-top: calc(var(--top-inset) + 14px); }
 .secretRow .secretCheck, .stickerProgressRow .secretCheck { justify-self: end; min-width: 44px; }
 .stickerProgressRow { display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: start; gap: 4px; border-top: 1px solid var(--game-panel-line, var(--line)); }
 .stickerProgressRow > .mediaDetails { border-top: 0; padding-bottom: 0; }

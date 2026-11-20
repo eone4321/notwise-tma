@@ -19,6 +19,18 @@ type Scope = keyof typeof scopeLabels;
 type Notifications = { ready: boolean; extraAvailable: boolean; enabled: Record<Scope, boolean> };
 const bot = 'https://t.me/NotWiseGuideBot';
 
+const guideAchievementsEn: Record<GuideAchievement, { title: string; description: string }> = {
+  mascot: { title: 'Who’s there?', description: 'You don’t stumble across this by accident. Almost.' },
+  explorer: { title: 'Know every corner', description: 'Curiosity leads beyond familiar paths.' },
+  referral: { title: 'Own route', description: 'Every trail leaves its own mark.' },
+  shared: { title: 'Pass it on', description: 'Good finds rarely stay with just one person.' },
+  five: { title: 'Own flock', description: 'Nobody flies here solo anymore.' },
+  community: { title: 'One of the chat', description: 'Sometimes one step is enough to be among your own.' },
+  squad: { title: 'Under one wing', description: 'A strong flock always has a banner to rally around.' },
+  theme: { title: 'Molting season', description: 'Sometimes the world around changes with a single decision.' },
+  joke: { title: 'Price of curiosity', description: 'Not everything that asks for payment actually costs money.' },
+};
+
 export function SettingsPage({ profile, earned, chatIssue }: { profile: GuideProfile | null; earned: GuideAchievement[]; chatIssue?: string }) {
   const { pathname, state } = useLocation();
   const keepParent = state?.guideDetail === true;
@@ -34,7 +46,7 @@ export function SettingsPage({ profile, earned, chatIssue }: { profile: GuidePro
     <nav className="choiceBar profileTabs settingsTabs" aria-label={en ? 'Guide settings' : 'Настройки гайда'}>
       {tabs.map(([to, label, glyph]) => <NavLink key={to} end replace state={keepParent ? { guideDetail: true } : undefined} to={to}><GameGlyph name={glyph}/>{label}</NavLink>)}
     </nav>
-    {pathname === '/support' && <div className="settingsContent" lang="ru"><SupportPage isAdmin={profile?.isAdmin === true}/></div>}
+    {pathname === '/support' && <div className="settingsContent"><SupportPage isAdmin={profile?.isAdmin === true}/></div>}
     {pathname === '/support/settings' && <div className="settingsContent">
       <Appearance english={en}/>
       <section className="card settingsGroup">
@@ -46,12 +58,12 @@ export function SettingsPage({ profile, earned, chatIssue }: { profile: GuidePro
           <button aria-pressed={language.choice === 'ru'} onClick={() => language.setChoice('ru')}>Русский</button>
           <button aria-pressed={language.choice === 'en'} onClick={() => language.setChoice('en')}>English</button>
         </div>
-        <p className="caption">{en ? 'Game guides are currently available in Russian.' : 'Материалы по игре пока доступны на русском.'}</p>
+        <p className="caption">{en ? 'Interface and game guides are available in Russian and English.' : 'Интерфейс и материалы гайда доступны на русском и английском.'}</p>
       </section>
       <NotificationSettings english={en}/>
       <ResetAccountSettings english={en}/>
     </div>}
-    {pathname === '/support/achievements' && <Achievements earned={earned} isAdmin={profile?.isAdmin === true} chatIssue={chatIssue}/>}
+    {pathname === '/support/achievements' && <Achievements earned={earned} isAdmin={profile?.isAdmin === true} chatIssue={chatIssue} english={en}/>}
   </>;
 }
 
@@ -96,7 +108,7 @@ function NotificationSettings({ english: en }: { english: boolean }) {
   </section>;
 }
 
-function Achievements({ earned, isAdmin, chatIssue }: { earned: GuideAchievement[]; isAdmin: boolean; chatIssue?: string }) {
+function Achievements({ earned, isAdmin, chatIssue, english: en }: { earned: GuideAchievement[]; isAdmin: boolean; chatIssue?: string; english: boolean }) {
   const total = Object.keys(guideAchievements).length;
   const hasCommunity = earned.includes('community');
   useEffect(() => {
@@ -104,22 +116,28 @@ function Achievements({ earned, isAdmin, chatIssue }: { earned: GuideAchievement
       window.dispatchEvent(new Event('guide-awards-check-chat'));
     }
   }, [hasCommunity]);
-  return <section className="card awardCollection" lang="ru">
-    <div className="progressCounts"><h2>Достижения гайда</h2><span>{earned.length}/{total}</span></div>
-    <progress className="gameProgress" value={earned.length} max={total} aria-label="Открыто достижений"/>
-    {!authData() && <p className="caption">Открой гайд в Telegram, чтобы сохранять достижения.</p>}
+  return <section className="card awardCollection">
+    <div className="progressCounts"><h2>{en ? 'Guide achievements' : 'Достижения гайда'}</h2><span>{earned.length}/{total}</span></div>
+    <progress className="gameProgress" value={earned.length} max={total} aria-label={en ? 'Unlocked achievements' : 'Открыто достижений'}/>
+    {!authData() && <p className="caption">{en ? 'Open the guide in Telegram to save your achievements.' : 'Открой гайд в Telegram, чтобы сохранять достижения.'}</p>}
     {isAdmin && chatIssue && !hasCommunity && <p className="caption">
       {chatIssue === 'no_chat'
-        ? 'Проверка чата для «Свой в чате» не настроена: укажи GUIDE_CHAT_ID или привяжи чат обсуждений к каналу.'
-        : 'Для проверки «Свой в чате» добавь @NotWiseGuideBot в чат CryptoOne (нужен доступ к списку участников).'}
+        ? (en
+          ? 'Chat check for "One of the chat" is not configured: set GUIDE_CHAT_ID or link a discussion chat to the channel.'
+          : 'Проверка чата для «Свой в чате» не настроена: укажи GUIDE_CHAT_ID или привяжи чат обсуждений к каналу.')
+        : (en
+          ? 'To verify "One of the chat", add @NotWiseGuideBot to the CryptoOne chat with access to the member list.'
+          : 'Для проверки «Свой в чате» добавь @NotWiseGuideBot в чат CryptoOne (нужен доступ к списку участников).')}
     </p>}
     <ul className="compactList">{Object.entries(guideAchievements).map(([id, item]) => {
-      const done = earned.includes(id as GuideAchievement);
+      const awardId = id as GuideAchievement;
+      const done = earned.includes(awardId);
+      const copy = en ? guideAchievementsEn[awardId] : item;
       return <li className="awardRow" key={id} data-earned={done}>
-        <span className="awardTile">{done ? <AwardIcon award={id as GuideAchievement} size={28}/> : <GameGlyph name="lock"/>}</span>
-        <div><strong>{item.title}</strong><small>{item.description}</small></div>
-        {done && <span className="awardMark" aria-label="Открыто">✓</span>}
-        {!done && <span className="sr-only">Скрытое достижение</span>}
+        <span className="awardTile">{done ? <AwardIcon award={awardId} size={28}/> : <GameGlyph name="lock"/>}</span>
+        <div><strong>{copy.title}</strong><small>{copy.description}</small></div>
+        {done && <span className="awardMark" aria-label={en ? 'Unlocked' : 'Открыто'}>✓</span>}
+        {!done && <span className="sr-only">{en ? 'Hidden achievement' : 'Скрытое достижение'}</span>}
       </li>;
     })}</ul>
   </section>;

@@ -12,21 +12,48 @@ import { skillEffect } from './BattleReadout';
 import { battleLeagues } from './battle-leagues';
 import { skillHpMultiplier, skillCooldown, skillMana } from '../domain/combat';
 import { BuildConstructor } from './BuildConstructor';
+import { useGuideLocale } from './guideLocale';
 
 export function SpBadge({ value }: { value?: number | string }) {
+  const { locale } = useGuideLocale();
+  const en = locale === 'en';
   return <span className="spBadge">
-    {value !== undefined && <span className="spValue">{typeof value === 'number' ? value.toLocaleString('ru-RU') : value}</span>}
+    {value !== undefined && <span className="spValue">{typeof value === 'number' ? value.toLocaleString(en ? 'en-US' : 'ru-RU') : value}</span>}
     <GameSymbol name="sp" size={14}/>
   </span>;
 }
 
 const branches = [
-  ['wisdom', 'Мудрость', 'Критический удар и мана'],
-  ['strength', 'Сила', 'Урон по противнику'],
-  ['agility', 'Ловкость', 'Уклонение и контроль'],
-  ['endurance', 'Выносливость', 'Здоровье и защита'],
+  ['wisdom', 'Мудрость', 'Критический удар и мана', 'Wisdom', 'Critical strike and mana'],
+  ['strength', 'Сила', 'Урон по противнику', 'Strength', 'Attack damage'],
+  ['agility', 'Ловкость', 'Уклонение и контроль', 'Agility', 'Dodge and control'],
+  ['endurance', 'Выносливость', 'Здоровье и защита', 'Endurance', 'Health and defense'],
 ] as const;
-const modes = [
+
+const skillDescriptionsEn = [
+  'Deals damage through both block and dodge.',
+  'Empowers basic hits. Each empowered hit spends mana.',
+  'Restores owl health.',
+  'Reduces incoming damage. Each trigger spends mana.',
+  'The opponent loses health on their next attacks while poisoned.',
+  'Deals damage and freezes. A frozen opponent attacks twice as slowly.',
+  'Temporarily prevents the opponent from attacking while still allowing them to block.',
+  'Lets you dodge several incoming hits. Hits into your block do not spend charges.',
+  'Reflects a portion of incoming hit damage back to the attacker.',
+  'Reveals where the opponent moved their block. Each hint spends mana.',
+  'Deals immediate damage and continues burning the opponent. Blocking does not extinguish the fire.',
+  'Deals more damage the lower your health is. Costs health to cast but always leaves at least 1 HP.',
+  'Unleashes a flurry of hits into the last targeted zone. A block in that zone stops the whole flurry.',
+  'Repeats landed hits for extra damage.',
+  'Your next hit either deals 5× damage or deals no damage at all.',
+  'Deals damage through block and dodge and stuns the opponent.',
+  'Locks the opponent’s block in place and reveals which zone they are guarding.',
+  'Your landed hits restore health proportional to the damage dealt.',
+  'Weakens enemy control effects, poison, and super streak. Each trigger spends mana.',
+  'Grants temporary invulnerability to all damage.',
+] as const;
+
+const modesRu = [
   ['swords', 'Рейтинговый бой', 'Рейтинг и капсулы', [
     'Атакуй зоны, которые соперник не блокирует, и переключай свой блок.',
     'Победа может дать капсулу при наличии свободного слота.',
@@ -56,16 +83,62 @@ const modes = [
     'После трёх ошибок книга сгорает.',
   ]],
   ['trophy', 'Сезон', '14 дней', [
-    'В каждом сезоне одна цель: лайки, победы, идеальные победы, полёты, загадки или удары в Додзе.',
+    'В каждом сезоне одна из 8 дисциплин: лайки, победы, идеальные победы без урона, монеты в полёте, дистанция в полёте, лучший полёт, загадки из книги или удары в Додзё.',
     'Учитывается активность только за текущий сезон.',
   ]],
 ] as const;
-const format = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
-const precise = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 4 });
+
+const modesEn = [
+  ['swords', 'Ranked Battle', 'Rating and capsules', [
+    'Attack zones the opponent is not guarding and switch your own block.',
+    'Winning can drop a capsule if you have an open slot.',
+  ]],
+  ['target', 'Raid', 'From level 1', [
+    'Attack owls from the leaderboard — the loser gives 3% of their coins to the winner.',
+    'After 3 lost raids in a row, a shield activates until the player logs back in.',
+  ]],
+  ['boxing', 'Dojo', 'From lvl 2 · 2 ⚡ per hit', [
+    'Hitting the dummy spends 2 ⚡ and grants SP.',
+    'Skills can also be trained on the dummy.',
+    'Spend SP on upgrades, and attribute points on unlocking branch skills.',
+  ]],
+  ['shield', 'Squads and Sieges', 'Squads at lvl 3 · wars at lvl 4', [
+    'Each round lasts 8 hours, and rewards stack across all 3 rounds.',
+    'Territories grant squad silver, coins, or +1–2 to an attribute for 24 h.',
+    'To claim your squad reward for a round, you must participate in the attack.',
+  ]],
+  ['rocket', 'Flight', 'From level 5 · from 250 energy', []],
+  ['bolt', 'Wild Magic', 'Spell training', [
+    'Three top scores unlock the Spell Book achievement.',
+  ]],
+  ['magnifier', 'Book of Riddles', '60 seconds to answer', [
+    'Scratch the field to reveal the riddle and start the timer.',
+    'A streak of correct answers multiplies coins and XP up to ×3.',
+    'A correct answer grants +5 Wisdom for 24 hours.',
+    'After three mistakes, the book burns up.',
+  ]],
+  ['trophy', 'Season', '14 days', [
+    'Each season features one of 8 disciplines: likes, wins, flawless wins, flight coins, flight distance, best flight, book riddles, or dojo hits.',
+    'Only activity during the current season counts.',
+  ]],
+] as const;
+
+const formatRu = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
+const formatEn = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 });
+const preciseRu = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 4 });
+const preciseEn = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 });
 const hpEffects = new Set(['strike', 'heal', 'chill', 'desperate', 'meteor', 'poison', 'burn']);
-const branchName = (branch: string) => branches.find(([id]) => id === branch)?.[1] ?? '';
-function unlockCondition(skill: Skill) {
+const branchName = (branch: string, en = false) => {
+  const found = branches.find(([id]) => id === branch);
+  return found ? (en ? found[3] : found[1]) : '';
+};
+function unlockCondition(skill: Skill, en = false) {
   const previous = skills.find(item => item.branch === skill.branch && item.tier === skill.tier - 1);
+  if (en) {
+    return previous
+      ? `After “${previous.name}” · +1 more point in “${branchName(skill.branch, true)}”`
+      : `From owl level 2: invest 1 point in “${branchName(skill.branch, true)}”`;
+  }
   return previous
     ? `После «${skillCopy[previous.id - 1][0]}» · ещё 1 очко ветки «${branchName(skill.branch)}»`
     : `Со 2-го уровня совы: вложи 1 очко в «${branchName(skill.branch)}»`;
@@ -74,6 +147,8 @@ const skillArt = (id: number) => '/game/skills/' + id + '.png';
 type Skill = typeof skills[number];
 
 export function CombatPage({ referralCode }: { referralCode?: string }) {
+  const { locale } = useGuideLocale();
+  const en = locale === 'en';
   const { pathname, search, state } = useLocation();
   const [, , page, branchId, skillId] = pathname.split('/');
   const searchParams = new URLSearchParams(search);
@@ -85,48 +160,66 @@ export function CombatPage({ referralCode }: { referralCode?: string }) {
   const skill = !isBuilds && skills.find(item => item.id === Number(skillId) && item.branch === branchId);
   const keepParent = state?.guideDetail === true;
   return <>
-    {!branch && <nav className="choiceBar profileTabs combatTabs" aria-label="Раздел боя">
-      <Link to="/combat" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isSkills ? 'page' : undefined}><GameGlyph name="lightning"/>Навыки</Link>
-      <Link to="/combat/stats" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isStats ? 'page' : undefined}><GameGlyph name="shield"/>Характеристики</Link>
-      <Link to="/combat/builds" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isBuilds ? 'page' : undefined}><GameGlyph name="sparkles"/>Билды</Link>
+    {!branch && <nav className="choiceBar profileTabs combatTabs" aria-label={en ? 'Combat section' : 'Раздел боя'}>
+      <Link to="/combat" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isSkills ? 'page' : undefined}><GameGlyph name="lightning"/>{en ? 'Skills' : 'Навыки'}</Link>
+      <Link to="/combat/stats" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isStats ? 'page' : undefined}><GameGlyph name="shield"/>{en ? 'Attributes' : 'Характеристики'}</Link>
+      <Link to="/combat/builds" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isBuilds ? 'page' : undefined}><GameGlyph name="sparkles"/>{en ? 'Builds' : 'Билды'}</Link>
     </nav>}
     {isBuilds ? <BuildConstructor referralCode={referralCode}/> :
       skill ? <SkillDetail key={skill.id} skill={skill}/> :
       branch ? <>
-        <h2 className="subTitle">{branch[1]}</h2>
+        <h2 className="subTitle">{en ? branch[3] : branch[1]}</h2>
         <section className="card skillShelf">
-          <p className="caption">С уровня 2 вложи очко атрибута в эту ветку и открой навык за полученное очко ветки. Для улучшения навыков нужны <SpBadge/> из Додзе.</p>
+          <p className="caption">{en
+            ? <>From level 2, invest an attribute point into this branch and unlock a skill with the branch point you receive. Upgrading skills costs <SpBadge/> from the Dojo.</>
+            : <>С уровня 2 вложи очко атрибута в эту ветку и открой навык за полученное очко ветки. Для улучшения навыков нужны <SpBadge/> из Додзе.</>}</p>
           {skills.filter(item => item.branch === branch[0]).sort((a, b) => a.tier - b.tier).map(item => {
             const isPassive = item.type === 'passive';
             const cost = isPassive
-              ? `Пассивный · ${skillMana(item.tier, true, item.id === 10)} маны`
-              : `Активный · ${skillMana(item.tier, false)} маны · откат ${skillCooldown(item.tier)} с`;
+              ? (en ? `Passive · ${skillMana(item.tier, true, item.id === 10)} mana` : `Пассивный · ${skillMana(item.tier, true, item.id === 10)} маны`)
+              : (en ? `Active · ${skillMana(item.tier, false)} mana · ${skillCooldown(item.tier)} s cooldown` : `Активный · ${skillMana(item.tier, false)} маны · откат ${skillCooldown(item.tier)} с`);
             return <DetailLink to={'/combat/skills/' + branch[0] + '/' + item.id} className="mediaRow skillRow" key={item.id}>
               <span className="skillTile"><GameArt path={skillArt(item.id)} size={38}/><b aria-hidden="true">{item.tier}</b></span>
-              <span><strong>{skillCopy[item.id - 1][0]}</strong><small>{cost}</small><small>{unlockCondition(item)}</small></span>
+              <span><strong>{en ? item.name : skillCopy[item.id - 1][0]}</strong><small>{cost}</small><small>{unlockCondition(item, en)}</small></span>
               <span className="rowChevron" aria-hidden="true"/>
             </DetailLink>;
           })}
         </section>
       </> : isStats ? <CombatStats/> : <>
-        <p className="intro">Ветки навыков открываются на 2-м уровне. В бой можно взять до трёх навыков, прокачка — за <SpBadge/> из Додзе.</p>
+        <p className="intro">{en
+          ? <>Skill branches unlock at level 2. You can bring up to three skills into battle and upgrade them with <SpBadge/> from the Dojo.</>
+          : <>Ветки навыков открываются на 2-м уровне. В бой можно взять до трёх навыков, прокачка — за <SpBadge/> из Додзе.</>}</p>
         <div className="card combatBranches">
-          {branches.map(([id, title, purpose]) =>
+          {branches.map(([id, titleRu, purposeRu, titleEn, purposeEn]) =>
             <DetailLink className="mediaRow" to={'/combat/skills/' + id} key={id}>
-              <GameAttribute name={id}/><span><strong>{title}</strong><small>{purpose}</small></span><span className="rowChevron" aria-hidden="true"/>
+              <GameAttribute name={id}/><span><strong>{en ? titleEn : titleRu}</strong><small>{en ? purposeEn : purposeRu}</small></span><span className="rowChevron" aria-hidden="true"/>
             </DetailLink>
           )}
         </div>
         <section className="card">
-          <h2>Что важно знать перед боем</h2>
+          <h2>{en ? 'What to know before battle' : 'Что важно знать перед боем'}</h2>
           <ul className="compactList combatTipsList">
-            <li><strong>Мана конечна на весь бой</strong><span>В бою она не восстанавливается. При 0 маны отключаются не только активные, но и пассивные навыки (Мощный удар, Щит из скорлупы, Железная воля, Подсказка духа).</span></li>
-            <li><strong>Серия из 3 попаданий подряд</strong><span>Три удара без блока и уклонения вызывают комбо из 4 доп. атак и оглушают цель на 1,5 с. Промах сбрасывает счётчик.</span></li>
-            <li><strong>Максимум 35% HP за один удар</strong><span>Даже крит ×2 или «Двойная ставка» ×5 не снимут обычным ударом больше 35% максимального здоровья цели.</span></li>
-            <li><strong>Оглушение не мешает блоку</strong><span>Оглушённая сова не бьёт, но всё ещё меняет зону блока. Зафиксировать блок могут только «Сковывающие цепи».</span></li>
-            <li><strong>Что бьёт сквозь защиту</strong><span>«Молния» проходит и через блок, и через уклонение; «Астероид» — через блок. Удар в твой блок не тратит заряды «Уклонения».</span></li>
-            <li><strong>Пауза 5-й ступени</strong><span>Ультимативные навыки после нажатия на 2 с блокируют твою атаку и смену блока — не жми их под чужой Фазовый сдвиг.</span></li>
-            <li><strong>Потолок 70% для крита и уклонения</strong><span>Оба предела достигаются при 100 стата. Ловкость сверх 100 ничего не даёт, а Мудрость продолжает добавлять +20 маны за очко.</span></li>
+            <li><strong>{en ? 'Mana is finite for the whole fight' : 'Мана конечна на весь бой'}</strong><span>{en
+              ? 'Mana does not regenerate during combat. At 0 mana, both active skills and passives (Power Punch, Nutshell Aegis, Iron Will, Spirit Guidance) stop triggering.'
+              : 'В бою она не восстанавливается. При 0 маны отключаются не только активные, но и пассивные навыки (Мощный удар, Щит из скорлупы, Железная воля, Подсказка духа).'}</span></li>
+            <li><strong>{en ? '3-hit streak combo' : 'Серия из 3 попаданий подряд'}</strong><span>{en
+              ? 'Three consecutive landed basic hits without block or dodge trigger a 4-hit flurry combo and stun the target for 1.5 s. A miss resets the counter.'
+              : 'Три удара без блока и уклонения вызывают комбо из 4 доп. атак и оглушают цель на 1,5 с. Промах сбрасывает счётчик.'}</span></li>
+            <li><strong>{en ? '35% max HP cap per hit' : 'Максимум 35% HP за один удар'}</strong><span>{en
+              ? 'Even a ×2 crit or ×5 Double Down cannot remove more than 35% of the target’s max health with a single basic hit.'
+              : 'Даже крит ×2 или «Двойная ставка» ×5 не снимут обычным ударом больше 35% максимального здоровья цели.'}</span></li>
+            <li><strong>{en ? 'Stun does not lock blocking' : 'Оглушение не мешает блоку'}</strong><span>{en
+              ? 'A stunned owl cannot attack, but can still switch guard zones. Only Crippling Chains lock the guard zone.'
+              : 'Оглушённая сова не бьёт, но всё ещё меняет зону блока. Зафиксировать блок могут только «Сковывающие цепи».'}</span></li>
+            <li><strong>{en ? 'What pierces defense' : 'Что бьёт сквозь защиту'}</strong><span>{en
+              ? 'All 5 direct attack spells (Lightning, Asteroid, Fireball, Snowball, Desperate Throw) pierce both block and dodge (Evada Kedabra and Agility dodge); only Phase Shift blocks them and Nutshell Aegis reduces their damage. A hit into your block does not spend Evada Kedabra charges.'
+              : 'Все 5 ударных заклинаний («Молния», «Астероид», «Огненный шар», «Снежок», «Бросок отчаяния») бьют и сквозь блок, и сквозь уклонение («Уклонение» и шанс от ловкости); полностью блокирует их только «Фазовый сдвиг», а «Щит из скорлупы» снижает урон. Удар в твой блок не тратит заряды «Уклонения».'}</span></li>
+            <li><strong>{en ? 'Tier 5 cast lock' : 'Пауза 5-й ступени'}</strong><span>{en
+              ? 'Tier 5 ultimate skills lock your attacks and guard switching for 2 s after casting — do not fire them into an enemy Phase Shift.'
+              : 'Ультимативные навыки после нажатия на 2 с блокируют твою атаку и смену блока — не жми их под чужой Фазовый сдвиг.'}</span></li>
+            <li><strong>{en ? '70% cap for crit and dodge' : 'Потолок 70% для крита и уклонения'}</strong><span>{en
+              ? 'Both caps are reached at 100 stat points. Agility above 100 adds nothing, while Wisdom continues adding +20 mana per point.'
+              : 'Оба предела достигаются при 100 стата. Ловкость сверх 100 ничего не даёт, а Мудрость продолжает добавлять +20 маны за очко.'}</span></li>
           </ul>
         </section>
       </>}
@@ -134,32 +227,37 @@ export function CombatPage({ referralCode }: { referralCode?: string }) {
 }
 
 export function ModesPage() {
+  const { locale } = useGuideLocale();
+  const en = locale === 'en';
+  const format = en ? formatEn : formatRu;
+  const modes = en ? modesEn : modesRu;
   const { hash } = useLocation();
   return <section className="card modesCard">
-        {modes.map(([icon, title, when, lines]) => <details className="mediaDetails" key={title}
+        {modes.map(([icon, title, when, lines]) => <details className="mediaDetails" key={icon}
           id={icon === 'rocket' ? 'flight' : undefined} open={icon === 'rocket' && hash === '#flight' || undefined}>
           <summary>{icon === 'swords' ? <GameArt path="/game/ui/fight-vs.png" size={36}/> : <GameSymbol name={icon}/>}<span><strong>{title}</strong>
-            <small>{icon === 'rocket' ? <span className="energyBadge">С 5-го уровня · от 250 <GameSymbol name="bolt" size={13}/></span> :
-              icon === 'boxing' ? <span className="energyBadge">Со 2-го уровня · 2 <GameSymbol name="bolt" size={13}/> / удар</span> : when}</small></span>
+            <small>{icon === 'rocket' ? <span className="energyBadge">{en ? 'From level 5 · from 250' : 'С 5-го уровня · от 250'} <GameSymbol name="bolt" size={13}/></span> :
+              icon === 'boxing' ? <span className="energyBadge">{en ? 'From level 2 · 2' : 'Со 2-го уровня · 2'} <GameSymbol name="bolt" size={13}/> {en ? '/ hit' : '/ удар'}</span> : when}</small></span>
           </summary>
           {icon === 'rocket' ? <FlightDetails/> : <div className="memoLines">{lines.map(line => <p key={line}>{line}</p>)}</div>}
           {icon === 'swords' && <div className="memoLines" style={{ marginTop: 6 }}>
-            <p>Целься в голову, корпус или живот — блок соперника отменяет урон в выбранной зоне.</p>
-            <p>Между атаками проходит 1,5 с, между сменами блока — 1 с.</p>
+            <p>{en ? 'Aim for the head, chest, or belly — the opponent’s guard blocks damage in the covered zone.' : 'Целься в голову, корпус или живот — блок соперника отменяет урон в выбранной зоне.'}</p>
+            <p>{en ? 'There is a 1.5 s cooldown between attacks and 1 s between guard switches.' : 'Между атаками проходит 1,5 с, между сменами блока — 1 с.'}</p>
           </div>}
           {icon === 'target' && <div className="memoLines" style={{ marginTop: 6 }}>
-            <p>Расход энергии: 10 ⚡ на 1–4 ур., 20 ⚡ на 5–9 ур., 30 ⚡ на 10–14 ур.</p>
-            <p>Стоимость растёт на +10 ⚡ каждые 5 уровней.</p>
+            <p>{en ? 'Energy cost: 10 ⚡ at lvl 1–4, 20 ⚡ at lvl 5–9, 30 ⚡ at lvl 10–14.' : 'Расход энергии: 10 ⚡ на 1–4 ур., 20 ⚡ на 5–9 ур., 30 ⚡ на 10–14 ур.'}</p>
+            <p>{en ? 'The cost increases by +10 ⚡ every 5 levels.' : 'Стоимость растёт на +10 ⚡ каждые 5 уровней.'}</p>
           </div>}
         </details>)}
-        <details className="mediaDetails"><summary><GameSymbol name="trophy"/><span><strong>Призы сезона</strong><small>Первые 100 мест</small></span></summary>
-        <p>При фонде 1 млн $NOT первые три места получают 400 000, 350 000 и 250 000 $NOT соответственно.</p><p>Топ-10 получает золотое загадочное яйцо. Места 11–100 получают загадочное яйцо, которое продаётся за 100 Stars.</p>
-        <p>Призы приходят автоматически. Фонд зависит от сезона.</p>
-        <DetailLink className="textLink" to="/owl/season">Что выпадает из загадочного яйца</DetailLink>
+        <details className="mediaDetails"><summary><GameSymbol name="trophy"/><span><strong>{en ? 'Season prizes' : 'Призы сезона'}</strong><small>{en ? 'Top 100 places' : 'Первые 100 мест'}</small></span></summary>
+        <p>{en ? 'With a 1M $NOT prize pool, the top three places receive 400,000, 350,000, and 250,000 $NOT respectively.' : 'При фонде 1 млн $NOT первые три места получают 400 000, 350 000 и 250 000 $NOT соответственно.'}</p>
+        <p>{en ? 'Top 10 receive a golden mystery egg. Places 11–100 receive a mystery egg that can be sold for 100 Stars.' : 'Топ-10 получает золотое загадочное яйцо. Места 11–100 получают загадочное яйцо, которое продаётся за 100 Stars.'}</p>
+        <p>{en ? 'Prizes are delivered automatically. The pool varies by season.' : 'Призы приходят автоматически. Фонд зависит от сезона.'}</p>
+        <DetailLink className="textLink" to="/owl/season">{en ? 'What drops from the mystery egg' : 'Что выпадает из загадочного яйца'}</DetailLink>
       </details>
-      <details className="mediaDetails" id="leagues" open={hash === "#leagues" || undefined}><summary><GameSymbol name="shield"/><span><strong>Боевые лиги</strong><small>Пороги рейтинга и бонус к фарму</small></span></summary>
+      <details className="mediaDetails" id="leagues" open={hash === "#leagues" || undefined}><summary><GameSymbol name="shield"/><span><strong>{en ? 'Battle leagues' : 'Боевые лиги'}</strong><small>{en ? 'Rating thresholds and farming bonus' : 'Пороги рейтинга и бонус к фарму'}</small></span></summary>
         <table className="priceTable">
-          <thead><tr><th scope="col">Лига</th><th scope="col">От MMR</th><th scope="col">Фарм</th></tr></thead>
+          <thead><tr><th scope="col">{en ? 'League' : 'Лига'}</th><th scope="col">{en ? 'Min MMR' : 'От MMR'}</th><th scope="col">{en ? 'Farm' : 'Фарм'}</th></tr></thead>
           <tbody>{battleLeagues.map(([name, rating], index) => <tr key={name}>
             <th scope="row">{name}</th><td>{format.format(rating)}</td><td>+{index + 1}%</td>
           </tr>)}</tbody>
@@ -169,131 +267,160 @@ export function ModesPage() {
 }
 
 function SkillDetail({ skill }: { skill: Skill }) {
+  const { locale } = useGuideLocale();
+  const en = locale === 'en';
+  const format = en ? formatEn : formatRu;
+  const precise = en ? preciseEn : preciseRu;
   const [level, setLevel] = useState(1);
   const [owlLevel, setOwlLevel] = useState(20);
-  const [title, description] = skillCopy[skill.id - 1];
+  const [titleRu, descriptionRu] = skillCopy[skill.id - 1];
+  const title = en ? skill.name : titleRu;
+  const description = en ? skillDescriptionsEn[skill.id - 1] : descriptionRu;
   const type = skillLevels[String(skill.id) as keyof typeof skillLevels].type;
   const scalesWithLevel = hpEffects.has(type);
   const multiplier = skillHpMultiplier(owlLevel);
   return <section className="card">
     <div className="mediaHeading"><GameArt path={skillArt(skill.id)} size={64}/><div>
-      <h2>{title}</h2><p>{skill.name} · ступень {skill.tier}</p>
+      <h2>{title}</h2><p>{en ? `${titleRu} · tier ${skill.tier}` : `${skill.name} · ступень ${skill.tier}`}</p>
     </div></div>
     <p>{description}</p>
-    <div className="skillUnlock"><strong>Условие открытия</strong><p>{unlockCondition(skill)}.</p></div>
-    <label className="field">Уровень навыка
+    <div className="skillUnlock"><strong>{en ? 'Unlock condition' : 'Условие открытия'}</strong><p>{unlockCondition(skill, en)}.</p></div>
+    <label className="field">{en ? 'Skill level' : 'Уровень навыка'}
       <select value={level} onChange={event => setLevel(Number(event.target.value))}>
         {Array.from({ length: 21 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
       </select>
     </label>
-    {scalesWithLevel && <label className="field">Уровень совы
+    {scalesWithLevel && <label className="field">{en ? 'Owl level' : 'Уровень совы'}
       <select value={owlLevel} onChange={event => setOwlLevel(Number(event.target.value))}>
         {progression.current.slice(1).map((_, index) => <option key={index} value={index + 1}>{index + 1}</option>)}
       </select>
     </label>}
     <ul className="compactList">
-      {skillEffect(skill.id, level, owlLevel).map(([label, value]) => <li className="mediaRow" key={label}><span>{label}</span><strong>{value}</strong></li>)}
-      <li className="mediaRow"><span>{skill.type === 'active' ? 'Мана за применение' : 'Мана за срабатывание'}</span>
+      {skillEffect(skill.id, level, owlLevel, en ? 1 : 0).map(([label, value]) => <li className="mediaRow" key={label}><span>{label}</span><strong>{value}</strong></li>)}
+      <li className="mediaRow"><span>{skill.type === 'active' ? (en ? 'Mana per cast' : 'Мана за применение') : (en ? 'Mana per trigger' : 'Мана за срабатывание')}</span>
         <strong>{skillMana(skill.tier, skill.type === 'passive', type === 'reveal')}</strong></li>
-      <li className="mediaRow"><span>Тренировка в Додзе</span><strong className="energyBadge">{skill.dojoEnergy} <GameSymbol name="bolt" size={15}/></strong></li>
-      {skill.type === 'active' && <li className="mediaRow"><span>Перезарядка</span><strong>{skillCooldown(skill.tier)} с</strong></li>}
-      <li className="mediaRow"><span>{level === 21 ? 'Прокачка' : `Улучшение до ${level + 1}-го уровня`}</span>
-        <strong>{level === 21 ? 'Максимум' : <SpBadge value={format.format(100 * 2 ** (level - 1))}/>}</strong></li>
+      <li className="mediaRow"><span>{en ? 'Dojo training' : 'Тренировка в Додзе'}</span><strong className="energyBadge">{skill.dojoEnergy} <GameSymbol name="bolt" size={15}/></strong></li>
+      {skill.type === 'active' && <li className="mediaRow"><span>{en ? 'Cooldown' : 'Перезарядка'}</span><strong>{skillCooldown(skill.tier)} {en ? 's' : 'с'}</strong></li>}
+      <li className="mediaRow"><span>{level === 21 ? (en ? 'Upgrade' : 'Прокачка') : (en ? `Upgrade to level ${level + 1}` : `Улучшение до ${level + 1}-го уровня`)}</span>
+        <strong>{level === 21 ? (en ? 'Max' : 'Максимум') : <SpBadge value={format.format(100 * 2 ** (level - 1))}/>}</strong></li>
     </ul>
-    {scalesWithLevel && <p className="caption">Множитель от уровня совы ×{precise.format(multiplier)}. Показан исходный эффект до защиты цели и других боевых модификаторов.</p>}
+    {scalesWithLevel && <p className="caption">{en
+      ? `Owl level multiplier ×${precise.format(multiplier)}. Shows base effect before target defense and other combat modifiers.`
+      : `Множитель от уровня совы ×${precise.format(multiplier)}. Показан исходный эффект до защиты цели и других боевых модификаторов.`}</p>}
   </section>;
 }
 
-const attributes = [
+const attributesRu = [
   ['strength', 'Сила', '+0,065 урона за очко', 'Повышает урон обычных ударов.'],
   ['agility', 'Ловкость', '+0,7% к шансу уклонения за очко', 'Шанс складывается. Например, с 20% он вырастет до 20,7%. Предел — 70%.'],
   ['wisdom', 'Мудрость', '+0,7% к шансу крита и +20 маны за очко', 'Например, шанс крита 20% вырастет до 20,7%. Предел — 70%. Базовая мана — 200.'],
   ['endurance', 'Выносливость', '+2 HP за очко', 'К базовым 20 HP прибавляются 3 HP за каждый уровень совы и 2 HP за каждое очко выносливости.'],
 ] as const;
 
+const attributesEn = [
+  ['strength', 'Strength', '+0.065 damage per point', 'Increases the damage of basic hits.'],
+  ['agility', 'Agility', '+0.7% dodge chance per point', 'Stacks additively. For example, 20% grows to 20.7%. Cap is 70%.'],
+  ['wisdom', 'Wisdom', '+0.7% crit chance and +20 mana per point', 'For example, 20% crit chance grows to 20.7%. Cap is 70%. Base mana is 200.'],
+  ['endurance', 'Endurance', '+2 HP per point', 'Base 20 HP plus 3 HP per owl level and 2 HP per Endurance point.'],
+] as const;
+
 function CombatStats() {
+  const { locale } = useGuideLocale();
+  const en = locale === 'en';
+  const format = en ? formatEn : formatRu;
+  const attributes = en ? attributesEn : attributesRu;
   const [level, setLevel] = useState(0);
   const [owlLevel, setOwlLevel] = useState(2);
   const curve = progression.current;
   return <>
-    <section className="card"><h2>Эффект одного очка атрибута</h2>
-      {attributes.map(([icon, name, effect, detail]) => <details className="mediaDetails" key={name}>
+    <section className="card"><h2>{en ? 'Effect of one attribute point' : 'Эффект одного очка атрибута'}</h2>
+      {attributes.map(([icon, name, effect, detail]) => <details className="mediaDetails" key={icon}>
         <summary><GameAttribute name={icon}/><span><strong>{name}</strong><small>{effect}</small></span></summary>
         <p>{detail}</p>
       </details>)}
     </section>
-    <section className="card"><h2>Улучшения совы</h2>
-      <p>Перки — постоянные улучшения совы за <SpBadge/> (очки навыков). У каждого улучшения свой уровень.</p>
+    <section className="card"><h2>{en ? 'Owl upgrades' : 'Улучшения совы'}</h2>
+      <p>{en
+        ? <>Perks are permanent owl upgrades purchased with <SpBadge/> (skill points). Each upgrade has its own level.</>
+        : <>Перки — постоянные улучшения совы за <SpBadge/> (очки навыков). У каждого улучшения свой уровень.</>}</p>
       <ul className="compactList owlUpgrades">
-        <li><GameSymbol name="bolt" size={24}/><span>Запас энергии</span><b>+100 <GameSymbol name="bolt" size={13}/> за ур.</b></li>
-        <li><GameSymbol name="rocket" size={24}/><span>Восстановление энергии</span><b>+3% за уровень</b></li>
-        <li><GameSymbol name="heart" size={24}/><span>Восстановление здоровья</span><b>+3% за уровень</b></li>
+        <li><GameSymbol name="bolt" size={24}/><span>{en ? 'Max energy' : 'Запас энергии'}</span><b>+100 <GameSymbol name="bolt" size={13}/> {en ? 'per lvl' : 'за ур.'}</b></li>
+        <li><GameSymbol name="rocket" size={24}/><span>{en ? 'Energy regeneration' : 'Восстановление энергии'}</span><b>{en ? '+3% per level' : '+3% за уровень'}</b></li>
+        <li><GameSymbol name="heart" size={24}/><span>{en ? 'Health regeneration' : 'Восстановление здоровья'}</span><b>{en ? '+3% per level' : '+3% за уровень'}</b></li>
       </ul>
-      <details><summary>Цена улучшений</summary>
-        <p className="caption">Каждое улучшение можно прокачать до 21-го уровня. Первый шаг стоит 10 <SpBadge/>, каждый следующий вдвое дороже.</p>
-        <label className="field">Текущий уровень улучшения
+      <details><summary>{en ? 'Upgrade cost' : 'Цена улучшений'}</summary>
+        <p className="caption">{en
+          ? <>Each upgrade can be leveled up to 21. The first step costs 10 <SpBadge/>, and each next step costs twice as much.</>
+          : <>Каждое улучшение можно прокачать до 21-го уровня. Первый шаг стоит 10 <SpBadge/>, каждый следующий вдвое дороже.</>}</p>
+        <label className="field">{en ? 'Current upgrade level' : 'Текущий уровень улучшения'}
           <select value={level} onChange={event => setLevel(Number(event.target.value))}>
-            {Array.from({ length: 21 }, (_, i) => <option key={i} value={i}>{i} → {i + 1} ур.</option>)}
+            {Array.from({ length: 21 }, (_, i) => <option key={i} value={i}>{i} → {i + 1} {en ? 'lvl' : 'ур.'}</option>)}
           </select>
         </label>
-        <p>Стоимость улучшения: <strong><SpBadge value={format.format(10 * 2 ** level)}/></strong></p>
+        <p>{en ? 'Upgrade cost:' : 'Стоимость улучшения:'} <strong><SpBadge value={format.format(10 * 2 ** level)}/></strong></p>
       </details>
-      <details><summary>Опыт для уровня совы</summary>
-        <label className="field">Целевой уровень совы
+      <details><summary>{en ? 'XP for owl level' : 'Опыт для уровня совы'}</summary>
+        <label className="field">{en ? 'Target owl level' : 'Целевой уровень совы'}
           <select value={owlLevel} onChange={event => setOwlLevel(Number(event.target.value))}>
             {curve.slice(1).map((_, index) => <option key={index} value={index + 1}>{index + 1}</option>)}
           </select>
         </label>
-        <p>Всего: <strong>{format.format(curve[owlLevel])} XP</strong> (из них {format.format(curve[owlLevel] - curve[owlLevel - 1])} XP с предыдущего уровня).</p>
+        <p>{en
+          ? <>Total: <strong>{format.format(curve[owlLevel])} XP</strong> ({format.format(curve[owlLevel] - curve[owlLevel - 1])} XP from the previous level).</>
+          : <>Всего: <strong>{format.format(curve[owlLevel])} XP</strong> (из них {format.format(curve[owlLevel] - curve[owlLevel - 1])} XP с предыдущего уровня).</>}</p>
       </details>
     </section>
   </>;
 }
 
 function FlightDetails() {
+  const { locale } = useGuideLocale();
+  const en = locale === 'en';
   return <div className="flightDetails">
-    <h4>Расход энергии на старт</h4>
+    <h4>{en ? 'Starting energy cost' : 'Расход энергии на старт'}</h4>
     <div className="flightEnergyGrid">
-      <div><span>Уровни 5–9</span><strong>250 <GameSymbol name="bolt" size={15}/></strong></div>
-      <div><span>Уровни 10–14</span><strong>300 <GameSymbol name="bolt" size={15}/></strong></div>
-      <div><span>Уровни 15–19</span><strong>350 <GameSymbol name="bolt" size={15}/></strong></div>
-      <div><span>Каждые +5 ур.</span><strong>+50 <GameSymbol name="bolt" size={15}/></strong></div>
+      <div><span>{en ? 'Levels 5–9' : 'Уровни 5–9'}</span><strong>250 <GameSymbol name="bolt" size={15}/></strong></div>
+      <div><span>{en ? 'Levels 10–14' : 'Уровни 10–14'}</span><strong>300 <GameSymbol name="bolt" size={15}/></strong></div>
+      <div><span>{en ? 'Levels 15–19' : 'Уровни 15–19'}</span><strong>350 <GameSymbol name="bolt" size={15}/></strong></div>
+      <div><span>{en ? 'Every +5 lvls' : 'Каждые +5 ур.'}</span><strong>+50 <GameSymbol name="bolt" size={15}/></strong></div>
     </div>
 
-    <h4>Что помогает в полёте</h4>
+    <h4>{en ? 'Helpful items in flight' : 'Что помогает в полёте'}</h4>
     <ul className="compactList flightItemsList">
       <li>
-        <span className="flightItemHead"><GameSymbol name="rocket" size={20}/><strong>Ракета</strong></span>
-        <p>Ускоряет, защищает от препятствий и умножает монеты. Три ракеты в день, ещё можно найти на трассе.</p>
+        <span className="flightItemHead"><GameSymbol name="rocket" size={20}/><strong>{en ? 'Rocket' : 'Ракета'}</strong></span>
+        <p>{en ? 'Speeds you up, protects from obstacles, and multiplies coins. Three rockets per day, plus more can be found on the track.' : 'Ускоряет, защищает от препятствий и умножает монеты. Три ракеты в день, ещё можно найти на трассе.'}</p>
       </li>
       <li>
-        <span className="flightItemHead"><GameSymbol name="magnet" size={20}/><strong>Магнит (10 сек)</strong></span>
-        <p>Притягивает монеты со всех трёх дорожек.</p>
+        <span className="flightItemHead"><GameSymbol name="magnet" size={20}/><strong>{en ? 'Magnet (10 s)' : 'Магнит (10 сек)'}</strong></span>
+        <p>{en ? 'Pulls in coins from all three lanes.' : 'Притягивает монеты со всех трёх дорожек.'}</p>
       </li>
       <li>
-        <span className="flightItemHead"><span className="emojiIcon">🍣</span><strong>Суши</strong></span>
-        <p>Первые две суши отнимают по <strong>20% текущего счёта</strong>. Третья прибавляет <strong>20%</strong> к оставшимся монетам и открывает стикер <strong>Sushi Master</strong>.</p>
+        <span className="flightItemHead"><span className="emojiIcon">🍣</span><strong>{en ? 'Sushi' : 'Суши'}</strong></span>
+        <p>{en
+          ? <>The first two sushi each subtract <strong>20% of your current score</strong>. The third adds <strong>20%</strong> to your remaining coins and unlocks the <strong>Sushi Master</strong> sticker.</>
+          : <>Первые две суши отнимают по <strong>20% текущего счёта</strong>. Третья прибавляет <strong>20%</strong> к оставшимся монетам и открывает стикер <strong>Sushi Master</strong>.</>}</p>
       </li>
     </ul>
 
-    <h4>Ловушки на трассе</h4>
+    <h4>{en ? 'Track hazards' : 'Ловушки на трассе'}</h4>
     <ul className="compactList flightItemsList flightDebuffs">
       <li>
-        <span className="flightItemHead"><GameSymbol name="cocktail" size={20}/><strong>Коктейль · Реверс (10 сек)</strong></span>
-        <p>Инвертирует управление на 10 секунд (влево и вправо меняются местами) и искажает звук (замедление трека и эхо).</p>
+        <span className="flightItemHead"><GameSymbol name="cocktail" size={20}/><strong>{en ? 'Cocktail · Reverse (10 s)' : 'Коктейль · Реверс (10 сек)'}</strong></span>
+        <p>{en ? 'Inverts controls for 10 seconds (left and right swap places) and distorts audio (slowed track and echo).' : 'Инвертирует управление на 10 секунд (влево и вправо меняются местами) и искажает звук (замедление трека и эхо).'}</p>
       </li>
       <li>
-        <span className="flightItemHead"><GameSymbol name="magnifier" size={20}/><strong>Лупа · Зум камеры (10 сек)</strong></span>
-        <p>Приближает камеру в 1.5× раза на 10 секунд, срезая обзор — сосны и препятствия появляются прямо перед носом.</p>
+        <span className="flightItemHead"><GameSymbol name="magnifier" size={20}/><strong>{en ? 'Magnifier · Camera zoom (10 s)' : 'Лупа · Зум камеры (10 сек)'}</strong></span>
+        <p>{en ? 'Zooms the camera in 1.5× for 10 seconds, cutting your field of view so pines and obstacles appear right in front of you.' : 'Приближает камеру в 1.5× раза на 10 секунд, срезая обзор — сосны и препятствия появляются прямо перед носом.'}</p>
       </li>
     </ul>
 
-    <h4>Основные правила и награды на финише</h4>
+    <h4>{en ? 'Core rules and finish rewards' : 'Основные правила и награды на финише'}</h4>
     <ul className="compactList flightRules">
-      <li><span>Минимум сытости</span><strong>10 единиц</strong></li>
-      <li><span>Награды за полёт</span><strong>Монеты, XP и дроп капсул (при свободном слоте)</strong></li>
-      <li><span>Платное предложение на финише</span><strong>Может появиться за Stars или GRAM</strong></li>
-      <li><span>Бонус фарма</span><strong>Дополнительные монеты от экипировки и лиги</strong></li>
+      <li><span>{en ? 'Minimum satiety' : 'Минимум сытости'}</span><strong>{en ? '10 points' : '10 единиц'}</strong></li>
+      <li><span>{en ? 'Flight rewards' : 'Награды за полёт'}</span><strong>{en ? 'Coins, XP, and capsule drops (with an open slot)' : 'Монеты, XP и дроп капсул (при свободном слоте)'}</strong></li>
+      <li><span>{en ? 'Paid offer at finish' : 'Платное предложение на финише'}</span><strong>{en ? 'May appear for Stars or GRAM' : 'Может появиться за Stars или GRAM'}</strong></li>
+      <li><span>{en ? 'Farming bonus' : 'Бонус фарма'}</span><strong>{en ? 'Extra coins from equipment and league' : 'Дополнительные монеты от экипировки и лиги'}</strong></li>
     </ul>
   </div>;
 }

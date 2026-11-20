@@ -6,29 +6,32 @@ import { artSrc } from '../ui/warmArt';
 import { collectionMarket } from './marketData';
 import collections from './market-collections';
 import { lightHaptic } from '../telegram/client';
+import { useGuideLocale } from './guideLocale';
 
 const singleFeatured = [
-  { id: 'eggs', description: 'Коллекционные яйца' },
-  { id: 'genesis', description: 'Первая коллекция сов' },
-  { id: 'skins', description: 'Скины сов' },
-  { id: 'items', description: 'Игровые предметы' },
+  { id: 'eggs', ru: 'Коллекционные яйца', en: 'Collectible eggs' },
+  { id: 'genesis', ru: 'Первая коллекция сов', en: 'First owl collection' },
+  { id: 'skins', ru: 'Скины сов', en: 'Owl skins' },
+  { id: 'items', ru: 'Игровые предметы', en: 'In-game items' },
 ];
 
 const marqueeCollections = [
-  { id: 'genesis', label: 'NOT Wise', slug: 'col:genesis' },
-  { id: 'skins', label: 'Скины', slug: 'owl-skin' },
-  { id: 'items', label: 'Предметы', slug: 'ring-str-1' },
-  { id: 'owlings', label: 'Owlings', slug: 'col:owlings' },
-  { id: 'eggs', label: 'NFT-яйца', slug: 'col:eggs' },
-  { id: 'classics', label: 'Стикеры', slug: 'col:classics' },
-  { id: 'domains', label: 'Домены', slug: 'col:domains' },
-  { id: 'family', label: 'Family', slug: 'col:family' },
+  { id: 'genesis', ru: 'NOT Wise', en: 'NOT Wise', slug: 'col:genesis' },
+  { id: 'skins', ru: 'Скины', en: 'Skins', slug: 'owl-skin' },
+  { id: 'items', ru: 'Предметы', en: 'Items', slug: 'ring-str-1' },
+  { id: 'owlings', ru: 'Owlings', en: 'Owlings', slug: 'col:owlings' },
+  { id: 'eggs', ru: 'NFT-яйца', en: 'NFT Eggs', slug: 'col:eggs' },
+  { id: 'classics', ru: 'Стикеры', en: 'Stickers', slug: 'col:classics' },
+  { id: 'domains', ru: 'Домены', en: 'Domains', slug: 'col:domains' },
+  { id: 'family', ru: 'Family', en: 'Family', slug: 'col:family' },
 ] as const;
-
-const fmtFloor = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
 
 export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}) {
   const { data: market, pending } = collectionMarket.useSnapshot();
+  const { locale } = useGuideLocale();
+  const en = locale === 'en';
+  const fmtFloor = new Intl.NumberFormat(en ? 'en-US' : 'ru-RU', { maximumFractionDigits: 1 });
+
   const [emblaRef] = useEmblaCarousel(
     {
       loop: true,
@@ -38,7 +41,7 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
     },
     [
       AutoScroll({
-        speed: 0.35,
+        speed: 0.18,
         startDelay: 0,
         stopOnInteraction: false,
         stopOnMouseEnter: true,
@@ -46,12 +49,16 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
     ],
   );
 
-  // Subpage single-collection mode stays unchanged
   if (only) {
+    const heading = only === 'eggs'
+      ? (en ? 'NFT Egg Price' : 'Цена NFT-яйца')
+      : only === 'items'
+        ? (en ? 'NFT Item Prices' : 'Цена NFT-предметов')
+        : (en ? 'NFT Prices in Not Wise' : 'Цены на NFT в Not Wise');
     return (
       <section className="card owlMarket" aria-labelledby="owl-market">
         <div className="marketHeading">
-          <h2 id="owl-market">{only === 'eggs' ? 'Цена NFT-яйца' : only === 'items' ? 'Цена NFT-предметов' : 'Цены на NFT в Not Wise'}</h2>
+          <h2 id="owl-market">{heading}</h2>
         </div>
         <div className="owlMarketList" aria-busy={!market && pending}>
           {singleFeatured.filter(item => item.id === only).map(item => {
@@ -69,9 +76,9 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
                 rel="noreferrer"
               >
                 <img className="marketRowArt" src={artSrc(`/brand/collections/${item.id}.png`)} alt="" width="40" height="40" />
-                <span className="marketCollectionLabel"><b>{collection.name}</b><small>{item.description}</small></span>
-                <span className="marketPriceValues" title={quote?.available === false && hasPrice ? 'Последняя доступная цена' : undefined}>
-                  {hasPrice ? <Price value={floor} currency="gram" from /> : <small>{pending && !market ? 'Загрузка…' : '—'}</small>}
+                <span className="marketCollectionLabel"><b>{collection.name}</b><small>{en ? item.en : item.ru}</small></span>
+                <span className="marketPriceValues" title={quote?.available === false && hasPrice ? (en ? 'Last available price' : 'Последняя доступная цена') : undefined}>
+                  {hasPrice ? <Price value={floor} currency="gram" from /> : <small>{pending && !market ? (en ? 'Loading…' : 'Загрузка…') : '—'}</small>}
                 </span>
               </a>
             );
@@ -86,11 +93,11 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
       <DetailLink to="/collections/charts" className="homeMarketBanner" onClick={() => lightHaptic()}>
         <div className="homeMarketBannerHead">
           <div>
-            <h2 id="owl-market">Маркет и графики цен</h2>
-            <p>Онлайн данные с Getgems</p>
+            <h2 id="owl-market">{en ? 'Market & Price Charts' : 'Маркет и графики цен'}</h2>
+            <p>{en ? 'Live game NFT data from GetGems' : 'Онлайн данные NFT игры с GetGems'}</p>
           </div>
           <span className="homeMarketCta">
-            <span>Открыть</span>
+            <span>{en ? 'Open' : 'Открыть'}</span>
             <span className="rowChevron" aria-hidden="true" />
           </span>
         </div>
@@ -130,7 +137,7 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
       <div
         ref={emblaRef}
         className="homeColMarquee emblaViewport"
-        aria-label="Коллекции NOT Wise на Getgems"
+        aria-label={en ? 'NOT Wise collections on GetGems' : 'Коллекции NOT Wise на GetGems'}
         aria-busy={!market && pending}
       >
         <div className="homeColTrack emblaContainer">
@@ -148,9 +155,9 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
                   <span className="homeColSquare">
                     <img src={artSrc(`/brand/collections/${item.id}.png`)} alt="" width="56" height="56" draggable={false} />
                   </span>
-                  <strong className="homeColName">{item.label}</strong>
+                  <strong className="homeColName">{en ? item.en : item.ru}</strong>
                   <span className="homeColFloor">
-                    {hasPrice ? `от ${fmtFloor.format(floor)}` : (pending && !market ? '…' : '—')}
+                    {hasPrice ? `${en ? 'from' : 'от'} ${fmtFloor.format(floor)}` : (pending && !market ? '…' : '—')}
                     {hasPrice && <img src={artSrc('/brand/tokens/gram.png')} alt="GRAM" width="12" height="12" draggable={false} />}
                   </span>
                 </DetailLink>

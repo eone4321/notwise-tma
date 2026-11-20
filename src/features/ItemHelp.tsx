@@ -51,7 +51,23 @@ const itemGuide = [
     mechanic: ['Зажигалка содержит 10 зарядов. Одно благословение тратит один заряд. Когда ритуал выполнит половина сквада, участники получают бонус на сутки.', 'The lighter holds 10 charges. One blessing spends one charge. Once half the squad has completed the ritual, its participants get a bonus for a day.'],
     use: ['Договорись со сквадом, чтобы достаточно участников успели выполнить ритуал.', 'Coordinate with your squad so enough members can complete the ritual.'],
   },
+  {
+    icon: 'scroll-enchant-ring.webp',
+    mechanic: ['Свиток заточки повышает уровень кольца на +1 (до +20). Каждый уровень даёт +1 к характеристике кольца и +5% к монетам в боях и полётах. До +3 заточка безопасна, с +4 при неудаче кольцо рассыпается в осколки скорлупы.', 'A ring enchant scroll upgrades a ring by +1 (up to +20). Each level adds +1 to the ring’s attribute and +5% coins in battles and flights. Up to +3 is safe; from +4 a failed attempt breaks the ring into eggshell shards.'],
+    use: ['Точи кольца до +3 без риска или копи дубликаты перед попытками заточки на +4 и выше.', 'Enchant rings to +3 risk-free, or keep spare rings before pushing +4 and higher.'],
+  },
+  {
+    icon: 'scroll-enchant-skin.webp',
+    mechanic: ['Свиток заточки повышает уровень скина на +1 (до +20). Каждый уровень добавляет +5% к монетам в боях и полётах. До +3 заточка безопасна, с +4 при неудаче скин рассыпается в осколки скорлупы.', 'A skin enchant scroll upgrades a skin by +1 (up to +20). Each level adds +5% coins in battles and flights. Up to +3 is safe; from +4 a failed attempt breaks the skin into eggshell shards.'],
+    use: ['Безопасно подними любимый скин до +3 (+15% к монетам), а на высокие уровни точи сменный образ.', 'Safely upgrade your favorite skin to +3 (+15% coins), and use a spare skin when pushing higher levels.'],
+  },
 ] as const;
+
+const sourceMapEn: Record<string, string> = {
+  'Лавка сквада': 'Squad shop',
+  'Магазин сквада': 'Squad shop',
+  'Магазин': 'Shop',
+};
 
 const ringHelp = {
   mechanic: ['Можно надеть до трёх колец. Заточка прибавляет +1 к атрибуту кольца и +5% к фарму монет за ступень. До +3 успех гарантирован, дальше кольцо может рассыпаться в скорлупу.', 'Equip up to three rings. Each sharpening level adds +1 to the ring’s attribute and +5% coin farming. Sharpening through +3 is guaranteed. Beyond that the ring can break into eggshell shards.'],
@@ -76,7 +92,7 @@ export function ItemHelp({ name, file, art, effect, source }: {
     </button>
     {open && <ItemHelpSheet title={name} art={art ?? '/game/items/' + file}
       mechanic={isRing ? effect + ' ' + ringHelp.mechanic[lang] : info?.mechanic[lang] ?? effect}
-      use={info?.use[lang]} source={source}
+      use={info?.use[lang]} source={lang && source ? (sourceMapEn[source] ?? source) : source}
       lang={lang} onClose={() => setOpen(false)}/>}
   </>;
 }

@@ -7,6 +7,15 @@ export const siegeRewardLabels: Record<RewardKind, string> = {
   wisdom: 'Мудрость', endurance: 'Выносливость', agility: 'Ловкость', strength: 'Сила',
 };
 
+export const siegeRewardLabelsEn: Record<RewardKind, string> = {
+  coins: 'Coins', squad_silver: 'Squad silver',
+  wisdom: 'Wisdom', endurance: 'Endurance', agility: 'Agility', strength: 'Strength',
+};
+
+export function getSiegeRewardLabel(kind: RewardKind, en = false): string {
+  return en ? siegeRewardLabelsEn[kind] : siegeRewardLabels[kind];
+}
+
 type SiegeReward = readonly [kind: RewardKind, amount: number];
 
 // Authenticated in-game territory rewards, 20 November 2026 at 04:16 (UTC+7).

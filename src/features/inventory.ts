@@ -26,6 +26,34 @@ export const itemNames: Record<number, [string, string]> = {
   54: ['Заточка скина', 'scroll-enchant-skin.webp'],
 };
 
+export const itemNamesEn: Record<number, string> = {
+  1: 'Bee',
+  2: 'Stag Beetle',
+  3: 'Grasshopper',
+  5: 'Caterpillar',
+  6: 'Not Mickey',
+  7: 'Juicy Pear',
+  8: 'Croissant',
+  10: 'Patch',
+  11: 'First Aid Kit',
+  12: 'Color String Lights',
+  13: 'String Lights',
+  14: 'Birch Branch',
+  15: 'Dubai Chocolate',
+  16: 'Empire State Branch',
+  24: 'Seba Cola',
+  25: 'Skin Jetton',
+  26: 'Epic Skin Jetton',
+  27: 'Golden Skin Jetton',
+  38: 'Epic Book of Explorers',
+  39: 'Montmorillonite',
+  50: 'Lighter',
+  51: 'Eggshell Shards',
+  52: 'XP Chiller',
+  53: 'Ring Enchanter',
+  54: 'Skin Enchanter',
+};
+
 type Drop = readonly [id: number, chancePerDraw: number];
 
 // Item weights and draw counts from the in-game catalog, 20 November 2026.

@@ -164,8 +164,6 @@
   flex: none;
   width: 18px;
   height: 18px;
-  background: currentColor;
-  mask: url('/brand/notwise.svg') center / contain no-repeat;
 }
 .heroActions .squadMark {
   width: 16px;
@@ -4592,8 +4590,6 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   }
   .homeColMarquee {
     overflow-x: auto;
-    mask-image: none;
-    -webkit-mask-image: none;
   }
 }
 
@@ -4890,4 +4886,131 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   color: var(--muted);
   line-height: 1.35;
   margin-top: 2px;
+}
+
+
+/* =====================================================================
+   Reusable Horizontal Edge-Fade Viewport (R6) + Item Value Tier List (R5b)
+   ===================================================================== */
+
+.hScrollFadeViewport {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 5%, #000 95%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 5%, #000 95%, transparent 100%);
+}
+.hScrollFadeViewport > .lifehackCats,
+.hScrollFadeViewport > .radarSheetCats {
+  padding-inline: 10px;
+}
+
+.careTabsViewport {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--game-panel);
+  border: 1px solid var(--game-panel-line);
+  margin-bottom: 12px;
+  padding: 4px 0;
+}
+.careTabsViewportInner {
+  mask-image: linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%);
+}
+.careTabs.careTabsScroll {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 10px;
+  margin: 0;
+  background: transparent;
+  border: none;
+}
+.careTabs.careTabsScroll::-webkit-scrollbar {
+  display: none;
+}
+.careTabs.careTabsScroll > a {
+  flex: 1 0 auto;
+  min-width: max-content;
+  padding-inline: 11px;
+  white-space: nowrap;
+}
+
+/* Item Value Tier List (R5b) */
+.itemValuePage {
+  display: grid;
+  gap: 10px;
+}
+.itemValueIntro {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.42;
+  color: var(--muted);
+}
+.itemValueCard {
+  display: grid;
+  gap: 8px;
+  padding: 13px 14px;
+}
+.itemValueHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.itemValueTierBadge {
+  flex: none;
+  min-width: 34px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  background: rgba(255, 204, 119, 0.16);
+  border: 1px solid rgba(255, 204, 119, 0.45);
+  color: var(--gold);
+}
+.itemValueTierBadge[data-tier="S"] {
+  background: rgba(170, 144, 247, 0.18);
+  border-color: rgba(170, 144, 247, 0.48);
+  color: #d6c6ff;
+}
+.itemValueTierBadge[data-tier="A"] {
+  background: rgba(82, 209, 138, 0.16);
+  border-color: rgba(82, 209, 138, 0.42);
+  color: #7eeaa9;
+}
+.itemValueTierBadge[data-tier="B"],
+.itemValueTierBadge[data-tier="C"],
+.itemValueTierBadge[data-tier="D"] {
+  background: var(--game-tile);
+  border-color: var(--game-panel-line);
+  color: var(--muted);
+}
+.itemValueLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+.itemValueChipLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 9px;
+  background: var(--game-tile);
+  border: 1px solid color-mix(in srgb, var(--gold) 32%, var(--game-panel-line));
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
 }

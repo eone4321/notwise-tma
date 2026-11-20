@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { lightHaptic } from '../telegram/client';
+import { useGuideLocale } from './guideLocale';
 import { profileRequest } from './guideProfile';
 
 type List = 'completed' | 'collected';
@@ -141,5 +142,8 @@ function changed(state: Progress, { list, id, checked }: Change) {
 
 export function ProgressStatus() {
   const { error, retry } = useProgress();
-  return error ? <p className="caption" role="status">{error} <button className="inlineAction" onClick={retry}>Повторить</button></p> : null;
+  const { locale } = useGuideLocale();
+  const en = locale === 'en';
+  const text = en && error === 'Синхронизация недоступна.' ? 'Sync unavailable.' : error;
+  return error ? <p className="caption" role="status">{text} <button className="inlineAction" onClick={retry}>{en ? 'Retry' : 'Повторить'}</button></p> : null;
 }

@@ -4,7 +4,20 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { GameGlyph } from '../ui/GameGlyph';
 import { GameArt } from '../ui/GameArt';
 import { lightHaptic } from '../telegram/client';
+import { useGuideLocale } from './guideLocale';
 import { authData, profileRequest } from './guideProfile';
+
+const awardCopyEn: Record<GuideAchievement, { title: string; description: string }> = {
+  mascot: { title: 'Who’s there?', description: 'You don’t stumble into this by accident. Almost.' },
+  explorer: { title: 'Know Every Corner', description: 'Curiosity takes you beyond familiar paths.' },
+  referral: { title: 'Own Route', description: 'Every trail leaves its own mark.' },
+  shared: { title: 'Pass It On', description: 'Good finds rarely stay with just one person.' },
+  five: { title: 'Own Flock', description: 'Nobody flies here solo anymore.' },
+  community: { title: 'One of the Chat', description: 'Sometimes one step is enough to be among friends.' },
+  squad: { title: 'Under One Wing', description: 'A strong flock always has a banner to rally under.' },
+  theme: { title: 'Plumage Shift', description: 'Sometimes the world around changes with a single choice.' },
+  joke: { title: 'Price Tag', description: 'Not everything with a price tag actually costs money.' },
+};
 
 type Awards = { earned: GuideAchievement[]; joined?: boolean; chatIssue?: string };
 type AwardAction = 'achievements' | 'mascot' | 'check_chat' | 'visit_squad' | 'theme' | 'joke';
@@ -132,19 +145,22 @@ export function AwardIcon({ award, size = 28 }: { award: GuideAchievement; size?
 
 export function AwardToast({ award, onDismiss }: { award?: GuideAchievement; onDismiss?: () => void }) {
   const reduce = useReducedMotion();
+  const { locale } = useGuideLocale();
+  const en = locale === 'en';
   const entry = award ? guideAchievements[award] : null;
+  const localized = award && en ? awardCopyEn[award] : entry;
   return <div className="awardNoticeHost">
     <AnimatePresence initial={false} mode="wait">
-      {award && entry && <motion.aside className="awardToast" role="status" key={award}
+      {award && entry && localized && <motion.aside className="awardToast" role="status" key={award}
         onClick={onDismiss}
         initial={{ y: reduce ? 0 : -22, opacity: 0, scale: reduce ? 1 : .94 }}
         animate={{ y: 0, opacity: 1, scale: 1, transition: reduce ? { duration: .15 } : { type: 'spring', stiffness: 420, damping: 28 } }}
         exit={{ y: reduce ? 0 : -14, opacity: 0, scale: reduce ? 1 : .96, transition: { duration: reduce ? .15 : .24, ease: [.2, 0, .4, 1] } }}>
         <span className="awardToastBadge"><AwardIcon award={award} size={34}/></span>
         <div className="awardToastCopy">
-          <span className="awardToastEyebrow"><GameGlyph name="treasure"/>Новое достижение</span>
-          <strong>{entry.title}</strong>
-          <p>{entry.description}</p>
+          <span className="awardToastEyebrow"><GameGlyph name="treasure"/>{en ? 'New achievement' : 'Новое достижение'}</span>
+          <strong>{localized.title}</strong>
+          <p>{localized.description}</p>
         </div>
         <span className="awardToastCheck" aria-hidden="true">✓</span>
         <span className="awardToastTimer" aria-hidden="true"/>
