@@ -180,68 +180,128 @@ export function BuildConstructor() {
     setState(applyBuildPreset(build, state));
   }
 
-  return <div className="buildConstructor">
-    <section className="card buildPanel" aria-labelledby="build-level-title">
-      <div className="buildHeading">
-        <h2 id="build-level-title">{copy('1. Уровень и очки', '1. Level and points')}</h2>
-        <button type="button" className="buildPillButton" onClick={() => {
-          lightHaptic();
-          resetPractice();
-          setComparison(null);
-          setBudgetDraft(null);
-          setState(initialBuild());
-        }}>{copy('↺ Сбросить', '↺ Reset')}</button>
-      </div>
+  const review = reviewBuild(state);
+  const warningCount = Number(review.freePoints > 0) + Number(review.skillSlots > 0) + Number(review.ringSlots > 0)
+    + Number(review.flurryWithoutHint) + review.overCap.length
+    + Number(review.rotationCost > 0 && review.mana < review.rotationCost * 2);
+  const statBarScale = Math.max(budget + 12, 42);
 
-      <div className="buildSetup">
-        <label className="field">{copy('Уровень совы', 'Owl level')}
-          <select value={state.level} onChange={event => update({ level: Number(event.target.value) })}>
-            {Array.from({ length: maxLevel }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
-          </select>
-        </label>
-        <div className="buildBudget" data-empty={left === 0 || undefined}>
-          <small>{copy('Свободные очки', 'Unspent points')}</small>
-          <strong>{left} <small>/ {budget}</small></strong>
+  return <div className="buildConstructor">
+    <section className="card buildPanel buildLoadoutCard" aria-labelledby="build-level-title">
+      <div className="buildLoadoutTop">
+        <div className="buildLoadoutControls">
+          <label className="buildLevelPill" aria-label={copy('Уровень совы', 'Owl level')}>
+            <span>{copy('Ур.', 'Lv.')}</span>
+            <select id="build-level-title" value={state.level} onChange={event => update({ level: Number(event.target.value) })}>
+              {Array.from({ length: maxLevel }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
+            </select>
+          </label>
+          <button type="button" className="buildPresetChip" aria-haspopup="dialog" onClick={() => { lightHaptic(); setChoosePreset(true); }}>
+            {selectedPreset ? <GameAttribute name={selectedPreset.icon}/> : <GameGlyph name="sparkles"/>}
+            <span>{selectedPreset ? selectedPreset.name[lang] : copy('Готовая сборка', 'Preset build')}</span>
+            <span className="buildChipCaret" aria-hidden="true">▾</span>
+          </button>
+        </div>
+        <div className="buildLoadoutRight">
+          <span className="buildBudgetPill" data-empty={left === 0 || undefined}>
+            {left === 0 ? copy('✓ 0 очк.', '✓ 0 pts') : copy(`Свободно: ${left}`, `Free: ${left}`)}
+          </span>
+          <button type="button" className="buildIconReset" title={copy('Сбросить билд', 'Reset build')}
+            aria-label={copy('Сбросить билд', 'Reset build')} onClick={() => {
+              lightHaptic();
+              resetPractice();
+              setComparison(null);
+              setBudgetDraft(null);
+              setState(initialBuild());
+            }}>↺</button>
         </div>
       </div>
 
-      <button className="buildEquipMain buildPresetTrigger" type="button" aria-haspopup="dialog" onClick={() => { lightHaptic(); setChoosePreset(true); }}>
-        {selectedPreset ? <GameAttribute name={selectedPreset.icon}/> : <GameGlyph name="sparkles"/>}
-        <span>
-          <strong>{selectedPreset ? selectedPreset.name[lang] : copy('Выбрать готовую сборку', 'Choose a preset build')}</strong>
-          <small>{selectedPreset ? selectedPreset.role[lang] : copy('10 проверенных архетипов с раскладкой под твой уровень', '10 tested archetypes scaled to your level')}</small>
-        </span>
-        <span className="buildPresetAction">{selectedPreset ? copy('Сменить', 'Change') : copy('Выбрать', 'Pick')}</span>
-      </button>
+      <div className="buildLoadoutStage">
+        <div className="buildLoadoutCol">
+          <span className="buildLoadoutColLabel">{copy('Навыки', 'Skills')}</span>
+          {state.skills.map((slot, i) => {
+            const locked = state.level < 2;
+            const skill = !locked && slot ? skillById.get(slot.id) : null;
+            return <button key={i} type="button" className="buildLoadoutSlot"
+              data-filled={Boolean(skill) || undefined}
+              data-locked={locked || undefined}
+              aria-haspopup={locked ? undefined : 'dialog'}
+              aria-label={skill ? nameOf(skill) : locked ? copy('Навыки со 2-го уровня', 'Skills from level 2') : copy('Выбрать навык', 'Choose skill') + ' ' + (i + 1)}
+              disabled={locked}
+              onClick={() => { lightHaptic(); setPicker({ kind: 'skill', slot: i }); }}>
+              {skill && slot ? <>
+                <GameArt path={skillArt(skill.id)} size={42}/>
+                <span className="buildLoadoutTag">{copy(`Ур.${slot.level}`, `Lv.${slot.level}`)}</span>
+              </> : locked ? <span className="buildSlotLock">{copy('2 ур.', 'Lv.2')}</span>
+                : <span className="buildSlotPlus" aria-hidden="true">+</span>}
+            </button>;
+          })}
+        </div>
 
-      <div className="buildAllocationHeading">
-        <h3>{copy('Распределение очков', 'Attribute points')}</h3>
-        <p className="caption">{copy('В полях справа — значения совы без колец и баффов (старт — 3). Навыки открываются за очки сверх базы 3.', 'Values on the right match your owl before rings and buffs (base 3). Skills unlock from points above base 3.')}</p>
+        <div className="buildLoadoutHero">
+          <div className="buildLoadoutOwl">
+            <GameArt path="/game/skins/5405.svg" size={96}/>
+          </div>
+          <a href="#build-results-title" className="buildLoadoutStatus" data-ok={warningCount === 0 || undefined}>
+            {warningCount === 0
+              ? copy('✓ Баланс ОК', '✓ Balanced')
+              : copy(`! Советы (${warningCount})`, `! Tips (${warningCount})`)}
+          </a>
+        </div>
+
+        <div className="buildLoadoutCol">
+          <span className="buildLoadoutColLabel">{copy('Кольца', 'Rings')}</span>
+          {state.rings.map((slot, i) => {
+            const locked = state.level < 5;
+            const equipped = !locked ? slot : null;
+            return <button key={i} type="button" className="buildLoadoutSlot"
+              data-filled={Boolean(equipped) || undefined}
+              data-locked={locked || undefined}
+              aria-haspopup={locked ? undefined : 'dialog'}
+              aria-label={equipped ? ringName(equipped.ring, lang) : locked ? copy('Кольца с 5-го уровня', 'Rings from level 5') : copy('Выбрать кольцо', 'Choose ring') + ' ' + (i + 1)}
+              disabled={locked}
+              onClick={() => { lightHaptic(); setPicker({ kind: 'ring', slot: i }); }}>
+              {equipped ? <>
+                <GameArt path={ringArt(equipped.ring.id)} size={42}/>
+                <span className="buildLoadoutTag">+{equipped.enchant}</span>
+              </> : locked ? <span className="buildSlotLock">{copy('5 ур.', 'Lv.5')}</span>
+                : <span className="buildSlotPlus" aria-hidden="true">+</span>}
+            </button>;
+          })}
+        </div>
       </div>
-      <div className="buildAttributes">
+
+      <div className="buildStatGrid" role="group" aria-label={copy('Распределение очков', 'Attribute points')}>
         {statKeys.map(stat => {
           const invested = state.points[stat];
           const bonus = total[stat] - invested - startingAttribute;
-          return <div className="buildAttributeRow" key={stat}>
-            <GameAttribute name={stat}/>
-            <span>
-              <strong>{statLabels[stat][lang]} <output aria-label={copy('Итого', 'Total') + ' · ' + statLabels[stat][lang]}>{total[stat]}</output></strong>
-              <small>{startingAttribute} {copy('база', 'base')} + {invested} {copy('влож.', 'pts')}{bonus > 0 && ` + ${bonus} ${copy('бонус', 'bonus')}`}</small>
-            </span>
-            <div className="buildStepper">
-              <button type="button" aria-label={copy('Уменьшить', 'Decrease') + ' · ' + statLabels[stat][lang]}
-                disabled={invested === 0} onClick={() => step(stat, -1)}>−</button>
-              <AttributeInput name={copy('Без бонусов · ', 'Before bonuses · ') + statLabels[stat][lang]}
-                value={startingAttribute + invested} onCommit={value => updateAttribute(stat, () => value - startingAttribute)}/>
-              <button type="button" aria-label={copy('Увеличить', 'Increase') + ' · ' + statLabels[stat][lang]}
-                disabled={left === 0} onClick={() => step(stat, 1)}>+</button>
+          const pct = Math.min(100, Math.round((total[stat] * 100) / statBarScale));
+          return <div className="buildStatCard" key={stat} data-stat={stat}>
+            <div className="buildStatTop">
+              <span className="buildStatName"><GameAttribute name={stat}/>{statLabels[stat][lang]}</span>
+              {bonus > 0 && <span className="buildStatBonus" title={copy('Бонус от колец и баффов', 'Bonus from rings & buffs')}>+{bonus}</span>}
             </div>
+            <div className="buildStatMid">
+              <div className="buildStatValueWrap">
+                <AttributeInput name={copy('Без бонусов · ', 'Before bonuses · ') + statLabels[stat][lang]}
+                  value={startingAttribute + invested} onCommit={value => updateAttribute(stat, () => value - startingAttribute)}/>
+                {bonus > 0 && <small className="buildStatTotal">= {total[stat]}</small>}
+              </div>
+              <div className="buildStatStep">
+                <button type="button" aria-label={copy('Уменьшить', 'Decrease') + ' · ' + statLabels[stat][lang]}
+                  disabled={invested === 0} onClick={() => step(stat, -1)}>−</button>
+                <button type="button" aria-label={copy('Увеличить', 'Increase') + ' · ' + statLabels[stat][lang]}
+                  disabled={left === 0} onClick={() => step(stat, 1)}>+</button>
+              </div>
+            </div>
+            <div className="buildStatBar" aria-hidden="true"><span style={{ width: `${pct}%` }}/></div>
           </div>;
         })}
       </div>
 
       <details className="mediaDetails buildAdvanced" id="build-advanced">
-        <summary><strong>{copy('Другой запас очков и баффы (осада, книга)', 'Custom point budget and temporary buffs')}</strong></summary>
+        <summary><strong>{copy('Запас очков и баффы (осада, книга)', 'Custom budget and temporary buffs')}</strong></summary>
         <p className="caption">{copy('По умолчанию доступно 1 очко за уровень. Если у тебя другой запас или действуют усиления от осады/книги, укажи их здесь.', 'Default budget is 1 point per level. Adjust your point pool or add siege/book buffs here.')}</p>
         <label className="field">{copy('Всего очков для распределения', 'Total points to allocate')}
           <input value={budgetDraft ?? state.budget ?? ''} placeholder={String(state.level)} inputMode="numeric" maxLength={3}
@@ -260,55 +320,8 @@ export function BuildConstructor() {
       </details>
     </section>
 
-    <details className="card buildPanel buildCollapsePanel" open aria-labelledby="build-skills-title">
-      <summary className="buildCollapseSummary">
-        <h2 id="build-skills-title">{copy('2. Навыки в бою', '2. Combat skills')}</h2>
-        {state.level >= 2 && <span className="buildSlotCounter">{state.skills.filter(Boolean).length}/3</span>}
-      </summary>
-      <p className="caption">{state.level < 2 ? copy('Навыки открываются со 2-го уровня совы.', 'Skills unlock at owl level 2.') : copy('Ступень навыка требует столько же вложенных очков в его ветке. Справа сразу меняется уровень навыка.', 'Skill tier requires matching branch points. Adjust skill level on the right.')}</p>
-      {state.level >= 2 && state.skills.map((slot, i) => {
-        const skill = slot && skillById.get(slot.id);
-        return <div className="buildEquip buildEquipInline" key={i}>
-          <button type="button" className="buildEquipMain" aria-haspopup="dialog" onClick={() => { lightHaptic(); setPicker({ kind: 'skill', slot: i }); }}>
-            {skill ? <GameArt path={skillArt(skill.id)} size={34}/> : <span className="buildEmptySlot"><GameGlyph name="lightning"/></span>}
-            <span><strong>{skill ? nameOf(skill) : copy('Выбрать навык', 'Choose skill') + ' ' + (i + 1)}</strong>
-              {slot && skill && <small>{skillMana(skill.tier, passive(skill), skill.id === 10)} {passive(skill)
-                ? copy('маны за срабатывание', 'mana / trigger')
-                : copy('маны · откат ', 'mana · ') + skillCooldown(skill.tier) + copy(' с', ' s')}</small>}
-            </span>
-            {!slot && <span className="rowChevron" aria-hidden="true"/>}
-          </button>
-          {slot && skill && <select className="buildInlineSelect" aria-label={copy('Уровень навыка', 'Skill level') + ' ' + nameOf(skill)}
-            value={slot.level} onChange={event => update({ skills: replaceSlot(state.skills, i, { ...slot, level: Number(event.target.value) }) })}>
-            {Array.from({ length: 21 }, (_, lvl) => <option key={lvl} value={lvl + 1}>{lvl + 1} {copy('ур.', 'lvl')}</option>)}
-          </select>}
-          {slot && skill && <p className="buildSkillEffect">{skillEffect(skill.id, slot.level, state.level, lang).map(row => row.join(' ')).join(' · ')}</p>}
-        </div>;
-      })}
-    </details>
-
-    <details className="card buildPanel buildCollapsePanel" open aria-labelledby="build-rings-title">
-      <summary className="buildCollapseSummary">
-        <h2 id="build-rings-title">{copy('3. Кольца', '3. Rings')}</h2>
-        {state.level >= 5 && <span className="buildSlotCounter">{state.rings.filter(Boolean).length}/3</span>}
-      </summary>
-      <p className="caption">{state.level < 5 ? copy('Кольца открываются с 5-го уровня совы.', 'Rings unlock at owl level 5.') : copy('Тапни по слоту для выбора кольца, справа сразу настраивается заточка.', 'Tap a slot to pick a ring; adjust sharpening directly on the right.')}</p>
-      {state.level >= 5 && state.rings.map((slot, i) => <div className="buildEquip buildEquipInline" key={i}>
-        <button type="button" className="buildEquipMain" aria-haspopup="dialog" onClick={() => { lightHaptic(); setPicker({ kind: 'ring', slot: i }); }}>
-          {slot ? <GameArt path={ringArt(slot.ring.id)} size={34}/> : <span className="buildEmptySlot" aria-hidden="true">+</span>}
-          <span><strong>{slot ? ringName(slot.ring, lang) : copy('Выбрать кольцо', 'Choose ring') + ' ' + (i + 1)}</strong>
-            {slot && <small>+{slot.ring.bonus + slot.enchant} {copy('к ', 'to ')}{statLabels[slot.ring.attribute][lang].toLowerCase()}</small>}</span>
-          {!slot && <span className="rowChevron" aria-hidden="true"/>}
-        </button>
-        {slot && <select className="buildInlineSelect" aria-label={copy('Заточка кольца', 'Ring sharpening') + ' ' + (i + 1)}
-          value={slot.enchant} onChange={event => update({ rings: replaceSlot(state.rings, i, { ...slot, enchant: Number(event.target.value) }) })}>
-          {Array.from({ length: 21 }, (_, lvl) => <option key={lvl} value={lvl}>+{lvl}</option>)}
-        </select>}
-      </div>)}
-    </details>
-
     <section className="card buildPanel buildPreview" aria-labelledby="build-results-title">
-      <h2 id="build-results-title">{copy('4. Итоги в бою и баланс', '4. Combat stats & check')}</h2>
+      <h2 id="build-results-title">{copy('Итоги в бою и баланс', 'Combat stats & check')}</h2>
       <BattleReadout stats={results}/>
       <BuildAnalysis state={state} lang={lang}/>
     </section>
@@ -378,25 +391,55 @@ export function BuildConstructor() {
       </div>
     </BuildPicker>}
 
-    {picker && <BuildPicker key={picker.kind} title={picker.kind === 'ring' ? copy('Выбрать кольцо', 'Choose ring') : copy('Выбрать навык', 'Choose skill')}
+    {picker && <BuildPicker key={picker.kind} title={picker.kind === 'ring' ? copy('Слот кольца ', 'Ring slot ') + (picker.slot + 1) : copy('Слот навыка ', 'Skill slot ') + (picker.slot + 1)}
       closeLabel={copy('Закрыть', 'Close')} onClose={() => setPicker(null)}>
       <div className="buildPickerOptions">
-        {picker.kind === 'ring' && state.rings[picker.slot] && <PickerLevel title={copy('Заточка кольца', 'Ring sharpening')} min={0} max={20}
-          value={state.rings[picker.slot]!.enchant} onChange={enchant => {
-            const slot = state.rings[picker.slot];
-            if (slot) update({ rings: replaceSlot(state.rings, picker.slot, { ...slot, enchant }) });
-          }}/>}
-        {picker.kind === 'skill' && state.skills[picker.slot] && <PickerLevel title={copy('Уровень навыка', 'Skill level')} min={1} max={21}
-          value={state.skills[picker.slot]!.level} onChange={level => {
-            const slot = state.skills[picker.slot];
-            if (slot) update({ skills: replaceSlot(state.skills, picker.slot, { ...slot, level }) });
-          }}/>}
-        {(picker.kind === 'ring' ? state.rings[picker.slot] : state.skills[picker.slot]) && <button className="buildPillButton buildClearSlot"
-          type="button" onClick={() => {
-            lightHaptic();
-            update(picker.kind === 'ring' ? { rings: replaceSlot(state.rings, picker.slot, null) } : { skills: replaceSlot(state.skills, picker.slot, null) });
-            setPicker(null);
-          }}>{copy('Освободить слот', 'Clear slot')}</button>}
+        {picker.kind === 'ring' && state.rings[picker.slot] && (() => {
+          const equipped = state.rings[picker.slot]!;
+          return <div className="buildEquippedCard">
+            <div className="buildEquippedTop">
+              <GameArt path={ringArt(equipped.ring.id)} size={40}/>
+              <div>
+                <strong>{ringName(equipped.ring, lang)}</strong>
+                <small>+{equipped.ring.bonus + equipped.enchant} {copy('к ', 'to ')}{statLabels[equipped.ring.attribute][lang].toLowerCase()}</small>
+              </div>
+              <button className="buildPillButton" type="button" onClick={() => {
+                lightHaptic();
+                update({ rings: replaceSlot(state.rings, picker.slot, null) });
+                setPicker(null);
+              }}>{copy('Снять', 'Remove')}</button>
+            </div>
+            <PickerLevel title={copy('Заточка кольца', 'Ring sharpening')} min={0} max={20}
+              value={equipped.enchant} onChange={enchant => {
+                update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant }) });
+              }}/>
+          </div>;
+        })()}
+        {picker.kind === 'skill' && state.skills[picker.slot] && (() => {
+          const equipped = state.skills[picker.slot]!;
+          const skill = skillById.get(equipped.id);
+          return skill ? <div className="buildEquippedCard">
+            <div className="buildEquippedTop">
+              <GameArt path={skillArt(skill.id)} size={40}/>
+              <div>
+                <strong>{nameOf(skill)}</strong>
+                <small>{skillMana(skill.tier, passive(skill), skill.id === 10)} {passive(skill)
+                  ? copy('маны за срабатывание', 'mana / trigger')
+                  : copy('маны · откат ', 'mana · ') + skillCooldown(skill.tier) + copy(' с', ' s')}</small>
+              </div>
+              <button className="buildPillButton" type="button" onClick={() => {
+                lightHaptic();
+                update({ skills: replaceSlot(state.skills, picker.slot, null) });
+                setPicker(null);
+              }}>{copy('Снять', 'Remove')}</button>
+            </div>
+            <p className="buildEquippedEffect">{skillEffect(skill.id, equipped.level, state.level, lang).map(row => row.join(' ')).join(' · ')}</p>
+            <PickerLevel title={copy('Уровень навыка', 'Skill level')} min={1} max={21}
+              value={equipped.level} onChange={level => {
+                update({ skills: replaceSlot(state.skills, picker.slot, { ...equipped, level }) });
+              }}/>
+          </div> : null;
+        })()}
         {picker.kind === 'ring' ? ringCatalog.map(ring => {
           const locked = ring.minLevel > state.level;
           return <PickerOption key={ring.id} art={ringArt(ring.id)} title={ringName(ring, lang)}
