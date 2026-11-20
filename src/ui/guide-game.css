@@ -547,17 +547,18 @@
   display: grid;
   width: max-content;
   place-items: center;
+  padding: 4px;
   border-radius: 50%;
   background: #393025;
 }
-.awardPortrait .gameArt { border-radius: 50%; }
+.awardPortrait .gameArt { border-radius: 0; overflow: visible; }
 .awardPortrait[data-award="explorer"] { background: #1c3546; }
 .awardPortrait[data-award="referral"] { background: #283c35; }
 .awardPortrait[data-award="shared"] { background: #493330; }
 .awardPortrait[data-award="five"] { background: #433451; }
 .awardPortrait[data-award="community"] { background: #303d55; }
 .awardPortrait[data-award="squad"] { background: #58412b; }
-.adminAward { grid-template-columns: 34px minmax(0,1fr) auto; align-items: start; }
+.adminAward { grid-template-columns: 38px minmax(0,1fr) auto; align-items: start; }
 .adminAward > span:last-child { color: var(--gold); font-weight: 700; }
 
 .awardNoticeHost {

@@ -111,7 +111,7 @@ export function useGuideAwards(user?: string) {
   return { earned, chatIssue, toast, dismissToast, update, noteChatVisit };
 }
 
-export function AwardIcon({ award, size = 34 }: { award: GuideAchievement; size?: number }) {
+export function AwardIcon({ award, size = 28 }: { award: GuideAchievement; size?: number }) {
   return <span className="awardPortrait" data-award={award} aria-hidden="true">
     <GameArt path={guideAchievements[award].icon} size={size}/>
     {award === 'community' && <span className="awardPortraitMark"><GameGlyph name="chat"/></span>}
@@ -129,7 +129,7 @@ export function AwardToast({ award, onDismiss }: { award?: GuideAchievement; onD
         initial={{ y: reduce ? 0 : -22, opacity: 0, scale: reduce ? 1 : .94 }}
         animate={{ y: 0, opacity: 1, scale: 1, transition: reduce ? { duration: .15 } : { type: 'spring', stiffness: 420, damping: 28 } }}
         exit={{ y: reduce ? 0 : -14, opacity: 0, scale: reduce ? 1 : .96, transition: { duration: reduce ? .15 : .24, ease: [.2, 0, .4, 1] } }}>
-        <span className="awardToastBadge"><AwardIcon award={award} size={40}/></span>
+        <span className="awardToastBadge"><AwardIcon award={award} size={34}/></span>
         <div className="awardToastCopy">
           <span className="awardToastEyebrow"><GameGlyph name="treasure"/>Новое достижение</span>
           <strong>{entry.title}</strong>

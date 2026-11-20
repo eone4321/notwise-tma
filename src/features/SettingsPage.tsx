@@ -113,7 +113,7 @@ function Achievements({ earned, isAdmin, chatIssue }: { earned: GuideAchievement
     <ul className="compactList">{Object.entries(guideAchievements).map(([id, item]) => {
       const done = earned.includes(id as GuideAchievement);
       return <li className="awardRow" key={id} data-earned={done}>
-        <span className="awardTile">{done ? <AwardIcon award={id as GuideAchievement} size={34}/> : <GameGlyph name="lock"/>}</span>
+        <span className="awardTile">{done ? <AwardIcon award={id as GuideAchievement} size={28}/> : <GameGlyph name="lock"/>}</span>
         <div><strong>{item.title}</strong><small>{item.description}</small></div>
         {done && <span className="awardMark" aria-label="Открыто">✓</span>}
         {!done && <span className="sr-only">Скрытое достижение</span>}

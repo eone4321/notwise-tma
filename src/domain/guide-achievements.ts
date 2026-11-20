@@ -4,8 +4,8 @@ export const guideAchievements = {
   referral: { title: 'Свой маршрут', description: 'У каждой тропы есть свой след.', icon: '/brand/awards/code.png' },
   shared: { title: 'Передай дальше', description: 'Хорошие находки редко остаются у одного.', icon: '/brand/awards/hoodie.png' },
   five: { title: 'Своя стая', description: 'По одному сюда уже не летают.', icon: '/brand/awards/tie.png' },
-  community: { title: 'Свой в чате', description: 'Где-то разговор продолжается даже ночью.', icon: '/brand/awards/blue.png' },
-  squad: { title: 'Под одним крылом', description: 'Открой ссылку «Наш сквад» на главной.', icon: '/brand/awards/tie.png' },
+  community: { title: 'Свой в чате', description: 'Иногда достаточно одного шага, чтобы оказаться среди своих.', icon: '/brand/awards/blue.png' },
+  squad: { title: 'Под одним крылом', description: 'У сильной стаи всегда есть знак, под которым собираются вместе.', icon: '/brand/awards/tie.png' },
 } as const;
 
 export type GuideAchievement = keyof typeof guideAchievements;
