@@ -12,7 +12,6 @@ import {
   activeAttributes, applyBuildPreset, builds, combatSkills, emptyAttributes, requiredAttributes, ringCatalog,
   skillAvailable, skillById, statKeys, statLabels, totalAttributes, type StatKey, type BuildState, type Ring,
 } from './combat-builds';
-
 import { practiceKey, reviewBuild, type PracticeResult } from './combat-analysis';
 
 type Picker = { kind: 'ring' | 'skill'; slot: number };
@@ -92,10 +91,11 @@ export function BuildConstructor() {
   const lang = locale === 'en' ? 1 : 0;
   const copy = (ru: string, en: string) => lang ? en : ru;
   const [state, setState] = useState(readBuild);
-  const [showReview, setShowReview] = useState(false);
   const [practice, setPractice] = useState<PracticeResult | 'waiting' | 'error' | null>(null);
   const [comparison, setComparison] = useState<PracticeResult | null>(null);
+  const [showAllBuilds, setShowAllBuilds] = useState(false);
   const worker = useRef<Worker | null>(null);
+
   useEffect(() => {
     trackGuide('build:open');
   }, []);
@@ -103,6 +103,7 @@ export function BuildConstructor() {
     try { localStorage.setItem(buildStorage, JSON.stringify(state)); } catch { /* Storage is optional. */ }
   }, [state]);
   useEffect(() => () => worker.current?.terminate(), []);
+
   const resetPractice = () => {
     worker.current?.terminate();
     worker.current = null;
@@ -127,6 +128,7 @@ export function BuildConstructor() {
       task.postMessage(state);
     } catch { resetPractice(); setPractice('error'); }
   };
+
   const activePreset = useMemo(() => builds.find(build => {
     if (state.presetId && state.presetId !== build.id) return false;
     const preset = applyBuildPreset(build, state);
@@ -134,11 +136,10 @@ export function BuildConstructor() {
       state.rings.every((slot, i) => slot?.ring.id === preset.rings[i]?.ring.id && slot?.enchant === preset.rings[i]?.enchant) &&
       state.skills.every((slot, i) => slot?.id === preset.skills[i]?.id && slot?.level === preset.skills[i]?.level);
   })?.id, [state]);
+
   const [budgetDraft, setBudgetDraft] = useState<string | null>(null);
   const [picker, setPicker] = useState<Picker | null>(null);
   const [choosePreset, setChoosePreset] = useState(false);
-  const levelRef = useRef<HTMLSelectElement>(null);
-  const guideRef = useRef<HTMLHeadingElement>(null);
   const spent = totalAttributes(state.points);
   const budget = state.budget ?? state.level;
   const left = budget - spent;
@@ -146,10 +147,7 @@ export function BuildConstructor() {
   const total = activeAttributes(state);
   const results = battleStats(state.level, total.strength, total.agility, total.wisdom, total.endurance);
   const nameOf = (skill: typeof combatSkills[number]) => lang ? skill.name : skill.title;
-  const jumpTo = (element: HTMLElement | null) => {
-    element?.focus({ preventScroll: true });
-    element?.scrollIntoView({ block: 'start' });
-  };
+
   const update = (change: Partial<BuildState>) => {
     trackGuide('build:edit');
     resetPractice();
@@ -175,60 +173,66 @@ export function BuildConstructor() {
     updateAttribute(stat, current => current + delta);
   };
 
-  function applyPreset(build: typeof builds[number], returnToLevel = false) {
+  function applyPreset(build: typeof builds[number]) {
     lightHaptic();
     trackGuide('build:preset');
     resetPractice();
     setState(applyBuildPreset(build, state));
-    if (returnToLevel) jumpTo(levelRef.current);
   }
 
   return <div className="buildConstructor">
     <section className="card buildPanel" aria-labelledby="build-level-title">
       <div className="buildHeading">
-        <h2 id="build-level-title">{copy('Калькулятор билда', 'Build calculator')}</h2>
-        <button type="button" className="buildTextButton" onClick={() => {
+        <h2 id="build-level-title">{copy('1. Уровень и очки', '1. Level and points')}</h2>
+        <button type="button" className="buildPillButton" onClick={() => {
           lightHaptic();
           resetPractice();
-          setShowReview(false);
           setComparison(null);
           setBudgetDraft(null);
           setState(initialBuild());
-        }}>{copy('Сбросить', 'Reset')}</button>
+        }}>{copy('↺ Сбросить', '↺ Reset')}</button>
       </div>
+
       <div className="buildSetup">
         <label className="field">{copy('Уровень совы', 'Owl level')}
-          <select ref={levelRef} value={state.level} onChange={event => update({ level: Number(event.target.value) })}>
+          <select value={state.level} onChange={event => update({ level: Number(event.target.value) })}>
             {Array.from({ length: maxLevel }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
           </select>
         </label>
-        <div className="buildBudget"><small>{copy('Свободные очки', 'Unspent points')}</small><strong>{left} <small>/ {budget}</small></strong></div>
+        <div className="buildBudget" data-empty={left === 0 || undefined}>
+          <small>{copy('Свободные очки', 'Unspent points')}</small>
+          <strong>{left} <small>/ {budget}</small></strong>
+        </div>
       </div>
 
-      <div className="buildPresetBar">
-        <button className="buildEquipMain buildPresetTrigger" type="button" aria-haspopup="dialog" onClick={() => { lightHaptic(); setChoosePreset(true); }}>
-          {selectedPreset ? <GameAttribute name={selectedPreset.icon}/> : <GameGlyph name="fight"/>}
-          <span><strong>{selectedPreset ? selectedPreset.name[lang] : copy('Готовые сборки', 'Preset builds')}</strong>
-            <small>{selectedPreset ? copy('Выбрать другую сборку', 'Choose another build') : copy('Подобрать под уровень совы', 'Choose for your owl level')}</small></span>
-          <span className="rowChevron" aria-hidden="true"/>
-        </button>
-        <button className="buildTextButton buildGuideLink" type="button" onClick={() => { lightHaptic(); jumpTo(guideRef.current); }}>{copy('Руководство', 'Build guide')}</button>
-      </div>
+      <button className="buildEquipMain buildPresetTrigger" type="button" aria-haspopup="dialog" onClick={() => { lightHaptic(); setChoosePreset(true); }}>
+        {selectedPreset ? <GameAttribute name={selectedPreset.icon}/> : <GameGlyph name="sparkles"/>}
+        <span>
+          <strong>{selectedPreset ? selectedPreset.name[lang] : copy('Выбрать готовую сборку', 'Choose a preset build')}</strong>
+          <small>{selectedPreset ? selectedPreset.role[lang] : copy('10 проверенных архетипов с раскладкой под твой уровень', '10 tested archetypes scaled to your level')}</small>
+        </span>
+        <span className="buildPresetAction">{selectedPreset ? copy('Сменить', 'Change') : copy('Выбрать', 'Pick')}</span>
+      </button>
 
-      <div className="buildAllocationHeading"><h3>{copy('Распределение очков', 'Allocate points')}</h3>
-        <p className="caption">{copy('Введи значения без колец и усилений. Числа слева учитывают все бонусы.', 'Enter the values before rings and buffs. The numbers on the left include all bonuses.')}</p>
+      <div className="buildAllocationHeading">
+        <h3>{copy('Распределение вложенных очков', 'Invested attribute points')}</h3>
+        <p className="caption">{copy('Вводи очки, вложенные в ветку (они открывают навыки). Справа от названия показан итог с базой 3, кольцами и баффами.', 'Enter points invested per branch (these unlock skills). The total next to each name includes base 3, rings and buffs.')}</p>
       </div>
       <div className="buildAttributes">
         {statKeys.map(stat => {
-          const bonus = total[stat] - state.points[stat] - startingAttribute;
+          const invested = state.points[stat];
+          const bonus = total[stat] - invested - startingAttribute;
           return <div className="buildAttributeRow" key={stat}>
             <GameAttribute name={stat}/>
-            <span><strong>{statLabels[stat][lang]} <output aria-label={copy('Итого', 'Total') + ' · ' + statLabels[stat][lang]}>{total[stat]}</output></strong>
-              <small>{startingAttribute} {copy('база', 'base')} + {state.points[stat]} {copy('вложено', 'invested')}{bonus > 0 && ` + ${bonus} ${copy('бонус', 'bonus')}`}</small></span>
+            <span>
+              <strong>{statLabels[stat][lang]} <output aria-label={copy('Итого', 'Total') + ' · ' + statLabels[stat][lang]}>{total[stat]}</output></strong>
+              <small>{startingAttribute} {copy('база', 'base')} + {invested} {copy('очк.', 'pts')}{bonus > 0 && ` + ${bonus} ${copy('бонус', 'bonus')}`}</small>
+            </span>
             <div className="buildStepper">
               <button type="button" aria-label={copy('Уменьшить', 'Decrease') + ' · ' + statLabels[stat][lang]}
-                disabled={state.points[stat] === 0} onClick={() => step(stat, -1)}>−</button>
-              <AttributeInput name={copy('Без бонусов · ', 'Before bonuses · ') + statLabels[stat][lang]} value={startingAttribute + state.points[stat]} onCommit={value => updateAttribute(stat, () => value - startingAttribute)}/>
+                disabled={invested === 0} onClick={() => step(stat, -1)}>−</button>
+              <AttributeInput name={copy('Вложено очков · ', 'Invested points · ') + statLabels[stat][lang]}
+                value={invested} onCommit={value => updateAttribute(stat, () => value)}/>
               <button type="button" aria-label={copy('Увеличить', 'Increase') + ' · ' + statLabels[stat][lang]}
                 disabled={left === 0} onClick={() => step(stat, 1)}>+</button>
             </div>
@@ -237,8 +241,8 @@ export function BuildConstructor() {
       </div>
 
       <details className="mediaDetails buildAdvanced" id="build-advanced">
-        <summary><strong>{copy('Бюджет очков и временные усиления', 'Custom points and temporary buffs')}</strong></summary>
-        <p className="caption">{copy('По умолчанию доступно по одному очку за уровень. Если в игре у тебя другой запас, укажи сумму вложенных и свободных очков. Усиления осады и книги прибавляются к итоговым статам.', 'The default budget is one point per level. If yours differs, enter the sum of invested and unspent points. Siege and book buffs contribute to your totals.')}</p>
+        <summary><strong>{copy('Другой запас очков и баффы (осада, книга)', 'Custom point budget and temporary buffs')}</strong></summary>
+        <p className="caption">{copy('По умолчанию доступно 1 очко за уровень. Если у тебя другой запас или действуют усиления от осады/книги, укажи их здесь.', 'Default budget is 1 point per level. Adjust your point pool or add siege/book buffs here.')}</p>
         <label className="field">{copy('Всего очков для распределения', 'Total points to allocate')}
           <input value={budgetDraft ?? state.budget ?? ''} placeholder={String(state.level)} inputMode="numeric" maxLength={3}
             onChange={event => setBudgetDraft(event.target.value.replace(/\D/g, ''))}
@@ -257,74 +261,93 @@ export function BuildConstructor() {
     </section>
 
     <section className="card buildPanel" aria-labelledby="build-rings-title">
-      <h2 id="build-rings-title">{copy('Кольца', 'Rings')}</h2>
-      <p className="caption">{state.level < 5 ? copy('Кольца доступны с 5-го уровня совы.', 'Rings unlock at owl level 5.') : copy('Нажми на слот, чтобы выбрать кольцо или изменить заточку.', 'Tap a slot to choose a ring or adjust sharpening.')}</p>
-      {state.level >= 5 && state.rings.map((slot, i) => <div className="buildEquip" key={i}>
+      <div className="buildHeading">
+        <h2 id="build-rings-title">{copy('2. Кольца', '2. Rings')}</h2>
+        {state.level >= 5 && <span className="buildSlotCounter">{state.rings.filter(Boolean).length}/3</span>}
+      </div>
+      <p className="caption">{state.level < 5 ? copy('Кольца открываются с 5-го уровня совы.', 'Rings unlock at owl level 5.') : copy('Тапни по слоту для выбора кольца, справа сразу настраивается заточка.', 'Tap a slot to pick a ring; adjust sharpening directly on the right.')}</p>
+      {state.level >= 5 && state.rings.map((slot, i) => <div className="buildEquip buildEquipInline" key={i}>
         <button type="button" className="buildEquipMain" aria-haspopup="dialog" onClick={() => { lightHaptic(); setPicker({ kind: 'ring', slot: i }); }}>
           {slot ? <GameArt path={ringArt(slot.ring.id)} size={34}/> : <span className="buildEmptySlot" aria-hidden="true">+</span>}
           <span><strong>{slot ? ringName(slot.ring, lang) : copy('Выбрать кольцо', 'Choose ring') + ' ' + (i + 1)}</strong>
-            {slot && <small>{statLabels[slot.ring.attribute][lang]} +{slot.ring.bonus + slot.enchant}{slot.enchant > 0 && ` · ${copy('Заточка', 'Sharpening')} +${slot.enchant}`}</small>}</span>
-          <span className="rowChevron" aria-hidden="true"/>
+            {slot && <small>+{slot.ring.bonus + slot.enchant} {copy('к ', 'to ')}{statLabels[slot.ring.attribute][lang].toLowerCase()}</small>}</span>
+          {!slot && <span className="rowChevron" aria-hidden="true"/>}
         </button>
+        {slot && <select className="buildInlineSelect" aria-label={copy('Заточка кольца', 'Ring sharpening') + ' ' + (i + 1)}
+          value={slot.enchant} onChange={event => update({ rings: replaceSlot(state.rings, i, { ...slot, enchant: Number(event.target.value) }) })}>
+          {Array.from({ length: 21 }, (_, lvl) => <option key={lvl} value={lvl}>+{lvl}</option>)}
+        </select>}
       </div>)}
     </section>
 
     <section className="card buildPanel" aria-labelledby="build-skills-title">
-      <h2 id="build-skills-title">{copy('Навыки в бою', 'Combat skills')}</h2>
-      <p className="caption">{state.level < 2 ? copy('Навыки доступны со 2-го уровня совы.', 'Skills unlock at owl level 2.') : copy('До трёх навыков. Для третьей ступени, например, нужно 3 очка в её ветке. Уровни навыков повышаются за SP.', 'Equip up to three skills. Tier three, for example, requires three points in its branch. SP raises a skill’s level.')}</p>
+      <div className="buildHeading">
+        <h2 id="build-skills-title">{copy('3. Навыки в бою', '3. Combat skills')}</h2>
+        {state.level >= 2 && <span className="buildSlotCounter">{state.skills.filter(Boolean).length}/3</span>}
+      </div>
+      <p className="caption">{state.level < 2 ? copy('Навыки открываются со 2-го уровня совы.', 'Skills unlock at owl level 2.') : copy('Ступень навыка требует столько же вложенных очков в его ветке. Справа сразу меняется уровень навыка.', 'Skill tier requires matching branch points. Adjust skill level on the right.')}</p>
       {state.level >= 2 && state.skills.map((slot, i) => {
         const skill = slot && skillById.get(slot.id);
-        return <div className="buildEquip" key={i}>
+        return <div className="buildEquip buildEquipInline" key={i}>
           <button type="button" className="buildEquipMain" aria-haspopup="dialog" onClick={() => { lightHaptic(); setPicker({ kind: 'skill', slot: i }); }}>
             {skill ? <GameArt path={skillArt(skill.id)} size={34}/> : <span className="buildEmptySlot"><GameGlyph name="lightning"/></span>}
             <span><strong>{skill ? nameOf(skill) : copy('Выбрать навык', 'Choose skill') + ' ' + (i + 1)}</strong>
-              {slot && skill && <small>{slot.level} {copy('ур. · ', 'lvl · ')}{skillMana(skill.tier, passive(skill), skill.id === 10)} {passive(skill)
-                ? copy('маны за срабатывание', 'mana per trigger')
-                : copy('маны · ', 'mana · ') + skillCooldown(skill.tier) + copy(' с перезарядки', ' s cooldown')}</small>}
+              {slot && skill && <small>{skillMana(skill.tier, passive(skill), skill.id === 10)} {passive(skill)
+                ? copy('маны за срабатывание', 'mana / trigger')
+                : copy('маны · откат ', 'mana · ') + skillCooldown(skill.tier) + copy(' с', ' s')}</small>}
             </span>
-            <span className="rowChevron" aria-hidden="true"/>
+            {!slot && <span className="rowChevron" aria-hidden="true"/>}
           </button>
+          {slot && skill && <select className="buildInlineSelect" aria-label={copy('Уровень навыка', 'Skill level') + ' ' + nameOf(skill)}
+            value={slot.level} onChange={event => update({ skills: replaceSlot(state.skills, i, { ...slot, level: Number(event.target.value) }) })}>
+            {Array.from({ length: 21 }, (_, lvl) => <option key={lvl} value={lvl + 1}>{lvl + 1} {copy('ур.', 'lvl')}</option>)}
+          </select>}
           {slot && skill && <p className="buildSkillEffect">{skillEffect(skill.id, slot.level, state.level, lang).map(row => row.join(' ')).join(' · ')}</p>}
         </div>;
       })}
     </section>
 
     <section className="card buildPanel buildPreview" aria-labelledby="build-results-title">
-      <h2 id="build-results-title">{copy('Параметры в бою', 'Combat stats')}</h2>
+      <h2 id="build-results-title">{copy('4. Итоги в бою и баланс', '4. Combat stats & check')}</h2>
       <BattleReadout stats={results}/>
-      <button className="primary buildAnalyze" type="button" aria-expanded={showReview} aria-controls="build-review" onClick={() => {
-        lightHaptic();
-        setShowReview(open => {
-          if (!open) trackGuide('build:analyze');
-          return !open;
-        });
-      }}><GameGlyph name="sparkles"/>{showReview ? copy('Свернуть анализ', 'Hide analysis') : copy('Анализ сборки', 'Analyze build')}</button>
-      <div id="build-review" className="buildAnalysisStatus" hidden={!showReview}>
-        {showReview && <BuildAnalysis state={state} lang={lang}/>}
-        <details className="mediaDetails buildPractice" id="build-practice">
-          <summary><span><strong>{copy('Тренировочные бои', 'Practice duels')}</strong><small>{copy('Сравни сборки в одних и тех же сценариях', 'Compare builds in the same scenarios')}</small></span></summary>
-          <p className="caption">{copy('Четыре соперника твоего уровня с тем же запасом очков. Их сборки фиксированы, навыки применяются автоматически. В рейтинге исход зависит от соперника и решений в бою.', 'Four opponents share your level and point budget. Their builds stay fixed and skills are cast automatically. Ranked results depend on your opponent and decisions during the fight.')}</p>
-          {totalAttributes(state.buffs) > 0 && <p className="caption">{copy('Твои временные усиления учтены. У соперников усилений нет.', 'Your temporary buffs apply. Opponents have no temporary buffs.')}</p>}
-          {comparison && <p className="buildComparisonStatus">{comparison.key === practiceKey(state)
-            ? copy('Сборка для сравнения сохранена.', 'A build is saved for comparison.')
-            : copy('Для сравнения верни исходный уровень и запас очков или сохрани новый результат.', 'Restore the previous level and point budget to compare, or save a new result.')}
-            <button className="buildTextButton" type="button" onClick={() => setComparison(null)}>{copy('Убрать', 'Clear')}</button></p>}
-          <button className="secondary buildRunPractice" type="button" onClick={startPractice} disabled={practice === 'waiting'}>
-            {practice === 'waiting' ? copy('Идут тренировочные бои…', 'Running practice duels…') : copy('Проверить в боях', 'Run practice duels')}
-          </button>
-          <div aria-live="polite">
-            {practice === 'error' && <p className="caption">{copy('Не удалось запустить бои. Попробуй ещё раз.', 'Could not start practice duels. Try again.')}</p>}
-            {practice && typeof practice !== 'string' && <BuildPractice result={practice} comparison={comparison} lang={lang} state={state}
-              save={() => { lightHaptic(); setComparison(practice); }}/>}
-          </div>
-        </details>
+      <BuildAnalysis state={state} lang={lang}/>
+    </section>
+
+    <section className="card buildPanel buildPracticeCard" aria-labelledby="build-practice-title">
+      <h2 id="build-practice-title">{copy('Проверка в тренировочных боях', 'Practice duel check')}</h2>
+      <p className="caption">{copy('320 авто-боёв против 4 архетипов твоего уровня (Натиск, Маг, Бастион и Яд/Уклонение). В реальном бою ещё решает выбор зон блока.', '320 auto-duels against 4 archetypes at your level. Real ranked fights also depend on zone timing.')}</p>
+      {totalAttributes(state.buffs) > 0 && <p className="caption">{copy('Твои временные усиления учтены. У соперников усилений нет.', 'Your temporary buffs apply; opponents have none.')}</p>}
+      <button className="primary buildAnalyze" type="button" onClick={startPractice} disabled={practice === 'waiting'}>
+        <GameGlyph name="fight"/>
+        {practice === 'waiting' ? copy('Проводим 320 боёв…', 'Running 320 duels…') : copy('Проверить билд в боях', 'Test build in duels')}
+      </button>
+      {comparison && (!practice || typeof practice === 'string') && <p className="buildComparisonStatus">
+        <span>{comparison.key === practiceKey(state)
+          ? copy('Эталон для сравнения сохранён — нажми «Проверить билд в боях», чтобы увидеть разницу.', 'Baseline saved — run duels to see the winrate delta.')
+          : copy('Уровень или бюджет изменился; для нового сравнения сбрось старый эталон.', 'Level or budget changed; clear old baseline to compare.')}</span>
+        <button className="buildPillButton" type="button" onClick={() => setComparison(null)}>{copy('Сбросить', 'Clear')}</button>
+      </p>}
+      <div aria-live="polite">
+        {practice === 'error' && <p className="caption">{copy('Не удалось запустить бои. Попробуй ещё раз.', 'Could not start practice duels. Try again.')}</p>}
+        {practice && typeof practice !== 'string' && <BuildPractice result={practice} comparison={comparison} lang={lang} state={state}
+          save={() => { lightHaptic(); trackGuide('build:analyze'); setComparison(practice); }}
+          clear={() => setComparison(null)}/>}
       </div>
     </section>
 
     <section className="card buildPanel buildGuide" aria-labelledby="build-guide-title">
-      <h2 id="build-guide-title" ref={guideRef} tabIndex={-1}>{copy('Руководство по билдам', 'Build guide')}</h2>
-      <p className="caption">{copy('Выбери стиль боя. В каждом билде есть тактика, слабое место и условия для полного набора навыков.', 'Choose a fighting style. Each build explains its tactics, weaknesses and full skill requirements.')}</p>
-      {builds.map(build => {
+      <div className="buildHeading">
+        <h2 id="build-guide-title">{copy('Тактика и все 10 сборок', 'All 10 archetypes')}</h2>
+        <button type="button" className="buildPillButton" onClick={() => {
+          lightHaptic();
+          setShowAllBuilds(open => {
+            if (!open) trackGuide('build:analyze');
+            return !open;
+          });
+        }}>{showAllBuilds ? copy('Свернуть', 'Hide') : copy('Показать все', 'Show all')}</button>
+      </div>
+      <p className="caption">{copy('Разбор сильных и слабых сторон каждой готовой сборки.', 'Strengths, weaknesses and full skill requirements for each preset.')}</p>
+      {showAllBuilds && builds.map(build => {
         const requirements = requiredAttributes(build.skills);
         const adapted = applyBuildPreset(build, state);
         const fullBuild = build.skills.every(id => adapted.skills.some(slot => slot?.id === id));
@@ -341,13 +364,13 @@ export function BuildConstructor() {
             <div><dt>{copy('Кольца по слотам', 'Rings by slot')}</dt><dd>{build.rings.map(stat => statLabels[stat][lang]).join(' · ')}</dd></div>
           </dl>
           {!fullBuild && <p className="caption">{copy('На твоём уровне применится стартовый вариант.', 'Your level uses the starter version.')}</p>}
-          <button className="secondary" type="button" onClick={() => applyPreset(build, true)}>{copy('Применить билд', 'Apply build')}</button>
+          <button className="secondary" type="button" onClick={() => applyPreset(build)}>{copy('Применить эту сборку', 'Apply build')}</button>
         </details>;
       })}
     </section>
 
     {choosePreset && <BuildPicker title={copy('Готовые сборки', 'Preset builds')} closeLabel={copy('Закрыть', 'Close')} onClose={() => setChoosePreset(false)}>
-      <p className="caption buildPresetNote">{copy('Сборка заменит очки, кольца и навыки. Заточка и уровни навыков подставляются как цели для прокачки.', 'A preset replaces points, rings and skills. Sharpening and skill levels are suggested upgrade targets.')}</p>
+      <p className="caption buildPresetNote">{copy('Сборка подставит очки, кольца и навыки под твой уровень.', 'Preset fills points, rings and skills for your current level.')}</p>
       <div className="buildPickerOptions">
         {builds.map(build => <PickerOption key={build.id} art={skillArt(build.signature)}
           title={build.name[lang]} meta={build.role[lang]} selected={selectedPreset?.id === build.id} disabled={false}
@@ -368,7 +391,7 @@ export function BuildConstructor() {
             const slot = state.skills[picker.slot];
             if (slot) update({ skills: replaceSlot(state.skills, picker.slot, { ...slot, level }) });
           }}/>}
-        {(picker.kind === 'ring' ? state.rings[picker.slot] : state.skills[picker.slot]) && <button className="buildTextButton buildClearSlot"
+        {(picker.kind === 'ring' ? state.rings[picker.slot] : state.skills[picker.slot]) && <button className="buildPillButton buildClearSlot"
           type="button" onClick={() => {
             lightHaptic();
             update(picker.kind === 'ring' ? { rings: replaceSlot(state.rings, picker.slot, null) } : { skills: replaceSlot(state.skills, picker.slot, null) });
@@ -438,7 +461,7 @@ function SkillPickerOptions({ state, slot, lang, onSelect }: { state: BuildState
       const used = !selected && state.skills.some(item => item?.id === skill.id);
       const available = skillAvailable(skill.id, state);
       const requirement = state.level < 2 ? (lang ? 'From owl level 2' : 'Со 2-го уровня совы')
-        : lang ? `Invest ${skill.tier} points in ${statLabels[branch][lang]}` : `Вложено очков в ветку ${state.points[branch]} из ${skill.tier}`;
+        : lang ? `Invest ${skill.tier} points in ${statLabels[branch][lang]}` : `Нужно ${skill.tier} очк. в ветке (сейчас ${state.points[branch]})`;
       return <PickerOption key={skill.id} art={skillArt(skill.id)} title={lang ? skill.name : skill.title}
         meta={used ? (lang ? 'Already equipped' : 'Уже в наборе') : available ? (lang ? skill.effect.split('.')[0].replace(/\{[^}]+\}/g, '…') : skill.summary) : requirement}
         disabled={used || !available} selected={selected} onSelect={() => onSelect(skill.id)}/>;
@@ -470,102 +493,127 @@ function BuildAnalysis({ state, lang }: { state: BuildState; lang: number }) {
   const review = reviewBuild(state);
   const notes: { title: string; detail: string }[] = [];
   if (review.freePoints > 0) notes.push({
-    title: copy('Распредели свободные очки', 'Allocate your unspent points'),
-    detail: copy(`Свободно: ${review.freePoints}. Выносливость даёт HP, мудрость — ману и шанс крита. Для нового навыка вкладывай очки в его ветку.`,
-      `${review.freePoints} left. Endurance adds HP. Wisdom adds mana and crit chance. Invest in the matching branch to unlock a skill.`),
+    title: copy('Есть свободные очки', 'Unspent points'),
+    detail: copy(`Осталось ${review.freePoints} очк. Мудрость даёт ману и крит, ловкость — уклонение, выносливость — HP.`,
+      `${review.freePoints} points left. Wisdom adds mana & crit, Agility adds dodge, Endurance adds HP.`),
   });
   if (review.skillSlots > 0) notes.push({
-    title: copy('Есть место для навыков', 'You can equip more skills'),
-    detail: copy(`Доступных пустых слотов: ${review.skillSlots}. Для начала подбери навык под задачу: лечение, контроль или урон.`,
-      `Available empty slots: ${review.skillSlots}. Start with a skill that fills a role: healing, control or damage.`),
+    title: copy('Свободные слоты навыков', 'Empty skill slots'),
+    detail: copy(`Можно поставить ещё ${review.skillSlots} навык(а) из открытых веток.`,
+      `You can equip ${review.skillSlots} more unlocked skill(s).`),
   });
   if (review.ringSlots > 0) notes.push({
-    title: copy('Заполни слоты колец', 'Fill your ring slots'),
-    detail: copy(`Пустых слотов: ${review.ringSlots}. Мудрость даёт запас маны, ловкость — уклонение, сила — урон обычных ударов.`,
-      `Empty slots: ${review.ringSlots}. Wisdom adds mana, Agility adds dodge and Strength adds basic hit damage.`),
+    title: copy('Пустые слоты колец', 'Empty ring slots'),
+    detail: copy(`Свободно слотов колец: ${review.ringSlots}. Добавь кольца под нужную ветку.`,
+      `${review.ringSlots} empty ring slot(s).`),
   });
   if (review.flurryWithoutHint) notes.push({
-    title: copy('Выбирай момент для Воя берсерка', 'Time Berserk Howl'),
-    detail: copy('Вся серия идёт в последнюю атакованную зону. Используй навык после попадания или попробуй Сковывающие цепи либо Подсказку духа.',
-      'The whole flurry targets the last attacked zone. Cast it after a hit or try pairing it with Chains or Spirit Guidance.'),
+    title: copy('Вой берсерка без фиксации блока', 'Berserk Howl without guard lock'),
+    detail: copy('Бей Воем сразу после попадания, либо добавь Сковывающие цепи / Подсказку духа.',
+      'Cast Howl right after hitting an open zone, or pair with Chains / Spirit Guidance.'),
   });
   if (review.overCap.includes('agility')) notes.push({
-    title: copy('Уклонение уже на потолке', 'Dodge is capped'),
+    title: copy('Уклонение упёрлось в потолок 70%', 'Dodge is capped at 70%'),
     detail: review.movableAgility > 0
-      ? copy(`С текущими бонусами можно перенести до ${review.movableAgility} вложенных очков ловкости и сохранить уклонение и выбранные навыки.`,
-        `With the current bonuses, you can move up to ${review.movableAgility} invested Agility points and keep your dodge and equipped skills.`)
-      : copy('Уклонение ограничено 70% при 100 ловкости. Если хочешь освободить очки, проверь вклад колец и временных усилений.',
-        'Dodge caps at 70% at 100 Agility. Check rings and temporary buffs if you want to free up points.'),
+      ? copy(`До ${review.movableAgility} очк. ловкости можно перекинуть в другой стат без потери уклонения.`,
+        `Up to ${review.movableAgility} Agility points can be moved elsewhere without losing dodge.`)
+      : copy('Выше 100 ловкости уклонение не растёт — проверь вклад колец и баффов.',
+        'Dodge stops scaling at 100 Agility; check rings and buffs.'),
   });
   if (review.overCap.includes('wisdom')) notes.push({
-    title: copy('Крит уже достиг 70%', 'Crit chance has reached 70%'),
-    detail: copy('После 100 мудрости крит больше не растёт. Каждое следующее очко всё ещё даёт 20 маны.',
-      'Crit chance stops increasing at 100 Wisdom. Each additional point still gives 20 mana.'),
+    title: copy('Крит упёрся в потолок 70%', 'Crit capped at 70%'),
+    detail: copy('Сверх 100 мудрости растёт только запас маны (+20 за очко).',
+      'Above 100 Wisdom, only your mana pool (+20 per point) increases.'),
   });
   if (review.rotationCost > 0 && review.mana < review.rotationCost * 2) notes.push({
-    title: copy('Оставь ману на ключевой навык', 'Reserve mana for a key skill'),
-    detail: copy('Запаса меньше, чем нужно на два применения каждого активного навыка. Определи, какой навык важнее повторить в конце боя.',
-      'Your mana covers fewer than two uses of each active skill. Decide which skill you want to cast again late in the fight.'),
+    title: copy('Маны меньше чем на 2 круга', 'Mana covers under 2 rotations'),
+    detail: copy(`Запас ${review.mana}, а один круг активных навыков стоит ${review.rotationCost}. В бою мана не восстанавливается.`,
+      `Pool is ${review.mana} and one full rotation costs ${review.rotationCost}. Mana does not regenerate in battle.`),
   });
+  const rotations = review.rotationCost > 0 ? Math.floor(review.mana / review.rotationCost) : null;
   return <div className="buildAnalysis">
-    <h3>{copy('Что проверить в сборке', 'What to check in the build')}</h3>
+    {rotations !== null && <div className="buildManaSummary">
+      <span>{copy('Мана на бой', 'Battle mana')}</span>
+      <strong>{review.mana} · {copy(`хватит на ${rotations} кр.`, `${rotations} full cast(s)`)}</strong>
+    </div>}
+    {review.hasPassives && <p className="caption">{copy('Пассивные навыки тоже тратят ману при каждом срабатывании.', 'Passive skills spend mana on every trigger.')}</p>}
     {notes.length > 0 ? <ul className="buildAdvice">{notes.map(note =>
       <li key={note.title}><strong>{note.title}</strong><p>{note.detail}</p></li>)}</ul>
-      : <p className="caption">{copy('По очкам, слотам и запасу маны явных проблем нет. Если выбираешь между двумя вариантами, сравни их в тренировочных боях.',
-        'The point allocation, slots and mana check out. If you are choosing between two builds, compare them in practice duels.')}</p>}
-    {(review.rotationCost > 0 || review.hasPassives) && <div className="buildManaCheck">
-      <div><span>{copy('Запас маны', 'Mana pool')}</span><strong>{review.mana}</strong></div>
-      {review.rotationCost > 0 && <div><span>{copy('Все активные навыки по разу', 'One cast of each active skill')}</span><strong>{review.rotationCost}</strong></div>}
-      {review.hasPassives && <p>{copy('Пассивные навыки расходуют ману при срабатывании.', 'Passive skills consume mana when triggered.')}</p>}
-    </div>}
+      : <p className="buildOkNote">✓ {copy('Очки, слоты и запас маны сбалансированы.', 'Points, slots and mana pool look balanced.')}</p>}
   </div>;
 }
 
-function BuildPractice({ result, comparison, lang, save, state }: { result: PracticeResult; comparison: PracticeResult | null; lang: number; save: () => void; state: BuildState }) {
+function BuildPractice({ result, comparison, lang, save, clear, state }: {
+  result: PracticeResult; comparison: PracticeResult | null; lang: number; save: () => void; clear: () => void; state: BuildState;
+}) {
   const copy = (ru: string, en: string) => lang ? en : ru;
   const prior = comparison?.key === result.key && comparison !== result ? comparison : null;
-  const percent = (wins: number, trials: number) => Math.round(wins * 100 / trials) + '%';
+  const pct = (wins: number, trials: number) => Math.round(wins * 100 / trials);
+  const totalWins = result.matchups.reduce((sum, row) => sum + row.wins, 0);
+  const totalTrials = result.matchups.reduce((sum, row) => sum + row.trials, 0);
+  const overall = pct(totalWins, totalTrials);
+  const priorOverall = prior ? pct(prior.matchups.reduce((s, r) => s + r.wins, 0), prior.matchups.reduce((s, r) => s + r.trials, 0)) : null;
+  const deltaOverall = priorOverall !== null ? overall - priorOverall : null;
+
   const weakest = result.matchups.reduce((weak, row) => row.wins < weak.wins ? row : weak);
   const hasSkill = (id: number) => state.skills.some(slot => slot?.id === id);
   const experiments: Record<string, string> = {
     stun: hasSkill(20) ? copy('Молния проходит через блок и уклонение. В реальном бою прибереги Фазовый сдвиг на её применение.', 'Lightning goes through guard and dodge. In a real fight, save Phase Shift for that cast.')
       : copy('Сравни вариант с большим запасом HP или Фазовым сдвигом. Молния проходит через блок и уклонение.', 'Try more HP or Phase Shift. Lightning goes through guard and dodge.'),
     bastion: state.rings.every(slot => slot?.ring.attribute === 'wisdom')
-      ? copy('Все кольца уже дают ману. Сравни вариант с более дешёвым активным навыком для затяжного боя.', 'All your rings already add mana. Try a cheaper active skill for drawn-out duels.')
-      : copy('Попробуй увеличить запас маны для затяжного боя. Сравни сборку, заменив одно кольцо на кольцо мудрости.', 'Try more mana for drawn-out duels. Swap one ring for a Wisdom ring and compare.'),
+      ? copy('Все кольца уже дают ману. Попробуй более дешёвый активный навык для затяжного боя.', 'All your rings already add mana. Try a cheaper active skill for drawn-out duels.')
+      : copy('Попробуй увеличить запас маны, заменив одно кольцо на кольцо мудрости.', 'Try more mana by swapping one ring for a Wisdom ring.'),
     dodge: [1, 6, 11, 12, 16].some(hasSkill)
-      ? copy('У тебя уже есть прямой урон сквозь уклонение. Проверь, что изменится, если заменить затратный навык или добавить ману для повторного применения.', 'You already have direct damage that bypasses dodge. Try swapping an expensive skill or giving yourself more mana for repeat casts.')
-      : copy('Попробуй навык сквозь уклонение, например Молнию или Астероид.', 'Try an ability that bypasses dodge, such as Lightning or Asteroid.'),
+      ? copy('У тебя уже есть урон сквозь уклонение. Проверь запас маны для повторного применения.', 'You already have direct damage that bypasses dodge. Check mana for repeat casts.')
+      : copy('Против высокого уклонения хорошо работают Молния или Астероид.', 'Try an ability that bypasses dodge, such as Lightning or Asteroid.'),
     assault: hasSkill(9) || hasSkill(6)
-      ? copy('У тебя уже есть ответ на частые удары. В реальном бою прибереги его до серии, когда соперник готов атаковать.', 'You already have an answer to frequent hits. In a real fight, save it for when the opponent is ready to attack.')
-      : copy('Попробуй Статический щит для ответного урона или Снежок, чтобы замедлить атаки соперника.', 'Try Static Shield for retaliation, or Snowball to slow the opponent’s attacks.'),
+      ? copy('У тебя уже есть ответ на частые удары. Прибереги его под серию соперника.', 'You already have an answer to frequent hits. Save it for enemy combos.')
+      : copy('Попробуй Статический щит для ответного урона или Снежок для замедления атак.', 'Try Static Shield for retaliation, or Snowball to slow attacks.'),
   };
   const canCompareFullBuilds = state.level >= 5 && (state.budget ?? state.level) >= 8;
   return <div className="buildPracticeResult">
-    <p className="caption">{result.matchups[0].trials} {copy('боёв с каждым соперником', 'duels per opponent')}
-      {result.skillLevel !== undefined && copy(` · навыки соперников ${result.skillLevel} ур.`, ` · opponent skills lvl ${result.skillLevel}`)}
-      {result.enchant !== undefined && copy(` · заточка +${result.enchant}`, ` · sharpening +${result.enchant}`)}
-    </p>
+    <div className="buildOverallWinrate">
+      <div>
+        <small>{copy('Общий винрейт', 'Overall winrate')}</small>
+        <p className="caption">
+          {result.skillLevel !== undefined && copy(`Навыки врагов ${result.skillLevel} ур.`, `Opponent skills lvl ${result.skillLevel}`)}
+          {result.enchant !== undefined && copy(` · заточка +${result.enchant}`, ` · +${result.enchant}`)}
+        </p>
+      </div>
+      <div className="buildOverallValue">
+        <strong>{overall}%</strong>
+        {deltaOverall !== null && deltaOverall !== 0 && (
+          <span className={deltaOverall > 0 ? 'buildDeltaUp' : 'buildDeltaDown'}>
+            {deltaOverall > 0 ? `+${deltaOverall}%` : `${deltaOverall}%`}
+          </span>
+        )}
+      </div>
+    </div>
     <dl className="buildMatchups">
       {result.matchups.map(row => {
         const previous = prior?.matchups.find(item => item.id === row.id);
         const defeats = row.trials - row.wins - row.draws;
+        const winPct = pct(row.wins, row.trials);
+        const prevPct = previous ? pct(previous.wins, previous.trials) : null;
         return <div key={row.id}>
           <dt><strong>{builds.find(build => build.id === row.id)?.name[lang]}</strong>
             <small>{copy(`Побед ${row.wins} · поражений ${defeats}`, `Wins ${row.wins} · losses ${defeats}`)}
               {row.draws > 0 && copy(` · ничьих ${row.draws}`, ` · draws ${row.draws}`)}</small>
+            <span className="buildWinBar" aria-hidden="true"><span style={{ width: `${winPct}%` }}/></span>
           </dt>
-          <dd>{percent(row.wins, row.trials)}{previous && <small>{copy('было', 'was')} {percent(previous.wins, previous.trials)}</small>}</dd>
+          <dd>{winPct}%{prevPct !== null && <small>{copy('было', 'was')} {prevPct}%</small>}</dd>
         </div>;
       })}
     </dl>
     {canCompareFullBuilds && weakest.wins * 5 < weakest.trials * 2 && <p className="buildPracticeHint">
-      <strong>{copy('Что проверить в следующей серии', 'What to try in the next series')}</strong>
+      <strong>{copy('Что можно усилить', 'What to improve')}</strong>
       {experiments[weakest.id]}
     </p>}
-    <button className="secondary buildRunPractice" type="button" onClick={save} disabled={comparison === result}>{comparison === result
-      ? copy('Сохранено для сравнения', 'Saved for comparison')
-      : copy('Сохранить для сравнения', 'Save for comparison')}</button>
-    {comparison === result && <p className="caption">{copy('Измени сборку и запусти бои ещё раз. Рядом появится прошлый результат.', 'Edit your build and run the duels again to see the previous result next to the new one.')}</p>}
+    <div className="actionPair">
+      <button className="secondary buildRunPractice" type="button" onClick={save} disabled={comparison === result}>
+        {comparison === result ? copy('✓ Запомнено как эталон', '✓ Saved as baseline') : copy('Запомнить для сравнения', 'Save for comparison')}
+      </button>
+      {comparison && <button className="buildPillButton" type="button" onClick={clear}>{copy('Сбросить', 'Clear')}</button>}
+    </div>
   </div>;
 }

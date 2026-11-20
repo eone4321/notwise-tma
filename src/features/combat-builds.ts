@@ -84,9 +84,9 @@ export const builds: Build[] = [
   },
   {
     id: 'bastion', icon: 'endurance', signature: 4, name: ['Бастион', 'Bastion'], role: ['Щит и восстановление в длинном бою', 'Shield and recovery for long duels'],
-    play: ['Включи Щит из скорлупы и применяй Клык вампира, когда можешь провести серию ударов. Фазовый сдвиг прибереги на сильную серию или ответное заклинание. Мудрость даёт ману на долгий размен.', 'Enable Aegis and use Vampire Fang when you can land a combo. Save Phase Shift for a heavy combo or spell. Wisdom funds a longer exchange.'],
+    play: ['Включи Щит из скорлупы и применяй Клык вампира, когда можешь провести серию ударов. Фазовый сдвиг прибереги на сильную серию или ответное заклинание. Ловкость снижает урон от быстрых атак, а мудрость даёт ману на долгий размен.', 'Enable Aegis and use Vampire Fang when you can land a combo. Save Phase Shift for a heavy combo or spell. Agility reduces incoming hits, and Wisdom funds a longer exchange.'],
     tradeoff: ['Клык лечит только за прошедший урон. Против высокой ловкости лучше дождаться удобного окна для серии.', 'Fang heals only from landed damage. Against high Agility, wait for a good opening before casting.'],
-    stats: [12, 0, 24, 64], rings: ['wisdom', 'strength', 'wisdom'], skills: [18, 4, 20], early: [19, 17, 14],
+    stats: [0, 22, 24, 54], rings: ['wisdom', 'agility', 'wisdom'], skills: [18, 4, 20], early: [19, 17, 14],
   },
   {
     id: 'dodge', icon: 'agility', signature: 5, name: ['Уклонение и яд', 'Dodge and poison'], role: ['Против частых обычных ударов', 'Against frequent basic attacks'],
@@ -97,16 +97,16 @@ export const builds: Build[] = [
   {
     id: 'assault', icon: 'strength', signature: 13, name: ['Натиск', 'Relentless assault'],
     role: ['Серия в открытую зону', 'Combos into an open zone'],
-    play: ['Включи Мощный удар. Зафиксируй блок Цепями, ударь в открытую зону и отправь туда же серию Воем берсерка. Кольца силы повышают урон каждого прошедшего удара.', 'Enable Power Punch. Fix the guard with Chains, hit an open zone, then send the Berserk Howl flurry into that same zone. Strength rings increase each landed hit.'],
-    tradeoff: ['Если Цепи кончились, соперник может перекрыть последнюю зону и погасить всю серию. Высокая ловкость также снижает число попаданий.', 'Once Chains expire, the enemy can cover the last zone and stop the entire flurry. High Agility also reduces landed hits.'],
-    stats: [52, 10, 13, 25], rings: ['strength', 'strength', 'wisdom'], skills: [2, 17, 13], early: [12, 19, 14],
+    play: ['Включи Мощный удар. Зафиксируй блок Цепями, ударь в открытую зону и отправь туда же серию Воем берсерка. Ловкость и мудрость дают выживаемость, криты и ману на повторную серию.', 'Enable Power Punch. Fix the guard with Chains, hit an open zone, then send the Berserk Howl flurry into that same zone. Agility and Wisdom add survivability, crits and mana for repeat combos.'],
+    tradeoff: ['Если Цепи кончились, соперник может перекрыть последнюю зону и погасить всю серию. На 40+ уровне высокая ловкость цели тоже снижает число попаданий.', 'Once Chains expire, the enemy can cover the last zone and stop the entire flurry. High Agility at level 40+ also reduces landed hits.'],
+    stats: [24, 24, 26, 26], rings: ['strength', 'wisdom', 'agility'], skills: [2, 17, 13], early: [17, 13, 2],
   },
   {
     id: 'fire', icon: 'strength', signature: 11, name: ['Поджигатель', 'Fire caster'],
     role: ['Урон со временем и ответ при низком HP', 'Damage over time and a low-health payoff'],
     play: ['Запускай Огненный шар, когда соперник открыт для урона. Отчаянный бросок оставь до потери части здоровья. Фазовый сдвиг помогает пережить опасный момент и дождаться следующего броска.', 'Cast Fireball when the enemy is vulnerable. Save Desperate Throw until you have lost some health. Phase Shift helps survive the danger window and reach the next throw.'],
     tradeoff: ['Отчаянный бросок тратит собственное HP. Если нажать его слишком рано, множитель будет слабым.', 'Desperate Throw spends your own HP. Casting too early wastes much of the multiplier.'],
-    stats: [10, 10, 15, 65], rings: ['agility', 'agility', 'wisdom'], skills: [11, 12, 20], early: [14, 2, 19],
+    stats: [0, 30, 25, 45], rings: ['agility', 'agility', 'wisdom'], skills: [11, 12, 20], early: [14, 2, 19],
   },
   {
     id: 'cast-control', icon: 'wisdom', signature: 16, name: ['Двойное оглушение', 'Double stun'],
@@ -120,14 +120,14 @@ export const builds: Build[] = [
     role: ['Подсказка блока и повторные удары', 'Guard hints and bonus hits'],
     play: ['Включи Подсказку духа и бей в другую зону, когда видишь блок. Удар с эхом включай перед серией, а Вой берсерка используй сразу после попадания в открытую зону.', 'Enable Spirit Guidance and use a different zone when a hint shows the guard. Cast Echoing Blow before a combo, and use Berserk Howl right after hitting an open zone.'],
     tradeoff: ['Соперник, который подолгу держит один блок, даёт мало новых подсказок. Частые смены, наоборот, расходуют ману.', 'An opponent who holds one guard gives you fewer new hints. Frequent changes, on the other hand, drain mana.'],
-    stats: [28, 15, 40, 17], rings: ['strength', 'wisdom', 'wisdom'], skills: [10, 14, 13], early: [12, 7, 19],
+    stats: [16, 22, 34, 28], rings: ['strength', 'wisdom', 'wisdom'], skills: [10, 14, 13], early: [12, 7, 19],
   },
   {
     id: 'iron-guard', icon: 'endurance', signature: 19, name: ['Железная защита', 'Iron guard'],
     role: ['Ответ на яд, оглушение и замедление', 'An answer to poison, stuns and slowdown'],
-    play: ['Включи Железную волю и Щит из скорлупы перед разменом. Когда урон всё же прошёл, используй Лечение после потери достаточного количества HP. Кольца ловкости снижают число обычных попаданий по тебе.', 'Toggle Iron Will and Aegis before trading damage. When damage gets through, heal once you have lost enough HP. Agility rings reduce the number of basic hits you take.'],
+    play: ['Включи Железную волю и Щит из скорлупы перед разменом. Когда урон всё же прошёл, используй Лечение после потери достаточного количества HP. Ловкость и кольца снижают число обычных попаданий по тебе.', 'Toggle Iron Will and Aegis before trading damage. When damage gets through, heal once you have lost enough HP. Agility and rings reduce the number of basic hits you take.'],
     tradeoff: ['Обе пассивки расходуют ману при срабатывании. Против прямого урона без контроля отключи Железную волю и сохрани ману на щит.', 'Both passives spend mana on triggers. Against direct damage without control, disable Iron Will and save mana for Aegis.'],
-    stats: [10, 10, 15, 65], rings: ['agility', 'agility', 'wisdom'], skills: [19, 4, 3], early: [5, 17, 12],
+    stats: [0, 34, 24, 42], rings: ['agility', 'agility', 'wisdom'], skills: [19, 4, 3], early: [5, 17, 12],
   },
 ];
 

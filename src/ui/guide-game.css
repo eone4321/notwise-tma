@@ -191,6 +191,11 @@
   box-shadow: none;
   backdrop-filter: none;
 }
+.guideGrid .guideTile:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  min-height: 86px;
+}
+.guideGrid .guideTile:last-child:nth-child(odd) .tileText small { max-width: none; }
 .guideTile .tileText { min-width: 0; }
 .guideTile .tileText b { font-size: 13px; line-height: 1.2; }
 .guideTile .tileText small { font-size: 11px; line-height: 1.35; margin-top: 3px; max-width: 23ch; }
@@ -1164,9 +1169,10 @@ dialog.modal.itemHelpSheet::backdrop { background: #0006; }
   margin-block: 12px 15px;
 }
 .buildEquipMain.buildPresetTrigger {
-  min-block-size: 55px;
-  padding: 6px 9px;
-  grid-template-columns: 20px minmax(0, 1fr) 9px;
+  min-block-size: 56px;
+  margin-block: 12px 14px;
+  padding: 8px 10px;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
   border: 1px solid var(--game-panel-line);
   background: var(--game-tile);
 }
@@ -1244,3 +1250,103 @@ dialog.modal.itemHelpSheet::backdrop { background: #0006; }
 .buildMatchups > div { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 0; border-block-end: 1px solid var(--game-panel-line); }
 .buildMatchups dd { margin: 0; color: var(--gold); text-align: end; font-weight: 700; white-space: nowrap; }
 .buildMatchups small { font-size: 11px; font-weight: 500; }
+
+.buildPillButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-block-size: 34px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.buildPillButton:active { border-color: var(--gold); color: var(--gold); }
+.buildBudget[data-empty="true"] strong { color: #9fd59b; }
+.buildPresetAction {
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--game-panel-line));
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 700;
+}
+.buildSlotCounter { font-size: 12px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.buildEquipInline {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 8px;
+}
+.buildEquipInline > .buildEquipMain { min-width: 0; grid-template-columns: 34px minmax(0, 1fr) auto; }
+.buildInlineSelect {
+  width: auto;
+  min-width: 62px;
+  min-height: 36px;
+  margin: 0;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+.buildManaSummary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--game-panel-line);
+  font-size: 12px;
+}
+.buildManaSummary strong { color: var(--gold); }
+.buildOkNote { margin: 0; font-size: 12px; font-weight: 600; color: #a7d996; }
+.buildOverallWinrate {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+}
+.buildOverallWinrate small { display: block; font-size: 11px; color: var(--muted); }
+.buildOverallWinrate .caption { margin: 2px 0 0; font-size: 11px; }
+.buildOverallValue { display: flex; align-items: baseline; gap: 6px; }
+.buildOverallValue strong { font-size: 22px; color: var(--gold); font-variant-numeric: tabular-nums; }
+.buildDeltaUp { color: #9fd59b; font-size: 13px; font-weight: 700; }
+.buildDeltaDown { color: #f18d82; font-size: 13px; font-weight: 700; }
+.buildWinBar {
+  display: block;
+  margin-top: 5px;
+  width: 100%;
+  max-width: 170px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.buildWinBar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff983f, var(--gold));
+}
+.buildPracticeCard .actionPair { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.buildPracticeCard .actionPair .buildRunPractice { flex: 1; }
+.combatTipsList { display: grid; gap: 10px; margin-top: 6px; }
+.combatTipsList li { display: grid; gap: 2px; padding-top: 9px; border-top: 1px solid var(--game-panel-line); }
+.combatTipsList li:first-child { padding-top: 0; border-top: 0; }
+.combatTipsList strong { font-size: 13px; color: var(--gold); }
+.combatTipsList span { font-size: 12.5px; line-height: 1.45; color: var(--muted); }

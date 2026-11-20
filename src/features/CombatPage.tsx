@@ -71,15 +71,20 @@ export function CombatPage() {
         <h2 className="subTitle">{branch[1]}</h2>
         <section className="card skillShelf">
           <p className="caption">С уровня 2 вложи очко атрибута в эту ветку и открой навык за полученное очко ветки. Для улучшения навыков нужны <SpBadge/> из Додзе.</p>
-          {skills.filter(item => item.branch === branch[0]).sort((a, b) => a.tier - b.tier).map(item =>
-            <DetailLink to={'/combat/skills/' + branch[0] + '/' + item.id} className="mediaRow skillRow" key={item.id}>
+          {skills.filter(item => item.branch === branch[0]).sort((a, b) => a.tier - b.tier).map(item => {
+            const isPassive = item.type === 'passive';
+            const cost = isPassive
+              ? `Пассивный · ${skillMana(item.tier, true, item.id === 10)} маны`
+              : `Активный · ${skillMana(item.tier, false)} маны · откат ${skillCooldown(item.tier)} с`;
+            return <DetailLink to={'/combat/skills/' + branch[0] + '/' + item.id} className="mediaRow skillRow" key={item.id}>
               <span className="skillTile"><GameArt path={skillArt(item.id)} size={38}/><b aria-hidden="true">{item.tier}</b></span>
-              <span><strong>{skillCopy[item.id - 1][0]}</strong><small>{unlockCondition(item)}</small></span>
+              <span><strong>{skillCopy[item.id - 1][0]}</strong><small>{cost}</small><small>{unlockCondition(item)}</small></span>
               <span className="rowChevron" aria-hidden="true"/>
-            </DetailLink>)}
+            </DetailLink>;
+          })}
         </section>
       </> : isStats ? <CombatStats/> : <>
-        <p className="intro">Ветки навыков открываются на 2-м уровне. В бой можно взять до трёх навыков.</p>
+        <p className="intro">Ветки навыков открываются на 2-м уровне. В бой можно взять до трёх навыков, прокачка — за <SpBadge/> из Додзе.</p>
         <div className="card combatBranches">
           {branches.map(([id, title, purpose]) =>
             <DetailLink className="mediaRow" to={'/combat/skills/' + id} key={id}>
@@ -87,7 +92,18 @@ export function CombatPage() {
             </DetailLink>
           )}
         </div>
-        <section className="card"><h2>Как прокачивать</h2><p>Вложи очко в нужный атрибут и открой следующий навык ветки. Затем прокачивай его за <SpBadge/>. Очки <SpBadge/> дают тренировки в Додзе и применение навыков в бою.</p></section>
+        <section className="card">
+          <h2>Что важно знать перед боем</h2>
+          <ul className="compactList combatTipsList">
+            <li><strong>Мана конечна на весь бой</strong><span>В бою она не восстанавливается. При 0 маны отключаются не только активные, но и пассивные навыки (Мощный удар, Щит из скорлупы, Железная воля, Подсказка духа).</span></li>
+            <li><strong>Серия из 3 попаданий подряд</strong><span>Три удара без блока и уклонения вызывают комбо из 4 доп. атак и оглушают цель на 1,5 с. Промах сбрасывает счётчик.</span></li>
+            <li><strong>Максимум 35% HP за один удар</strong><span>Даже крит ×2 или «Двойная ставка» ×5 не снимут обычным ударом больше 35% максимального здоровья цели.</span></li>
+            <li><strong>Оглушение не мешает блоку</strong><span>Оглушённая сова не бьёт, но всё ещё меняет зону блока. Зафиксировать блок могут только «Сковывающие цепи».</span></li>
+            <li><strong>Что бьёт сквозь защиту</strong><span>«Молния» проходит и через блок, и через уклонение; «Астероид» — через блок. Удар в твой блок не тратит заряды «Уклонения».</span></li>
+            <li><strong>Пауза 5-й ступени</strong><span>Ультимативные навыки после нажатия на 2 с блокируют твою атаку и смену блока — не жми их под чужой Фазовый сдвиг.</span></li>
+            <li><strong>Потолок 70% для крита и уклонения</strong><span>Оба предела достигаются при 100 стата. Ловкость сверх 100 ничего не даёт, а Мудрость продолжает добавлять +20 маны за очко.</span></li>
+          </ul>
+        </section>
       </>}
   </>;
 }
