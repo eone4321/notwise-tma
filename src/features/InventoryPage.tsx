@@ -197,6 +197,62 @@ const energyTiers = [
   { range: ['Ур. 40–44', 'Lv. 40–44'], fight: 90, flight: 600, sp: '40–44 SP' },
 ] as const;
 
+function ResourcesPage({ en }: { en: boolean }) {
+  const lang = en ? 1 : 0;
+  const resources = [
+    {
+      title: ['XP · Опыт', 'XP · Experience'],
+      factors: ['От чего зависит награда XP', 'What changes XP rewards'],
+      summary: ['Повышает уровень совы. На 2-м открываются навыки и Додзё, на 3-м — сквады, на 4-м — осады, на 5-м — полёт и задания. Уровень также повышает базовое здоровье и урон. Запись в дискету требует вдвое больше XP, чем она вмещает, и сбрасывает опыт, SP и навыки, возвращая сову в яйцо.', 'Raises your owl’s level. Skills and the Dojo unlock at level 2, squads at 3, sieges at 4, and flights and tasks at 5. Level also raises base health and damage. Filling a floppy requires twice the XP it holds and resets XP, SP, and skills, returning the owl to an egg.'],
+      icon: <GameSymbol name="xp" size={28}/>,
+      sources: ['Капсулы, полёты и верные ответы в Книге загадок. Опыт также можно получить из заполненной дискеты XP.', 'Capsules, flights, and correct answers in the Book of Riddles. You can also gain XP by using a filled XP Floppy.'],
+      tip: ['В капсулах опыт зависит от уровня и типа капсулы. В Книге загадок серия верных ответов увеличивает XP до ×3. Голод режет получаемый опыт вдвое. Открытый Чиллер убирает XP из капсул, сохраняя монеты и предметы.', 'Capsule XP depends on the capsule’s level and type. A correct-answer streak in the Book of Riddles multiplies XP by up to ×3. Hunger halves earned XP. An open Chiller removes capsule XP while preserving coins and items.'],
+      links: [['/combat/stats#xp', 'Опыт для уровней', 'XP by level'], ['/capsules', 'Награды капсул', 'Capsule rewards']],
+    },
+    {
+      title: ['SP · Очки навыков', 'SP · Skill points'],
+      factors: ['Сколько SP даёт удар', 'SP per hit'],
+      siege: ['Личная мощь в осадах растёт с заработанными SP. Мощь вкладывают в атаку или защиту территории. Учитываются заработанные очки, а не текущий остаток SP.', 'Personal siege power grows with earned SP. Commit that power to attack or defend a territory. Total SP earned matters, regardless of your unspent SP balance.'],
+      summary: ['Трать SP на уровни уже открытых навыков, запас энергии и восстановление энергии и здоровья. Свободные SP можно записать в колбу для переноса. Для заполнения нужно вдвое больше SP, чем вмещает колба, и списывается весь свободный остаток.', 'Spend SP on unlocked skill levels, energy capacity, and energy and health regeneration. A flask lets you transfer SP. Filling it requires twice its capacity and spends your entire unallocated balance.'],
+      icon: <GameSymbol name="sp" size={28}/>,
+      sources: ['Додзё открывается со 2-го уровня. Удар по манекену стоит 2⚡ и даёт SP по уровню совы. На 10-м уровне это 10 SP за обычный удар. SP также дают за бои. Заполненная колба позволяет перенести ранее накопленные очки.', 'The Dojo opens at level 2. A hit costs 2⚡ and gives SP equal to your owl’s level. At level 10, that is 10 SP per normal hit. Battles also award SP. A filled flask lets you transfer previously stored points.'],
+      tip: ['Чем выше уровень совы, тем больше SP за удар. Удар Bang удваивает награду. Новый навык открывается за очки атрибутов в его ветке, а SP идут на его улучшение.', 'Higher owl levels give more SP per hit. A Bang hit doubles the reward. Attribute points unlock skills in their branches, and SP upgrade them.'],
+      links: [['/combat', 'Открытие и прокачка навыков', 'Unlocking and upgrading skills'], ['/squads/war', 'Мощь в осадах', 'Siege power']],
+    },
+    {
+      title: ['Монеты', 'Coins'],
+      factors: ['Бонусы и штрафы к монетам', 'Coin bonuses and penalties'],
+      summary: ['Ими платят в игровой лавке за еду, лекарства и экипировку.', 'Spend them in the in-game shop on food, medicine, and gear.'],
+      icon: <GameArt path={itemPath('wise-coin.webp')} size={28}/>,
+      sources: ['Капсулы, полёты, нападения, Книга загадок, удержание территорий в осадах и награды за приглашения. Победитель нападения забирает 3% монет проигравшего.', 'Capsules, flights, raids, the Book of Riddles, holding territories in sieges, and referral rewards. The winner of a raid takes 3% of the loser’s coins.'],
+      tip: ['Скин, заточка, боевая лига и Монтмориллонит повышают доход от боёв и полётов. Серия ответов в Книге даёт до ×3 монет, а голод режет доход вдвое. Бонусы экипировки не увеличивают фиксированную награду капсул.', 'Skins, enchants, battle league, and Montmorillonite boost coins from battles and flights. Riddle streaks multiply coins by up to ×3, and hunger halves income. Equipment bonuses do not boost fixed capsule rewards.'],
+      links: [['/owl/skins', 'Калькулятор бонуса к монетам', 'Coin bonus calculator'], ['/modes#leagues', 'Бонусы лиг', 'League bonuses'], ['/assets', 'Цены в лавке', 'Shop prices']],
+    },
+  ];
+  return <>
+    {resources.map(resource => <section className="card memoCard" key={resource.title[0]}>
+      <div className="memoCardHead">{resource.icon}<div><h2>{resource.title[lang]}</h2></div></div>
+      <div className="resourceSections">
+        <section>
+          <h3>{en ? 'Where to earn it' : 'Где получить'}</h3>
+          <p>{resource.sources[lang]}</p>
+        </section>
+        <section>
+          <h3>{resource.factors[lang]}</h3>
+          <p>{resource.tip[lang]}</p>
+        </section>
+        <section>
+          <h3>{en ? 'What it is for' : 'Для чего нужно'}</h3>
+          <p>{resource.summary[lang]}</p>
+          {resource.siege && <p>{resource.siege[lang]}</p>}
+        </section>
+      </div>
+      <div className="itemValueLinks">{resource.links.map(([to, ru, english]) =>
+        <DetailLink key={to} className="itemValueChipLink" to={to}>{en ? english : ru}<span className="rowChevron" aria-hidden="true"/></DetailLink>)}</div>
+    </section>)}
+  </>;
+}
+
 export function CarePage() {
   const { pathname, state } = useLocation();
   const { locale } = useGuideLocale();
@@ -210,9 +266,12 @@ export function CarePage() {
   return <>
     <div className="careTabsViewport">
       <div className="careTabsViewportInner">
-        <nav className="choiceBar profileTabs careTabs careTabsScroll" aria-label={en ? 'Memo, lifehacks, item value and modes' : 'Памятка, лайфхаки, ценность и режимы'}>
+        <nav className="choiceBar profileTabs careTabs careTabsScroll" aria-label={en ? 'Guide sections' : 'Разделы памятки'}>
           <Link to="/care" replace state={tabState} aria-current={!isModes && !isLifehacks && !isValues ? 'page' : undefined}>
             <GameGlyph name="info"/>{en ? 'Memo' : 'Памятка'}
+          </Link>
+          <Link to="/modes" replace state={tabState} aria-current={isModes ? 'page' : undefined}>
+            <GameGlyph name="fight"/>{en ? 'Modes' : 'Режимы'}
           </Link>
           <Link to="/lifehacks" replace state={tabState} aria-current={isLifehacks ? 'page' : undefined}>
             <GameGlyph name="sparkles"/>{en ? 'Lifehacks' : 'Лайфхаки'}
@@ -220,14 +279,12 @@ export function CarePage() {
           <Link to="/item-values" replace state={tabState} aria-current={isValues ? 'page' : undefined}>
             <GameGlyph name="treasure"/>{en ? 'Item Value' : 'Ценность'}
           </Link>
-          <Link to="/modes" replace state={tabState} aria-current={isModes ? 'page' : undefined}>
-            <GameGlyph name="fight"/>{en ? 'Modes' : 'Режимы'}
-          </Link>
         </nav>
       </div>
     </div>
 
     {isModes ? <ModesPage/> : isLifehacks ? <LifehacksPage/> : isValues ? <ItemValueRankingPage/> : <div className="memoStack">
+      <ResourcesPage en={en}/>
       <section className="card memoCard">
         <div className="memoCardHead">
           <GameArt path={itemPath('book.webp')} size={40}/>

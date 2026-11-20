@@ -675,7 +675,7 @@ const rankedItems: RankedItemEntry[] = [
     tier: 'S+',
     icon: '/game/items/chiller-open.webp',
     title: ['Чиллер', 'Chiller'],
-    role: ['Контроль уровня и цены энергии (freezes_xp: 1)', 'Level & energy cost control (freezes_xp: 1)'],
+    role: ['Останавливает получение опыта из капсул', 'Pauses XP from capsules'],
     whyValuable: [
       [
         'Самый недооценённый стратегический предмет: замораживает опыт из капсул, но сохраняет 100% монет, предметов и шансов на $NOT.',
@@ -695,7 +695,7 @@ const rankedItems: RankedItemEntry[] = [
     tier: 'S+',
     icon: '/game/items/montmorillonite.webp',
     title: ['Монтмориллонит', 'Montmorillonite'],
-    role: ['Вечное 100% здоровье + 10% к фарму (full_health: true)', 'Permanent 100% HP + 10% coin farm (full_health: true)'],
+    role: ['Вечное 100% здоровье + 10% к фарму', 'Permanent 100% HP + 10% coin farm'],
     whyValuable: [
       [
         'Кроме +10% к монетам, артефакт поддерживает здоровье совы на максимуме.',
@@ -980,11 +980,11 @@ export function ItemValueRankingPage() {
                   <GameArt path={item.icon} size={36} />
                 </span>
                 <div className="lifehackTitleWrap" style={{ flex: 1 }}>
+                  <h2>{en ? item.title[1] : item.title[0]}</h2>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span className="itemValueTierBadge" data-tier={item.tier}>{item.tier}</span>
                     <span className="lifehackTag">{en ? item.role[1] : item.role[0]}</span>
                   </div>
-                  <h2>{en ? item.title[1] : item.title[0]}</h2>
                 </div>
               </div>
 

@@ -465,6 +465,12 @@ details > p { margin: 4px 0 8px; }
 .flightRules li:last-child { border-bottom: 0; }
 .flightRules span { color: var(--muted); font-size: 13px; }
 .flightRules strong { text-align: end; font-size: 12px; font-weight: 600; color: var(--text); }
+.modeRules li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
 .energyBadge { display: inline-flex; align-items: center; gap: 3px; }
 .spBadge { display: inline-flex; align-items: center; gap: 3px; color: #c4b5fd; font-weight: 700; vertical-align: middle; line-height: 1; }
 .spBadge .spValue { line-height: 1; }

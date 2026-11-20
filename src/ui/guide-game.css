@@ -658,6 +658,7 @@
 }
 .stickerMintTotal strong { margin-inline-start: auto; color: var(--gold); }
 .albumTileMeta { display: flex; justify-content: center; gap: 3px; white-space: nowrap; font-size: 9.5px; line-height: 1.4; }
+.stickerShelf .albumTileMeta { margin-block-start: -2px; }
 .albumTileMeta span { padding: 1px 5px; border-radius: 999px; background: var(--game-tile); color: var(--muted); font-weight: 700; }
 .albumTileMeta span.isComplete { color: #211812; background: #ffce91; }
 .albumNftCorner {
@@ -5133,3 +5134,20 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   font-weight: 700;
   text-decoration: none;
 }
+
+.resourceSections > section + section {
+  margin-block-start: 12px;
+  padding-block-start: 12px;
+  border-block-start: 1px solid var(--game-panel-line);
+}
+.resourceSections h3 {
+  margin: 0 0 4px;
+  color: var(--gold);
+  font-size: 14px;
+}
+.resourceSections p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.resourceSections p + p { margin-block-start: 8px; }

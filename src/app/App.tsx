@@ -379,6 +379,7 @@ function Page({ english: en, profile, onChatVisit, ask, joke, showJoke, popup, r
   ask: () => void; joke: boolean; showJoke: boolean; popup: boolean; reveal: () => void; referrals: React.ReactNode;
 }) {
   const { pathname, hash, state } = useLocation();
+  if (pathname === '/care/resources') return <Navigate to="/care" state={state} replace/>;
   if (pathname === '/owl/care' || pathname === '/combat/modes') {
     return <Navigate to={(pathname === '/owl/care' ? '/care' : '/modes') + hash} state={state} replace/>;
   }

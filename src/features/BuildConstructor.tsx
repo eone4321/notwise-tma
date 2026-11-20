@@ -932,8 +932,8 @@ function BuildAnalysis({ state, lang }: { state: BuildState; lang: number }) {
     ),
   });
   if (review.flurryWithoutHint) notes.push({
-    title: copy('Вой берсерка без фиксации блока', 'Berserk Howl without guard lock'),
-    detail: copy('Бей Воем сразу после попадания, либо добавь Сковывающие цепи / Подсказку духа.',
+    title: copy('Berserk Howl без фиксации блока', 'Berserk Howl without guard lock'),
+    detail: copy('Бей Berserk Howl сразу после попадания, либо добавь Crippling Chains / Spirit Guidance.',
       'Cast Howl right after hitting an open zone, or pair with Chains / Spirit Guidance.'),
   });
   if (review.overCap.includes('agility')) notes.push({
@@ -982,17 +982,17 @@ function BuildPractice({ result, comparison, lang, save, clear, state }: {
   const weakest = result.matchups.reduce((weak, row) => row.wins < weak.wins ? row : weak);
   const hasSkill = (id: number) => state.skills.some(slot => slot?.id === id);
   const experiments: Record<string, string> = {
-    stun: hasSkill(20) ? copy('Молния проходит через блок и уклонение. В реальном бою прибереги Фазовый сдвиг на её применение.', 'Lightning goes through guard and dodge. In a real fight, save Phase Shift for that cast.')
-      : copy('Сравни вариант с большим запасом HP или Фазовым сдвигом. Молния проходит через блок и уклонение.', 'Try more HP or Phase Shift. Lightning goes through guard and dodge.'),
+    stun: hasSkill(20) ? copy('Lightning проходит через блок и уклонение. В реальном бою прибереги Phase Shift на её применение.', 'Lightning goes through guard and dodge. In a real fight, save Phase Shift for that cast.')
+      : copy('Сравни вариант с большим запасом HP или Phase Shift. Lightning проходит через блок и уклонение.', 'Try more HP or Phase Shift. Lightning goes through guard and dodge.'),
     bastion: state.rings.every(slot => slot?.ring.attribute === 'wisdom')
       ? copy('Все кольца уже дают ману. Попробуй более дешёвый активный навык для затяжного боя.', 'All your rings already add mana. Try a cheaper active skill for drawn-out duels.')
       : copy('Попробуй увеличить запас маны, заменив одно кольцо на кольцо мудрости.', 'Try more mana by swapping one ring for a Wisdom ring.'),
     dodge: [1, 6, 11, 12, 16].some(hasSkill)
       ? copy('У тебя уже есть урон сквозь уклонение. Проверь запас маны для повторного применения.', 'You already have direct damage that bypasses dodge. Check mana for repeat casts.')
-      : copy('Против высокого уклонения хорошо работают Молния или Астероид.', 'Try an ability that bypasses dodge, such as Lightning or Asteroid.'),
+      : copy('Против высокого уклонения хорошо работают Lightning или Asteroid.', 'Try an ability that bypasses dodge, such as Lightning or Asteroid.'),
     assault: hasSkill(9) || hasSkill(6)
       ? copy('У тебя уже есть ответ на частые удары. Прибереги его под серию соперника.', 'You already have an answer to frequent hits. Save it for enemy combos.')
-      : copy('Попробуй Статический щит для ответного урона или Снежок для замедления атак.', 'Try Static Shield for retaliation, or Snowball to slow attacks.'),
+      : copy('Попробуй Static Shield для ответного урона или Snowball для замедления атак.', 'Try Static Shield for retaliation, or Snowball to slow attacks.'),
   };
   const verdict = overall >= 58 ? copy('Выше базы', 'Above meta') : overall >= 48 ? copy('На равных с метой', 'Even with meta') : copy('Сложные матчапы', 'Tough matchups');
   const canCompareFullBuilds = state.level >= 5 && (state.budget ?? state.level) >= 8;

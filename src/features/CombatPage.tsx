@@ -53,74 +53,45 @@ const skillDescriptionsEn = [
   'Grants temporary invulnerability to all damage.',
 ] as const;
 
-const modesRu = [
-  ['swords', 'Рейтинговый бой', 'Рейтинг и капсулы', [
-    'Атакуй зоны, которые соперник не блокирует, и переключай свой блок.',
-    'Победа может дать капсулу при наличии свободного слота.',
-  ]],
-  ['target', 'Нападения', 'С 1-го уровня', [
-    'Нападай на сов из рейтинга — проигравший отдаёт победителю 3% монет.',
-    'После 3 проигранных нападений подряд включается щит до входа игрока.',
-  ]],
-  ['boxing', 'Додзе', 'Со 2-го ур. · 2 ⚡ за удар', [
-    'Удар по манекену тратит 2 ⚡ и приносит SP.',
-    'Навыки тоже можно тренировать на манекене.',
-    'Трать SP на улучшения, а очки атрибута — на открытие навыков ветки.',
-  ]],
-  ['shield', 'Сквады и осады', 'Сквады с 3-го · война с 4-го', [
-    'Раунд длится 8 часов, награды суммируются за все 3 раунда.',
-    'Территории дают серебро сквада, монеты или +1–2 к атрибуту на 24ч.',
-    'Чтобы забрать награду сквада за раунд, нужно участвовать в атаке.',
-  ]],
-  ['rocket', 'Полёт', 'С 5-го уровня · от 250 энергии', []],
-  ['bolt', 'Wild Magic', 'Тренировка заклинаний', [
-    'Три максимальные оценки открывают достижение Spell Book.',
-  ]],
-  ['magnifier', 'Книга загадок', '60 секунд на ответ', [
-    'Сотри поле, чтобы открыть загадку и запустить таймер.',
-    'Серия верных ответов умножает монеты и XP до ×3.',
-    'Верный ответ даёт +5 мудрости на 24 часа.',
-    'После трёх ошибок книга сгорает.',
-  ]],
-  ['trophy', 'Сезон', '14 дней', [
-    'В каждом сезоне одна из 8 дисциплин: лайки, победы, идеальные победы без урона, монеты в полёте, дистанция в полёте, лучший полёт, загадки из книги или удары в Додзё.',
-    'Учитывается активность только за текущий сезон.',
-  ]],
-] as const;
-
-const modesEn = [
-  ['swords', 'Ranked Battle', 'Rating and capsules', [
-    'Attack zones the opponent is not guarding and switch your own block.',
-    'Winning can drop a capsule if you have an open slot.',
-  ]],
-  ['target', 'Raid', 'From level 1', [
-    'Attack owls from the leaderboard — the loser gives 3% of their coins to the winner.',
-    'After 3 lost raids in a row, a shield activates until the player logs back in.',
-  ]],
-  ['boxing', 'Dojo', 'From lvl 2 · 2 ⚡ per hit', [
-    'Hitting the dummy spends 2 ⚡ and grants SP.',
-    'Skills can also be trained on the dummy.',
-    'Spend SP on upgrades, and attribute points on unlocking branch skills.',
-  ]],
-  ['shield', 'Squads and Sieges', 'Squads at lvl 3 · wars at lvl 4', [
-    'Each round lasts 8 hours, and rewards stack across all 3 rounds.',
-    'Territories grant squad silver, coins, or +1–2 to an attribute for 24 h.',
-    'To claim your squad reward for a round, you must participate in the attack.',
-  ]],
-  ['rocket', 'Flight', 'From level 5 · from 250 energy', []],
-  ['bolt', 'Wild Magic', 'Spell training', [
-    'Three top scores unlock the Spell Book achievement.',
-  ]],
-  ['magnifier', 'Book of Riddles', '60 seconds to answer', [
-    'Scratch the field to reveal the riddle and start the timer.',
-    'A streak of correct answers multiplies coins and XP up to ×3.',
-    'A correct answer grants +5 Wisdom for 24 hours.',
-    'After three mistakes, the book burns up.',
-  ]],
-  ['trophy', 'Season', '14 days', [
-    'Each season features one of 8 disciplines: likes, wins, flawless wins, flight coins, flight distance, best flight, book riddles, or dojo hits.',
-    'Only activity during the current season counts.',
-  ]],
+const modes = [
+  { icon: 'swords', title: ['Рейтинговый бой', 'Ranked Battle'], subtitle: ['Рейтинг и капсулы', 'Rating and capsules'],
+    guide: ['Целься в голову, корпус или живот. Удар в защищённую зону не наносит урона. Меняй свой блок, чтобы прикрыть зону, в которую бьёт соперник.', 'Aim for the head, chest, or belly. Hits into a guarded zone deal no damage. Switch your guard to cover the zone your opponent is targeting.'],
+    rules: [
+      ['Между атаками', 'Between attacks', '1,5с', '1.5s'],
+      ['Между сменами блока', 'Between guard switches', '1с', '1s'],
+      ['За победу', 'For winning', 'Шанс на капсулу при свободном слоте', 'Chance for a capsule with an open slot'],
+    ] },
+  { icon: 'target', title: ['Нападения', 'Raids'], subtitle: ['С 1-го уровня', 'From level 1'],
+    guide: ['Выбери соперника в рейтинге. После трёх проигранных нападений подряд щит защищает игрока до следующего входа в игру.', 'Choose an opponent from the leaderboard. After three raid losses in a row, a shield protects the player until they log back in.'],
+    rules: [['Победитель забирает', 'Winner takes', '3% монет проигравшего', '3% of the loser’s coins']] },
+  { icon: 'boxing', title: ['Додзё', 'Dojo'], subtitle: ['Со 2-го уровня', 'From level 2'],
+    guide: ['Бей манекен, чтобы заработать SP, и пробуй на нём навыки. Потрать SP на прокачку, а очки атрибутов вкладывай в ветки, чтобы открыть новые навыки.', 'Hit the dummy to earn SP and practise your skills. Spend SP on upgrades and invest attribute points in branches to unlock new skills.'],
+    rules: [['Обычный удар', 'Basic hit', '2 ⚡ за удар', '2 ⚡ per hit']] },
+  { icon: 'shield', title: ['Сквады и осады', 'Squads and Sieges'], subtitle: ['Сквады с 3-го ур. · осады с 4-го', 'Squads at level 3 · sieges at level 4'],
+    guide: ['Захватывай и удерживай территории вместе со сквадом. Чтобы получить награду за раунд, вложи в атаку хотя бы 1 единицу мощи.', 'Capture and hold territories with your squad. Contribute at least 1 power to an attack to earn that round’s reward.'],
+    rules: [
+      ['Длительность осады', 'Siege duration', '3 раунда по 8ч.', '3 rounds of 8h'],
+      ['Награды за территории', 'Territory rewards', 'Монеты, серебро или +1–2 к атрибуту на 24ч.', 'Coins, squad silver, or +1–2 to an attribute for 24h'],
+    ] },
+  { icon: 'rocket', title: ['Полёт', 'Flight'], subtitle: ['С 5-го уровня', 'From level 5'] },
+  { icon: 'bolt', title: ['Wild Magic', 'Wild Magic'], subtitle: ['Тренировка заклинаний', 'Spell practice'],
+    guide: ['Тренируй заклинания и старайся получить максимальную оценку.', 'Practise casting spells and aim for the highest score.'],
+    rules: [['Достижение Spell Book', 'Spell Book achievement', 'Три максимальные оценки', 'Three top scores']] },
+  { icon: 'magnifier', title: ['Книга загадок', 'Book of Riddles'], subtitle: ['60с на ответ', '60s to answer'],
+    guide: ['Сотри защитный слой, чтобы увидеть загадку. Таймер запускается сразу, как открывается загадка.', 'Scratch off the cover to reveal the riddle. The timer starts when the riddle appears.'],
+    rules: [
+      ['За верный ответ', 'Correct answer', '+5 к мудрости на 24ч.', '+5 Wisdom for 24h'],
+      ['Серия верных ответов', 'Correct answer streak', 'До ×3 монет и XP', 'Up to ×3 coins and XP'],
+      ['Три ошибки', 'Three mistakes', 'Книга сгорает', 'The book burns up'],
+    ] },
+  { icon: 'trophy', title: ['Сезон', 'Season'], subtitle: ['14 дней', '14 days'],
+    guide: ['В каждом сезоне одна дисциплина. В зачёт идут результаты, полученные за эти 14 дней.', 'Each season has one discipline. Only results earned during those 14 days count.'],
+    rules: [
+      ['Социальная активность', 'Social', 'Лайки', 'Likes'],
+      ['Бои', 'Battles', 'Победы или победы без урона', 'Wins or flawless wins'],
+      ['Полёт', 'Flight', 'Монеты, дистанция или лучший полёт', 'Coins, distance, or best flight'],
+      ['Другие режимы', 'Other modes', 'Загадки или удары в Додзё', 'Riddles or Dojo hits'],
+    ] },
 ] as const;
 
 const formatRu = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
@@ -180,7 +151,7 @@ export function CombatPage({ referralCode }: { referralCode?: string }) {
   return <>
     {!branch && !badPage && <nav className="choiceBar profileTabs combatTabs" aria-label={en ? 'Combat section' : 'Раздел боя'}>
       <Link to="/combat" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isSkills ? 'page' : undefined}><GameGlyph name="lightning"/>{en ? 'Skills' : 'Навыки'}</Link>
-      <Link to="/combat/stats" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isStats ? 'page' : undefined}><GameGlyph name="shield"/>{en ? 'Attributes' : 'Характеристики'}</Link>
+      <Link to="/combat/stats" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isStats ? 'page' : undefined}><GameGlyph name="shield"/>{en ? 'Attributes' : 'Атрибуты'}</Link>
       <Link to="/combat/builds" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={isBuilds ? 'page' : undefined}><GameGlyph name="sparkles"/>{en ? 'Builds' : 'Билды'}</Link>
     </nav>}
     {badPage ? (
@@ -236,22 +207,22 @@ export function CombatPage({ referralCode }: { referralCode?: string }) {
           <ul className="compactList combatTipsList">
             <li><strong>{en ? 'Mana is finite for the whole fight' : 'Мана конечна на весь бой'}</strong><span>{en
               ? 'Mana does not regenerate during combat. At 0 mana, both active skills and passives (Power Punch, Nutshell Aegis, Iron Will, Spirit Guidance) stop triggering.'
-              : 'В бою она не восстанавливается. При 0 маны отключаются не только активные, но и пассивные навыки (Мощный удар, Щит из скорлупы, Железная воля, Подсказка духа).'}</span></li>
+              : 'В бою она не восстанавливается. При 0 маны отключаются не только активные, но и пассивные навыки (Power Punch, Nutshell Aegis, Iron Will, Spirit Guidance).'}</span></li>
             <li><strong>{en ? '3-hit streak combo' : 'Серия из 3 попаданий подряд'}</strong><span>{en
               ? 'Three consecutive landed basic hits without block or dodge trigger a 4-hit flurry combo and stun the target for 1.5 s. A miss resets the counter.'
               : 'Три удара без блока и уклонения вызывают комбо из 4 доп. атак и оглушают цель на 1,5с. Промах сбрасывает счётчик.'}</span></li>
             <li><strong>{en ? '35% max HP cap per hit' : 'Максимум 35% HP за один удар'}</strong><span>{en
               ? 'Even a ×2 crit or ×5 Double Down cannot remove more than 35% of the target’s max health with a single basic hit.'
-              : 'Даже крит ×2 или «Двойная ставка» ×5 не снимут обычным ударом больше 35% максимального здоровья цели.'}</span></li>
+              : 'Даже крит ×2 или «Double Down» ×5 не снимут обычным ударом больше 35% максимального здоровья цели.'}</span></li>
             <li><strong>{en ? 'Stun does not lock blocking' : 'Оглушение не мешает блоку'}</strong><span>{en
               ? 'A stunned owl cannot attack, but can still switch guard zones. Only Crippling Chains lock the guard zone.'
-              : 'Оглушённая сова не бьёт, но всё ещё меняет зону блока. Зафиксировать блок могут только «Сковывающие цепи».'}</span></li>
+              : 'Оглушённая сова не бьёт, но всё ещё меняет зону блока. Зафиксировать блок могут только «Crippling Chains».'}</span></li>
             <li><strong>{en ? 'What pierces defense' : 'Что бьёт сквозь защиту'}</strong><span>{en
               ? 'All 5 direct attack spells (Lightning, Asteroid, Fireball, Snowball, Desperate Throw) pierce both block and dodge (Evada Kedabra and Agility dodge); only Phase Shift blocks them and Nutshell Aegis reduces their damage. A hit into your block does not spend Evada Kedabra charges.'
-              : 'Все 5 ударных заклинаний («Молния», «Астероид», «Огненный шар», «Снежок», «Бросок отчаяния») бьют и сквозь блок, и сквозь уклонение («Уклонение» и шанс от ловкости); полностью блокирует их только «Фазовый сдвиг», а «Щит из скорлупы» снижает урон. Удар в твой блок не тратит заряды «Уклонения».'}</span></li>
+              : 'Все 5 ударных заклинаний (Lightning, Asteroid, Fireball, Snowball, Desperate Throw) бьют и сквозь блок, и сквозь уклонение (Evada Kedabra и шанс от ловкости); полностью блокирует их только Phase Shift, а «Nutshell Aegis» снижает урон. Удар в твой блок не тратит заряды «Уклонения».'}</span></li>
             <li><strong>{en ? 'A brief pause after powerful spells' : 'Пауза после мощных заклинаний'}</strong><span>{en
               ? 'Snowball, Fireball, and Asteroid pause your attacks and guard switches for a few seconds. Check the opponent’s Phase Shift before casting.'
-              : 'После Снежка, Огненного шара и Астероида атаки и смена блока ненадолго приостанавливаются. Перед применением проверь, не действует ли Фазовый сдвиг у соперника.'}</span></li>
+              : 'После применения Snowball, Fireball и Asteroid атаки и смена блока ненадолго приостанавливаются. Перед применением проверь, не действует ли Phase Shift у соперника.'}</span></li>
             <li><strong>{en ? '70% cap for crit and dodge' : 'Потолок 70% для крита и уклонения'}</strong><span>{en
               ? 'Both caps are reached at 100 stat points. Agility above 100 adds nothing, while Wisdom continues adding +20 mana per point.'
               : 'Оба предела достигаются при 100 стата. Ловкость сверх 100 ничего не даёт, а Мудрость продолжает добавлять +20 маны за очко.'}</span></li>
@@ -265,29 +236,45 @@ export function ModesPage() {
   const { locale } = useGuideLocale();
   const en = locale === 'en';
   const format = en ? formatEn : formatRu;
-  const modes = en ? modesEn : modesRu;
+  const lang = en ? 1 : 0;
   const { hash } = useLocation();
   return <section className="card modesCard">
-        {modes.map(([icon, title, when, lines]) => <details className="mediaDetails" key={icon}
+        {modes.map(({ icon, title, subtitle, ...content }) => <details className="mediaDetails" key={icon}
           id={icon === 'rocket' ? 'flight' : undefined} open={icon === 'rocket' && hash === '#flight' || undefined}>
-          <summary>{icon === 'swords' ? <GameArt path="/game/ui/fight-vs.png" size={36}/> : <GameSymbol name={icon}/>}<span><strong>{title}</strong>
-            <small>{icon === 'rocket' ? <span className="energyBadge">{en ? 'From level 5 · from 250' : 'С 5-го уровня · от 250'} <GameSymbol name="bolt" size={13}/></span> :
-              icon === 'boxing' ? <span className="energyBadge">{en ? 'From level 2 · 2' : 'Со 2-го уровня · 2'} <GameSymbol name="bolt" size={13}/> {en ? '/ hit' : '/ удар'}</span> : when}</small></span>
+          <summary>{icon === 'swords' ? <GameArt path="/game/ui/fight-vs.png" size={36}/> : <GameSymbol name={icon}/>}
+            <span><strong>{title[lang]}</strong><small>{subtitle[lang]}
+              {icon === 'rocket' && <span className="energyBadge"> · {en ? 'from 250' : 'от 250'} <GameSymbol name="bolt" size={13}/></span>}
+            </small></span>
           </summary>
-          {icon === 'rocket' ? <FlightDetails/> : <div className="memoLines">{lines.map(line => <p key={line}>{line}</p>)}</div>}
-          {icon === 'swords' && <div className="memoLines" style={{ marginTop: 6 }}>
-            <p>{en ? 'Aim for the head, chest, or belly — the opponent’s guard blocks damage in the covered zone.' : 'Целься в голову, корпус или живот — блок соперника отменяет урон в выбранной зоне.'}</p>
-            <p>{en ? 'There is a 1.5 s cooldown between attacks and 1 s between guard switches.' : 'Между атаками проходит 1,5с, между сменами блока — 1с.'}</p>
-          </div>}
-          {icon === 'target' && <div className="memoLines" style={{ marginTop: 6 }}>
-            <p>{en ? 'Energy cost: 10 ⚡ at lvl 1–4, 20 ⚡ at lvl 5–9, 30 ⚡ at lvl 10–14.' : 'Расход энергии: 10 ⚡ на 1–4 ур., 20 ⚡ на 5–9 ур., 30 ⚡ на 10–14 ур.'}</p>
-            <p>{en ? 'The cost increases by +10 ⚡ every 5 levels.' : 'Стоимость растёт на +10 ⚡ каждые 5 уровней.'}</p>
+          {icon === 'rocket' ? <FlightDetails/> : 'guide' in content && <div className="flightDetails">
+            <p>{content.guide[lang]}</p>
+            {icon === 'target' && <>
+              <h4>{en ? 'Energy per raid' : 'Энергия за нападение'}</h4>
+              <div className="flightEnergyGrid">
+                {[[en ? 'Levels 1–4' : 'Уровни 1–4', 10], [en ? 'Levels 5–9' : 'Уровни 5–9', 20],
+                  [en ? 'Levels 10–14' : 'Уровни 10–14', 30], [en ? 'Every +5 levels' : 'Каждые +5 ур.', '+10']].map(([label, cost]) =>
+                  <div key={label}><span>{label}</span><strong>{cost} <GameSymbol name="bolt" size={15}/></strong></div>)}
+              </div>
+            </>}
+            <ul className="compactList flightRules modeRules">
+              {content.rules.map(row => <li key={row[0]}><span>{row[lang]}</span><strong>{row[lang + 2]}</strong></li>)}
+            </ul>
+            {icon === 'shield' && <DetailLink className="textLink" to="/squads">{en ? 'Siege map and rewards' : 'Карта и награды осад'}</DetailLink>}
+            {icon === 'swords' && <DetailLink className="textLink" to="/combat">{en ? 'Combat skills' : 'Боевые навыки'}</DetailLink>}
           </div>}
         </details>)}
         <details className="mediaDetails"><summary><GameSymbol name="trophy"/><span><strong>{en ? 'Season prizes' : 'Призы сезона'}</strong><small>{en ? 'Top 100 places' : 'Первые 100 мест'}</small></span></summary>
-        <p>{en ? 'With a 1M $NOT prize pool, the top three places receive 400,000, 350,000, and 250,000 $NOT respectively.' : 'При фонде 1 млн $NOT первые три места получают 400 000, 350 000 и 250 000 $NOT соответственно.'}</p>
-        <p>{en ? 'Top 10 receive a golden mystery egg. Places 11–100 receive a mystery egg that can be sold for 100 Stars.' : 'Топ-10 получает золотое загадочное яйцо. Места 11–100 получают загадочное яйцо, которое продаётся за 100 Stars.'}</p>
-        <p>{en ? 'Prizes are delivered automatically. The pool varies by season.' : 'Призы приходят автоматически. Фонд зависит от сезона.'}</p>
+        <ul className="compactList flightRules modeRules">
+          <li><span>{en ? 'Places 1–10' : 'Места 1–10'}</span><strong>{en ? 'Golden Mystery Egg' : 'Золотое загадочное яйцо'}</strong></li>
+          <li><span>{en ? 'Places 11–100' : 'Места 11–100'}</span><strong>{en ? 'Mystery Egg · sell for 100 Stars' : 'Загадочное яйцо · продажа за 100 Stars'}</strong></li>
+        </ul>
+        <h4>{en ? 'Example: prize pool of 1M $NOT' : 'Пример для фонда в 1 млн $NOT'}</h4>
+        <table className="priceTable">
+          <thead><tr><th scope="col">{en ? 'Place' : 'Место'}</th><th scope="col">{en ? 'Prize' : 'Приз'}</th></tr></thead>
+          <tbody>{[400000, 350000, 250000].map((amount, index) =>
+            <tr key={amount}><th scope="row">{index + 1}</th><td>{format.format(amount)} $NOT</td></tr>)}</tbody>
+        </table>
+        <p>{en ? 'Prizes are delivered automatically. The prize pool can vary by season.' : 'Призы начисляются автоматически. Размер фонда зависит от сезона.'}</p>
         <DetailLink className="textLink" to="/owl/season">{en ? 'What drops from the mystery egg' : 'Что выпадает из загадочного яйца'}</DetailLink>
       </details>
       <details className="mediaDetails" id="leagues" open={hash === "#leagues" || undefined}><summary><GameSymbol name="shield"/><span><strong>{en ? 'Battle leagues' : 'Боевые лиги'}</strong><small>{en ? 'Rating thresholds and farming bonus' : 'Пороги рейтинга и бонус к фарму'}</small></span></summary>
@@ -308,7 +295,7 @@ function SkillDetail({ skill }: { skill: Skill }) {
   const precise = en ? preciseEn : preciseRu;
   const [level, setLevel] = useState(1);
   const [owlLevel, setOwlLevel] = useState(20);
-  const [titleRu, descriptionRu] = skillCopy[skill.id - 1];
+  const [, descriptionRu] = skillCopy[skill.id - 1];
   const title = skill.name;
   const levelData = skillLevels[String(skill.id) as keyof typeof skillLevels];
   const echoDur = format.format(levelData.dur[level - 1]);
@@ -323,7 +310,7 @@ function SkillDetail({ skill }: { skill: Skill }) {
   const multiplier = skillHpMultiplier(owlLevel);
   return <section className="card">
     <div className="mediaHeading"><GameArt path={skillArt(skill.id)} size={64}/><div>
-      <h2>{title}</h2><p>{titleRu} · {en ? `tier ${skill.tier}` : `ступень ${skill.tier}`}</p>
+      <h2>{title}</h2><p>{en ? `tier ${skill.tier}` : `ступень ${skill.tier}`}</p>
     </div></div>
     {skill.id === 14 && <p className="caption">«{en ? skill.description : 'Дежавю, но больно'}»</p>}
     <p>{description}</p>
@@ -368,6 +355,7 @@ const attributesEn = [
 ] as const;
 
 function CombatStats() {
+  const { hash } = useLocation();
   const { locale } = useGuideLocale();
   const en = locale === 'en';
   const format = en ? formatEn : formatRu;
@@ -377,10 +365,10 @@ function CombatStats() {
   const curve = progression.current;
   return <>
     <section className="card"><h2>{en ? 'Effect of one attribute point' : 'Эффект одного очка атрибута'}</h2>
-      {attributes.map(([icon, name, effect, detail]) => <details className="mediaDetails" key={icon}>
-        <summary><GameAttribute name={icon}/><span><strong>{name}</strong><small>{effect}</small></span></summary>
-        <p>{detail}</p>
-      </details>)}
+      {attributes.map(([icon, name, effect, detail]) => <div className="mediaRow combatAttributeRow" key={icon}>
+        <GameAttribute name={icon}/>
+        <div><strong>{name}</strong><p>{effect}</p><p>{detail}</p></div>
+      </div>)}
     </section>
     <section className="card"><h2>{en ? 'Owl upgrades' : 'Улучшения совы'}</h2>
       <p>{en
@@ -402,7 +390,7 @@ function CombatStats() {
         </label>
         <p>{en ? 'Upgrade cost:' : 'Стоимость улучшения:'} <strong><SpBadge value={format.format(10 * 2 ** level)}/></strong></p>
       </details>
-      <details><summary>{en ? 'XP for owl level' : 'Опыт для уровня совы'}</summary>
+      <details id="xp" open={hash === '#xp' || undefined}><summary>{en ? 'XP for owl level' : 'Опыт для уровня совы'}</summary>
         <label className="field">{en ? 'Target owl level' : 'Целевой уровень совы'}
           <select value={owlLevel} onChange={event => setOwlLevel(Number(event.target.value))}>
             {curve.slice(1).map((_, index) => <option key={index} value={index + 1}>{index + 1}</option>)}

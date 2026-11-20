@@ -49,6 +49,16 @@ const categories: { id: MarketCategory; label: string; labelEn: string }[] = [
   { id: 'albums', label: 'Стикеры', labelEn: 'Stickers' },
 ];
 
+function albumsByFloor(quotes: readonly { id: string; floor: number | null }[] = []) {
+  const prices = new Map(quotes.map(({ id, floor }) => [id, floor]));
+  const floorOf = (asset: MarketAsset) => {
+    const floor = prices.get(asset.slug.slice(4));
+    return floor != null && Number.isFinite(floor) && floor > 0 ? floor : Infinity;
+  };
+  return marketCatalog.filter(asset => asset.category === 'albums')
+    .sort((a, b) => floorOf(a) - floorOf(b));
+}
+
 const ranges: { id: HistoryRange; label: string; labelEn: string }[] = [
   { id: '24h', label: '24ч', labelEn: '24h' },
   { id: '7d', label: '7д', labelEn: '7d' },
@@ -97,14 +107,17 @@ export function MarketChartsPage() {
   const rawEnchantParam = searchParams.get('enchant');
   const parsedEnchant = rawEnchantParam !== null && rawEnchantParam !== '' ? Number(rawEnchantParam) : null;
 
+  const { data: cols } = collectionMarket.useSnapshot();
+
   const asset: MarketAsset = useMemo(() => {
     if (slugParam && marketAssetBySlug.has(slugParam)) return marketAssetBySlug.get(slugParam)!;
+    if (categoryParam === 'albums') return albumsByFloor(cols?.items)[0] ?? marketCatalog[0];
     if (categoryParam) {
       const first = marketCatalog.find(a => a.category === categoryParam);
       if (first) return first;
     }
     return marketCatalog[0];
-  }, [slugParam, categoryParam]);
+  }, [slugParam, categoryParam, cols]);
 
   // null means "All" (all enchant levels combined) for enchantable items
   const enchant: number | null = useMemo(() => {
@@ -144,7 +157,6 @@ export function MarketChartsPage() {
   }, [enchant, asset.slug]);
 
   const { data: explorer, pending: explorerPending } = explorerMarket.useSnapshot();
-  const { data: cols } = collectionMarket.useSnapshot();
   const { data: itemsSnap } = itemMarket.useSnapshot();
   const { data: tokens } = tokenMarket.useSnapshot();
 
@@ -357,6 +369,10 @@ export function MarketChartsPage() {
   const selectCategory = (cat: MarketCategory) => {
     lightHaptic();
     if (cat === category) return;
+    if (cat === 'albums') {
+      setSearchParams({ category: cat }, { replace: true, state: location.state });
+      return;
+    }
     const first = marketCatalog.find(a => a.category === cat);
     if (first) {
       updateQuery(first.slug, null);
@@ -1129,14 +1145,15 @@ function MarketAssetPickerSheet({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return marketCatalog.filter(asset => {
+    const catalog = catFilter === 'albums' ? albumsByFloor(cols) : marketCatalog;
+    return catalog.filter(asset => {
       if (catFilter !== 'all' && asset.category !== catFilter) return false;
       if (!q) return true;
       return asset.nameRu.toLowerCase().includes(q)
         || asset.nameEn.toLowerCase().includes(q)
         || asset.slug.toLowerCase().includes(q);
     });
-  }, [query, catFilter]);
+  }, [query, catFilter, cols]);
 
   const floorFor = (asset: MarketAsset): { floor: number | null; lots: number } => {
     const slugBuckets = bucketsBySlug.get(asset.slug);
