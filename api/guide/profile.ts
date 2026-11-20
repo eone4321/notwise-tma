@@ -4,6 +4,7 @@ import { readGuideAnalytics, recordGuideEvent } from '../../server/guide-analyti
 import { awardGuide, awardStats, trackExplorer, userAwards } from '../../server/guide-achievements';
 import { notificationSettings, setSalePreference, scopes } from '../../server/guide-notifications';
 import { guideProgress } from '../../server/guide-progress';
+import { marketDiagnostics, refreshMarket } from '../../server/getgems-market';
 
 export const config = { runtime: 'edge' };
 
@@ -250,9 +251,21 @@ export default async function handler(request: Request) {
       }
       return json(await notificationSettings(id));
     }
-    if (action === 'admin' || action === 'analytics' || action === 'award_stats') {
+    if (action === 'admin' || action === 'analytics' || action === 'award_stats' || action === 'market_status' || action === 'market_refresh') {
       if (!await guideAdmin(id, token)) return json({ error: 'forbidden' }, 403);
-      return json(action === 'admin' ? await members(membersKey, offset) : action === 'award_stats' ? await awardStats() : await readGuideAnalytics());
+      if (action === 'market_refresh') {
+        if (!await redis(['SET', namespace + 'admin-market-refresh', '1', 'NX', 'EX', 15]).catch(() => 'OK')) {
+          return json(await marketDiagnostics());
+        }
+        await refreshMarket().catch(() => null);
+        return json(await marketDiagnostics());
+      }
+      return json(
+        action === 'admin' ? await members(membersKey, offset) :
+        action === 'award_stats' ? await awardStats() :
+        action === 'market_status' ? await marketDiagnostics() :
+        await readGuideAnalytics(),
+      );
     }
     if (action === 'progress' || action === 'mark') {
       const progress = await guideProgress(redis, namespace, id, input);

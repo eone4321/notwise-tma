@@ -19,8 +19,10 @@ const webHeaders: HeadersInit = {
   'Accept-Language': 'en-US,en;q=0.9',
 };
 
+type CollectionSource = 'getgems-web' | 'basic-info';
 type CollectionQuote = {
   id: string; address: string; floor: number | null; supply: number | null; updatedAt: string | null; available: boolean;
+  source?: CollectionSource;
 };
 type Listing = { id: string; floor: number; href: string };
 type ItemSource = 'getgems' | 'toncenter' | 'getgems-on-chain';
@@ -125,16 +127,19 @@ async function collectionQuote(entry: typeof addresses[number], previous?: Colle
     // Getgems SSR stats match the live marketplace floor; public-api basic-info can lag behind actual listings.
     const web = await fetchGetgemsWebStats(entry.address).catch(() => null);
     if (web) {
-      return { ...entry, floor: web.floor, supply: web.supply, available: true, updatedAt: new Date().toISOString() };
+      return { ...entry, floor: web.floor, supply: web.supply, available: true, source: 'getgems-web', updatedAt: new Date().toISOString() };
     }
     const response = await fetch(`${api}/collection/basic-info/${entry.address}`, { signal: AbortSignal.timeout(5500) });
     if (!response.ok) throw new Error('Collection unavailable');
     const result = (await response.json())?.response;
     if (typeof result?.floor !== 'number' || result.floor < 0 || !Number.isFinite(result.floor)) throw new Error('Invalid collection floor');
     const supply = Number.isSafeInteger(result.total_supply) && result.total_supply >= 0 ? result.total_supply as number : null;
-    return { ...entry, floor: result.floor || null, supply, available: true, updatedAt: new Date().toISOString() };
+    return { ...entry, floor: result.floor || null, supply, available: true, source: 'basic-info', updatedAt: new Date().toISOString() };
   } catch {
-    return { ...entry, floor: previous?.floor ?? null, supply: previous?.supply ?? null, updatedAt: previous?.updatedAt ?? null, available: false };
+    return {
+      ...entry, floor: previous?.floor ?? null, supply: previous?.supply ?? null,
+      updatedAt: previous?.updatedAt ?? null, available: false, source: previous?.source,
+    };
   }
 }
 
@@ -352,4 +357,35 @@ export async function itemQuotes(): Promise<ItemsSnapshot> {
   const result = (await market())?.items;
   if (!result) return { items: [], status: 'unavailable' };
   return result.updatedAt && Date.now() - Date.parse(result.updatedAt) >= freshWindow ? { ...result, status: 'stale' } : result;
+}
+
+export async function marketDiagnostics() {
+  const snapshot = await market();
+  const now = Date.now();
+  const cols = (snapshot?.collections ?? []).map(row => ({
+    id: row.id,
+    name: 'name' in row ? (row as { name?: string }).name ?? row.id : row.id,
+    floor: row.floor,
+    supply: row.supply,
+    updatedAt: row.updatedAt,
+    source: row.source ?? null,
+    available: row.available && !!row.updatedAt && now - Date.parse(row.updatedAt) < freshWindow,
+  }));
+  const rawItems = snapshot?.items;
+  const itemsStale = rawItems?.updatedAt && now - Date.parse(rawItems.updatedAt) >= freshWindow;
+  const items = rawItems
+    ? {
+        status: itemsStale && rawItems.status === 'ready' ? 'stale' : rawItems.status,
+        source: rawItems.source ?? null,
+        updatedAt: rawItems.updatedAt ?? null,
+        items: rawItems.items.map(({ id, floor }) => ({ id, floor })).sort((a, b) => a.floor - b.floor),
+      }
+    : { status: 'unavailable' as const, source: null, updatedAt: null, items: [] };
+  return {
+    attemptedAt: snapshot?.attemptedAt ?? null,
+    fresh: !!snapshot?.attemptedAt && now - snapshot.attemptedAt < freshWindow,
+    intervalMinutes: interval / 60_000,
+    collections: cols,
+    items,
+  };
 }
