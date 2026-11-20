@@ -318,12 +318,12 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
   <section className="homeGameActions" aria-label={en ? 'Calculators' : 'Калькуляторы'}>
     <Link to="/combat/builds" onClick={() => { lightHaptic(); trackGuide('action:builds'); }}>
       <span className="homeCalcIcon" aria-hidden="true"><GameGlyph name="fight"/></span>
-      <span>{en ? 'Build calculator' : 'Калькулятор билдов'}</span>
+      <span>{en ? 'Build Constructor' : 'Конструктор билдов'}</span>
       <span className="rowChevron" aria-hidden="true"/>
     </Link>
     <Link to="/owl/skins" onClick={() => lightHaptic()}>
       <span className="homeCalcIcon" aria-hidden="true"><GameGlyph name="skin"/></span>
-      <span>{en ? 'Skin calculator' : 'Калькулятор скинов'}</span>
+      <span>{en ? 'Farming Calculator' : 'Калькулятор фарма'}</span>
       <span className="rowChevron" aria-hidden="true"/>
     </Link>
   </section>

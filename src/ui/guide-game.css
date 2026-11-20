@@ -1606,7 +1606,7 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   align-items: center;
   gap: 3px;
   min-height: 32px;
-  padding: 0 6px 0 8px;
+  padding: 0 7px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--gold) 45%, var(--game-panel-line));
   background: color-mix(in srgb, var(--gold) 10%, var(--game-tile));
@@ -1616,7 +1616,7 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   flex: none;
 }
 .buildLevelPill select {
-  width: auto;
+  width: 42px;
   min-height: 30px;
   margin: 0;
   padding: 0 2px;
@@ -1628,6 +1628,7 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   font-weight: 800;
   box-shadow: none;
 }
+.buildConstructor[data-level-pending] .buildLevelPill select { width: auto; }
 .buildLevelPill select:focus,
 .buildLevelPill select:focus-visible,
 .buildInlineSelect:focus,
@@ -1806,6 +1807,14 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 }
 
 .buildStatGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.buildStatGridHeading {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
 .buildStatCard {
   display: grid;
   gap: 6px;
@@ -2851,6 +2860,10 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .wardrobeCard .buildLoadoutRight {
   flex: none;
   gap: 5px;
+  margin-inline-start: auto;
+}
+@media (max-width: 430px) {
+  .wardrobeCard .buildLoadoutTop { flex-wrap: wrap; }
 }
 .wardrobeCard .buildIconReset {
   width: 32px;
@@ -5190,3 +5203,21 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   margin-block-start: 4px;
 }
 .ringEnchantBonuses .wardrobeRiskFill { background: #65d6a0; }
+
+:is(.buildLoadoutCard, .wardrobeCard) .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: auto;
+  min-width: 0;
+  padding-inline: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+:is(.buildLoadoutCard, .wardrobeCard) .buildIconReset > span[aria-hidden] { font-size: 14px; }
+
+.wardrobeExtrasBody .skinRingSlotSelect {
+  width: 72px;
+  flex: none;
+}

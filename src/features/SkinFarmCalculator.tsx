@@ -18,12 +18,12 @@ import {
 type SavedSkinCalc = {
   selection: SkinSelection;
   enchant: string;
-  gear: { rings: string; artifact: boolean; league: number };
+  gear: { rings: (number | null)[]; artifact: boolean; league: number };
   presetId: number | null;
 };
 
 const skinCalcStorage = 'notwise.guide.skin-calc.v1';
-const defaultGear = { rings: '', artifact: false, league: 0 };
+const defaultGear: SavedSkinCalc['gear'] = { rings: [null, null, null], artifact: false, league: 0 };
 const slotOrder: readonly SkinSlotKey[] = ['body', 'hat', 'glasses', 'chest', 'eyes'];
 
 const bodySwatches: Record<string, string> = {
@@ -91,7 +91,16 @@ function readSavedSkinCalc(): SavedSkinCalc {
         if (typeof val === 'string' && findTrait(slot, val)) sel[slot] = val;
       }
       const enchant = typeof raw.enchant === 'string' ? enchantValue(raw.enchant, 20) : '';
-      const rings = typeof raw.gear?.rings === 'string' ? enchantValue(raw.gear.rings, 60) : '';
+      const savedRings = raw.gear?.rings;
+      const legacyTotal = typeof savedRings === 'string' ? Number(enchantValue(savedRings, 60)) : 0;
+      const rings = defaultGear.rings.map((_, index) => {
+        if (Array.isArray(savedRings)) {
+          const level = savedRings[index];
+          return Number.isInteger(level) && level >= 0 && level <= 20 ? level : null;
+        }
+        const level = Math.min(20, legacyTotal - index * 20);
+        return level > 0 ? level : null;
+      });
       const artifact = Boolean(raw.gear?.artifact);
       const league = typeof raw.gear?.league === 'number' && raw.gear.league >= 0 && raw.gear.league <= battleLeagues.length
         ? raw.gear.league : 0;
@@ -157,7 +166,8 @@ export function SkinFarmCalculator({
   const enchantBonus = 5 * enchantLevel;
   const partsBonus = skinBonusForSelection(selection);
   const skinTotal = partsBonus + enchantBonus;
-  const gearBonus = 5 * (Number(gear.rings) || 0) + (gear.artifact ? 10 : 0);
+  const ringBonus = gear.rings.reduce<number>((sum, level) => sum + (level ?? 0) * 5, 0);
+  const gearBonus = ringBonus + (gear.artifact ? 10 : 0);
   const extras = gearBonus + gear.league;
   const total = skinTotal + extras;
 
@@ -229,7 +239,6 @@ export function SkinFarmCalculator({
   const activeTraits = skinTraitsBySlot[activeTab];
   const equippedInTab = findTrait(activeTab, selection[activeTab]);
   const isOnHome = sameSkinSelection(selection, homeSkin);
-  const ringLevel = Number(gear.rings) || 0;
 
   function handleSetHome() {
     lightHaptic();
@@ -253,14 +262,16 @@ export function SkinFarmCalculator({
         </button>
       </div>
       <div className="buildLoadoutRight">
-        <button type="button" className="wardrobeActionIcon calcInfoBtn" title={copy('О калькуляторе скинов', 'About skin calculator')}
-          aria-label={copy('О калькуляторе скинов', 'About skin calculator')} onClick={() => { lightHaptic(); setInfoOpen(true); }}>
-          <GameGlyph name="info"/>
-        </button>
         <button type="button" className="wardrobeActionIcon" title={copy('Случайный образ', 'Randomize look')}
           aria-label={copy('Случайный образ', 'Randomize look')} onClick={randomize}>🎲</button>
         <button type="button" className="buildIconReset" title={copy('Сбросить скин', 'Reset skin')}
-          aria-label={copy('Сбросить скин', 'Reset skin')} onClick={reset}>↺</button>
+          aria-label={copy('Сбросить скин', 'Reset skin')} onClick={reset}>
+          <span aria-hidden="true">↺</span><span>{copy('Сброс', 'Reset')}</span>
+        </button>
+        <button type="button" className="wardrobeActionIcon calcInfoBtn" title={copy('О калькуляторе скинов', 'About skin calculator')}
+          aria-label={copy('О калькуляторе скинов', 'About skin calculator')} onClick={() => { lightHaptic(); setInfoOpen(true); }}>
+          <GameGlyph name="info"/><span>{copy('Инфо', 'Info')}</span>
+        </button>
       </div>
     </div>
 
@@ -428,28 +439,32 @@ export function SkinFarmCalculator({
             <GameArt path="/game/items/ring-wit-3.webp" size={28}/>
             <div>
               <strong>{copy('Заточка колец', 'Ring enchantments')}</strong>
-              <small>{ringLevel > 0 ? `+${5 * ringLevel}% ${copy('к монетам', 'coin bonus')}` : copy('+5% за каждый +1 (до 60)', '+5% per +1 (max 60)')}</small>
+              <small>{copy('+5% к монетам за каждый уровень', '+5% coins per enchant level')}</small>
             </div>
           </div>
-          <div className="buildStatStep skinEnchantStep">
-            <button type="button" aria-label={copy('Уменьшить заточку колец', 'Decrease ring enchant')}
-              disabled={ringLevel <= 0}
-              onClick={() => { lightHaptic(); setGear({ ...gear, rings: ringLevel <= 1 ? '' : String(ringLevel - 1) }); }}>−</button>
-            <select
-              className="skinEnchantSelect"
-              aria-label={copy('Выбрать сумму заточек колец', 'Choose total ring enchant')}
-              value={ringLevel}
-              onChange={event => { lightHaptic(); const v = Number(event.target.value); setGear({ ...gear, rings: v > 0 ? String(v) : '' }); }}
-            >
-              {Array.from({ length: 61 }, (_, lvl) => (
-                <option key={lvl} value={lvl}>{lvl === 0 ? '0' : `+${lvl}`}</option>
+          <strong className="farmExtrasValue">+{ringBonus}%</strong>
+        </div>
+        {gear.rings.map((level, index) => (
+          <label className="wardrobeExtraRow" key={index}>
+            <span className="wardrobeExtraInfo">
+              <strong>{copy('Кольцо', 'Ring')} {index + 1}</strong>
+              {level !== null && <small>+{level * 5}%</small>}
+            </span>
+            <select className="skinEnchantSelect skinRingSlotSelect"
+              aria-label={copy(`Заточка кольца ${index + 1}`, `Ring ${index + 1} enchant`)}
+              value={level ?? ''}
+              onChange={event => {
+                lightHaptic();
+                const next = event.target.value === '' ? null : Number(event.target.value);
+                setGear(current => ({ ...current, rings: current.rings.map((ring, slot) => slot === index ? next : ring) }));
+              }}>
+              <option value="">{copy('Пусто', 'Empty')}</option>
+              {Array.from({ length: 21 }, (_, enchantment) => (
+                <option key={enchantment} value={enchantment}>+{enchantment}</option>
               ))}
             </select>
-            <button type="button" aria-label={copy('Увеличить заточку колец', 'Increase ring enchant')}
-              disabled={ringLevel >= 60}
-              onClick={() => { lightHaptic(); setGear({ ...gear, rings: String(ringLevel + 1) }); }}>+</button>
-          </div>
-        </div>
+          </label>
+        ))}
 
         <button
           type="button"

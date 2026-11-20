@@ -286,13 +286,6 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
           </button>
         </div>
         <div className="buildLoadoutRight">
-          <span className="buildBudgetPill" data-empty={left === 0 || undefined}>
-            {left === 0 ? copy('✓ 0 очк.', '✓ 0 pts') : copy(`Свободно: ${left}`, `Free: ${left}`)}
-          </span>
-          <button type="button" className="wardrobeActionIcon calcInfoBtn" disabled={!levelSelected} title={copy('О калькуляторе билдов', 'About build calculator')}
-            aria-label={copy('О калькуляторе билдов', 'About build calculator')} onClick={() => { lightHaptic(); setInfoOpen(true); }}>
-            <GameGlyph name="info"/>
-          </button>
           <button type="button" className="buildIconReset" disabled={!levelSelected} title={copy('Сбросить билд', 'Reset build')}
             aria-label={copy('Сбросить билд', 'Reset build')} onClick={() => {
               lightHaptic();
@@ -304,7 +297,11 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
               setBulkConfirmLevel(null);
               setLevelSelected(false);
               setState(initialBuild());
-            }}>↺</button>
+            }}><span aria-hidden="true">↺</span><span>{copy('Сброс', 'Reset')}</span></button>
+          <button type="button" className="wardrobeActionIcon calcInfoBtn" disabled={!levelSelected} title={copy('О калькуляторе билдов', 'About build calculator')}
+            aria-label={copy('О калькуляторе билдов', 'About build calculator')} onClick={() => { lightHaptic(); setInfoOpen(true); }}>
+            <GameGlyph name="info"/><span>{copy('Инфо', 'Info')}</span>
+          </button>
         </div>
       </div>
       <div style={{ display: 'contents' }} inert={!levelSelected}>
@@ -371,6 +368,12 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
 
 
       <div className="buildStatGrid" role="group" aria-label={copy('Распределение очков', 'Attribute points')}>
+        <div className="buildStatGridHeading">
+          <strong>{copy('Распределение очков', 'Attribute points')}</strong>
+          <span aria-live="polite" className="buildBudgetPill" data-empty={left === 0 || undefined}>
+            {left === 0 ? copy('✓ 0 очк.', '✓ 0 pts') : copy(`Свободно: ${left}`, `Free: ${left}`)}
+          </span>
+        </div>
         {statKeys.map(stat => {
           const invested = state.points[stat];
           const bonus = total[stat] - invested - startingAttribute;
@@ -775,8 +778,8 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
       onClose={() => setInfoOpen(false)}>
       {requestClose => <div className="calcInfoSheetBody">
         <p>{copy(
-          'Калькулятор точно повторяет боевую математику NOT Wise: показывает, как очки характеристик, навыки, кольца и баффы влияют на HP, ману, урон, уклонение и крит в PvP-боях и рейдах.',
-          'The calculator mirrors NOT Wise combat math: see how attributes, skills, rings and buffs affect HP, mana, hit damage, dodge and crit in PvP duels and raids.',
+          'Калькулятор показывает, как характеристики, кольца и баффы меняют HP, ману, урон, уклонение и крит. Тренировочные бои оценивают сборку в заданных сценариях, поэтому результат зависит от соперника и тактики.',
+          'See how attributes, rings and buffs change HP, mana, hit damage, dodge and crit. Practice duels estimate performance in a set of scenarios, so results depend on the opponent and tactics.',
         )}</p>
         <div className="calcInfoList">
           <div>
