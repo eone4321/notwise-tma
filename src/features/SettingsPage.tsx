@@ -66,10 +66,6 @@ export function SettingsPage({ profile, earned, chatIssue }: { profile: GuidePro
       </section>
       <NotificationSettings english={en}/>
       <ResetAccountSettings english={en}/>
-      <section className="card settingsVersionCard" aria-label={en ? 'Guide version' : 'Версия гайда'}>
-        <span className="settingsVersionLabel">NOT Wise Guide</span>
-        <span className="settingsVersionBadge">1.2</span>
-      </section>
     </div>}
     {pathname === '/support/achievements' && <Achievements earned={earned} isAdmin={profile?.isAdmin === true} chatIssue={chatIssue} english={en}/>}
   </>;

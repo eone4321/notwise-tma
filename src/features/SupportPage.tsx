@@ -116,8 +116,11 @@ export function SupportPage({ isAdmin }: { isAdmin: boolean }) {
 
   return <>
     <section className="card aboutGuide">
-      <div className="mediaHeading"><img src={artSrc('/brand/notwise.svg')} width="36" height="36" alt=""/>
-        <h2>NOT Wise Guide</h2></div>
+      <div className="mediaHeading">
+        <img src={artSrc('/brand/notwise.svg')} width="36" height="36" alt=""/>
+        <h2>NOT Wise Guide</h2>
+        <span className="settingsVersionBadge">1.2</span>
+      </div>
       <p>{en ? 'We built an interactive knowledge base and market radar for NOT Wise: The GAME on TON.' : 'Мы собрали интерактивную базу знаний и аналитику по NOT Wise: The GAME на TON.'}</p>
       <p>{en ? 'The guide covers leveling, owl care, combat skills, and capsule & egg drop rates.' : 'В гайде собраны прокачка, уход за совой, боевые навыки и награды из капсул и яиц.'}</p>
       <p>{en ? 'Live Getgems floor prices and token rates are updated here too.' : 'Здесь же обновляются цены Getgems и курсы токенов.'}</p>

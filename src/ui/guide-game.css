@@ -3539,17 +3539,8 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   width: 100%;
 }
 .settingsResetDanger,
-[data-theme="graphite"] .settingsVersionCard {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 13px 16px;
-}
-.settingsVersionLabel {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text);
+[data-theme="graphite"] .aboutGuide .mediaHeading .settingsVersionBadge {
+  margin-inline-start: auto;
 }
 .settingsVersionBadge {
   padding: 4px 10px;
