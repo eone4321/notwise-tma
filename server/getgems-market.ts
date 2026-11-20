@@ -527,8 +527,14 @@ function parseHistoryHash(raw: Record<string, string> | string[] | null): Histor
 }
 
 export async function marketExplorer(): Promise<ExplorerSnapshot> {
-  await market();
-  const explorer = await storedExplorer();
+  let explorer = await storedExplorer();
+  if (!explorer || !explorer.buckets.length) {
+    await market(true);
+    explorer = await storedExplorer();
+  } else {
+    await market();
+    explorer = await storedExplorer() ?? explorer;
+  }
   if (!explorer) {
     return { updatedAt: null, status: 'unavailable', buckets: [] };
   }

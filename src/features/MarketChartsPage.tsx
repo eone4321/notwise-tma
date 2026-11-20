@@ -74,7 +74,8 @@ export function MarketChartsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSlug = searchParams.get('slug') ?? '';
   const initialCategory = searchParams.get('category') as MarketCategory | null;
-  const initialEnchant = Number(searchParams.get('enchant') ?? '0');
+  const rawEnchantParam = searchParams.get('enchant');
+  const parsedEnchant = rawEnchantParam !== null && rawEnchantParam !== '' ? Number(rawEnchantParam) : null;
 
   const defaultAsset = useMemo(() => {
     if (initialSlug && marketAssetBySlug.has(initialSlug)) return marketAssetBySlug.get(initialSlug)!;
@@ -86,8 +87,11 @@ export function MarketChartsPage() {
   }, [initialSlug, initialCategory]);
 
   const [selectedSlug, setSelectedSlug] = useState(defaultAsset.slug);
-  const [enchant, setEnchant] = useState(
-    Number.isSafeInteger(initialEnchant) && initialEnchant >= 0 && initialEnchant <= 20 ? initialEnchant : 0,
+  // null means "Все" (all enchant levels combined) for enchantable items
+  const [enchant, setEnchant] = useState<number | null>(
+    parsedEnchant !== null && Number.isSafeInteger(parsedEnchant) && parsedEnchant >= 0 && parsedEnchant <= 20
+      ? parsedEnchant
+      : null,
   );
   const [chartMode, setChartMode] = useState<ChartMode>('history');
   const [range, setRange] = useState<HistoryRange>('7d');
@@ -107,7 +111,7 @@ export function MarketChartsPage() {
   const { data: tokens } = tokenMarket.useSnapshot();
 
   useEffect(() => {
-    explorerMarket.refresh();
+    explorerMarket.refresh(true);
   }, []);
 
   const asset: MarketAsset = marketAssetBySlug.get(selectedSlug) ?? marketCatalog[0];
@@ -117,14 +121,14 @@ export function MarketChartsPage() {
   useEffect(() => {
     const next = new URLSearchParams();
     next.set('slug', asset.slug);
-    if (asset.enchantable && enchant > 0) next.set('enchant', String(enchant));
+    if (asset.enchantable && enchant !== null) next.set('enchant', String(enchant));
     setSearchParams(next, { replace: true });
   }, [asset.slug, asset.enchantable, enchant, setSearchParams]);
 
   // If switching to non-enchantable asset, reset enchant & mode
   useEffect(() => {
     if (!asset.enchantable) {
-      if (enchant !== 0) setEnchant(0);
+      if (enchant !== null) setEnchant(null);
       if (chartMode === 'curve') setChartMode('history');
     }
   }, [asset.enchantable, enchant, chartMode]);
@@ -132,8 +136,9 @@ export function MarketChartsPage() {
   const gramUsd = useMemo(() => {
     const raw = tokens?.items.find(t => t.symbol === 'GRAM')?.priceUsd;
     const n = raw ? Number(raw) : NaN;
-    return Number.isFinite(n) && n > 0 ? n : null;
-  }, [tokens]);
+    if (Number.isFinite(n) && n > 0) return n;
+    return cols?.gramToUsdt && cols.gramToUsdt > 0 ? cols.gramToUsdt : null;
+  }, [tokens, cols]);
 
   // Index explorer buckets by slug -> Map<enchant, ExplorerBucket>
   const bucketsBySlug = useMemo(() => {
@@ -150,17 +155,26 @@ export function MarketChartsPage() {
   }, [explorer]);
 
   const assetBuckets = bucketsBySlug.get(asset.slug);
-  const activeBucket = assetBuckets?.get(asset.enchantable ? enchant : 0);
+  const allAssetBuckets = useMemo(() => [...(assetBuckets?.values() ?? [])], [assetBuckets]);
+  const totalAssetLots = useMemo(() => allAssetBuckets.reduce((sum, b) => sum + b.count, 0), [allAssetBuckets]);
+
+  const activeBucket = asset.enchantable
+    ? (enchant !== null ? assetBuckets?.get(enchant) : undefined)
+    : assetBuckets?.get(0);
 
   // Fallback floor from collectionMarket / itemMarket if explorer bucket is empty or still loading
   const liveFloor = useMemo(() => {
+    if (asset.enchantable && enchant === null) {
+      const floors = allAssetBuckets.map(b => b.floor).filter(f => f > 0);
+      if (floors.length) return Math.min(...floors);
+    }
     if (activeBucket && activeBucket.floor > 0) return activeBucket.floor;
     if (asset.category === 'collections') {
       const colId = asset.slug.replace(/^col:/, '');
       const q = cols?.items.find(c => c.id === colId);
       return q?.floor && q.floor > 0 ? q.floor : null;
     }
-    if (!asset.enchantable || enchant === 0) {
+    if (!asset.enchantable || enchant === 0 || enchant === null) {
       if (asset.slug === 'owl-skin') {
         const q = cols?.items.find(c => c.id === 'skins');
         return q?.floor && q.floor > 0 ? q.floor : null;
@@ -169,16 +183,17 @@ export function MarketChartsPage() {
       return q?.floor && q.floor > 0 ? q.floor : null;
     }
     return null;
-  }, [activeBucket, asset, cols, itemsSnap, enchant]);
+  }, [activeBucket, allAssetBuckets, asset, cols, itemsSnap, enchant]);
 
   const liveCount = useMemo(() => {
+    if (asset.enchantable && enchant === null) return totalAssetLots;
     if (activeBucket) return activeBucket.count;
     if (asset.category === 'collections') {
       const colId = asset.slug.replace(/^col:/, '');
       return cols?.items.find(c => c.id === colId)?.supply ?? null;
     }
     return 0;
-  }, [activeBucket, asset, cols]);
+  }, [activeBucket, totalAssetLots, asset, cols, enchant]);
 
   // Fetch historical points for the selected (slug, enchant, range)
   const [historyPoints, setHistoryPoints] = useState<HistoryPoint[]>([]);
@@ -187,7 +202,7 @@ export function MarketChartsPage() {
   useEffect(() => {
     const controller = new AbortController();
     setHistoryLoading(true);
-    const enc = asset.enchantable ? enchant : 0;
+    const enc = asset.enchantable ? (enchant ?? 0) : 0;
     const url = `/api/market/history?slug=${encodeURIComponent(asset.historySlug)}&enchant=${enc}&range=${range}`;
     fetch(url, { signal: controller.signal })
       .then(res => (res.ok ? res.json() : null))
@@ -228,9 +243,9 @@ export function MarketChartsPage() {
       .map(b => ({ enchant: b.enchant, floor: b.floor, count: b.count }));
   }, [asset.enchantable, assetBuckets]);
 
-  // Buy vs Enchant insight for rings at +1..+10
+  // Buy vs Enchant insight for rings at +1..+12
   const buyVsEnchant = useMemo(() => {
-    if (asset.category !== 'rings' || enchant <= 0 || enchant > 12 || !liveFloor) return null;
+    if (asset.category !== 'rings' || enchant === null || enchant <= 0 || enchant > 12 || !liveFloor) return null;
     const baseFloor = assetBuckets?.get(0)?.floor ?? itemsSnap?.items.find(i => i.id === asset.slug)?.floor ?? 0;
     const scrollFloor = bucketsBySlug.get('scroll-enchant-ring')?.get(0)?.floor
       ?? itemsSnap?.items.find(i => i.id === 'scroll-enchant-ring')?.floor ?? 0;
@@ -240,14 +255,21 @@ export function MarketChartsPage() {
     return { ...calc, baseFloor, scrollFloor, diffPct };
   }, [asset, enchant, liveFloor, assetBuckets, itemsSnap, bucketsBySlug]);
 
-  // Lots sorted
-  const sortedLots: ExplorerLot[] = useMemo(() => {
-    const list = [...(activeBucket?.lots ?? [])];
+  // Lots sorted (supports "Все" across all enchant levels + single enchant level)
+  const sortedLots: (ExplorerLot & { enchant: number })[] = useMemo(() => {
+    const list: (ExplorerLot & { enchant: number })[] = [];
+    if (asset.enchantable && enchant === null) {
+      for (const b of allAssetBuckets) {
+        for (const lot of b.lots) list.push({ ...lot, enchant: b.enchant });
+      }
+    } else if (activeBucket) {
+      for (const lot of activeBucket.lots) list.push({ ...lot, enchant: activeBucket.enchant });
+    }
     list.sort((a, b) => (sortAsc ? a.price - b.price : b.price - a.price));
-    return list;
-  }, [activeBucket, sortAsc]);
+    return list.slice(0, 24);
+  }, [asset.enchantable, enchant, allAssetBuckets, activeBucket, sortAsc]);
 
-  // Enchant rail levels to show (+0..+12 or up to highest active enchant)
+  // Enchant rail levels to show (+0..+10 or up to highest active enchant)
   const maxActiveEnchant = useMemo(() => {
     if (!assetBuckets) return 10;
     let max = 10;
@@ -277,7 +299,7 @@ export function MarketChartsPage() {
     const first = marketCatalog.find(a => a.category === cat);
     if (first) {
       setSelectedSlug(first.slug);
-      setEnchant(0);
+      setEnchant(null);
     }
   };
 
@@ -286,9 +308,11 @@ export function MarketChartsPage() {
     setSelectedSlug(`ring-${stat}-${tier}`);
   };
 
-  const getgemsDisplayName = asset.enchantable && enchant > 0
+  const getgemsDisplayName = asset.enchantable && enchant !== null && enchant > 0
     ? `${asset.nameEn} +${enchant}`
-    : asset.nameEn;
+    : asset.enchantable && enchant === null
+      ? `${asset.nameEn} · все заточки`
+      : asset.nameEn;
 
   const statMin = seriesPoints.length ? Math.min(...seriesPoints.map(p => p.floor)) : null;
   const statMax = seriesPoints.length ? Math.max(...seriesPoints.map(p => p.floor)) : null;
@@ -322,7 +346,7 @@ export function MarketChartsPage() {
           <GameArt path={asset.icon} size={36} />
         </span>
         <span className="radarSelectorText">
-          <strong>{asset.nameRu}{asset.enchantable && enchant > 0 ? ` +${enchant}` : ''}</strong>
+          <strong>{asset.nameRu}{asset.enchantable && enchant !== null && enchant > 0 ? ` +${enchant}` : ''}</strong>
           <small>{getgemsDisplayName}</small>
         </span>
         <span className="radarSelectorAction">
@@ -365,19 +389,31 @@ export function MarketChartsPage() {
         </div>
       )}
 
-      {/* Enchant Rail (+0 .. +20) for Rings & Skins */}
+      {/* Enchant Rail (Все, +0 .. +20) for Rings & Skins */}
       {asset.enchantable && (
         <div className="radarEnchantWrap">
           <div className="radarEnchantHeader">
             <span>Уровень заточки</span>
             <small>
-              {asset.ringStat && asset.ringTier
-                ? `+${ringStatBonus(asset.ringTier, enchant)} ${ringStatLabels[asset.ringStat]}`
-                : enchant > 0 ? `Заточка +${enchant}` : 'Без заточки'}
+              {enchant === null
+                ? 'Все уровни'
+                : asset.ringStat && asset.ringTier
+                  ? `+${ringStatBonus(asset.ringTier, enchant)} ${ringStatLabels[asset.ringStat]}`
+                  : enchant > 0 ? `Заточка +${enchant}` : 'Без заточки'}
             </small>
           </div>
           <div className="radarRailViewport">
             <div ref={railRef} className="radarEnchantRail" role="listbox" aria-label="Уровень заточки">
+              <button
+                type="button"
+                role="option"
+                aria-selected={enchant === null}
+                className={`radarEnchantChip ${enchant === null ? 'isActive' : ''} ${totalAssetLots > 0 ? 'hasLots' : ''}`}
+                onClick={() => { lightHaptic(); setEnchant(null); }}
+              >
+                <strong>Все</strong>
+                {totalAssetLots > 0 && <span className="radarChipCount">{totalAssetLots}</span>}
+              </button>
               {enchantLevels.map(lvl => {
                 const bucket = assetBuckets?.get(lvl);
                 const count = bucket?.count ?? 0;
@@ -597,8 +633,8 @@ export function MarketChartsPage() {
                     <strong>{lot.name}</strong>
                     <small>
                       {asset.ringStat && asset.ringTier
-                        ? `+${ringStatBonus(asset.ringTier, enchant)} ${ringStatLabels[asset.ringStat]}`
-                        : asset.nameRu}
+                        ? `+${ringStatBonus(asset.ringTier, lot.enchant)} ${ringStatLabels[asset.ringStat]}${lot.enchant > 0 ? ` · заточка +${lot.enchant}` : ''}`
+                        : lot.enchant > 0 ? `${asset.nameRu} · +${lot.enchant}` : asset.nameRu}
                     </small>
                   </span>
                   <span className="radarLotPrice">
@@ -665,6 +701,7 @@ export function MarketChartsPage() {
       {/* Bottom-Sheet Item Picker with Instant Search */}
       {pickerOpen && (
         <MarketAssetPickerSheet
+          initialCategory={category}
           selectedSlug={asset.slug}
           bucketsBySlug={bucketsBySlug}
           cols={cols?.items ?? []}
@@ -672,7 +709,7 @@ export function MarketChartsPage() {
           onSelect={nextAsset => {
             lightHaptic();
             setSelectedSlug(nextAsset.slug);
-            setEnchant(0);
+            setEnchant(null);
             setPickerOpen(false);
           }}
           onClose={() => setPickerOpen(false)}
@@ -862,7 +899,7 @@ function EnchantCurveChart({
   onSelectEnchant,
 }: {
   points: { enchant: number; floor: number; count: number }[];
-  activeEnchant: number;
+  activeEnchant: number | null;
   onSelectEnchant: (lvl: number) => void;
 }) {
   if (points.length === 0) {
@@ -951,6 +988,7 @@ function EnchantCurveChart({
 }
 
 function MarketAssetPickerSheet({
+  initialCategory,
   selectedSlug,
   bucketsBySlug,
   cols,
@@ -958,6 +996,7 @@ function MarketAssetPickerSheet({
   onSelect,
   onClose,
 }: {
+  initialCategory: MarketCategory;
   selectedSlug: string;
   bucketsBySlug: Map<string, Map<number, ExplorerBucket>>;
   cols: { id: string; floor: number | null; supply: number | null }[];
@@ -966,7 +1005,7 @@ function MarketAssetPickerSheet({
   onClose: () => void;
 }) {
   const [query, setQuery] = useState('');
-  const [catFilter, setCatFilter] = useState<MarketCategory | 'all'>('all');
+  const [catFilter, setCatFilter] = useState<MarketCategory | 'all'>(initialCategory);
   const [closing, setClosing] = useState(false);
 
   const triggerClose = () => {

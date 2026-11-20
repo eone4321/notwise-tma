@@ -121,7 +121,7 @@ export function useGuideScroll() {
 
 const rootTabs = new Set([
   '/owl/shop', '/owl/loot', '/owl/skins', '/combat/stats', '/combat/builds', '/ecosystem/quotes',
-  '/ecosystem/tokens', '/collections/market', '/support/settings', '/support/achievements', '/secrets/achievements',
+  '/ecosystem/tokens', '/collections/market', '/collections/charts', '/support/settings', '/support/achievements', '/secrets/achievements',
   '/squads/war', '/squads/shop', '/modes',
 ]);
 

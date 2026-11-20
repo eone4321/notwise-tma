@@ -125,6 +125,18 @@ export function OwlPage() {
   </>;
 }
 
+const energyTiers = [
+  { range: 'Ур. 0–4', fight: 10, flight: 200, fightsPer1k: 100, note: 'Старт' },
+  { range: 'Ур. 5–9', fight: 20, flight: 250, fightsPer1k: 50, note: '×2 дороже' },
+  { range: 'Ур. 10–14', fight: 30, flight: 300, fightsPer1k: 33, note: '' },
+  { range: 'Ур. 15–19', fight: 40, flight: 350, fightsPer1k: 25, note: '' },
+  { range: 'Ур. 20–24', fight: 50, flight: 400, fightsPer1k: 20, note: 'Порог золотых колец' },
+  { range: 'Ур. 25–29', fight: 60, flight: 450, fightsPer1k: 16, note: '' },
+  { range: 'Ур. 30–34', fight: 70, flight: 500, fightsPer1k: 14, note: '' },
+  { range: 'Ур. 35–39', fight: 80, flight: 550, fightsPer1k: 12, note: '' },
+  { range: 'Ур. 40–44', fight: 90, flight: 600, fightsPer1k: 11, note: '' },
+] as const;
+
 export function CarePage() {
   const { pathname, state } = useLocation();
   const keepParent = state?.guideDetail === true;
@@ -163,24 +175,61 @@ export function CarePage() {
         <DetailLink className="textLink" to="/assets/care">Вся еда и лекарства</DetailLink>
       </section>
 
+      <section className="card feedingCard energyGradCard">
+        <div className="mediaHeading"><GameArt path={itemPath('chiller.webp')} size={44}/>
+          <div>
+            <h2>Стоимость боя, полёта и фарм SP</h2>
+            <p>Цена боя растёт на +10 ⚡ каждые 5 уровней, полёта — на +50 ⚡. В Додзё всегда 2 ⚡ за удар.</p>
+          </div>
+        </div>
+
+        <div className="energyGradTable" role="table" aria-label="Градация стоимости энергии по уровням">
+          <div className="energyGradHead" role="row">
+            <span role="columnheader">Уровень</span>
+            <span role="columnheader">Бой</span>
+            <span role="columnheader">Полёт</span>
+            <span role="columnheader">Боёв / 1000 ⚡</span>
+          </div>
+          {energyTiers.map(tier => (
+            <div className="energyGradRow" role="row" key={tier.range}>
+              <strong role="cell">{tier.range}</strong>
+              <span role="cell" className="isGold">{tier.fight} ⚡</span>
+              <span role="cell">{tier.flight} ⚡</span>
+              <span role="cell" className="isFights">{tier.fightsPer1k}</span>
+            </div>
+          ))}
+        </div>
+
+        <ul className="memoList">
+          <li>
+            <strong>Динамика фарма SP и Чиллер</strong>
+            <span>На границе ступеней (ур. 4, 9, 14, 19) выгоднее всего включать <b>Чиллер</b> (заморозку XP), чтобы делать максимум боёв и фармить SP до скачка цены на +10 ⚡. На ур. 4 за 1 000 ⚡ проходит 100 боёв, на ур. 20 — уже только 20.</span>
+          </li>
+          <li>
+            <strong>Запас и регенерация энергии</strong>
+            <span>База: 100 ⚡ и реген 80 ⚡/ч (1 ⚡ за 45 с). Перк Мудрости добавляет +100 ⚡ к запасу за уровень (до 2 200 ⚡ на 21 ур.), перк Ловкости ускоряет реген на +3% за уровень (до 130 ⚡/ч).</span>
+          </li>
+        </ul>
+      </section>
+
       <section className="card feedingCard">
-        <h2>Бой, прокачка и осада</h2>
+        <h2>Бой, осада и защита</h2>
         <ul className="memoList">
           <li>
             <strong>Потолок статов — 70% на 100 очках</strong>
             <span>Выше 100 ловкости (уклонение) и 100 мудрости (крит) шансы не растут — лишняя мудрость даёт только +20 маны за очко. В бой можно взять до 3 навыков; мана за бой не восстанавливается.</span>
           </li>
           <li>
-            <strong>Боевая мощь в осадах</strong>
-            <span>Личная мощь для захвата территорий растёт от прокачки в Додзё и боях, а не от уровня или опыта.</span>
+            <strong>Осады сквадов и боевая мощь</strong>
+            <span>Личная мощь для захвата территорий растёт от прокачки в Додзё и боях, а не от уровня совы. Награды территорий суммируются за все 3 раунда осады.</span>
           </li>
           <li>
-            <strong>Сбросы и заморозка XP</strong>
-            <span>Чиллер замораживает получение XP (удобно фармить SP/монеты на своём уровне), Дискета сохраняет XP перед перерождением, Морфер сбрасывает статы и навыки без потери SP.</span>
+            <strong>Сбросы и перенос прогресса</strong>
+            <span>Чиллер замораживает XP из капсул, Морфер сбрасывает статы и навыки без потери SP, Колба записывает накопленные SP, а Дискета сохраняет XP перед перерождением.</span>
           </li>
           <li>
             <strong>Защита от рейдов</strong>
-            <span>Победитель забирает 3% монет. После 3 проигранных защит включается щит, пока владелец сам не вернётся в игру.</span>
+            <span>Победитель забирает 3% монет. После любого боя действует 5-минутная передышка, после 3 проигранных защит подряд включается щит до входа в игру, а Seba Cola даёт купол на 24 ч.</span>
           </li>
         </ul>
         <div className="memoLinks">
