@@ -408,8 +408,8 @@ details > p { margin: 4px 0 8px; }
 .heroCopy { width: min(66%, 290px); min-height: 100px; }
 .heroCopy h1 { text-wrap: initial; }
 .heroShare { min-height: 44px; margin-top: 0; }
-.dockCoach { position: fixed; z-index: 21; bottom: calc(var(--dock-height) + 8px); left: 50%; translate: -50% 0; width: min(340px, calc(100% - 32px)); box-shadow: 0 18px 50px #0008; background-color: #151c2d; }
-.dockCoach::after { content: ""; position: absolute; left: calc(50% - 7px); bottom: -7px; width: 14px; height: 14px; rotate: 45deg; background: #151c2d; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.dockCoach { position: fixed; z-index: 21; bottom: calc(var(--dock-height) + 8px); left: 50%; translate: -50% 0; width: min(340px, calc(100% - 32px)); box-shadow: 0 18px 50px #0008; background: var(--game-panel, #151c2d); border-color: var(--game-panel-line, var(--line)); }
+.dockCoach::after { content: ""; position: absolute; left: calc(50% - 7px); bottom: -7px; width: 14px; height: 14px; rotate: 45deg; clip-path: polygon(100% 0, 0 100%, 100% 100%); background: var(--game-panel, #151c2d); border-right: 1px solid var(--game-panel-line, var(--line)); border-bottom: 1px solid var(--game-panel-line, var(--line)); }
 .dockCoach h2 { font-size: 17px; }
 .dockCoach dl { display: grid; gap: 6px; margin: 0; font-size: 13px; }
 .dockCoach dl div { display: flex; justify-content: space-between; gap: 10px; }
@@ -665,7 +665,7 @@ html { scrollbar-gutter: stable; }
   display: inline-block;
   width: 8px;
   height: 8px;
-  flex: 0 0 8px;
+  flex: none;
   border: solid var(--lavender);
   border-width: 0 1.5px 1.5px 0;
   transform: rotate(-45deg);
@@ -675,6 +675,12 @@ html { scrollbar-gutter: stable; }
 .mediaDetails[open] > summary::after { content: ''; transform: rotate(225deg); }
 .rowEnd { display: inline-flex; align-items: center; justify-content: flex-end; flex: none; gap: 10px; margin-inline-start: auto; }
 .mediaRow > span:has(> small) { min-width: 0; }
+.leanList a.mediaRow, .mediaRow:is(a), .mediaDetails > summary, .tokenRateLink {
+  margin-inline: -6px;
+  padding-inline: 6px;
+  border-radius: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
 .leanList a.mediaRow:active, .mediaRow:is(a):active, .mediaDetails > summary:active { background: #d3c2ff10; border-radius: 8px; }
 .leanList .mediaRow > .rowChevron { margin-inline-start: auto; margin-inline-end: 4px; }
 .guideDisclosure > summary { min-height: 54px; padding: 0; cursor: pointer; }
@@ -731,8 +737,10 @@ html { scrollbar-gutter: stable; }
 .progressGroup > h2 { font-size: 15px; color: var(--lavender); margin: 12px 0 2px; }
 .secretRow { scroll-margin-top: 12px; }
 .secretRow .secretCheck, .stickerProgressRow .secretCheck { justify-self: end; min-width: 44px; }
-.stickerProgressRow { display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: start; gap: 4px; border-top: 1px solid var(--line); }
-.stickerProgressRow .mediaDetails > summary { min-height: 50px; }
+.stickerProgressRow { display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: start; gap: 4px; border-top: 1px solid var(--game-panel-line, var(--line)); }
+.stickerProgressRow > .mediaDetails { border-top: 0; padding-bottom: 0; }
+.stickerProgressRow > .mediaDetails[open] { padding-bottom: 8px; }
+.stickerProgressRow .mediaDetails > summary { min-height: 50px; margin-inline: -4px 0; padding-inline: 4px 6px; }
 .stickerProgressRow .secretCheck { min-height: 50px; }
 .albumGrid > a { gap: 3px; }
 .albumGrid > a small { font-size: 10px; line-height: 1.2; }
@@ -848,7 +856,9 @@ body { font-weight: 500; -webkit-font-smoothing: antialiased; -moz-osx-font-smoo
     linear-gradient(0deg, #181819 8%, transparent 76%);
 }
 [data-theme="graphite"] .heroImage { filter: saturate(.75); }
-[data-theme="graphite"] :is(.modal, .dockCoach, .dockCoach::after) { background: var(--raised); }
+[data-theme="graphite"] .modal { background: var(--raised); }
+[data-theme="graphite"] .dockCoach,
+[data-theme="graphite"] .dockCoach::after { background: var(--surface); border-color: var(--line); }
 [data-theme="graphite"] .modal::backdrop { background: #000c; }
 [data-theme="graphite"] .dockCoachTint { background: #000a; }
 [data-theme="graphite"] .guideLoading progress { background: var(--raised); }

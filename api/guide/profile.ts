@@ -271,6 +271,27 @@ export default async function handler(request: Request) {
       if (progress === false) return json({ error: 'profile_required' }, 409);
       return json(progress);
     }
+    if (action === 'reset_my_state') {
+      const achPrefix = 'notwise:guide:achievements:v1:';
+      const [marks, earned] = await Promise.all([
+        redis<string[]>(['HKEYS', namespace + 'progress:' + id]).catch(() => []),
+        redis<string[]>(['SMEMBERS', achPrefix + id]).catch(() => []),
+      ]);
+      for (const mark of marks) {
+        if (mark.startsWith('c:')) {
+          await redis(['HINCRBY', namespace + 'completion-counts', mark.slice(2), -1]).catch(() => null);
+        }
+      }
+      for (const item of earned) {
+        await redis(['HINCRBY', achPrefix + 'totals', item, -1]).catch(() => null);
+      }
+      await Promise.all([
+        redis(['DEL', namespace + 'progress:' + id, namespace + 'progress-imported:' + id]).catch(() => null),
+        redis(['DEL', achPrefix + id, achPrefix + 'visited:' + id]).catch(() => null),
+        redis(['DEL', namespace + 'auto-chat:' + id, namespace + 'chat-check:' + id]).catch(() => null),
+      ]);
+      return json({ ok: true });
+    }
     if (action === 'check_subscription') {
       const subscribed = await channelMember(id, token).catch(() => null);
       return subscribed === null ? json({ error: 'subscription_unavailable' }, 503) : json({ subscribed });

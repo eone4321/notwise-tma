@@ -7,6 +7,7 @@ import { Appearance } from './Appearance';
 import { SupportPage } from './SupportPage';
 import { authData, profileRequest, type GuideProfile } from './guideProfile';
 import { useGuideLocale } from './guideLocale';
+import { saveHomeOwlSkin } from './skinRig';
 
 const scopeLabels = {
   genesis: ['Совы NOT Wise', 'NOT Wise Owls'],
@@ -48,6 +49,7 @@ export function SettingsPage({ profile, earned, chatIssue }: { profile: GuidePro
         <p className="caption">{en ? 'Game guides are currently available in Russian.' : 'Материалы по игре пока доступны на русском.'}</p>
       </section>
       <NotificationSettings english={en}/>
+      <ResetAccountSettings english={en}/>
     </div>}
     {pathname === '/support/achievements' && <Achievements earned={earned} isAdmin={profile?.isAdmin === true} chatIssue={chatIssue}/>}
   </>;
@@ -120,5 +122,60 @@ function Achievements({ earned, isAdmin, chatIssue }: { earned: GuideAchievement
         {!done && <span className="sr-only">Скрытое достижение</span>}
       </li>;
     })}</ul>
+  </section>;
+}
+
+function clearGuideStorage(storage: Storage) {
+  const keys: string[] = [];
+  for (let i = 0; i < storage.length; i += 1) {
+    const key = storage.key(i);
+    if (key && key.startsWith('notwise.guide.')) keys.push(key);
+  }
+  for (const key of keys) {
+    try { storage.removeItem(key); } catch { /* ignore */ }
+  }
+}
+
+function ResetAccountSettings({ english: en }: { english: boolean }) {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function runReset() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (authData()) {
+        await profileRequest({ action: 'reset_my_state' }).catch(() => null);
+      }
+      saveHomeOwlSkin(null);
+      clearGuideStorage(localStorage);
+      clearGuideStorage(sessionStorage);
+      document.documentElement.dataset.theme = 'graphite';
+    } finally {
+      window.location.replace('/');
+    }
+  }
+
+  return <section className="card settingsGroup settingsResetCard">
+    <h2>{en ? 'Reset guide settings & progress' : 'Сброс настроек и онбординга'}</h2>
+    <p className="caption">
+      {en
+        ? 'Clears onboarding tips, cover owl skin, saved builds, checklists and achievements so the guide opens like the very first time.'
+        : 'Сбрасывает онбординг, выбранный скин совы на обложке, сохранённые сборки, отметки стикеров/секретов и достижения гайда — как при первом открытии.'}
+    </p>
+    {!confirming ? (
+      <button type="button" className="secondary settingsResetBtn" onClick={() => setConfirming(true)}>
+        {en ? 'Reset everything & restart onboarding' : 'Сбросить всё и показать онбординг заново'}
+      </button>
+    ) : (
+      <div className="settingsResetConfirm">
+        <button type="button" className="primary settingsResetDanger" disabled={busy} onClick={() => void runReset()}>
+          {busy ? (en ? 'Resetting…' : 'Сбрасываем…') : (en ? 'Yes, reset my data' : 'Да, сбросить всё')}
+        </button>
+        <button type="button" className="secondary" disabled={busy} onClick={() => setConfirming(false)}>
+          {en ? 'Cancel' : 'Отмена'}
+        </button>
+      </div>
+    )}
   </section>;
 }

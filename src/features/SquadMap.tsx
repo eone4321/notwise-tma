@@ -115,6 +115,7 @@ const nf = new Intl.NumberFormat('ru-RU');
 export function SquadMap() {
   const [selected, setSelected] = useState(territories[0].id);
   const [filter, setFilter] = useState<MapFilter>('all');
+  const [roundsHeld, setRoundsHeld] = useState<1 | 2 | 3>(3);
 
   const territory = byId.get(selected) ?? territories[0];
   const reward = territoryRewards[territory.id];
@@ -124,12 +125,13 @@ export function SquadMap() {
 
   const coinsTotal = siegeRewardTotals.coins ?? 0;
   const silverTotal = siegeRewardTotals.squad_silver ?? 0;
-  const statSummary = [
-    siegeRewardTotals.wisdom ? `+${siegeRewardTotals.wisdom} Мдр` : '',
-    siegeRewardTotals.agility ? `+${siegeRewardTotals.agility} Лов` : '',
-    siegeRewardTotals.strength ? `+${siegeRewardTotals.strength} Сил` : '',
-    siegeRewardTotals.endurance ? `+${siegeRewardTotals.endurance} Вын` : '',
-  ].filter(Boolean).join(' · ');
+  const scaledTotals = useMemo(() => {
+    const next: Partial<Record<RewardKind, number>> = {};
+    for (const kind of Object.keys(siegeRewardLabels) as RewardKind[]) {
+      next[kind] = (siegeRewardTotals[kind] ?? 0) * roundsHeld;
+    }
+    return next;
+  }, [roundsHeld]);
 
   return <section className="card squadMapCard" id="siege-map">
     <div className="squadMapHeader">
@@ -202,13 +204,23 @@ export function SquadMap() {
     <details className="mediaDetails siegePayoutExample">
       <summary>
         <span>
-          <strong>Награды всех {counts.total} земель за 1 раунд</strong>
-          <small>{nf.format(coinsTotal)} монет · {nf.format(silverTotal)} серебра · {statSummary}</small>
+          <strong>Награды всех земель: за раунд и за всю осаду</strong>
+          <small>1 раунд ({counts.total}): {nf.format(coinsTotal)} монет · {nf.format(silverTotal)} серебра · 3 раунда ({counts.total * 3}): до {nf.format(coinsTotal * 3)} монет · {nf.format(silverTotal * 3)} серебра</small>
         </span>
       </summary>
-      <SiegeTotals totals={siegeRewardTotals}/>
+      <div className="siegeRoundSwitch" role="group" aria-label="Суммарные награды по количеству раундов">
+        {([1, 2, 3] as const).map(num => <button
+          key={num}
+          type="button"
+          aria-pressed={roundsHeld === num}
+          onClick={() => setRoundsHeld(num)}
+        >
+          {num === 1 ? `1 раунд (${counts.total})` : num === 2 ? `2 раунда (${counts.total * 2})` : `Вся осада · 3 раунда (${counts.total * 3})`}
+        </button>)}
+      </div>
+      <SiegeTotals totals={scaledTotals}/>
       <p className="siegePoolNote">
-        Сумма выше — максимум за один 8-часовой раунд, если один сквад удержит все {counts.total} земель. В каждом из 3 раундов монеты и серебро начисляются отдельно тем участникам, кто вложил от 1 мощи, а стат-баффы работают 24 часа после нажатия «Забрать» в День празднования.
+        На карте {counts.total} участков, но осада идёт 3 раунда по 8 часов: по итогам каждого раунда удержанные земли начисляют награды в общую копилку осады (монеты, серебро и суточные баффы суммируются). Если сквад удержал все {counts.total} земель в 2 раундах ({counts.total * 2} удержаний) — каждый атаковавший участник получит {nf.format(coinsTotal * 2)} монет, {nf.format(silverTotal * 2)} серебра и ×2 баффов (+6 Мдр, +4 Лов, +4 Сил, +2 Вын). За все 3 раунда ({counts.total * 3} удержаний) максимум составляет {nf.format(coinsTotal * 3)} монет, {nf.format(silverTotal * 3)} серебра и ×3 баффов на 24 часа.
       </p>
     </details>
   </section>;

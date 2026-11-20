@@ -76,7 +76,6 @@
   pointer-events: auto;
 }
 .gameHero .heroOwlStage .skinOwlRender {
-  transform: scaleX(-1);
   -webkit-mask-image: radial-gradient(ellipse 56% 56% at 50% 52%, #000 68%, rgba(0, 0, 0, 0.52) 86%, transparent 100%);
   mask-image: radial-gradient(ellipse 56% 56% at 50% 52%, #000 68%, rgba(0, 0, 0, 0.52) 86%, transparent 100%);
 }
@@ -556,8 +555,8 @@
   background: var(--game-tile);
   white-space: nowrap;
 }
-.inventoryPriceStrip > a.inventoryFloor { min-block-size: 32px; }
-.inventoryFloor .rowChevron { width: 5px; height: 5px; margin-inline-end: 2px; }
+.inventoryPriceStrip > a.inventoryFloor { min-block-size: 32px; padding-inline-end: 8px; }
+.inventoryFloor .rowChevron { width: 6px; height: 6px; flex: none; margin-inline: 1px 3px; }
 .inventoryPriceStrip .priceBadge { font-size: 11px; }
 .inventoryPanel .inventoryCopy > .itemSource {
   margin-block-start: 4px;
@@ -574,6 +573,8 @@
   width: 9px;
   height: 9px;
   flex: none;
+  margin-inline: 2px;
+  overflow: visible;
   border: solid currentColor;
   border-width: 1.5px 1.5px 0 0;
   border-radius: 0 1px 0 0;
@@ -1966,6 +1967,7 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   width: 100%;
   height: 100%;
   flex: none;
+  transform: scaleX(-1);
 }
 .skinOwlRender[data-interactive="true"] {
   cursor: pointer;
@@ -2049,7 +2051,8 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
+  min-height: 44px;
   padding: 9px 10px;
   border-radius: 10px;
   border: 1px solid var(--game-panel-line);
@@ -2060,17 +2063,54 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   align-items: center;
   gap: 8px;
   min-width: 0;
+  flex: 1 1 0;
 }
-.skinEnchantMeta strong { display: block; font-size: 13px; color: var(--text); }
-.skinEnchantMeta small { display: block; font-size: 11px; color: var(--muted); }
+.skinEnchantText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 0;
+}
+.skinEnchantMeta strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.25;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.skinEnchantBonusTag {
+  display: inline-block;
+  min-width: 58px;
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.skinEnchantMeta small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
 .skinEnchantStep input {
-  width: 38px;
+  width: 40px;
+  height: 30px;
   min-height: 30px;
+  padding: 0;
   border-radius: 7px;
   border: 1px solid var(--game-panel-line);
   background: var(--game-panel);
   color: var(--gold);
-  font-size: 14px;
+  font-size: 16px;
+  line-height: 28px;
   font-weight: 800;
   text-align: center;
   font-variant-numeric: tabular-nums;
@@ -2844,20 +2884,53 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .wardrobeTrayHead strong { color: var(--text); }
 .wardrobeTrayHead small { font-size: 12px; font-weight: 800; color: var(--gold); }
 
+.wardrobeTrayViewport {
+  position: relative;
+  margin-inline: -6px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.wardrobeTrayViewport::before,
+.wardrobeTrayViewport::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 22px;
+  z-index: 2;
+  pointer-events: none;
+}
+.wardrobeTrayViewport::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--game-tile) 0%, color-mix(in srgb, var(--game-tile) 65%, transparent) 55%, transparent 100%);
+  box-shadow: inset 8px 0 10px -8px rgba(0, 0, 0, 0.55);
+}
+.wardrobeTrayViewport::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--game-tile) 0%, color-mix(in srgb, var(--game-tile) 65%, transparent) 55%, transparent 100%);
+  box-shadow: inset -8px 0 10px -8px rgba(0, 0, 0, 0.55);
+}
+.wardrobeTrayViewport.isLeagueViewport::before {
+  background: linear-gradient(90deg, var(--game-panel) 0%, color-mix(in srgb, var(--game-panel) 65%, transparent) 55%, transparent 100%);
+}
+.wardrobeTrayViewport.isLeagueViewport::after {
+  background: linear-gradient(270deg, var(--game-panel) 0%, color-mix(in srgb, var(--game-panel) 65%, transparent) 55%, transparent 100%);
+}
+
 .wardrobeTray {
   display: flex;
   gap: 7px;
   overflow-x: auto;
-  padding-bottom: 3px;
-  scroll-snap-type: x proximity;
+  padding: 1px 10px 3px;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x pan-y;
   scrollbar-width: none;
 }
 .wardrobeTray::-webkit-scrollbar { display: none; }
 
 .wardrobeItemChip {
   flex: none;
-  scroll-snap-align: start;
   display: grid;
   justify-items: center;
   gap: 4px;
@@ -3175,4 +3248,79 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   border-radius: 50%;
   background: var(--gold);
   box-shadow: 0 0 8px var(--gold);
+}
+
+*, *::before, *::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wardrobeLeagueRail {
+  padding: 1px 10px 2px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x pan-y;
+}
+
+.owlMarketList .marketPriceRow {
+  margin-inline: -6px;
+  padding-inline: 7px;
+  border-radius: 8px;
+}
+
+.siegeRoundSwitch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-block: 4px 10px;
+}
+.siegeRoundSwitch button {
+  margin: 0;
+  min-height: 34px;
+  padding: 5px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  cursor: pointer;
+}
+.siegeRoundSwitch button[aria-pressed="true"] {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 16%, var(--game-panel));
+  color: var(--text);
+}
+
+.settingsResetCard {
+  display: grid;
+  gap: 10px;
+}
+.settingsResetCard h2 {
+  margin: 0;
+}
+.settingsResetCard .caption {
+  margin: 0;
+}
+.settingsResetBtn {
+  margin: 0;
+  width: 100%;
+  border-color: color-mix(in srgb, #ff7b72 45%, var(--game-panel-line));
+  color: #ffb3ad;
+}
+.settingsResetConfirm {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.settingsResetConfirm > button {
+  margin: 0;
+  width: 100%;
+}
+.settingsResetDanger,
+[data-theme="graphite"] .settingsResetDanger {
+  background: #d94848;
+  border-color: #f26d6d;
+  color: #fff;
 }

@@ -310,37 +310,39 @@ export function SkinFarmCalculator({
         </span>
         {equippedInTab && <small>+{equippedInTab.bonus}%</small>}
       </div>
-      <div className="wardrobeTray">
-        <button
-          type="button"
-          className="wardrobeItemChip"
-          aria-pressed={selection[activeTab] === null}
-          onClick={() => applySlot(activeTab, null)}
-        >
-          <span className="wardrobeChipThumb"><SlotGlyph slot={activeTab}/></span>
-          <span>{activeTab === 'body' ? copy('База', 'Base') : copy('Снять', 'None')}</span>
-          <small>0%</small>
-        </button>
-        {activeTraits.map(option => {
-          const isEquipped = selection[activeTab] === option.key;
-          const isSpecial = option.key === 'Golden' || option.key === 'NOT_Chain';
-          return <button
-            key={option.key}
+      <div className="wardrobeTrayViewport">
+        <div className="wardrobeTray">
+          <button
             type="button"
             className="wardrobeItemChip"
-            data-gold={isSpecial || undefined}
-            aria-pressed={isEquipped}
-            onClick={() => applySlot(activeTab, isEquipped ? null : option.key)}
+            aria-pressed={selection[activeTab] === null}
+            onClick={() => applySlot(activeTab, null)}
           >
-            <span className="wardrobeChipThumb">
-              {activeTab === 'body' && bodySwatches[option.key]
-                ? <span className="skinColorDot" style={{ background: bodySwatches[option.key] }} aria-hidden="true"/>
-                : <SlotGlyph slot={activeTab}/>}
-            </span>
-            <span>{copy(option.ru, option.en)}</span>
-            <small>+{option.bonus}%</small>
-          </button>;
-        })}
+            <span className="wardrobeChipThumb"><SlotGlyph slot={activeTab}/></span>
+            <span>{activeTab === 'body' ? copy('База', 'Base') : copy('Снять', 'None')}</span>
+            <small>0%</small>
+          </button>
+          {activeTraits.map(option => {
+            const isEquipped = selection[activeTab] === option.key;
+            const isSpecial = option.key === 'Golden' || option.key === 'NOT_Chain';
+            return <button
+              key={option.key}
+              type="button"
+              className="wardrobeItemChip"
+              data-gold={isSpecial || undefined}
+              aria-pressed={isEquipped}
+              onClick={() => applySlot(activeTab, isEquipped ? null : option.key)}
+            >
+              <span className="wardrobeChipThumb">
+                {activeTab === 'body' && bodySwatches[option.key]
+                  ? <span className="skinColorDot" style={{ background: bodySwatches[option.key] }} aria-hidden="true"/>
+                  : <SlotGlyph slot={activeTab}/>}
+              </span>
+              <span>{copy(option.ru, option.en)}</span>
+              <small>+{option.bonus}%</small>
+            </button>;
+          })}
+        </div>
       </div>
     </div>
 
@@ -348,13 +350,16 @@ export function SkinFarmCalculator({
       <div className="skinEnchantBox">
         <div className="skinEnchantMeta">
           <GameArt path="/game/items/scroll-enchant-skin.webp" size={28}/>
-          <div>
-            <strong>{copy('Заточка скина', 'Skin enchant')} {enchantLevel > 0 ? `+${enchantLevel} (+${enchantBonus}%)` : ''}</strong>
+          <div className="skinEnchantText">
+            <strong>
+              <span>{copy('Заточка скина', 'Skin enchant')}</span>
+              <b className="skinEnchantBonusTag">{enchantLevel > 0 ? `+${enchantLevel} · +${enchantBonus}%` : '+0%'}</b>
+            </strong>
             <small data-risk={riskZone}>
               {enchantLevel >= 20
                 ? copy('Максимум +20 (+100%)', 'Max +20 (+100%)')
                 : enchantBurn > 0
-                  ? copy(`На +${nextEnchantTarget}: ${enchantSuccess}% успех · ${enchantBurn}% сгорание 🔥`, `To +${nextEnchantTarget}: ${enchantSuccess}% ok · ${enchantBurn}% burn 🔥`)
+                  ? copy(`На +${nextEnchantTarget}: ${enchantSuccess}% успех · ${enchantBurn}% риск 🔥`, `To +${nextEnchantTarget}: ${enchantSuccess}% ok · ${enchantBurn}% burn 🔥`)
                   : copy(`На +${nextEnchantTarget}: 100% без сгорания`, `To +${nextEnchantTarget}: 100% safe`)}
             </small>
           </div>
@@ -433,27 +438,29 @@ export function SkinFarmCalculator({
             <span>🏆 {copy('Боевая лига', 'Battle league')}</span>
             <strong>{gear.league > 0 ? `${battleLeagues[gear.league - 1][0]} +${gear.league}%` : copy('Без бонуса', 'None')}</strong>
           </div>
-          <div className="wardrobeLeagueRail" role="group" aria-label={copy('Боевая лига', 'Battle league')}>
-            <button
-              type="button"
-              className="wardrobeLeagueChip"
-              aria-pressed={gear.league === 0}
-              onClick={() => { lightHaptic(); setGear({ ...gear, league: 0 }); }}
-            >
-              {copy('Нет', 'None')}
-            </button>
-            {battleLeagues.map(([name], index) => {
-              const lvl = index + 1;
-              return <button
-                key={name}
+          <div className="wardrobeTrayViewport isLeagueViewport">
+            <div className="wardrobeLeagueRail" role="group" aria-label={copy('Боевая лига', 'Battle league')}>
+              <button
                 type="button"
                 className="wardrobeLeagueChip"
-                aria-pressed={gear.league === lvl}
-                onClick={() => { lightHaptic(); setGear({ ...gear, league: gear.league === lvl ? 0 : lvl }); }}
+                aria-pressed={gear.league === 0}
+                onClick={() => { lightHaptic(); setGear({ ...gear, league: 0 }); }}
               >
-                {name} <small>+{lvl}%</small>
-              </button>;
-            })}
+                {copy('Нет', 'None')}
+              </button>
+              {battleLeagues.map(([name], index) => {
+                const lvl = index + 1;
+                return <button
+                  key={name}
+                  type="button"
+                  className="wardrobeLeagueChip"
+                  aria-pressed={gear.league === lvl}
+                  onClick={() => { lightHaptic(); setGear({ ...gear, league: gear.league === lvl ? 0 : lvl }); }}
+                >
+                  {name} <small>+{lvl}%</small>
+                </button>;
+              })}
+            </div>
           </div>
         </div>
 
