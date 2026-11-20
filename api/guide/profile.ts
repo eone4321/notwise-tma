@@ -125,6 +125,11 @@ export default async function handler(request: Request) {
   if (!Number.isSafeInteger(offset) || offset < 0 || offset > 1_000_000) return json({ error: 'invalid_request' }, 400);
 
   try {
+    if (action === 'visit_squad') {
+      await awardGuide(id, 'squad');
+      await recordGuideEvent(id, token, 'action:squad').catch(() => false);
+      return json({ earned: await userAwards(id) });
+    }
     if (action === 'track') {
       if (!await recordGuideEvent(id, token, input.event)) return json({ error: 'invalid_request' }, 400);
       await trackExplorer(id, input.event);

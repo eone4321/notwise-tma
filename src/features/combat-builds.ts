@@ -1,5 +1,6 @@
 import rawSkills from '../../public/data/skills.json';
 import shopItems from './shop-data.json';
+import { startingAttribute } from '../domain/combat';
 import { skillCopy } from './skill-copy';
 
 export const statKeys = ['strength', 'agility', 'wisdom', 'endurance'] as const;
@@ -35,71 +36,55 @@ export const ringCatalog = shopItems.flatMap(item => {
   }];
 });
 
-type Build = {
+export type Ring = typeof ringCatalog[number];
+export type EquippedRing = { ring: Ring; enchant: number };
+export type EquippedSkill = { id: number; level: number };
+export type BuildState = {
+  level: number;
+  budget: number | null;
+  points: Attributes;
+  buffs: Attributes;
+  rings: (EquippedRing | null)[];
+  skills: (EquippedSkill | null)[];
+};
+
+export type Build = {
   id: string;
+  icon: StatKey;
   name: [string, string];
   role: [string, string];
   play: [string, string];
   stats: [number, number, number, number];
   rings: [StatKey, StatKey, StatKey];
   skills: [number, number, number];
+  early: number[];
 };
 
 export const builds: Build[] = [
   {
-    id: 'balanced', name: ['Универсал', 'All-rounder'], role: ['Для первых боёв', 'For early fights'],
-    play: ['Начни с обычных ударов и используй лечение, когда потеряешь здоровье. Щит помогает пережить серию попаданий, пока учишься менять блок.', 'Start with basic hits and heal after taking damage. Your shield buys time to learn how to switch guards.'],
-    stats: [25, 25, 25, 25], rings: ['strength', 'agility', 'wisdom'], skills: [3, 2, 4],
+    id: 'snowball', icon: 'agility', name: ['Ледяной контроль', 'Frost control'], role: ['Замедление, лечение и защита от взрывного урона', 'Slow, healing and burst protection'],
+    play: ['Замедли атаки Снежком и бей в свободную зону. Фазовый сдвиг береги на ответное заклинание или серию. Лечение используй, когда потерял хотя бы столько HP, сколько оно восстановит.', 'Slow incoming attacks with Snowball and hit an open zone. Save Phase Shift for a spell or combo. Heal once you have lost enough health to use it fully.'],
+    stats: [0, 30, 30, 40], rings: ['wisdom', 'agility', 'wisdom'], skills: [3, 6, 20], early: [5, 19, 8],
   },
   {
-    id: 'strength', name: ['Тяжёлый удар', 'Heavy hitter'], role: ['Сила · быстрый урон', 'Strength · burst'],
-    play: ['Включи Мощный удар и бей в открытую зону. Вой берсерка повторяет удары в последнюю зону, поэтому следи за блоком. Огненный шар помогает, когда к цели трудно подобраться.', 'Enable Power Punch and strike an open zone. Berserk Howl repeats attacks in the last zone, so watch the guard. Fireball helps against hard-to-hit targets.'],
-    stats: [100, 0, 0, 0], rings: ['strength', 'strength', 'strength'], skills: [2, 13, 11],
+    id: 'reflect', icon: 'strength', name: ['Контрудар', 'Counter fighter'], role: ['Ответ на серии ударов', 'Answer to hit combos'],
+    play: ['Включай Статический щит перед серией ударов. Цепи фиксируют блок соперника и помогают бить в незакрытые зоны. Фазовый сдвиг помогает пережить ответную вспышку, а два кольца мудрости дают ману на повторные применения.', 'Cast Static Shield before a combo. Chains hold the opponent’s guard so you can hit an open zone. Phase Shift helps survive burst retaliation, and two Wisdom rings fund repeat casts.'],
+    stats: [15, 30, 30, 25], rings: ['strength', 'wisdom', 'wisdom'], skills: [17, 9, 20], early: [12, 5, 13],
   },
   {
-    id: 'agility', name: ['Уворотчик', 'Dodger'], role: ['Ловкость · контроль темпа', 'Agility · tempo control'],
-    play: ['Замедляй атаки Снежком и береги Уклонение на серию ударов противника. Споры наказывают за активные атаки. Против заклинаний сквозь уклонение держи запас здоровья.', 'Slow incoming attacks with Snowball and save Evada Kedabra for an enemy combo. Spores punish frequent attacks. Keep health in reserve against spells that bypass dodge.'],
-    stats: [0, 100, 0, 0], rings: ['agility', 'agility', 'agility'], skills: [5, 8, 6],
+    id: 'stun', icon: 'wisdom', name: ['Боевой маг', 'Battle mage'], role: ['Против уклонения и плотного блока', 'Against dodge and tight guard'],
+    play: ['Молния проходит сквозь блок и уклонение. Перед применением следи за действиями соперника: на две секунды закроются атака и смена блока. Фазовый сдвиг и Лечение помогают пережить размен.', 'Lightning bypasses guards and dodges. Time the cast carefully, since it locks attacks and guard for two seconds. Phase Shift and Healing keep you alive through trades.'],
+    stats: [0, 25, 45, 30], rings: ['wisdom', 'agility', 'wisdom'], skills: [1, 20, 3], early: [7, 14, 5],
   },
   {
-    id: 'wisdom', name: ['Крит-маг', 'Crit caster'], role: ['Мудрость · мана и крит', 'Wisdom · mana and crit'],
-    play: ['Используй Подсказку духа, чтобы видеть смену блока. Молния проходит сквозь блок и уклонение, а Фазовый сдвиг помогает пережить ответный удар.', 'Use Spirit Guidance to see guard changes. Lightning bypasses guard and dodge, while Phase Shift helps survive retaliation.'],
-    stats: [0, 0, 100, 0], rings: ['wisdom', 'wisdom', 'wisdom'], skills: [20, 10, 1],
+    id: 'bastion', icon: 'endurance', name: ['Бастион', 'Bastion'], role: ['Щит и восстановление в длинном бою', 'Shield and recovery for long duels'],
+    play: ['Включи Щит из скорлупы и применяй Клык вампира, когда можешь провести серию ударов. Фазовый сдвиг прибереги на сильную серию или ответное заклинание. Мудрость даёт ману на долгий размен.', 'Enable Aegis and use Vampire Fang when you can land a combo. Save Phase Shift for a heavy combo or spell. Wisdom funds a longer exchange.'],
+    stats: [12, 0, 24, 64], rings: ['wisdom', 'strength', 'wisdom'], skills: [18, 4, 20], early: [19, 17, 14],
   },
   {
-    id: 'endurance', name: ['Бастион', 'Bastion'], role: ['Выносливость · затяжной бой', 'Endurance · long fights'],
-    play: ['Щит снижает входящий урон, Клык вампира возвращает здоровье за попадания. Прибереги Астероид для момента, когда оглушение позволит перехватить инициативу. Кольца мудрости дают ману на защиту.', 'Use Aegis to reduce damage and Vampire Fang to heal on hits. Save Asteroid for a stun that lets you take the initiative. Wisdom rings fund your defense.'],
-    stats: [0, 0, 0, 100], rings: ['wisdom', 'strength', 'wisdom'], skills: [18, 4, 16],
-  },
-  {
-    id: 'flurry', name: ['Серия ударов', 'Flurry fighter'], role: ['Сила + ловкость · PvP', 'Strength + agility · PvP'],
-    play: ['Включи Мощный удар, а Уклонение оставь на ответную серию. Используй Вой берсерка, пока последняя атакованная зона открыта. Если её закрыли, сначала смени зону.', 'Enable Power Punch and save Evada Kedabra for the counterattack. Use Berserk Howl while the last zone is open. If it is guarded, change zones first.'],
-    stats: [55, 45, 0, 0], rings: ['strength', 'agility', 'agility'], skills: [2, 8, 13],
-  },
-  {
-    id: 'stun', name: ['Маг оглушения', 'Stun caster'], role: ['Мудрость + ловкость · PvP', 'Wisdom + agility · PvP'],
-    play: ['Оглушение мешает сопернику атаковать, но он по-прежнему может менять блок. Используй это окно для Молнии. Фазовый сдвиг оставь на ответное заклинание.', 'Stun stops enemy attacks, and the enemy can still switch guard. Use that window for Lightning. Save Phase Shift for a counterspell.'],
-    stats: [0, 45, 55, 0], rings: ['wisdom', 'agility', 'wisdom'], skills: [7, 20, 1],
-  },
-  {
-    id: 'reflect', name: ['Отражающий боец', 'Counter fighter'], role: ['Сила + выносливость · PvP', 'Strength + endurance · PvP'],
-    play: ['Включай Статический щит перед серией противника. Цепи фиксируют и показывают его блок, чтобы ты мог бить в открытую зону. Для щита нужны четыре вложенных очка ловкости.', 'Use Static Shield before an enemy combo. Chains reveal and hold the enemy guard so you can strike an open zone. The shield requires four invested Agility points.'],
-    stats: [55, 0, 0, 45], rings: ['strength', 'wisdom', 'strength'], skills: [17, 19, 9],
-  },
-  {
-    id: 'snowball', name: ['Ледяной контроль', 'Frost control'], role: ['Выносливость + мудрость · PvP', 'Endurance + wisdom · PvP'],
-    play: ['Снежок замедляет атаки врага, Лечение и Щит из скорлупы помогают пережить размен. Сначала открой навыки ловкости и выносливости, затем вложи остаток в запас HP и маны.', 'Snowball slows enemy attacks, while Healing and Aegis help you survive trades. Unlock Agility and Endurance skills first, then spend the rest on health and mana.'],
-    stats: [0, 0, 45, 55], rings: ['wisdom', 'agility', 'wisdom'], skills: [3, 4, 6],
-  },
-  {
-    id: 'raid-cast', name: ['Охотник в рейдах', 'Raid hunter'], role: ['Контроль блока + Молния', 'Guard control + Lightning'],
-    play: ['Открой бой Цепями и бей в незакрытые зоны. Молнию используй против цели с высоким уклонением, а Фазовый сдвиг — когда ждёшь ответную серию.', 'Open with Chains and attack unguarded zones. Use Lightning against high-dodge targets and Phase Shift when you expect a counterattack.'],
-    stats: [25, 0, 55, 20], rings: ['wisdom', 'strength', 'wisdom'], skills: [17, 20, 1],
-  },
-  {
-    id: 'raid-sustain', name: ['Рейдер с вампиризмом', 'Lifesteal raider'], role: ['Обычные удары · долгий рейд', 'Basic hits · long raids'],
-    play: ['Мощный удар усиливает каждое попадание. Включай Клык вампира, когда можешь провести несколько ударов подряд. Держи запас маны на усиление и не трать Вой берсерка в блок.', 'Power Punch strengthens each hit. Use Vampire Fang when you can land several hits in a row. Conserve mana for empowered hits and avoid using Berserk Howl into a guard.'],
-    stats: [60, 0, 40, 0], rings: ['strength', 'strength', 'wisdom'], skills: [2, 18, 13],
+    id: 'dodge', icon: 'agility', name: ['Уклонение и яд', 'Dodge and poison'], role: ['Против частых обычных ударов', 'Against frequent basic attacks'],
+    play: ['Используй Споры против соперника, который постоянно атакует. Снежок замедляет соперника, а Лечение компенсирует удары, которые прошли сквозь уклонение. Кольцо мудрости понадобится для повторных применений.', 'Use Spores if your opponent keeps attacking. Snowball slows the opponent, and Healing recovers health after hits that get through your dodge. A Wisdom ring helps you cast more than once.'],
+    stats: [0, 54, 22, 24], rings: ['agility', 'wisdom', 'agility'], skills: [5, 3, 6], early: [8, 14, 19],
   },
 ];
 
@@ -116,24 +101,42 @@ export function totalAttributes(attributes: Attributes) {
   return statKeys.reduce((sum, stat) => sum + attributes[stat], 0);
 }
 
-export function presetAttributes(build: Build, level: number, budget: number): Attributes {
-  let result = { ...emptyAttributes };
-  if (level >= 2) {
-    const ids: number[] = [];
-    for (const id of build.skills) {
-      const candidate = requiredAttributes([...ids, id]);
-      if (totalAttributes(candidate) <= budget) {
-        ids.push(id);
-        result = candidate;
-      }
+export function activeAttributes(state: BuildState): Attributes {
+  const result = { ...state.points };
+  for (const stat of statKeys) result[stat] += startingAttribute + state.buffs[stat];
+  for (const slot of state.rings) if (slot) result[slot.ring.attribute] += slot.ring.bonus + slot.enchant;
+  return result;
+}
+
+export function applyBuildPreset(build: Build, state: BuildState): BuildState {
+  const budget = state.budget ?? state.level;
+  const chosen: number[] = [];
+  let points = { ...emptyAttributes };
+  if (state.level >= 2) {
+    for (const id of [...build.skills, ...build.early]) {
+      if (chosen.length === 3) break;
+      if (chosen.includes(id)) continue;
+      const candidate = requiredAttributes([...chosen, id]);
+      if (totalAttributes(candidate) > budget) continue;
+      chosen.push(id);
+      points = candidate;
     }
   }
-  // Allocate the rest toward the build's proportions without taking away skill prerequisites.
-  const deficits = build.stats.map((weight, i) => weight * budget / 100 - result[statKeys[i]]);
-  for (let remaining = budget - totalAttributes(result); remaining > 0; remaining--) {
+
+  const deficits = build.stats.map((weight, i) => weight * budget / 100 - points[statKeys[i]]);
+  for (let remaining = budget - totalAttributes(points); remaining > 0; remaining--) {
     const index = deficits.indexOf(Math.max(...deficits));
-    result[statKeys[index]]++;
+    points[statKeys[index]]++;
     deficits[index]--;
   }
-  return result;
+
+  const rings = build.rings.map(attribute => {
+    const ring = ringCatalog.filter(ring => ring.attribute === attribute && ring.minLevel <= state.level)
+      .sort((a, b) => b.tier - a.tier)[0];
+    return ring ? { ring, enchant: Math.min(3, Math.floor((state.level - 5) / 5)) } : null;
+  });
+  const targetSkillLevel = Math.min(5, 1 + Math.floor(state.level / 5));
+  const skills = Array.from({ length: 3 }, (_, slot) =>
+    chosen[slot] ? { id: chosen[slot], level: targetSkillLevel } : null);
+  return { ...state, points, rings, skills };
 }

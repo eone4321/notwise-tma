@@ -6,7 +6,7 @@ import { GameArt } from '../ui/GameArt';
 import { authData, profileRequest } from './guideProfile';
 
 type Awards = { earned: GuideAchievement[]; joined?: boolean };
-type AwardAction = 'achievements' | 'mascot' | 'check_chat';
+type AwardAction = 'achievements' | 'mascot' | 'check_chat' | 'visit_squad';
 
 export function useGuideAwards(user?: string) {
   const [earned, setEarned] = useState<GuideAchievement[]>([]);
@@ -22,11 +22,12 @@ export function useGuideAwards(user?: string) {
 
   const update = useCallback(async (action: AwardAction = 'achievements') => {
     if (!authData()) return;
-    const result = await profileRequest<Awards>({ action });
+    const result = await profileRequest<Awards>({ action }, undefined, action === 'visit_squad');
     const added = result.earned.filter(item => Object.hasOwn(guideAchievements, item) && !seen.current.has(item));
     added.forEach(item => seen.current.add(item));
     const newNotices = ready.current ? added : added.filter(item =>
-      (action === 'mascot' && item === 'mascot') || (action === 'check_chat' && item === 'community'));
+      (action === 'mascot' && item === 'mascot') || (action === 'check_chat' && item === 'community') ||
+      (action === 'visit_squad' && item === 'squad'));
     if (newNotices.length) setNotices(queue => [...queue, ...newNotices]);
     setEarned([...seen.current]);
     ready.current = true;

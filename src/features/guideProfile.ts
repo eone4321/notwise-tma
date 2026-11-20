@@ -41,7 +41,7 @@ export async function shareGuide(url: string, text = 'Гайд по NOT Wise') {
 
 export const authData = () => telegramPopup()?.initData as string | undefined;
 
-export async function profileRequest<T>(body: object, signal?: AbortSignal): Promise<T> {
+export async function profileRequest<T>(body: object, signal?: AbortSignal, keepalive = false): Promise<T> {
   const initData = authData();
   if (!initData) throw new Error('telegram_required');
   const response = await fetch('/api/guide/profile', {
@@ -49,6 +49,7 @@ export async function profileRequest<T>(body: object, signal?: AbortSignal): Pro
     headers: { 'Content-Type': 'application/json', Authorization: 'tma ' + initData },
     body: JSON.stringify(body),
     signal,
+    keepalive,
   });
   if (!response.ok) {
     const result = await response.json().catch(() => null);

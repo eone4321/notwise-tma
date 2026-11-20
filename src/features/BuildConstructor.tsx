@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { battleStats, skillCooldown, skillMana, startingAttribute } from '../domain/combat';
 import { GameArt } from '../ui/GameArt';
 import { GameAttribute, GameGlyph } from '../ui/GameGlyph';
@@ -8,21 +8,12 @@ import { useGuideLocale } from './guideLocale';
 import progression from './owl-progression.json';
 import { BattleReadout, skillEffect } from './BattleReadout';
 import {
-  builds, combatSkills, emptyAttributes, presetAttributes, requiredAttributes, ringCatalog,
-  skillById, statKeys, statLabels, totalAttributes, type Attributes, type StatKey,
+  activeAttributes, applyBuildPreset, builds, combatSkills, emptyAttributes, requiredAttributes, ringCatalog,
+  skillById, statKeys, statLabels, totalAttributes, type StatKey, type BuildState,
 } from './combat-builds';
 
-type Ring = typeof ringCatalog[number];
-type EquippedRing = { ring: Ring; enchant: number };
-type EquippedSkill = { id: number; level: number };
-type BuildState = {
-  level: number;
-  budget: number | null;
-  points: Attributes;
-  buffs: Attributes;
-  rings: (EquippedRing | null)[];
-  skills: (EquippedSkill | null)[];
-};
+import type { AnalysisResult } from './combat-analysis';
+
 type Picker = { kind: 'ring' | 'skill'; slot: number };
 const maxLevel = progression.current.length - 1;
 const emptySlots = [null, null, null];
@@ -102,26 +93,41 @@ export function BuildConstructor() {
   const lang = locale === 'en' ? 1 : 0;
   const copy = (ru: string, en: string) => lang ? en : ru;
   const [state, setState] = useState(readBuild);
-  const [analysis, setAnalysis] = useState<'idle' | 'waiting' | 'ready'>('idle');
-  const analysisTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [analysis, setAnalysis] = useState<AnalysisResult | 'waiting' | 'error' | null>(null);
+  const worker = useRef<Worker | null>(null);
   useEffect(() => {
     try { localStorage.setItem(buildStorage, JSON.stringify(state)); } catch { /* Storage is optional. */ }
   }, [state]);
-  useEffect(() => () => { if (analysisTimer.current !== null) clearTimeout(analysisTimer.current); }, []);
+  useEffect(() => () => worker.current?.terminate(), []);
   const resetAnalysis = () => {
-    if (analysisTimer.current !== null) clearTimeout(analysisTimer.current);
-    analysisTimer.current = null;
-    setAnalysis('idle');
+    worker.current?.terminate();
+    worker.current = null;
+    setAnalysis(null);
   };
   const startAnalysis = () => {
     lightHaptic();
+    resetAnalysis();
     setAnalysis('waiting');
-    analysisTimer.current = setTimeout(() => {
-      analysisTimer.current = null;
-      setAnalysis('ready');
-    }, 360);
+    try {
+      const task = new Worker(new URL('./combat-analysis.worker.ts', import.meta.url), { type: 'module' });
+      worker.current = task;
+      const finish = (result: AnalysisResult | 'error') => {
+        if (worker.current !== task) return;
+        task.terminate();
+        worker.current = null;
+        setAnalysis(result);
+      };
+      task.onmessage = (event: MessageEvent<AnalysisResult>) => finish(event.data);
+      task.onerror = () => finish('error');
+      task.postMessage(state);
+    } catch { setAnalysis('error'); }
   };
-  const [activePreset, setActivePreset] = useState<string | null>(null);
+  const activePreset = useMemo(() => builds.find(build => {
+    const preset = applyBuildPreset(build, state);
+    return statKeys.every(stat => state.points[stat] === preset.points[stat]) &&
+      state.rings.every((slot, i) => slot?.ring.id === preset.rings[i]?.ring.id && slot?.enchant === preset.rings[i]?.enchant) &&
+      state.skills.every((slot, i) => slot?.id === preset.skills[i]?.id && slot?.level === preset.skills[i]?.level);
+  })?.id, [state]);
   const [budgetDraft, setBudgetDraft] = useState<string | null>(null);
   const [picker, setPicker] = useState<Picker | null>(null);
   const levelRef = useRef<HTMLSelectElement>(null);
@@ -129,19 +135,15 @@ export function BuildConstructor() {
   const spent = totalAttributes(state.points);
   const budget = state.budget ?? state.level;
   const left = budget - spent;
-  const total = { ...state.points };
-  for (const stat of statKeys) total[stat] += startingAttribute + state.buffs[stat];
-  for (const slot of state.rings) if (slot) total[slot.ring.attribute] += slot.ring.bonus + slot.enchant;
+  const total = activeAttributes(state);
   const results = battleStats(state.level, total.strength, total.agility, total.wisdom, total.endurance);
   const nameOf = (skill: typeof combatSkills[number]) => lang ? skill.name : skill.title;
   const update = (change: Partial<BuildState>) => {
     resetAnalysis();
-    setActivePreset(null);
     setState(s => validateBuild({ ...s, ...change }));
   };
   const updateAttribute = (stat: StatKey, getAmount: (current: number) => number) => {
     resetAnalysis();
-    setActivePreset(null);
     setState(s => {
       const current = s.points[stat];
       const max = (s.budget ?? s.level) - totalAttributes(s.points) + current;
@@ -157,16 +159,7 @@ export function BuildConstructor() {
   function applyPreset(build: typeof builds[number], returnToLevel = false) {
     lightHaptic();
     resetAnalysis();
-    const next: BuildState = { ...state, points: presetAttributes(build, state.level, budget) };
-    next.rings = build.rings.map(attribute => {
-      const ring = ringCatalog.filter(ring => ring.attribute === attribute && ring.minLevel <= state.level)
-        .sort((a, b) => b.tier - a.tier)[0];
-      return ring ? { ring, enchant: 0 } : null;
-    });
-    const readySkills = build.skills.filter(id => skillAvailable(id, next));
-    next.skills = emptySlots.map((_, i) => readySkills[i] ? { id: readySkills[i], level: 1 } : null);
-    setState(next);
-    setActivePreset(build.id);
+    setState(applyBuildPreset(build, state));
     if (returnToLevel) levelRef.current?.focus();
   }
 
@@ -177,7 +170,6 @@ export function BuildConstructor() {
         <button type="button" className="buildTextButton" onClick={() => {
           lightHaptic();
           resetAnalysis();
-          setActivePreset(null);
           setBudgetDraft(null);
           setState(initialBuild());
         }}>{copy('Сбросить', 'Reset')}</button>
@@ -193,17 +185,18 @@ export function BuildConstructor() {
 
       <fieldset className="buildQuickPresets">
         <legend>{copy('Готовые сборки', 'Presets')}</legend>
-        {builds.slice(0, 5).map((build, index) => <button className="buildPresetChoice" key={build.id} type="button"
+        {builds.map((build) => <button className="buildPresetChoice" key={build.id} type="button"
           aria-pressed={activePreset === build.id} onClick={() => applyPreset(build)}>
-          {index === 0 ? <GameGlyph name="shield"/> : <GameAttribute name={statKeys[index - 1]}/>}
+          <GameAttribute name={build.icon}/>
           <span>{build.name[lang]}</span>
         </button>)}
         <button className="buildPresetChoice" type="button" onClick={() => {
           lightHaptic();
           guideRef.current?.focus({ preventScroll: true });
           guideRef.current?.scrollIntoView({ block: 'start' });
-        }}><GameGlyph name="info"/><span>{copy('Все билды', 'All builds')}</span></button>
+        }}><GameGlyph name="info"/><span>{copy('Тактика', 'Tactics')}</span></button>
       </fieldset>
+      <p className="caption buildPlanNote">{copy('Сборки подбирают навыки и кольца под уровень совы. Уровни навыков и заточка — цели для прокачки.', 'Presets choose skills and rings for your owl level. Skill levels and sharpening are targets.')}</p>
 
       <div className="buildPreview">
         <h3>{copy('Параметры в бою', 'Combat stats')}</h3>
@@ -232,10 +225,11 @@ export function BuildConstructor() {
       </div>
 
       <button className="primary buildAnalyze" type="button" onClick={startAnalysis} disabled={analysis === 'waiting'}>
-        <GameGlyph name="sparkles"/>{analysis === 'waiting' ? copy('Анализируем…', 'Analyzing…') : copy('Анализ', 'Analyze')}
+        <GameGlyph name="sparkles"/>{analysis === 'waiting' ? copy('Симулируем бои…', 'Simulating duels…') : copy('Анализ', 'Analyze')}
       </button>
       <div className="buildAnalysisStatus" aria-live="polite">
-        {analysis === 'ready' && <BuildAnalysis state={state} total={total} lang={lang}/>}
+        {analysis === 'error' && <p className="caption">{copy('Не удалось запустить симуляцию. Попробуй ещё раз.', 'Could not start the simulation. Try again.')}</p>}
+        {analysis && typeof analysis !== 'string' && <BuildAnalysis result={analysis} lang={lang}/>}
       </div>
 
       <details className="mediaDetails buildAdvanced">
@@ -422,49 +416,51 @@ function PickerLevel({ title, min, max, value, onChange }: {
   </label>;
 }
 
-function BuildAnalysis({ state, total, lang }: { state: BuildState; total: Attributes; lang: number }) {
+function BuildAnalysis({ result, lang }: { result: AnalysisResult; lang: number }) {
   const copy = (ru: string, en: string) => lang ? en : ru;
-  const remaining = (state.budget ?? state.level) - totalAttributes(state.points);
-  const chosen = state.skills.flatMap(slot => {
-    const skill = slot && skillById.get(slot.id);
-    return skill ? [skill] : [];
-  });
-  const castMana = chosen.filter(skill => !passive(skill)).reduce((sum, skill) => sum + skillMana(skill.tier, false), 0);
-  const mana = battleStats(state.level, total.strength, total.agility, total.wisdom, total.endurance).mana;
-  const ready = orderedSkills.find(skill => skillAvailable(skill.id, state) && !chosen.some(item => item.id === skill.id));
-  const advice: string[] = [];
-  const capped = (['agility', 'wisdom'] as const).filter(stat => total[stat] > 100);
-  if (capped.length) advice.push(copy(
-    `Лимит шанса крита и уклонения — 70%. Свыше 100 очков ${capped.map(stat => statLabels[stat][0].toLowerCase()).join(' и ')} соответствующий шанс не растёт. Мудрость по-прежнему даёт ману.`,
-    'Crit and dodge cap at 70%. Their chances stop growing above 100 in the relevant attribute. Wisdom still adds mana.',
-  ));
-  if (remaining > 0) advice.push(copy(
-    `Доступно ещё ${remaining} очк. Вкладывай их в ветку нужного навыка. Выносливость добавит по 2 HP за очко, мудрость — по 20 маны.`,
-    `You have ${remaining} unspent points. Invest in the branch of a skill you want. Endurance adds 2 HP per point and Wisdom adds 20 mana.`,
-  ));
-  if (chosen.length < 3 && state.level < 2) advice.push(copy('Навыки откроются со 2-го уровня совы.', 'Skills unlock at owl level 2.'));
-  else if (chosen.length < 3 && ready) advice.push(copy(
-    `Есть свободный слот навыка. Можно поставить «${ready.title}».`,
-    `You have a free skill slot. Try ${ready.name}.`,
-  ));
-  else if (chosen.length < 3 && remaining > 0) advice.push(copy('Вложи очки в ветку, чтобы открыть навык для свободного слота.', 'Invest in a branch to unlock a skill for your free slot.'));
-  if (castMana > 0) advice.push(castMana > mana
-    ? copy(`По одному применению всех активных навыков потребует ${castMana} маны при запасе ${mana}. Добавь мудрость или возьми навык дешевле.`, `One cast of every active skill costs ${castMana} mana out of ${mana}. Add Wisdom or choose a cheaper skill.`)
-    : copy(`На один цикл активных навыков уйдёт ${castMana} из ${mana} маны. Оставь запас на повторные применения и пассивные эффекты.`, `One cast of each active skill costs ${castMana} of ${mana} mana. Keep a reserve for repeat casts and passive effects.`));
-  const emptyRings = state.rings.filter(slot => slot === null).length;
-  if (emptyRings > 0) advice.push(state.level < 5
-    ? copy('Первые кольца доступны с 5-го уровня.', 'Your first rings unlock at level 5.')
-    : copy(`Свободно слотов колец: ${emptyRings}. Кольца силы усиливают удары, ловкости — уклонение, мудрости — крит и ману.`, `Free ring slots: ${emptyRings}. Strength supports damage, Agility supports dodge, and Wisdom supports crit and mana.`));
-  if (state.rings.some(slot => slot && ringCatalog.some(ring =>
-    ring.attribute === slot.ring.attribute && ring.minLevel <= state.level && ring.bonus > slot.ring.bonus + slot.enchant))) {
-    advice.push(copy('Для одного из слотов уже доступно кольцо с большей прибавкой без заточки.', 'A ring with a higher unsharpened bonus is already available for one slot.'));
-  }
-  if (!advice.length) advice.push(copy(
-    'Очки распределены, слоты заполнены. Для долгих боёв проверь запас маны и здоровья. Для серии ударов оцени силу и шанс крита.',
-    'Your points and slots are filled. For long fights check mana and health. For hit combos review Strength and crit chance.',
-  ));
+  const { baseline, matchups, recommendations } = result;
+  const percent = (wins: number, total: number) => Math.round(wins * 100 / total);
+  const skillName = (id: number) => lang ? skillById.get(id)?.name : skillById.get(id)?.title;
   return <section className="buildAnalysis" aria-label={copy('Анализ билда', 'Build analysis')}>
-    <h3>{copy('Что улучшить', 'What to improve')}</h3>
-    <ul>{advice.map(line => <li key={line}>{line}</li>)}</ul>
+    <div className="buildScore">
+      <strong>{percent(baseline.wins, baseline.trials)}%</strong>
+      <span>{copy('побед в симуляции', 'simulated wins')}<small>{baseline.wins} / {baseline.trials} {copy('боёв', 'duels')} · {Math.round(baseline.seconds / baseline.trials)} {copy('с в среднем', 's average')}</small></span>
+    </div>
+    <p className="caption">{copy('Пять сборок твоего уровня с тем же бюджетом очков и сопоставимой прокачкой. Результаты рейтинга будут зависеть от действий игроков.', 'Five opponent builds at your level and point budget. This estimate uses simulated tactics. Ranked results depend on players.')}</p>
+    <dl className="buildMatchups">
+      {matchups.map(row => <div key={row.id}>
+        <dt>{builds.find(build => build.id === row.id)?.name[lang]}</dt>
+        <dd>{percent(row.wins, row.trials)}%</dd>
+      </div>)}
+    </dl>
+    {baseline.attempts > 0 && <p className="caption buildHitBreakdown">{copy(
+      `Противники заблокировали ${percent(baseline.blocked, baseline.attempts)}% твоих ударов и уклонились от ${percent(baseline.evaded, baseline.attempts)}%.`,
+      `Opponents blocked ${percent(baseline.blocked, baseline.attempts)}% of your strikes and dodged ${percent(baseline.evaded, baseline.attempts)}%.`,
+    )}</p>}
+    <h3>{copy('Что можно докрутить', 'What to improve')}</h3>
+    {recommendations.length > 0 ? <ul>{recommendations.map(({ change, gain }, index) => {
+      let label: string;
+      if (change.kind === 'points') {
+        const target = statLabels[change.to][lang];
+        label = change.from
+          ? copy(`Перенеси ${change.amount} очк. из «${statLabels[change.from][lang]}» в «${target}».`, `Move ${change.amount} points from ${statLabels[change.from][lang]} to ${target}.`)
+          : copy(`Добавь ${change.amount} очк. в «${target}».`, `Add ${change.amount} points to ${target}.`);
+      } else if (change.kind === 'ring') {
+        const ring = ringCatalog.find(item => item.id === change.id);
+        const name = lang ? [null, 'Wooden', 'Obsidian', 'Golden'][ring?.tier ?? 0] + ' ring: ' + statLabels[ring!.attribute][lang] : ring?.title;
+        label = copy(`Слот кольца ${change.slot + 1}: ${name}`, `Ring slot ${change.slot + 1}: ${name}`) + (change.enchant ? ` +${change.enchant}.` : '.');
+      } else {
+        const name = skillName(change.id);
+        label = change.previous && change.previous !== change.id
+          ? copy(`Замени «${skillName(change.previous)}» на «${name}» (${change.level} ур.).`, `Replace ${skillName(change.previous)} with ${name} (level ${change.level}).`)
+          : copy(`${change.previous ? 'Улучши' : 'Поставь'} «${name}» (${change.level} ур.).`, `${change.previous ? 'Upgrade' : 'Equip'} ${name} (level ${change.level}).`);
+      }
+      return <li key={index}>{label} <strong>+{Math.round(gain)} {copy('пунктов к доле побед', 'points to win rate')}</strong></li>;
+    })}</ul> : <p className="caption">{copy('Проверенные одиночные правки дали прирост меньше 4 пунктов. Смотри разбивку по соперникам перед выбором тактики.', 'Tested single changes gained less than 4 points. Check individual matchups when choosing tactics.')}</p>}
+    {baseline.manaShort * 4 >= baseline.trials && <p className="caption">{copy(
+      `В ${percent(baseline.manaShort, baseline.trials)}% боёв маны не хватило на готовый навык. Сохраняй её для ключевого применения или попробуй кольцо мудрости.`,
+      `You ran out of mana for a ready skill in ${percent(baseline.manaShort, baseline.trials)}% of duels. Save it for key casts or try a Wisdom ring.`,
+    )}</p>}
+    {result.overCap.length > 0 && <p className="caption">{copy('После 100 очков ловкости или мудрости шанс уклонения или крита уже на пределе 70%. Мудрость продолжает добавлять ману.', 'Dodge and crit cap at 70% at 100 Agility or Wisdom. Wisdom still adds mana beyond that.')}</p>}
   </section>;
 }

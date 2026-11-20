@@ -44,13 +44,16 @@
   border-radius: 16px;
 }
 .gameHero .heroImage {
-  inset: 8px 0 auto auto;
-  object-position: 54% top;
-  height: calc(var(--hero-image-height) + 39px);
-  width: 77%;
+  inset: 0 0 auto auto;
+  object-position: 55% 13%;
+  height: calc(var(--hero-image-height) + 58px);
+  width: 86%;
   max-width: none;
   filter: saturate(.94);
-  mask-image: linear-gradient(to bottom, #000 64%, transparent), linear-gradient(to right, transparent, #000 36%);
+  mask-image:
+    radial-gradient(ellipse at 63% 42%, #000 34%, #000d 50%, transparent 82%),
+    linear-gradient(90deg, transparent, #000 24%, #000 84%, transparent),
+    linear-gradient(180deg, transparent, #000 9%, #000 65%, transparent 98%);
   mask-composite: intersect;
 }
 .gameHero::after, [data-theme="graphite"] .gameHero::after {
@@ -134,31 +137,6 @@
   line-height: 1;
 }
 .heroShare .gameGlyph, .supportPill .gameGlyph { font-size: 16px; }
-.heroBuilds {
-  position: relative;
-}
-.heroBadge {
-  position: absolute;
-  top: -5px;
-  right: 6px;
-  font-size: 9px;
-  font-weight: 800;
-  line-height: 1;
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: #2a1f42;
-  color: #d3c2ff;
-  border: 1px solid #7c5cb8;
-  letter-spacing: 0.02em;
-  pointer-events: none;
-  white-space: nowrap;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-}
-[data-theme="graphite"] .heroBadge {
-  background: #262626;
-  color: #e5e5e5;
-  border-color: #525252;
-}
 .owlMarket.card {
   padding: 12px;
   border-radius: 12px;
@@ -250,13 +228,13 @@
   color: var(--game-tab-quiet);
   text-align: center;
 }
-.profileTabs > :is(a, button):is([aria-current], [aria-pressed="true"]),
-[data-theme="graphite"] .profileTabs > :is(a, button):is([aria-current], [aria-pressed="true"]) {
-  background: var(--game-tile);
+.profileTabs > :is(a, button):is([aria-current="page"], [aria-pressed="true"]),
+[data-theme="graphite"] .profileTabs > :is(a, button):is([aria-current="page"], [aria-pressed="true"]) {
+  background: color-mix(in srgb, var(--game-tile), var(--gold) 10%);
   color: var(--text);
-  border-color: var(--game-panel-line);
+  border-color: color-mix(in srgb, var(--game-panel-line), var(--gold) 30%);
 }
-[data-theme="graphite"] .choiceBar.profileTabs > :is(a, button):not([aria-current], [aria-pressed="true"]) {
+[data-theme="graphite"] .choiceBar.profileTabs > :is(a, button):not([aria-current="page"], [aria-pressed="true"]) {
   background: transparent;
   border-color: transparent;
 }
@@ -1019,7 +997,7 @@
   min-block-size: 52px;
   padding: 6px 8px;
 }
-.buildPickerOption[aria-pressed="true"] { border-color: var(--gold); }
+.buildPickerOption[aria-pressed="true"] { background: color-mix(in srgb, var(--game-tile), var(--gold) 10%); border-color: color-mix(in srgb, var(--game-panel-line), var(--gold) 45%); }
 .buildPickerOption:disabled > .gameArt { opacity: .55; }
 .buildPickerOption:disabled strong { color: var(--muted); }
 .buildBranchFilter { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin-block: 4px 6px; }
@@ -1119,8 +1097,12 @@ dialog.modal.itemHelpSheet::backdrop { background: #0006; }
   text-align: center;
 }
 .buildPresetChoice :is(.gameAttribute, .gameGlyph) { font-size: 17px; }
-.buildPresetChoice:active, .buildPresetChoice[aria-pressed="true"] { border-color: var(--gold); }
-.buildPresetChoice[aria-pressed="true"] { color: var(--gold); }
+.buildPresetChoice:active { opacity: .8; }
+.buildPresetChoice[aria-pressed="true"] {
+  color: var(--gold);
+  background: color-mix(in srgb, var(--game-tile), var(--gold) 12%);
+  border-color: color-mix(in srgb, var(--game-panel-line), var(--gold) 45%);
+}
 .buildPreview h3, .buildAllocationHeading h3 { font-size: 14px; }
 .buildPreview .buildReadout { margin-block-start: 6px; }
 .buildPreview .buildReadout { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; }
@@ -1173,3 +1155,15 @@ dialog.modal.itemHelpSheet::backdrop { background: #0006; }
 .settingsGroup > :is(h2, p, .themeChoices, .secondary) { margin-block: 0; }
 .settingsGroup > .caption { margin-block-start: 2px; }
 .settingsGroup > .secondary { justify-self: start; }
+
+.profileTabs > :is(a, button), .buildPresetChoice, .buildPickerOption { -webkit-tap-highlight-color: transparent; }
+.buildPlanNote { margin: -5px 0 10px; }
+.buildScore { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.buildScore > strong { color: var(--gold); font-size: 30px; font-variant-numeric: tabular-nums; line-height: 1; }
+.buildScore > span { display: grid; gap: 1px; font-size: 13px; }
+.buildScore small { font-variant-numeric: tabular-nums; }
+.buildMatchups { display: grid; gap: 4px; margin: 9px 0 13px; font-size: 12px; }
+.buildMatchups > div { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--game-panel-line); }
+.buildMatchups dd { margin: 0; color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+.buildAnalysis > .caption:not(:first-child) { margin-top: 5px; }
+.buildAnalysis .buildHitBreakdown { margin-block: -5px 12px; }

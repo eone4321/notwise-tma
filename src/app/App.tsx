@@ -91,7 +91,7 @@ useEffect(() => {
   window.addEventListener('keydown', close);
   return () => window.removeEventListener('keydown', close);
 }, [hamster, hamsterLocked]);useEffect(()=>{telegramPopup()?.ready();const key='notwise.guide.startapp.v1';if(sessionStorage.getItem(key))return;const start=new URLSearchParams(location.search).get('startapp')??telegramPopup()?.initDataUnsafe?.start_param;const routes:Record<string,string>={capsules_gold:'/capsules/gold',eggs:'/owl',secrets:'/secrets',market:'/collections/market'};if(start&&Object.hasOwn(routes,start)){sessionStorage.setItem(key,'1');nav(routes[start],{replace:true})}},[nav]);const ask=()=>{lightHaptic();const tg=telegramPopup();if(tg?.showPopup){try { tg.showPopup({title:'Секреты Not Wise',message:'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты',buttons:[{id:'pay',text:'Заплатить',type:'default'},{id:'back',text:'Назад',type:'default'}]},()=>reveal()); return; } catch { /* Older Telegram clients use the local dialog. */ }}setPopup(true)};function reveal(){setPopup(false);setJoke(true);setShowJoke(true);localStorage.setItem('notwise.guide.secrets.v1','1')}
-return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach !== null}><Link to="/" className="brand"><img src={artSrc('/brand/notwise.svg')} alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main className="guideScreen" key={loc.pathname} inert={hamster || coach !== null}>{loc.pathname === '/' ? <Home onChatVisit={awards.noteChatVisit} english={english} profile={profile} profileFailed={profileFailed} retryProfile={() => {
+return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach !== null}><Link to="/" className="brand"><img src={artSrc('/brand/notwise.svg')} alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main className="guideScreen" key={loc.pathname} inert={hamster || coach !== null}>{loc.pathname === '/' ? <Home onChatVisit={awards.noteChatVisit} onSquadVisit={() => { void awards.update('visit_squad').catch(() => {}); }} english={english} profile={profile} profileFailed={profileFailed} retryProfile={() => {
   setProfileFailed(false); setProfileAttempt(value => value + 1);
 }}/> : <div className="guidePageContent">{loc.pathname === '/admin' ? <AdminPage profile={profile}/> : loc.pathname === '/support' || loc.pathname.startsWith('/support/') ?
   <SettingsPage profile={profile} earned={awards.earned}/> : <div lang="ru"><Page profile={profile} ask={ask} joke={joke} popup={popup} reveal={reveal}
@@ -185,8 +185,8 @@ function Dock({ hamster, locked, onHamster, onGesture }: { hamster: boolean; loc
     </button>
   </nav>;
 }
-function Home({ profile, profileFailed, retryProfile, onChatVisit, english: en }: {
-  english: boolean; profile: GuideProfile | null; profileFailed: boolean; retryProfile: () => void; onChatVisit: () => void;
+function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit, english: en }: {
+  english: boolean; profile: GuideProfile | null; profileFailed: boolean; retryProfile: () => void; onChatVisit: () => void; onSquadVisit: () => void;
 }) {
  const [share, setShare] = useState(false);
  const fromInvite = authData() && /^g_[a-f0-9]{32}$/.test(telegramPopup()?.initDataUnsafe?.start_param ?? '');
@@ -226,9 +226,8 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, english: en }
       <Link className="secondary heroBuilds" to="/combat/builds" onClick={() => { lightHaptic(); (trackGuide as (e: string) => void)('action:builds'); }}>
         <GameGlyph name="fight"/>
         <span>{en ? 'Builds' : 'Собрать билд'}</span>
-        <span className="heroBadge">{en ? 'Beta' : 'В разработке'}</span>
-      </Link>
-      <a className="secondary" href={squadLink} onClick={() => trackGuide('action:squad')}>
+        </Link>
+      <a className="secondary" href={squadLink} onClick={() => { lightHaptic(); onSquadVisit(); }}>
         <span className="squadMark" aria-hidden="true"/>
         {en ? 'Our squad' : 'Наш сквад'}
       </a>

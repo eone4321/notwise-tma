@@ -5,7 +5,7 @@ export const guideAchievements = {
   shared: { title: 'Передай дальше', description: 'Хорошие находки редко остаются у одного.', icon: '/brand/awards/hoodie.png' },
   five: { title: 'Своя стая', description: 'По одному сюда уже не летают.', icon: '/brand/awards/tie.png' },
   community: { title: 'Свой в чате', description: 'Где-то разговор продолжается даже ночью.', icon: '/brand/awards/blue.png' },
-  squad: { title: 'Под одним крылом', description: 'Некоторые крылья летят в одном строю.', icon: '/brand/awards/tie.png' },
+  squad: { title: 'Под одним крылом', description: 'Открой ссылку «Наш сквад» на главной.', icon: '/brand/awards/tie.png' },
 } as const;
 
 export type GuideAchievement = keyof typeof guideAchievements;
