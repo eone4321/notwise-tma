@@ -1,3 +1,6 @@
+// Verified profile amounts minus learned skills and unused points in each branch.
+export const startingAttribute = 3;
+
 export function baseHealth(level: number, endurance = 0) {
   return 20 + 2 * endurance + 3 * Math.max(0, level);
 }

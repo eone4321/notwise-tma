@@ -14,7 +14,7 @@ const icons = {
 const dollars = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const smallDollars = new Intl.NumberFormat('ru-RU', { maximumSignificantDigits: 2 });
 
-function GramUsdSubtext({ gram }: { gram: number }) {
+export function GramUsd({ price: gram }: { price: number }) {
   const { data } = tokenMarket.useSnapshot();
   const quote = data?.items.find(row => row.symbol === 'GRAM');
   const usd = Number(quote?.priceUsd);
@@ -61,7 +61,7 @@ export function Price({
     return (
       <span className="priceGramBlock" data-layout={usdLayout}>
         {badge}
-        <GramUsdSubtext gram={value}/>
+        <GramUsd price={value}/>
       </span>
     );
   }

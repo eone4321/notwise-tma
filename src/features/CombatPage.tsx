@@ -10,7 +10,7 @@ import { skillCopy } from './skill-copy';
 import skillLevels from './skill-levels.json';
 import { BattleReadout, skillEffect } from './BattleReadout';
 import { battleLeagues } from './battle-leagues';
-import { battleStats, skillHpMultiplier, skillCooldown, skillMana } from '../domain/combat';
+import { battleStats, skillHpMultiplier, skillCooldown, skillMana, startingAttribute } from '../domain/combat';
 import { BuildConstructor } from './BuildConstructor';
 
 export function SpBadge({ value }: { value?: number | string }) {
@@ -213,12 +213,13 @@ const statInputs = [
 ] as const;
 
 function BattleStatsCalculator() {
-  const [input, setInput] = useState({ level: '20', strength: '', agility: '', wisdom: '', endurance: '' });
+  const base = String(startingAttribute);
+  const [input, setInput] = useState({ level: '20', strength: base, agility: base, wisdom: base, endurance: base });
   const stats = battleStats(Number(input.level), Number(input.strength), Number(input.agility), Number(input.wisdom), Number(input.endurance));
 
   return <details className="card mediaDetails calculator battleCalculator" id="battle-calculator">
     <summary><GameGlyph name="fight"/><span><strong>Боевой калькулятор</strong><small>Здоровье, мана и урон</small></span></summary>
-    <p className="caption">Введи итоговые атрибуты из профиля совы с учётом экипировки и усилений.</p>
+    <p className="caption">Введи итоговые атрибуты из профиля совы. Как точка отсчёта в каждом поле стоит базовое значение 3.</p>
     <div className="calculatorGrid">
       {statInputs.map(([key, label]) => <label className="field" key={key}><span>{key !== 'level' && <GameAttribute name={key}/>} {label}</span>
         <input inputMode="numeric" value={input[key]} placeholder="0" maxLength={4}

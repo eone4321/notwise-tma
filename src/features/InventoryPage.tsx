@@ -10,11 +10,10 @@ import { chanceLabel, chancePerOpening } from '../domain/mechanics';
 import { dropsFor, eggDrawCounts, itemNames } from './inventory';
 import marketCollections from './market-collections.json';
 import { OwlPrices } from './OwlPrices';
-import { Price, type Currency } from './Price';
-import { StarsAndGram } from './GamePrice';
+import { GramUsd, Price, type Currency } from './Price';
+import { GramEstimate, StarsAndGram } from './GamePrice';
 import { SkinExamples } from './SkinExamples';
-import { ArtifactInfoModal } from './ArtifactInfoModal';
-import { lightHaptic } from '../telegram/client';
+import { ItemHelp } from './ItemHelp';
 import { ringCatalog } from './combat-builds';
 import shopItems from './shop-data.json';
 import skinParts from './skin-parts.json';
@@ -336,24 +335,29 @@ function InventoryRow({ item, id, collectionFloor }: { item: CatalogItem; id?: s
   const price = item.price ?? (offer && { value: offer.price, currency: offer.currency as Currency });
   const floor = collectionFloor ?? listing?.floor;
   const marketUrl = listing?.href ?? (item.marketAddress ? 'https://getgems.io/collection/' + item.marketAddress : undefined);
+  const source = item.source + (level ? ` · с ${level}-го ур.` : '');
   return <li className="inventoryRow" id={id} aria-labelledby={titleId}>
     <span className="inventoryIcon"><GameArt path={item.art ?? itemPath(item.file)} size={33}/></span>
     <div className="inventoryCopy">
-      <h3 id={titleId}>{item.name}</h3>
-      {(price || floor || marketUrl) && <div className="inventoryPrices">
-        {price && <span className="inventoryShopPrice">{price.currency === 'stars'
-          ? <StarsAndGram stars={price.value}/> : <Price value={price.value} currency={price.currency}/>}</span>}
-        {marketUrl ? <a className="inventoryFloor" href={marketUrl} target="_blank" rel="noreferrer"
-            aria-label={floor ? `${item.name} за ${collectionFloor !== undefined ? 'сумму от ' : ''}${floor.toLocaleString('ru-RU')} GRAM на Getgems` : `Открыть коллекцию для «${item.name}» на Getgems`}>
-            {floor ? <Price value={floor} currency="gram" from={collectionFloor !== undefined}/> : <span className="inventoryMarketLabel">Getgems</span>}
-            <span aria-hidden="true" className="rowChevron"/>
-          </a>
-          : floor ? <span className="inventoryFloor"><Price value={floor} currency="gram"/></span> : null}
-      </div>}
+      <div className="inventoryTitle">
+        <h3 id={titleId}>{item.name}</h3>
+        <ItemHelp name={item.name} file={item.file} art={item.art} effect={item.effect} source={source}/>
+      </div>
+      {price && <span className="inventoryShopPrice"><Price value={price.value} currency={price.currency} withUsd={false}/></span>}
       <p>{item.effect}</p>
       <div className="inventoryMeta">
-        <small className="itemSource">{item.source}{level ? ` · с ${level}-го ур.` : ''}</small>
+        <small className="itemSource">{source}</small>
         {mintPrice !== undefined && <span className="inventoryMint">Минт NFT <Price value={mintPrice} currency="gram" usdLayout="inline"/></span>}
+        {(price?.currency === 'stars' || price?.currency === 'gram' || marketUrl || floor) && <div className="inventorySecondaryPrices">
+          {price?.currency === 'stars' && <GramEstimate stars={price.value} usdLayout="inline"/>}
+          {price?.currency === 'gram' && <GramUsd price={price.value}/>}
+          {marketUrl ? <a className="inventoryFloor" href={marketUrl} target="_blank" rel="noreferrer"
+              aria-label={floor ? `Открыть «${item.name}» за ${floor.toLocaleString('ru-RU')} GRAM на Getgems` : `Открыть коллекцию для «${item.name}» на Getgems`}>
+              {floor ? <Price value={floor} currency="gram" from={collectionFloor !== undefined} usdLayout="inline"/> : <span className="inventoryMarketLabel">Getgems</span>}
+              <span aria-hidden="true" className="rowChevron"/>
+            </a>
+            : floor ? <span className="inventoryFloor"><Price value={floor} currency="gram" usdLayout="inline"/></span> : null}
+        </div>}
       </div>
     </div>
   </li>;
@@ -362,33 +366,25 @@ function InventoryRow({ item, id, collectionFloor }: { item: CatalogItem; id?: s
 export function InventoryPage() {
   const { pathname } = useLocation();
   const [, , slug, file] = pathname.split('/');
-  const [artifactOpen, setArtifactOpen] = useState(false);
-  const openArtifact = () => { lightHaptic(); setArtifactOpen(true); };
   const category = Object.hasOwn(categories, slug) ? categories[slug] : undefined;
   const itemCategory = slug === 'item' ? Object.entries(categories).find(([, entry]) =>
     entry.items.some(value => value.file.split('.')[0] === file)) : undefined;
   const item = itemCategory?.[1].items.find(value => value.file.split('.')[0] === file);
-  if (slug === 'item') return <section className="card inventoryPanel inventorySingle" data-category={itemCategory?.[0]}>
+  if (slug === 'item') return <section className="card inventoryPanel" data-category={itemCategory?.[0]}>
     {item ? <><h2 className="inventoryCategoryLabel">{itemCategory?.[1].title}</h2>
-      {itemCategory?.[0] === 'gear' && <ArtifactHelp onClick={openArtifact}/>}
       <ul className="compactList singleItem">{item === skinNft ? <SkinCollectionRow/> : <InventoryRow item={item}/>}</ul></> : <p>Предмет не найден.</p>}
-    <ArtifactInfoModal open={artifactOpen} onClose={() => setArtifactOpen(false)}/>
   </section>;
 
   return <>
     {(category ? [[slug, category] as const] : Object.entries(categories)).map(([id, entry]) =>
-      <div className={id === 'gear' ? 'inventorySectionFrame withArtifactHelp' : 'inventorySectionFrame'} key={id}>
-        {id === 'gear' && <ArtifactHelp onClick={openArtifact}/>}
-        <details className="card mediaDetails inventoryPanel inventorySection" id={'inventory-' + id}
+        <details className="card mediaDetails inventoryPanel inventorySection" key={id} id={'inventory-' + id}
           data-category={id} open={category !== undefined || undefined}>
           <summary><GameArt path={itemPath(entry.icon)} size={34}/><span><strong>{entry.title}</strong><small>{entry.summary}</small></span></summary>
           <ul className="compactList">{entry.items.map(item => item === skinNft
             ? <SkinCollectionRow key={item.file}/> : <InventoryRow item={item} key={item.file}/>)}</ul>
           {id === 'gear' && !category && <DetailLink className="textLink" to="/assets/gear">Шансы заточки и NFT</DetailLink>}
           {id === 'skins' && <DetailLink className="textLink" to="/owl/skins">Облики и калькулятор бонуса</DetailLink>}
-        </details>
-      </div>)}
-    <ArtifactInfoModal open={artifactOpen} onClose={() => setArtifactOpen(false)}/>
+        </details>)}
     {slug === 'gear' && <>
       <EnchantGuide/>
       <OwlPrices only="items"/>
@@ -397,12 +393,6 @@ export function InventoryPage() {
       </details>
     </>}
   </>;
-}
-
-function ArtifactHelp({ onClick }: { onClick: () => void }) {
-  return <button type="button" className="artifactHelp" aria-label="Как работают кольца и артефакты" onClick={onClick}>
-    <span className="infoCircleBtn" aria-hidden="true">i</span>
-  </button>;
 }
 
 function EnchantGuide() {

@@ -479,35 +479,29 @@
   overflow-wrap: break-word;
   text-wrap: wrap;
 }
-.inventoryPrices {
-  display: grid;
-  justify-items: end;
-  gap: 0;
-  grid-column: 2;
-  font-variant-numeric: tabular-nums;
-}
-.inventoryShopPrice, .inventoryFloor {
-  position: relative;
+.inventoryTitle { display: flex; align-items: center; min-width: 0; }
+.inventoryPanel .inventoryTitle h3 { padding-block-start: 0; min-inline-size: 0; overflow-wrap: anywhere; }
+.inventoryShopPrice {
+  align-self: start;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding-inline-end: 12px;
+  min-height: 30px;
+  font-variant-numeric: tabular-nums;
 }
-.inventoryShopPrice { min-height: 19px; }
+.inventorySecondaryPrices { display: flex; align-items: center; justify-content: end; flex-wrap: wrap; gap: 0 9px; margin-inline-start: auto; }
+.inventorySecondaryPrices:empty { display: none; }
+.inventorySecondaryPrices .priceBadge { font-size: 11px; }
 .inventoryFloor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   min-height: 28px;
-  padding-block: 2px;
   border-radius: 5px;
   color: var(--text);
 }
-.inventoryFloor .rowChevron {
-  position: absolute;
-  inset-inline-end: 2px;
-  inset-block-start: 8px;
-  width: 6px;
-  height: 6px;
-  opacity: .85;
-}
+.inventoryFloor .rowChevron { width: 6px; height: 6px; }
+.inventorySecondaryPrices :is(.rateEstimate, .priceUsdSubtext) + .inventoryFloor { border-radius: 0; border-inline-start: 1px solid var(--game-panel-line); padding-inline-start: 7px; }
 .inventoryMint { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 2px 4px; max-width: 100%; }
 .inventoryPanel .priceBadge { padding: 0; border: 0; background: none; box-shadow: none; }
 .inventoryFloor .priceBadge { color: inherit; }
@@ -631,13 +625,16 @@
 :is(.primary, .secondary, .supportPill) > .gameGlyph { line-height: 1; }
 
 .inventoryMeta {
-  margin-block-start: 4px;
-  line-height: 1.45;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  margin-block-start: 5px;
+  line-height: 1.4;
 }
 .inventoryPanel .inventoryMeta .itemSource {
   display: inline;
   margin: 0;
-  margin-inline-end: 8px;
   color: var(--item-accent, var(--muted));
 }
 .inventoryMeta .inventoryMint {
@@ -783,8 +780,7 @@
 .inventoryMarketLabel { color: var(--muted); font-size: 11px; font-weight: 650; }
 
 .starsAndGram { display: inline-flex; align-items: center; gap: 7px; }
-.eggLink .starsAndGram, .inventoryShopPrice .starsAndGram { display: grid; justify-items: end; gap: 4px; }
-.inventoryShopPrice:has(.starsAndGram) { padding-block: 2px; }
+.eggLink .starsAndGram { display: grid; justify-items: end; gap: 4px; }
 .rateEstimate { display: inline-flex; align-items: center; white-space: nowrap; }
 .rateEstimate[data-stale] { opacity: .8; }
 .gramUnavailable { color: var(--muted); font-size: 11px; font-weight: 500; white-space: nowrap; }
@@ -930,7 +926,7 @@
 .buildHeading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .buildHeading h2, .buildPanel h2 { font-size: 16px; line-height: 1.25; margin: 0; }
 .buildHeading .close { flex: none; margin: 0; }
-.buildTextButton, .buildGuideLink {
+.buildTextButton {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -940,8 +936,7 @@
   font-weight: 700;
   text-align: start;
 }
-.buildTextButton:active, .buildGuideLink:active { opacity: .7; }
-.buildGuideLink .rowChevron { width: 6px; height: 6px; }
+.buildTextButton:active { opacity: .7; }
 #build-guide-title { scroll-margin-block-start: 80px; }
 .buildSetup { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; gap: 12px; }
 .buildSetup .field, .buildEquipLevel { margin: 0; }
@@ -1009,7 +1004,6 @@
 .buildReadout dt :is(.gameAttribute, .gameGlyph) { font-size: 18px; }
 .buildReadout dd { margin: 0; color: var(--text); font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .buildPanel > .caption { margin-block: 5px 8px; }
-.buildPanel > .buildReadoutNote { font-size: 11px; }
 .buildAdvanced { margin-block-start: 4px; }
 .buildAdvanced > summary, .buildGuideEntry > summary { min-block-size: 46px; font-size: 13px; }
 .buildAdvanced > small { color: var(--muted); }
@@ -1045,15 +1039,110 @@
 .buildBranchFilter > button { min-height: 44px; }
 .buildBranchFilter .gameAttribute { font-size: 17px; }
 
-.inventorySectionFrame, .inventorySingle { position: relative; }
-.inventorySectionFrame > .card { margin-block-start: 0; }
-.withArtifactHelp summary { padding-inline-end: 41px; }
-.withArtifactHelp summary::after { position: absolute; inset-inline-end: 12px; }
-.artifactHelp { position: absolute; inset-block-start: 9px; inset-inline-end: 25px; width: 44px; height: 44px; display: grid; place-items: center; }
-.artifactHelp:active .infoCircleBtn { border-color: var(--gold); }
-.inventorySingle .artifactHelp { inset-block-start: 0; inset-inline-end: 5px; }
-.inventorySingle:has(.artifactHelp) .inventoryCategoryLabel { min-block-size: 28px; padding-inline-end: 44px; }
-.artifactInfoModal .buildHeading { margin-block-end: 5px; }
-.artifactCardsList > details + details { border-top: 1px solid var(--game-panel-line); }
-.artifactCardsList > details > summary { min-height: 52px; font-size: 13px; }
-.artifactCardsList p { font-size: 13px; }
+.itemHelpTrigger {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 36px;
+  block-size: 30px;
+  color: var(--muted);
+  border-radius: 8px;
+}
+.itemHelpTrigger .gameGlyph { font-size: 14px; }
+.itemHelpTrigger:active { color: var(--gold); background: var(--game-tile); }
+.squadShopTitle { display: flex; align-items: center; gap: 2px; }
+
+dialog.modal.itemHelpSheet[open] {
+  position: fixed;
+  inset: auto 0 0;
+  margin: 0 auto;
+  padding: 0;
+  width: min(100%, 560px);
+  max-width: 100%;
+  max-height: 80dvh;
+  overflow: hidden;
+  border-radius: 24px 24px 0 0;
+  border: 1px solid var(--game-panel-line);
+  border-bottom: 0;
+  background: #1c1c1c;
+  color: #f5f3f4;
+  box-shadow: 0 -12px 48px #0006;
+  animation: none;
+}
+dialog.modal.itemHelpSheet::backdrop { background: #0006; }
+.itemSheetContent {
+  display: flex;
+  flex-direction: column;
+  max-height: 80dvh;
+  padding: 24px 20px calc(22px + max(env(safe-area-inset-bottom, 0px), var(--tg-safe-area-inset-bottom, 0px)));
+}
+.itemSheetHeader { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); margin: 0 0 16px; justify-items: center; gap: 10px; text-align: center; }
+.itemSheetHeader h2 { font-size: 19px; }
+.itemSheetHeader .close {
+  position: absolute;
+  inset: -15px -11px auto auto;
+  margin: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: #eee;
+}
+.itemSheetBody { overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 12px; min-height: 0; }
+.itemSheetBody p { font-size: 14px; color: #d0ccd2; line-height: 1.5; }
+.itemSheetBody h3 { font-size: 14px; margin-bottom: 3px; }
+.itemSheetBody small { color: #b8b4ba; text-align: start; }
+@media (prefers-reduced-motion: no-preference) {
+  .itemHelpSheet::backdrop { animation: itemSheetDim 500ms cubic-bezier(.32,.72,0,1) both; }
+  .itemHelpSheet[data-closing]::backdrop { animation: itemSheetDim 400ms cubic-bezier(.32,.72,0,1) reverse both; }
+}
+@keyframes itemSheetDim { from { opacity: 0; } to { opacity: 1; } }
+
+.siegeRewardRules { display: grid; gap: 9px; margin: 8px 0 12px; padding-inline-start: 1.3em; color: var(--muted); font-size: 13px; list-style: decimal; }
+.siegeRewardRules strong, .siegeRoundExample strong { color: var(--text); }
+.siegeRoundExample { padding: 10px 11px; border-radius: 9px; background: var(--game-tile); }
+.siegeRoundExample h3 { font-size: 14px; margin: 0 0 6px; }
+.siegeRoundExample p { font-size: 12px; color: var(--muted); }
+.siegeRoundExample p + p { margin-top: 6px; }
+.siegePayoutExample > summary small { color: var(--muted); }
+
+.buildSetup { margin-block-start: 8px; }
+.buildQuickPresets {
+  min-inline-size: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin: 14px 0 12px;
+  padding: 0;
+  border: 0;
+}
+.buildQuickPresets legend { margin-block-end: 6px; font-size: 13px; font-weight: 700; color: var(--text); }
+.buildPresetChoice {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 3px;
+  min-height: 44px;
+  padding: 4px 3px;
+  border: 1px solid var(--game-panel-line);
+  border-radius: 8px;
+  background: var(--game-tile);
+  color: var(--text);
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
+}
+.buildPresetChoice :is(.gameAttribute, .gameGlyph) { font-size: 17px; }
+.buildPresetChoice:active, .buildPresetChoice[aria-pressed="true"] { border-color: var(--gold); }
+.buildPresetChoice[aria-pressed="true"] { color: var(--gold); }
+.buildPreview h3, .buildAllocationHeading h3 { font-size: 14px; }
+.buildPreview .buildReadout { margin-block-start: 6px; }
+.buildPreview .buildReadout { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; }
+.buildPreview .buildReadout > div { grid-column: span 2; min-height: 43px; padding-inline: 6px; }
+.buildPreview .buildReadout > div:nth-child(3) { grid-column: span 2; }
+.buildPreview .buildReadout > div:nth-child(n+4) { grid-column: span 3; }
+.buildPreview .buildReadout dt { font-size: 10px; line-height: 1.15; gap: 4px; }
+.buildPreview .buildReadout dt :is(.gameGlyph, .gameAttribute) { font-size: 16px; }
+.buildPreview .buildReadout dd { font-size: 13px; }
+.buildAllocationHeading { margin-block-start: 15px; }
+.buildAllocationHeading p { margin-block-start: 4px; }
+.buildAttributeRow output { margin-inline-start: 3px; color: var(--gold); font-variant-numeric: tabular-nums; }

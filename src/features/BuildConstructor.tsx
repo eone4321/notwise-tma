@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { battleStats, skillCooldown, skillMana } from '../domain/combat';
+import { battleStats, skillCooldown, skillMana, startingAttribute } from '../domain/combat';
 import { GameArt } from '../ui/GameArt';
 import { GameAttribute, GameGlyph } from '../ui/GameGlyph';
 import { useModal } from '../ui/useModal';
@@ -66,6 +66,7 @@ export function BuildConstructor() {
   const lang = locale === 'en' ? 1 : 0;
   const copy = (ru: string, en: string) => lang ? en : ru;
   const [state, setState] = useState(initialBuild);
+  const [activePreset, setActivePreset] = useState<string | null>(null);
   const [budgetDraft, setBudgetDraft] = useState<string | null>(null);
   const [picker, setPicker] = useState<Picker | null>(null);
   const levelRef = useRef<HTMLSelectElement>(null);
@@ -74,12 +75,16 @@ export function BuildConstructor() {
   const budget = state.budget ?? state.level;
   const left = budget - spent;
   const total = { ...state.points };
-  for (const stat of statKeys) total[stat] += state.buffs[stat];
+  for (const stat of statKeys) total[stat] += startingAttribute + state.buffs[stat];
   for (const slot of state.rings) if (slot) total[slot.ring.attribute] += slot.ring.bonus + slot.enchant;
   const results = battleStats(state.level, total.strength, total.agility, total.wisdom, total.endurance);
   const nameOf = (skill: typeof combatSkills[number]) => lang ? skill.name : skill.title;
-  const update = (change: Partial<BuildState>) => setState(s => validateBuild({ ...s, ...change }));
+  const update = (change: Partial<BuildState>) => {
+    setActivePreset(null);
+    setState(s => validateBuild({ ...s, ...change }));
+  };
   const updateAttribute = (stat: StatKey, getAmount: (current: number) => number) => {
+    setActivePreset(null);
     setState(s => {
       const current = s.points[stat];
       const max = (s.budget ?? s.level) - totalAttributes(s.points) + current;
@@ -92,7 +97,7 @@ export function BuildConstructor() {
     updateAttribute(stat, current => current + delta);
   };
 
-  function applyPreset(build: typeof builds[number]) {
+  function applyPreset(build: typeof builds[number], returnToLevel = false) {
     lightHaptic();
     const next: BuildState = { ...state, points: presetAttributes(build, state.level, budget) };
     next.rings = build.rings.map(attribute => {
@@ -103,7 +108,8 @@ export function BuildConstructor() {
     const readySkills = build.skills.filter(id => skillAvailable(id, next));
     next.skills = emptySlots.map((_, i) => readySkills[i] ? { id: readySkills[i], level: 1 } : null);
     setState(next);
-    levelRef.current?.focus();
+    setActivePreset(build.id);
+    if (returnToLevel) levelRef.current?.focus();
   }
 
   return <div className="buildConstructor">
@@ -112,14 +118,10 @@ export function BuildConstructor() {
         <h2 id="build-level-title">{copy('Калькулятор билда', 'Build calculator')}</h2>
         <button type="button" className="buildTextButton" onClick={() => {
           lightHaptic();
+          setActivePreset(null);
           setState(initialBuild(state.level, state.budget, state.buffs));
-        }}>{copy('Сбросить билд', 'Reset build')}</button>
+        }}>{copy('Сбросить', 'Reset')}</button>
       </div>
-      <button className="buildGuideLink" type="button" onClick={() => {
-        lightHaptic();
-        guideRef.current?.focus({ preventScroll: true });
-        guideRef.current?.scrollIntoView({ block: 'start' });
-      }}>{copy('Руководство по билдам', 'Build guide')} <span className="rowChevron" aria-hidden="true"/></button>
       <div className="buildSetup">
         <label className="field">{copy('Уровень совы', 'Owl level')}
           <select ref={levelRef} value={state.level} onChange={event => update({ level: Number(event.target.value) })}>
@@ -129,17 +131,39 @@ export function BuildConstructor() {
         <div className="buildBudget"><small>{copy('Свободно очков', 'Unspent points')}</small><strong>{left} <small>/ {budget}</small></strong></div>
       </div>
 
+      <fieldset className="buildQuickPresets">
+        <legend>{copy('Готовые сборки', 'Presets')}</legend>
+        {builds.slice(0, 5).map((build, index) => <button className="buildPresetChoice" key={build.id} type="button"
+          aria-pressed={activePreset === build.id} onClick={() => applyPreset(build)}>
+          {index === 0 ? <GameGlyph name="shield"/> : <GameAttribute name={statKeys[index - 1]}/>}
+          <span>{build.name[lang]}</span>
+        </button>)}
+        <button className="buildPresetChoice" type="button" onClick={() => {
+          lightHaptic();
+          guideRef.current?.focus({ preventScroll: true });
+          guideRef.current?.scrollIntoView({ block: 'start' });
+        }}><GameGlyph name="info"/><span>{copy('Все билды', 'All builds')}</span></button>
+      </fieldset>
+
+      <div className="buildPreview">
+        <h3>{copy('Параметры в бою', 'Combat stats')}</h3>
+        <BattleReadout stats={results}/>
+      </div>
+
+      <div className="buildAllocationHeading"><h3>{copy('Распределение очков', 'Allocate points')}</h3>
+        <p className="caption">{copy('У каждого атрибута 3 базовых очка. Меняй вложения справа, итог виден слева.', 'Each attribute starts at 3. Edit invested points on the right and see the total on the left.')}</p>
+      </div>
       <div className="buildAttributes">
         {statKeys.map(stat => {
-          const bonus = total[stat] - state.points[stat];
+          const bonus = total[stat] - state.points[stat] - startingAttribute;
           return <div className="buildAttributeRow" key={stat}>
             <GameAttribute name={stat}/>
-            <span><strong>{statLabels[stat][lang]}</strong>
-              {bonus > 0 && <small>{copy('С бонусами', 'With bonuses')} {total[stat]} (+{bonus})</small>}</span>
+            <span><strong>{statLabels[stat][lang]} <output aria-label={copy('Итого', 'Total') + ' · ' + statLabels[stat][lang]}>{total[stat]}</output></strong>
+              <small>{startingAttribute} {copy('база', 'base')} + {state.points[stat]} {copy('вложено', 'invested')}{bonus > 0 && ` + ${bonus} ${copy('бонус', 'bonus')}`}</small></span>
             <div className="buildStepper">
               <button type="button" aria-label={copy('Уменьшить', 'Decrease') + ' · ' + statLabels[stat][lang]}
                 disabled={state.points[stat] === 0} onClick={() => step(stat, -1)}>−</button>
-              <AttributeInput name={statLabels[stat][lang]} value={state.points[stat]} onCommit={value => updateAttribute(stat, () => value)}/>
+              <AttributeInput name={copy('Вложено · ', 'Invested · ') + statLabels[stat][lang]} value={state.points[stat]} onCommit={value => updateAttribute(stat, () => value)}/>
               <button type="button" aria-label={copy('Увеличить', 'Increase') + ' · ' + statLabels[stat][lang]}
                 disabled={left === 0} onClick={() => step(stat, 1)}>+</button>
             </div>
@@ -147,11 +171,9 @@ export function BuildConstructor() {
         })}
       </div>
 
-      <BattleReadout stats={results}/>
-      <p className="caption buildReadoutNote">{copy('Урон показан до блока, округления и прочих эффектов.', 'Damage is shown before blocks, rounding and other effects.')}</p>
       <details className="mediaDetails buildAdvanced">
-        <summary><strong>{copy('Свои очки и временные баффы', 'Custom points and temporary buffs')}</strong></summary>
-        <p className="caption">{copy('Укажи свой общий запас очков, если он отличается от уровня. Баффы осады и книги прибавляются к боевым параметрам, а доступ к навыкам зависит от вложенных очков.', 'Enter your actual point total if it differs from your level. Siege and book buffs affect combat stats. Only invested points unlock skills.')}</p>
+        <summary><strong>{copy('Бюджет очков и временные усиления', 'Custom points and temporary buffs')}</strong></summary>
+        <p className="caption">{copy('По умолчанию доступно по одному очку за уровень. Если в игре у тебя другой запас, укажи сумму вложенных и свободных очков. Усиления осады и книги прибавляются к итоговым статам.', 'The default budget is one point per level. If yours differs, enter the sum of invested and unspent points. Siege and book buffs contribute to your totals.')}</p>
         <label className="field">{copy('Всего очков для распределения', 'Total points to allocate')}
           <input value={budgetDraft ?? state.budget ?? ''} placeholder={String(state.level)} inputMode="numeric" maxLength={3}
             onChange={event => setBudgetDraft(event.target.value.replace(/\D/g, ''))}
@@ -161,7 +183,6 @@ export function BuildConstructor() {
               setBudgetDraft(null);
             }}/>
         </label>
-        <small>{copy('Очки меняются после выхода из поля.', 'Points update when you leave the field.')}</small>
         <div className="calculatorGrid">{statKeys.map(stat => <label className="field" key={stat}>
           <span><GameAttribute name={stat}/> {statLabels[stat][lang]}</span>
           <input value={state.buffs[stat] || ''} placeholder="0" inputMode="numeric" maxLength={3}
@@ -230,7 +251,7 @@ export function BuildConstructor() {
             return <span key={id}><GameArt path={skillArt(id)} size={22}/>{nameOf(skill)}</span>;
           })}</div>
           <p className="caption">{copy('Очки для всех трёх навыков', 'Points for all three skills')} · {statKeys.filter(stat => requirements[stat] > 0).map(stat => statLabels[stat][lang] + ' ' + requirements[stat]).join(' + ')}</p>
-          <button className="secondary" type="button" onClick={() => applyPreset(build)}>{copy('Применить билд', 'Apply build')}</button>
+          <button className="secondary" type="button" onClick={() => applyPreset(build, true)}>{copy('Применить билд', 'Apply build')}</button>
         </details>;
       })}
       <p className="caption">{copy('Сборки — примеры применения навыков. В рейтинговом бою результат зависит от соперника, блока и действий игроков.', 'These builds illustrate skill combinations. Ranked results depend on the opponent, guard and decisions during the fight.')}</p>
