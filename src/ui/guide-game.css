@@ -885,7 +885,7 @@
   dialog.modal[open] { animation: guideDialogIn 180ms cubic-bezier(.16,1,.3,1); }
 }
 
-.buildConstructor { display: grid; gap: 10px; margin-block-end: 16px; }
+.buildConstructor { display: grid; gap: 12px; margin-block-end: 16px; }
 .buildConstructor .buildPanel {
   margin: 0;
   background: var(--game-panel);
@@ -906,7 +906,7 @@
   text-align: start;
 }
 .buildTextButton:active { opacity: .7; }
-#build-guide-title { scroll-margin-block-start: 80px; }
+#build-guide-title, .buildSetup select { scroll-margin-block-start: calc(var(--top-inset) + 12px); }
 .buildSetup { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; gap: 12px; }
 .buildSetup .field { margin: 0; }
 .buildBudget { display: grid; gap: 2px; justify-items: end; padding-block-end: 2px; }
@@ -921,14 +921,15 @@
   color: var(--text);
   text-align: start;
 }
-.buildAttributeRow { min-block-size: 49px; }
+.buildAttributeRow { min-block-size: 52px; }
+.buildAttributeRow .gameAttribute { font-size: 23px; }
 .buildAttributeRow + .buildAttributeRow, .buildEquip + .buildEquip { border-top: 1px solid var(--game-panel-line); }
 .buildAttributeRow :is(strong, small), .buildEquipMain :is(strong, small), .buildPickerOption :is(strong, small) { display: block; }
 .buildAttributeRow strong, .buildEquipMain strong, .buildPickerOption strong { font-size: 13px; line-height: 1.25; }
 .buildAttributeRow small, .buildEquipMain small, .buildPickerOption small { margin-block-start: 2px; color: var(--muted); font-size: 11px; line-height: 1.3; }
-.buildStepper { display: flex; align-items: center; justify-content: end; gap: 1px; }
+.buildStepper { display: flex; align-items: center; justify-content: end; }
 .buildStepper input {
-  inline-size: 38px;
+  inline-size: 42px;
   block-size: 32px;
   padding: 0;
   border-radius: 6px;
@@ -983,13 +984,19 @@
 .buildEquipMain:active, .buildPickerOption:active:not(:disabled) { background: var(--game-tile); }
 .buildEquip .buildSkillEffect { grid-column: 1 / -1; padding-inline-start: 43px; margin: 0 0 5px; font-size: 12px; color: var(--muted); }
 .buildGuideEntry { border-top: 1px solid var(--game-panel-line); }
-.buildGuideEntry > summary { min-block-size: 52px; }
+.buildGuideEntry > summary { min-block-size: 54px; display: flex; align-items: center; gap: 9px; cursor: pointer; }
 .buildGuideEntry > summary small { color: var(--muted); font-size: 11px; margin-block-start: 2px; }
-.buildGuideEntry[open] { padding-block-end: 10px; }
-.buildGuideEntry p { font-size: 13px; }
-.buildGuideSkills { display: flex; flex-wrap: wrap; gap: 5px 10px; }
+.buildGuideEntry[open] { padding-block-end: 12px; }
+.buildGuideEntry p { margin-block: 8px; font-size: 13px; }
+.buildGuideTradeoff { color: var(--muted); }
+.buildGuideTradeoff strong { color: var(--text); display: block; }
+.buildGuideSkills { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-block: 12px 9px; }
 .buildGuideSkills > span { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; }
-.buildGuideEntry > button { min-block-size: 44px; margin-block-start: 6px; }
+.buildGuideGear { display: grid; gap: 6px; margin: 0; font-size: 12px; }
+.buildGuideGear > div { display: grid; gap: 1px; }
+.buildGuideGear dt { color: var(--muted); }
+.buildGuideGear dd { margin: 0; }
+.buildGuideEntry > button { min-block-size: 44px; margin-block-start: 10px; }
 .buildPickerOptions { display: grid; gap: 5px; }
 .buildPickerOptions > .buildTextButton { justify-self: start; }
 .buildPickerOption {
@@ -1073,49 +1080,32 @@ dialog.modal.itemHelpSheet::backdrop { background: #0006; }
 .siegePayoutExample > summary small { color: var(--muted); }
 
 .buildSetup { margin-block-start: 8px; }
-.buildQuickPresets {
-  min-inline-size: 0;
+.buildPresetBar {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 5px;
-  margin: 14px 0 12px;
-  padding: 0;
-  border: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin-block: 12px 15px;
 }
-.buildQuickPresets legend { margin-block-end: 6px; font-size: 13px; font-weight: 700; color: var(--text); }
-.buildPresetChoice {
-  display: grid;
-  justify-items: center;
-  align-content: center;
-  gap: 3px;
-  min-height: 44px;
-  padding: 4px 3px;
+.buildEquipMain.buildPresetTrigger {
+  min-block-size: 55px;
+  padding: 6px 9px;
+  grid-template-columns: 20px minmax(0, 1fr) 9px;
   border: 1px solid var(--game-panel-line);
-  border-radius: 8px;
   background: var(--game-tile);
-  color: var(--text);
-  font-size: 11px;
-  line-height: 1.2;
-  text-align: center;
 }
-.buildPresetChoice :is(.gameAttribute, .gameGlyph) { font-size: 17px; }
-.buildPresetChoice:active { opacity: .8; }
-.buildPresetChoice[aria-pressed="true"] {
-  color: var(--gold);
-  background: color-mix(in srgb, var(--game-tile), var(--gold) 12%);
-  border-color: color-mix(in srgb, var(--game-panel-line), var(--gold) 45%);
-}
-.buildPreview h3, .buildAllocationHeading h3 { font-size: 14px; }
-.buildPreview .buildReadout { margin-block-start: 6px; }
-.buildPreview .buildReadout { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; }
-.buildPreview .buildReadout > div { grid-column: span 2; min-height: 43px; padding-inline: 6px; }
+.buildPresetTrigger :is(.gameAttribute, .gameGlyph) { font-size: 19px; color: var(--gold); }
+.buildGuideLink { padding-inline: 3px; }
+.buildPresetNote { margin: 0 0 10px; }
+.buildAllocationHeading h3 { font-size: 14px; }
+.buildPreview .buildReadout { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 5px; margin-block: 10px 14px; }
+.buildPreview .buildReadout > div { grid-column: span 2; min-block-size: 46px; padding-inline: 7px; }
 .buildPreview .buildReadout > div:nth-child(3) { grid-column: span 2; }
 .buildPreview .buildReadout > div:nth-child(n+4) { grid-column: span 3; }
-.buildPreview .buildReadout dt { font-size: 10px; line-height: 1.15; gap: 4px; }
+.buildPreview .buildReadout dt { font-size: 11px; line-height: 1.15; gap: 4px; }
 .buildPreview .buildReadout dt :is(.gameGlyph, .gameAttribute) { font-size: 16px; }
 .buildPreview .buildReadout dd { font-size: 13px; }
-.buildAllocationHeading { margin-block-start: 15px; }
-.buildAllocationHeading p { margin-block-start: 4px; }
+.buildAllocationHeading p { margin-block: 4px 0; }
 .buildAttributeRow output { margin-inline-start: 3px; color: var(--gold); font-variant-numeric: tabular-nums; }
 
 .buildEmptySlot {
@@ -1142,30 +1132,39 @@ dialog.modal.itemHelpSheet::backdrop { background: #0006; }
 .buildPickerLevel select { min-height: 38px; margin: 0; padding: 4px 7px; }
 .buildPickerCheck { width: 15px; text-align: center; color: var(--gold); }
 .buildClearSlot { min-height: 36px; margin-block-end: 3px; }
-.buildAnalyze { width: 100%; margin-block: 4px; gap: 7px; }
+.buildAnalyze { width: 100%; min-block-size: 44px; margin: 0; gap: 7px; }
+.buildAnalysisStatus { margin-block-start: 12px; }
 .buildAnalysis {
-  margin: 8px 0;
-  padding: 11px 12px;
+  padding: 11px 12px 12px;
   border: 1px solid var(--game-panel-line);
   border-radius: 9px;
   background: var(--game-tile);
 }
-.buildAnalysis h3 { font-size: 14px; margin-bottom: 7px; }
-.buildAnalysis ul { margin: 0; padding-inline-start: 16px; list-style: disc; color: var(--muted); font-size: 12px; }
-.buildAnalysis li + li { margin-top: 6px; }
+.buildAnalysis h3 { font-size: 14px; margin: 0 0 8px; }
+.buildAdvice { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: 13px; }
+.buildAdvice p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+.buildAdvice li + li { border-block-start: 1px solid var(--game-panel-line); padding-block-start: 8px; }
+.buildManaCheck { display: grid; gap: 5px; border-block-start: 1px solid var(--game-panel-line); padding-block-start: 8px; margin-block-start: 10px; font-size: 12px; }
+.buildManaCheck > div { display: flex; justify-content: space-between; gap: 8px; }
+.buildManaCheck strong { color: var(--gold); }
+.buildManaCheck p { color: var(--muted); margin: 0; font-size: 11px; }
+.buildPractice { border-block-start: 1px solid var(--game-panel-line); margin-block-start: 11px; }
+.buildPractice > summary { display: flex; align-items: center; min-block-size: 53px; gap: 8px; cursor: pointer; }
+.buildPractice > summary small, .buildMatchups small { display: block; color: var(--muted); margin-block-start: 3px; }
+.buildPractice > summary small { font-size: 11px; }
+.buildPractice > .caption, .buildPracticeResult > .caption { margin: 4px 0 8px; }
+.buildPracticeHint { margin-block: 8px; padding: 8px 10px; border-radius: 7px; background: var(--game-tile); color: var(--muted); font-size: 12px; }
+.buildPracticeHint > strong { display: block; margin-block-end: 2px; color: var(--text); }
+.buildComparisonStatus { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.buildRunPractice { width: 100%; min-block-size: 44px; margin-block: 4px; }
+.buildRunPractice:disabled { opacity: .75; }
 .settingsGroup { display: grid; gap: 9px; }
 .settingsGroup > :is(h2, p, .themeChoices, .secondary) { margin-block: 0; }
 .settingsGroup > .caption { margin-block-start: 2px; }
 .settingsGroup > .secondary { justify-self: start; }
 
-.profileTabs > :is(a, button), .buildPresetChoice, .buildPickerOption { -webkit-tap-highlight-color: transparent; }
-.buildPlanNote { margin: -5px 0 10px; }
-.buildScore { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
-.buildScore > strong { color: var(--gold); font-size: 30px; font-variant-numeric: tabular-nums; line-height: 1; }
-.buildScore > span { display: grid; gap: 1px; font-size: 13px; }
-.buildScore small { font-variant-numeric: tabular-nums; }
-.buildMatchups { display: grid; gap: 4px; margin: 9px 0 13px; font-size: 12px; }
-.buildMatchups > div { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--game-panel-line); }
-.buildMatchups dd { margin: 0; color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
-.buildAnalysis > .caption:not(:first-child) { margin-top: 5px; }
-.buildAnalysis .buildHitBreakdown { margin-block: -5px 12px; }
+.profileTabs > :is(a, button), .buildPickerOption { -webkit-tap-highlight-color: transparent; }
+.buildMatchups { display: grid; margin: 8px 0; font-size: 13px; }
+.buildMatchups > div { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 0; border-block-end: 1px solid var(--game-panel-line); }
+.buildMatchups dd { margin: 0; color: var(--gold); text-align: end; font-weight: 700; white-space: nowrap; }
+.buildMatchups small { font-size: 11px; font-weight: 500; }

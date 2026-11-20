@@ -38,12 +38,13 @@ function fighter(stats: Fighter, guard: number) {
     reflect: 0, reflectPct: 0, lift: 0, liftPct: 0, echo: 0, echoPct: 0,
     burn: 0, burnDps: 0, burnCarry: 0,
     poisonTicks: 0, poisonDamage: 0, poisonAt: 0, poisonedAttack: false,
-    manaShort: false, blocked: 0, evaded: 0, attempts: 0,
   };
 }
 
 type FighterState = ReturnType<typeof fighter>;
-type QueuedHit = { at: number; from: FighterState; target: FighterState; amount: number; zone?: number };
+type QueuedHit = { at: number; target: FighterState } & (
+  { kind: 'raw' | 'reduced'; amount: number } | { kind: 'flurry'; from: FighterState; zone: number }
+);
 
 export function simulateDuel(first: Fighter, second: Fighter, seed: number, reverse = false) {
   const random = rng(seed);
@@ -60,28 +61,36 @@ export function simulateDuel(first: Fighter, second: Fighter, seed: number, reve
     return Math.trunc(skill.value);
   }
 
-  function damage(target: FighterState, value: number) {
+  function reducedDamage(target: FighterState, value: number) {
     if (target.phase > now || value <= 0) return 0;
-    const amount = round(value * (1 - passive(target, 4) / 100));
+    return round(value * (1 - passive(target, 4) / 100));
+  }
+
+  function damage(target: FighterState, value: number) {
+    const amount = reducedDamage(target, value);
     target.hp = Math.max(0, target.hp - amount);
     return amount;
   }
 
-  function canTarget(source: FighterState, target: FighterState, zone: number) {
-    if (zone === target.guard) { source.blocked++; return false; }
+  function spellDamage(target: FighterState, value: number, delay: number) {
+    const amount = reducedDamage(target, round(value));
+    if (amount <= 0) return;
+    if (delay > 0) queue.push({ kind: 'reduced', at: now + delay, target, amount });
+    else target.hp = Math.max(0, target.hp - amount);
+  }
+
+  function canTarget(target: FighterState, zone: number) {
+    if (zone === target.guard) return false;
     if (target.evade > now && target.dodgeCharges > 0) {
       target.dodgeCharges--;
-      source.evaded++;
       return false;
     }
-    if (random() * 100 < target.stats.dodge) { source.evaded++; return false; }
-    return true;
+    return random() * 100 >= target.stats.dodge;
   }
 
   function strike(source: FighterState, target: FighterState, zone: number, basic: boolean) {
-    source.attempts++;
     if (source.poisonTicks && now < source.poisonAt) source.poisonedAttack = true;
-    if (!canTarget(source, target, zone)) {
+    if (!canTarget(target, zone)) {
       if (basic) source.streak = 0;
       return;
     }
@@ -104,13 +113,13 @@ export function simulateDuel(first: Fighter, second: Fighter, seed: number, reve
     }
     if (source.lift > now) source.hp = Math.min(source.stats.health, source.hp + round(landed * source.liftPct));
     if (target.reflect > now) damage(source, round(landed * target.reflectPct));
-    if (source.echo > now) queue.push({ at: now + 600, from: source, target, amount: round(landed * source.echoPct) });
+    if (source.echo > now) queue.push({ kind: 'raw', at: now + 600, target, amount: round(landed * source.echoPct) });
     if (basic && ++source.streak === 3) {
       source.streak = 0;
       const multiplier = 1 - passive(target, 19) / 100;
       target.stunned = Math.max(target.stunned, now + 1500 * multiplier);
       for (const delay of [490, 630, 770, 910]) {
-        queue.push({ at: now + delay, from: source, target, amount: round(raw * .5 * multiplier) });
+        queue.push({ kind: 'raw', at: now + delay, target, amount: round(raw * .5 * multiplier) });
       }
     }
   }
@@ -131,36 +140,36 @@ export function simulateDuel(first: Fighter, second: Fighter, seed: number, reve
     const controlUntil = () => now + lock + duration * (1 - passive(target, 19) / 100);
     // The cast lock delays the next input. It does not cancel the spell which set it.
     switch (skill.id) {
-      case 1: damage(target, round(scaled)); break;
+      case 1: spellDamage(target, scaled, 80); break;
       case 3: source.hp = Math.min(source.stats.health, source.hp + round(scaled)); break;
       case 5:
-        target.poisonTicks = Math.floor(duration / 1000 * (1 - passive(target, 19) / 100));
+        target.poisonTicks = Math.floor(Math.round(duration / 1000) * (1 - passive(target, 19) / 100));
         target.poisonDamage = round(scaled);
         target.poisonAt = now + 1500;
         target.poisonedAttack = false;
         break;
-      case 6: damage(target, round(scaled)); target.chilled = Math.max(target.chilled, controlUntil()); break;
+      case 6: spellDamage(target, scaled, 300); target.chilled = Math.max(target.chilled, controlUntil()); break;
       case 7: target.stunned = Math.max(target.stunned, controlUntil()); break;
       case 8: source.dodgeCharges = round(skill.value); source.evade = now + duration; break;
       case 9: source.reflect = now + duration; source.reflectPct = value / 100; break;
       case 11:
-        damage(target, round(scaled));
+        spellDamage(target, scaled, 160);
         target.burn = now + duration;
         target.burnDps = skill.dps * source.stats.scale;
         target.burnCarry = 0;
         break;
       case 12:
-        damage(target, round(scaled * (1 + 3 * (1 - source.hp / source.stats.health))));
+        spellDamage(target, scaled * (1 + 3 * (1 - source.hp / source.stats.health)), 895);
         source.hp = Math.max(1, source.hp - round(3 * source.stats.scale));
         break;
       case 13:
         for (let i = 0, count = round(skill.value); i < count; i++) {
-          queue.push({ at: now + i * 250, from: source, target, amount: 0, zone: source.lastZone });
+          queue.push({ kind: 'flurry', at: now + i * 250, from: source, target, zone: source.lastZone });
         }
         break;
       case 14: source.echo = now + duration; source.echoPct = value / 100; break;
       case 15: source.gamble = value; break;
-      case 16: damage(target, round(scaled)); target.stunned = Math.max(target.stunned, controlUntil()); break;
+      case 16: spellDamage(target, scaled, 0); target.stunned = Math.max(target.stunned, controlUntil()); break;
       case 17: target.chains = Math.max(target.chains, controlUntil()); break;
       case 18: source.lift = now + duration; source.liftPct = value / 100; break;
       case 20: source.phase = now + duration; break;
@@ -168,7 +177,7 @@ export function simulateDuel(first: Fighter, second: Fighter, seed: number, reve
   }
 
   function tickEffects(state: FighterState) {
-    if (state.burn >= now && state.burnDps > 0) {
+    if (state.burn > now && state.burnDps > 0) {
       state.burnCarry += state.burnDps / 10;
       const damageNow = Math.floor(state.burnCarry);
       state.burnCarry -= damageNow;
@@ -193,19 +202,20 @@ export function simulateDuel(first: Fighter, second: Fighter, seed: number, reve
         target.revealed = now + reveal.duration;
       }
     }
-    if (now < source.stunned) return;
     if (now >= source.castAt) {
       for (const skill of source.active) {
         if (now < (source.cooldowns.get(skill.id) ?? 0)) continue;
         if (skill.id === 3 && source.stats.health - source.hp < Math.round(skill.value * source.stats.scale)) continue;
+        if (skill.id === 7 && target.stunned > now + 500) continue;
+        if (skill.id === 12 && source.hp > source.stats.health * .7) continue;
         if (skill.id === 13 && source.lastZone === target.guard && (source.revealed > now || target.chains > now)) continue;
         if ([1, 6, 11, 12, 16].includes(skill.id) && target.phase > now) continue;
-        if (source.mana < skill.mana) { source.manaShort = true; continue; }
+        if (source.mana < skill.mana) continue;
         cast(source, target, skill);
         break;
       }
     }
-    if (source.hp <= 0 || target.hp <= 0 || now < source.attackAt || now < source.locked) return;
+    if (source.hp <= 0 || target.hp <= 0 || now < source.attackAt || now < source.stunned || now < source.locked) return;
     source.attackAt = now + (source.chilled > now ? 3000 : 1500);
     const informed = source.revealed > now || target.chains > now;
     source.lastZone = informed ? (target.guard + 1 + Number(random() < .5)) % 3 : Math.floor(random() * 3);
@@ -220,8 +230,9 @@ export function simulateDuel(first: Fighter, second: Fighter, seed: number, reve
       const event = queue[i];
       if (event.at > now) { i++; continue; }
       queue.splice(i, 1);
-      if (event.zone === undefined) damage(event.target, event.amount);
-      else strike(event.from, event.target, event.zone, false);
+      if (event.kind === 'flurry') strike(event.from, event.target, event.zone, false);
+      else if (event.kind === 'raw') damage(event.target, event.amount);
+      else event.target.hp = Math.max(0, event.target.hp - event.amount);
     }
     if (aFirst) { act(a, b); act(b, a); }
     else { act(b, a); act(a, b); }
@@ -229,8 +240,5 @@ export function simulateDuel(first: Fighter, second: Fighter, seed: number, reve
 
   const player = reverse ? b : a;
   const opponent = reverse ? a : b;
-  return {
-    outcome: Math.sign(player.hp / player.stats.health - opponent.hp / opponent.stats.health), duration: now / 1000,
-    manaShort: player.manaShort, blocked: player.blocked, evaded: player.evaded, attempts: player.attempts,
-  };
+  return { outcome: Math.sign(player.hp - opponent.hp) };
 }
