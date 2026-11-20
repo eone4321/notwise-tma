@@ -154,10 +154,12 @@ function AlbumPublishing({ edition, minted, floor }: {
 }) {
   return <div className="albumPublishing">
     <dl>
+      <div><dt>Создание пака</dt><dd><Price value={edition.creationGram} currency="gram"/></dd></div>
+      <div><dt>Минт в NFT</dt><dd><Price value={edition.mintGram} currency="gram"/></dd></div>
       <div><dt>Сминчено на Getgems</dt><dd>{typeof minted === 'number' ? `${format.format(minted)} из ${format.format(edition.edition)}` : '—'}</dd></div>
-      <div><dt>Стоимость минта</dt><dd><Price value={edition.mintGram} currency="gram"/></dd></div>
       <div><dt>Флор на Getgems</dt><dd>{floor && floor > 0 ? <Price value={floor} currency="gram" from/> : '—'}</dd></div>
     </dl>
+    <p className="albumMintNote">Создание даёт стикерпак в Telegram. При минте в NFT он удаляется из Telegram, но предмет можно вернуть в игру.</p>
     <a className="textLink" href={`https://getgems.io/collection/${stickerData.collectionByAlbum[edition.id]}`} target="_blank" rel="noreferrer">
       Открыть коллекцию на Getgems <span className="externalMark" aria-hidden="true"/>
     </a>

@@ -541,11 +541,12 @@
 .albumTileMeta span { padding: 1px 3px; border-radius: 4px; background: var(--game-tile); color: var(--muted); }
 .albumTileMeta span.isComplete { color: #211812; background: #ffce91; }
 .albumTileMeta span.nftBadge, .nftBadge { color: #e2be78; background: rgba(194, 155, 90, 0.18); border: 1px solid rgba(226, 190, 120, 0.45); font-weight: 600; border-radius: 4px; padding: 1px 4px; }
-.albumPublishing { display: grid; gap: 2px; margin-block: 9px; padding: 9px 10px 2px; border-radius: 8px; background: var(--game-tile); }
-.albumPublishing dl { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 10px; font-size: 11px; }
+.albumPublishing { display: grid; gap: 4px; margin-block: 9px; padding: 9px 10px 2px; border-radius: 8px; background: var(--game-tile); }
+.albumPublishing dl { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 10px; margin: 0; font-size: 11px; }
 .albumPublishing dt { color: var(--muted); }
 .albumPublishing dd { margin: 0; font-size: 14px; font-weight: 700; }
 .albumPublishing .priceBadge { padding: 0; border: 0; background: none; box-shadow: none; }
+.albumMintNote { margin: 4px 0 0; font-size: 11px; line-height: 1.35; color: var(--muted); }
 .albumPublishing .textLink { justify-content: space-between; min-height: 38px; font-size: 12px; }
 
 .awardPortrait {
