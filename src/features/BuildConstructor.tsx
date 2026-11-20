@@ -381,7 +381,10 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
     </section>
 
     <section className="card buildPanel buildPracticeCard" aria-labelledby="build-practice-title">
-      <h2 id="build-practice-title">{copy('Проверка в тренировочных боях', 'Practice duel check')}</h2>
+      <div className="buildPracticeHead">
+        <h2 id="build-practice-title">{copy('Проверка в тренировочных боях', 'Practice duel check')}</h2>
+        <span className="buildWipBadge">{copy('В разработке', 'In development')}</span>
+      </div>
       <p className="caption">{copy('320 авто-боёв против 4 архетипов твоего уровня (Натиск, Маг, Бастион и Яд/Уклонение). В реальном бою ещё решает выбор зон блока.', '320 auto-duels against 4 archetypes at your level. Real ranked fights also depend on zone timing.')}</p>
       {totalAttributes(state.buffs) > 0 && <p className="caption">{copy('Твои временные усиления учтены. У соперников усилений нет.', 'Your temporary buffs apply; opponents have none.')}</p>}
       <button className="primary buildAnalyze" type="button" onClick={startPractice} disabled={practice === 'waiting'}>

@@ -4,7 +4,7 @@ import { GameSymbol } from '../ui/GameSymbol';
 import { useGuideLocale } from './guideLocale';
 import levels from './skill-levels.json';
 
-const formats = ['ru-RU', 'en-US'].map(locale => new Intl.NumberFormat(locale, { maximumFractionDigits: 4 }));
+const formats = ['ru-RU', 'en-US'].map(locale => new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }));
 const healthEffects = new Set(['strike', 'heal', 'chill', 'desperate', 'meteor', 'poison', 'burn']);
 const effectLabels: Record<string, [string, string]> = {
   heal: ['Лечение', 'Healing'], poison: ['Урон за атаку врага', 'Damage per enemy attack'],
@@ -25,7 +25,8 @@ export function skillEffect(id: number, level: number, owlLevel: number, lang = 
   const rows: [string, string][] = [];
   const whole = Math.floor(amount);
   if (amount) {
-    const main = healthEffects.has(type) ? format(amount * multiplier) + HP :
+    const hpVal = amount * multiplier;
+    const main = healthEffects.has(type) ? format(hpVal >= 10 ? Math.round(hpVal) : hpVal) + HP :
       type === 'evade' || type === 'flurry' ? (whole === amount ? String(whole) : `${whole}–${whole + 1}`) : Math.trunc(amount) + '%';
     rows.push([(effectLabels[type] ?? ['Базовый урон', 'Base damage'])[lang], main]);
   }
