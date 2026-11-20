@@ -202,24 +202,26 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
 }) {
  const [share, setShare] = useState(false);
  const fromInvite = authData() && /^g_[a-f0-9]{32}$/.test(telegramPopup()?.initDataUnsafe?.start_param ?? '');
- const titles = [
-   ['Secrets', 'Hidden quests and achievements'], ['Capsules', 'Loot odds and opening costs'],
-   ['Eggs and skins', 'Egg drops, skins and tokens'], ['Collections', 'Stickers and Getgems'],
-   ['Combat and skills', 'Stats, game modes and builds'], ['Items', 'Food, rings and décor'],
-   ['Squads and wars', 'Rituals, sieges and rewards'], ['Ecosystem', 'Projects and token prices'],
-   ['Invite friends', 'Your links and invitations'],
- ] as const;
- const tiles = [
-  ['Секреты', '/secrets', '/game/stickers/9.webp', 'Скрытые условия и достижения', '/game/stickers/42.webp'],
-  ['Капсулы', '/capsules', '/game/capsules/gold.webp', 'Что выпадет и сколько стоит открыть сейчас?', '/game/capsules/silver.webp'],
-  ['Яйца и скины', '/owl', '/game/items/egg.webp', 'Дроп, облики сов и жетоны', '/game/skins/5565.svg'],
-  ['Коллекции', '/collections', '/game/albums/1.webp', 'Стикеры, альбомы и Getgems', '/game/stickers/1.webp'],
-  ['Бои и навыки', '/combat', '/game/skills/1.png', 'Какие навыки выбрать и что качать?', '/game/skills/16.png'],
-  ['Предметы', '/assets', '/game/items/ring-wit-3.webp', 'Еда, кольца и оформление', '/game/items/book.webp'],
-  ['Сквады и войны', '/squads', '/game/items/lighter.webp', 'Ритуалы, осады и награды', '/game/war/siege-header.webp'],
-  ['Экосистема', '/ecosystem', '/brand/notwise.svg', 'Токены, проекты и курсы', '/brand/projects/grouche.png'],
-  ['Пригласить друзей', '/referrals', '/game/items/wise-coin.webp', 'Твоя ссылка и список приглашённых', '/game/items/referral-egg.webp'],
- ] as const;
+ const homeTiles = [
+  { path: '/capsules', icon: '/game/capsules/gold.webp', art: '/game/capsules/silver.webp',
+    ru: ['Капсулы', 'Шансы на $NOT, яйца и цены открытия'], en: ['Capsules', 'Loot odds, $NOT and opening costs'] },
+  { path: '/combat', icon: '/game/skills/1.png', art: '/game/skills/16.png',
+    ru: ['Бои и навыки', 'Правила боя, навыки и калькулятор билдов'], en: ['Combat and skills', 'Rules, skills and build calculator'] },
+  { path: '/owl', icon: '/game/items/egg.webp', art: '/game/skins/5565.svg',
+    ru: ['Яйца и скины', 'Дроп, облики сов и калькулятор фарма'], en: ['Eggs and skins', 'Egg drops, skins and farm bonus'] },
+  { path: '/assets', icon: '/game/items/ring-wit-3.webp', art: '/game/items/book.webp',
+    ru: ['Предметы', 'Еда, кольца, расходники и Getgems'], en: ['Items', 'Food, rings, gear and Getgems'] },
+  { path: '/squads', icon: '/game/items/lighter.webp', art: '/game/war/siege-header.webp',
+    ru: ['Сквады и войны', 'Ритуалы, карта осад и магазин'], en: ['Squads and wars', 'Rituals, sieges and shop'] },
+  { path: '/collections', icon: '/game/albums/1.webp', art: '/game/stickers/1.webp',
+    ru: ['Коллекции', 'Стикеры, альбомы и Getgems'], en: ['Collections', 'Stickers and Getgems'] },
+  { path: '/secrets', icon: '/game/stickers/9.webp', art: '/game/stickers/42.webp',
+    ru: ['Секреты', 'Скрытые квесты и достижения'], en: ['Secrets', 'Hidden quests and achievements'] },
+  { path: '/ecosystem', icon: '/brand/notwise.svg', art: '/brand/projects/grouche.png',
+    ru: ['Экосистема', 'Токены, проекты и курсы'], en: ['Ecosystem', 'Projects and token prices'] },
+  { path: '/referrals', icon: '/game/items/wise-coin.webp', art: '/game/items/referral-egg.webp',
+    ru: ['Пригласить друзей', 'Твоя ссылка и список приглашённых'], en: ['Invite friends', 'Your links and invitations'] },
+] as const;
  return <>
   <section className="gameHero">
     <div className="heroCopy"><h1>{en ? <>NOT Wise <span>Guide</span></> : <>Гайд по <span>NOT Wise</span></>}</h1><p className="heroSub">{en ? 'Loot, combat and owl care.' : 'Награды, бои и уход за совой.'}</p></div>
@@ -256,13 +258,14 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
     <Link to="/care"><GameArt path="/game/items/croissant.webp" size={34}/><span>{en ? 'Feeding' : 'Кормление'}</span><span className="rowChevron" aria-hidden="true"/></Link>
   </section>
   <div className="sectionHeading"><div><h2>{en ? 'Explore' : 'Что ищешь?'}</h2></div></div>
-  <div className="guideGrid">{tiles.map(([name, path, icon, description, art], index) =>
-    <Link to={path} className="guideTile" key={path}>
-      <img className="guideTileArt" src={artSrc(art)} alt="" width="108" height="108"/>
-      <span className="guideTileIcon">{path === '/collections' ? <AlbumLogo id={1} size={44}/> : <GameArt path={icon} size={40}/>}</span>
-      <span className="tileText"><b>{en ? titles[index][0] : name}</b><small>{en ? titles[index][1] : description}</small></span>
-    </Link>
-  )}</div>
+  <div className="guideGrid">{homeTiles.map(tile => {
+    const [name, description] = en ? tile.en : tile.ru;
+    return <Link to={tile.path} className="guideTile" key={tile.path}>
+      <img className="guideTileArt" src={artSrc(tile.art)} alt="" width="108" height="108"/>
+      <span className="guideTileIcon">{tile.path === '/collections' ? <AlbumLogo id={1} size={44}/> : <GameArt path={tile.icon} size={40}/>}</span>
+      <span className="tileText"><b>{name}</b><small>{description}</small></span>
+    </Link>;
+  })}</div>
   <div className="supportFooter"><a className="supportPill" href={channelInvite} onClick={() => trackGuide('action:channel')}><img className="channelLogo" src={artSrc('/brand/cryptoone-channel.jpg')} alt="" width="24" height="24"/>{en ? 'CryptoOne channel' : 'Канал CryptoOne'}</a><a className="supportPill" href={communityChat} onClick={() => { onChatVisit(); trackGuide('action:chat'); }}><GameGlyph name="chat"/>{en ? 'Join the chat' : 'Присоединиться к чату'}</a><Link className="supportPill" to="/support"><GameGlyph name="settings"/>{en ? 'Settings' : 'Настройки'}</Link></div>
   {profile?.isAdmin && <Link className="textLink" to="/admin">Управление гайдом</Link>}
  </>;
