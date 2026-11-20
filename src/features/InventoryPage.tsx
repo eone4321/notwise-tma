@@ -10,7 +10,7 @@ import { chanceLabel, chancePerOpening } from '../domain/mechanics';
 import { dropsFor, eggDrawCounts, itemNames } from './inventory';
 import marketCollections from './market-collections.json';
 import { OwlPrices } from './OwlPrices';
-import { GramUsd, Price, type Currency } from './Price';
+import { Price, type Currency } from './Price';
 import { GramEstimate, StarsAndGram } from './GamePrice';
 import { SkinExamples } from './SkinExamples';
 import { ItemHelp } from './ItemHelp';
@@ -32,6 +32,7 @@ const eggs = [
 type Egg = typeof eggs[number];
 
 const marketEggs = marketCollections.find(item => item.id === 'eggs')!;
+const itemsMarketUrl = 'https://getgems.io/collection/' + marketCollections.find(item => item.id === 'items')!.address;
 const itemMintGram: Readonly<Partial<Record<number, number>>> = publishing.itemMintGram;
 
 export function OwlPage() {
@@ -315,13 +316,13 @@ function SkinCatalog() {
 
 function SkinCollectionRow() {
   const { data } = collectionMarket.useSnapshot();
-  const floor = data?.items.find(entry => entry.id === 'skins')?.floor;
-  return <InventoryRow item={skinNft} collectionFloor={floor ?? undefined}/>;
+  const quote = data?.items.find(entry => entry.id === 'skins');
+  return <InventoryRow item={skinNft} collectionFloor={quote?.floor ?? undefined} collectionStale={quote?.available === false}/>;
 }
 
-function InventoryRow({ item, id, collectionFloor }: { item: CatalogItem; id?: string; collectionFloor?: number }) {
+function InventoryRow({ item, id, collectionFloor, collectionStale }: { item: CatalogItem; id?: string; collectionFloor?: number; collectionStale?: boolean }) {
   const titleId = useId();
-  const { data: market } = itemMarket.useSnapshot();
+  const { data: market, stale } = itemMarket.useSnapshot();
   const marketKey = item.file.split('.')[0];
   const listing = market?.items.find(quote => quote.id === marketKey);
   const gameId = (mintableItems as Record<string, number>)[marketKey];
@@ -334,7 +335,11 @@ function InventoryRow({ item, id, collectionFloor }: { item: CatalogItem; id?: s
   const level = item.minLevel ?? offer?.required_level;
   const price = item.price ?? (offer && { value: offer.price, currency: offer.currency as Currency });
   const floor = collectionFloor ?? listing?.floor;
-  const marketUrl = listing?.href ?? (item.marketAddress ? 'https://getgems.io/collection/' + item.marketAddress : undefined);
+  const latest = market?.updatedAt ? Date.now() - Date.parse(market.updatedAt) < 15 * 60_000 : true;
+  const staleFloor = !!floor && (collectionFloor !== undefined ? collectionStale : (stale || market?.status === 'stale' || !latest));
+  const marketUrl = listing?.href ?? (item.marketAddress ? 'https://getgems.io/collection/' + item.marketAddress : gameId ? itemsMarketUrl : undefined);
+  const floorLabel = staleFloor ? 'Последний флор' : floor ? 'Getgems'
+    : gameId && market?.status === 'ready' && latest && market.source === 'getgems' ? 'Нет лотов' : 'Getgems';
   const source = item.source + (level ? ` · с ${level}-го ур.` : '');
   return <li className="inventoryRow" id={id} aria-labelledby={titleId}>
     <span className="inventoryIcon"><GameArt path={item.art ?? itemPath(item.file)} size={33}/></span>
@@ -343,21 +348,18 @@ function InventoryRow({ item, id, collectionFloor }: { item: CatalogItem; id?: s
         <h3 id={titleId}>{item.name}</h3>
         <ItemHelp name={item.name} file={item.file} art={item.art} effect={item.effect} source={source}/>
       </div>
-      {price && <span className="inventoryShopPrice"><Price value={price.value} currency={price.currency} withUsd={false}/></span>}
+      {price && <span className="inventoryShopPrice"><Price value={price.value} currency={price.currency}/></span>}
       <p>{item.effect}</p>
-      <div className="inventoryMeta">
-        <small className="itemSource">{source}</small>
-        {mintPrice !== undefined && <span className="inventoryMint">Минт NFT <Price value={mintPrice} currency="gram" usdLayout="inline"/></span>}
-        {(price?.currency === 'stars' || price?.currency === 'gram' || marketUrl || floor) && <div className="inventorySecondaryPrices">
-          {price?.currency === 'stars' && <GramEstimate stars={price.value} usdLayout="inline"/>}
-          {price?.currency === 'gram' && <GramUsd price={price.value}/>}
-          {marketUrl ? <a className="inventoryFloor" href={marketUrl} target="_blank" rel="noreferrer"
-              aria-label={floor ? `Открыть «${item.name}» за ${floor.toLocaleString('ru-RU')} GRAM на Getgems` : `Открыть коллекцию для «${item.name}» на Getgems`}>
-              {floor ? <Price value={floor} currency="gram" from={collectionFloor !== undefined} usdLayout="inline"/> : <span className="inventoryMarketLabel">Getgems</span>}
-              <span aria-hidden="true" className="rowChevron"/>
-            </a>
-            : floor ? <span className="inventoryFloor"><Price value={floor} currency="gram" usdLayout="inline"/></span> : null}
-        </div>}
+      <small className="itemSource">{source}</small>
+      <div className="inventoryPriceStrip">
+        {price?.currency === 'stars' && <span className="inventoryEstimate"><GramEstimate stars={price.value}/></span>}
+        {mintPrice !== undefined && <span className="inventoryMint">Минт <Price value={mintPrice} currency="gram"/></span>}
+        {marketUrl ? <a className="inventoryFloor" href={marketUrl} target="_blank" rel="noreferrer">
+            <span>{floorLabel}</span>
+            {floor ? <Price value={floor} currency="gram" from/> : null}
+            <span aria-hidden="true" className="rowChevron"/>
+          </a>
+          : floor ? <span className="inventoryFloor"><span>{floorLabel}</span><Price value={floor} currency="gram" from/></span> : null}
       </div>
     </div>
   </li>;

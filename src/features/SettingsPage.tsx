@@ -35,7 +35,7 @@ export function SettingsPage({ profile, earned }: { profile: GuideProfile | null
     {pathname === '/support' && <div className="settingsContent" lang="ru"><SupportPage isAdmin={profile?.isAdmin === true}/></div>}
     {pathname === '/support/settings' && <div className="settingsContent">
       <Appearance english={en}/>
-      <section className="card">
+      <section className="card settingsGroup">
         <h2>{en ? 'Interface language' : 'Язык интерфейса'}</h2>
         <div className="choiceBar themeChoices" role="group" aria-label={en ? 'Language' : 'Язык'}>
           <button aria-pressed={language.choice === 'auto'} onClick={() => language.setChoice('auto')}>
@@ -75,7 +75,7 @@ function NotificationSettings({ english: en }: { english: boolean }) {
     finally { setBusy(undefined); }
   }
 
-  return <section className="card">
+  return <section className="card settingsGroup">
     <h2>{en ? 'Sale notifications' : 'Уведомления о продажах'}</h2>
     <p>{en ? 'The guide bot sends completed Getgems sales.' : 'Бот гайда присылает состоявшиеся продажи на Getgems.'}</p>
     {(!secure || (state && !state.ready)) && <a className="secondary" href={bot}>{en ? 'Start the bot' : 'Запустить бота'}</a>}

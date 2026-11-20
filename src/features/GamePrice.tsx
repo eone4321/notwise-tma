@@ -20,12 +20,12 @@ function RateEstimate({ stale, children }: { stale: boolean; children: ReactNode
   </span>;
 }
 
-export function GramEstimate({ stars, showUnavailable, purpose, usdLayout }: { stars: number; showUnavailable?: boolean; purpose?: 'game' | 'support'; usdLayout?: 'inline' | 'stack' }) {
+export function GramEstimate({ stars, showUnavailable, purpose }: { stars: number; showUnavailable?: boolean; purpose?: 'game' | 'support' }) {
   const { usd, pending, stale } = useGramRate();
   const value = usd === null ? null : estimateGramForStars(stars, usd, purpose);
   if (value === null) return showUnavailable ? <span className="gramUnavailable"
     aria-label={pending ? 'Курс GRAM загружается' : 'Курс GRAM недоступен'}>—</span> : null;
-  return <RateEstimate stale={stale}><Price value={value} currency="gram" approximate usdLayout={usdLayout}/></RateEstimate>;
+  return <RateEstimate stale={stale}><Price value={value} currency="gram" approximate/></RateEstimate>;
 }
 
 export function StarsAndGram({ stars }: { stars: number }) {
