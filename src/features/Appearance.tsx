@@ -10,10 +10,12 @@ export function Appearance({ english = false }: { english?: boolean }) {
     <div className="choiceBar themeChoices" role="group" aria-labelledby="appearance-title">
       {(['graphite', 'glass'] as const).map(value => <button key={value} type="button" aria-pressed={theme === value}
         onClick={() => {
+          const changed = value !== theme;
           document.documentElement.dataset.theme = value;
           setTheme(value);
           syncTelegramTheme();
           try { localStorage.setItem(themeKey, value); } catch { /* Apply for the current visit. */ }
+          if (changed) window.dispatchEvent(new CustomEvent('guide-award-action', { detail: 'theme' }));
         }}>{value === 'graphite' ? english ? 'Graphite' : 'Графит' : english ? 'Game' : 'Игровая'}</button>)}
     </div>
   </section>;

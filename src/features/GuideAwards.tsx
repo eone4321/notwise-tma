@@ -7,7 +7,7 @@ import { lightHaptic } from '../telegram/client';
 import { authData, profileRequest } from './guideProfile';
 
 type Awards = { earned: GuideAchievement[]; joined?: boolean; chatIssue?: string };
-type AwardAction = 'achievements' | 'mascot' | 'check_chat' | 'visit_squad';
+type AwardAction = 'achievements' | 'mascot' | 'check_chat' | 'visit_squad' | 'theme' | 'joke';
 
 export function useGuideAwards(user?: string) {
   const [earned, setEarned] = useState<GuideAchievement[]>([]);
@@ -48,7 +48,8 @@ export function useGuideAwards(user?: string) {
     added.forEach(item => seen.current.add(item));
     const newNotices = ready.current ? added : added.filter(item =>
       (action === 'mascot' && item === 'mascot') || (action === 'check_chat' && item === 'community') ||
-      (action === 'visit_squad' && item === 'squad'));
+      (action === 'visit_squad' && item === 'squad') || (action === 'theme' && item === 'theme') ||
+      (action === 'joke' && item === 'joke'));
     if (newNotices.length) setNotices(queue => [...queue, ...newNotices]);
     setEarned([...seen.current]);
     ready.current = true;
@@ -93,15 +94,23 @@ export function useGuideAwards(user?: string) {
       runChatCheck();
     };
     const checkNow = () => { runChatCheck(); };
+    const onAwardAction = (event: Event) => {
+      const action = (event as CustomEvent<unknown>).detail;
+      if (action === 'theme' && !seen.current.has('theme')) {
+        void update('theme').catch(() => {});
+      }
+    };
     visible();
     window.addEventListener('guide-awards-refresh', refresh);
     window.addEventListener('guide-awards-check-chat', checkNow);
+    window.addEventListener('guide-award-action', onAwardAction);
     window.addEventListener('focus', visible);
     window.addEventListener('pageshow', visible);
     document.addEventListener('visibilitychange', visible);
     return () => {
       window.removeEventListener('guide-awards-refresh', refresh);
       window.removeEventListener('guide-awards-check-chat', checkNow);
+      window.removeEventListener('guide-award-action', onAwardAction);
       window.removeEventListener('focus', visible);
       window.removeEventListener('pageshow', visible);
       document.removeEventListener('visibilitychange', visible);
@@ -116,6 +125,8 @@ export function AwardIcon({ award, size = 28 }: { award: GuideAchievement; size?
     <GameArt path={guideAchievements[award].icon} size={size}/>
     {award === 'community' && <span className="awardPortraitMark"><GameGlyph name="chat"/></span>}
     {award === 'squad' && <span className="awardPortraitMark"><GameGlyph name="shield"/></span>}
+    {award === 'theme' && <span className="awardPortraitMark"><GameGlyph name="sparkles"/></span>}
+    {award === 'joke' && <span className="awardPortraitMark"><GameGlyph name="lock"/></span>}
   </span>;
 }
 

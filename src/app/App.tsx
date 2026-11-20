@@ -51,6 +51,7 @@ function App() {
   });
   const [joke, setJoke] = useState(localStorage.getItem('notwise.guide.secrets.v1') === '1' || sessionStorage.getItem('notwise.guide.secrets.v1') === '1');
   const [showJoke, setShowJoke] = useState(false);
+  const jokePendingAward = useRef(false);
   const [popup, setPopup] = useState(false);
   const [profile, setProfile] = useState<GuideProfile | null>(null);
   const awards = useGuideAwards(profile?.userId);
@@ -90,7 +91,18 @@ useEffect(() => {
   const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setHamster(false); };
   window.addEventListener('keydown', close);
   return () => window.removeEventListener('keydown', close);
-}, [hamster, hamsterLocked]);useEffect(()=>{telegramPopup()?.ready();const key='notwise.guide.startapp.v1';if(sessionStorage.getItem(key))return;const start=new URLSearchParams(location.search).get('startapp')??telegramPopup()?.initDataUnsafe?.start_param;const routes:Record<string,string>={capsules_gold:'/capsules/gold',eggs:'/owl',secrets:'/secrets',market:'/collections/market'};if(start&&Object.hasOwn(routes,start)){sessionStorage.setItem(key,'1');nav(routes[start],{replace:true})}},[nav]);const ask=()=>{lightHaptic();const tg=telegramPopup();if(tg?.showPopup){try { tg.showPopup({title:'Секреты Not Wise',message:'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты',buttons:[{id:'pay',text:'Заплатить',type:'default'},{id:'back',text:'Назад',type:'default'}]},()=>reveal()); return; } catch { /* Older Telegram clients use the local dialog. */ }}setPopup(true)};function reveal(){setPopup(false);setJoke(true);setShowJoke(true);localStorage.setItem('notwise.guide.secrets.v1','1')}
+}, [hamster, hamsterLocked]);
+const closeJoke = () => {
+  setShowJoke(false);
+  if (jokePendingAward.current) {
+    jokePendingAward.current = false;
+    void awards.update('joke').catch(() => {});
+  }
+};
+useEffect(() => {
+  if (loc.pathname !== '/secrets' && showJoke) closeJoke();
+});
+useEffect(()=>{telegramPopup()?.ready();const key='notwise.guide.startapp.v1';if(sessionStorage.getItem(key))return;const start=new URLSearchParams(location.search).get('startapp')??telegramPopup()?.initDataUnsafe?.start_param;const routes:Record<string,string>={capsules_gold:'/capsules/gold',eggs:'/owl',secrets:'/secrets',market:'/collections/market'};if(start&&Object.hasOwn(routes,start)){sessionStorage.setItem(key,'1');nav(routes[start],{replace:true})}},[nav]);const ask=()=>{lightHaptic();const tg=telegramPopup();if(tg?.showPopup){try { tg.showPopup({title:'Секреты Not Wise',message:'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты',buttons:[{id:'pay',text:'Заплатить',type:'default'},{id:'back',text:'Назад',type:'default'}]},()=>reveal()); return; } catch { /* Older Telegram clients use the local dialog. */ }}setPopup(true)};function reveal(){setPopup(false);setJoke(true);setShowJoke(true);jokePendingAward.current=true;localStorage.setItem('notwise.guide.secrets.v1','1')}
 return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach !== null}><Link to="/" className="brand"><img src={artSrc('/brand/notwise.svg')} alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main className="guideScreen" key={loc.pathname} inert={hamster || coach !== null}>{loc.pathname === '/' ? <Home onChatVisit={awards.noteChatVisit} onSquadVisit={() => { void awards.update('visit_squad').catch(() => {}); }} english={english} profile={profile} profileFailed={profileFailed} retryProfile={() => {
   setProfileFailed(false); setProfileAttempt(value => value + 1);
 }}/> : <div className="guidePageContent">{loc.pathname === '/admin' ? <AdminPage profile={profile}/> : loc.pathname === '/support' || loc.pathname.startsWith('/support/') ?
@@ -98,7 +110,7 @@ return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathn
   referrals={<ReferralsPage profile={profile} failed={profileFailed} onSave={next => { setProfile(next); void awards.update().catch(() => {}); }} onRetry={() => {
     setProfileFailed(false);
     setProfileAttempt(value => value + 1);
-  }}/>}/></div>}</div>}</main><AwardToast award={awards.toast} onDismiss={awards.dismissToast}/>{coach && !hamster && <><div className="dockCoachTint" aria-hidden="true"/><DockCoach step={coach} onContinue={advanceCoach}/></>}{showJoke && loc.pathname === '/secrets' && <RevealedSecrets close={() => setShowJoke(false)}/>}<Dock onGesture={coach ? advanceCoach : undefined} hamster={hamster} locked={hamsterLocked} onHamster={() => {
+  }}/>}/></div>}</div>}</main><AwardToast award={awards.toast} onDismiss={awards.dismissToast}/>{coach && !hamster && <><div className="dockCoachTint" aria-hidden="true"/><DockCoach step={coach} onContinue={advanceCoach}/></>}{showJoke && loc.pathname === '/secrets' && <RevealedSecrets close={closeJoke}/>}<Dock onGesture={coach ? advanceCoach : undefined} hamster={hamster} locked={hamsterLocked} onHamster={() => {
   if (hamsterLocked) return;
   if (hamster) {
     setHamster(false);

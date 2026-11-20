@@ -558,6 +558,8 @@
 .awardPortrait[data-award="five"] { background: #433451; }
 .awardPortrait[data-award="community"] { background: #303d55; }
 .awardPortrait[data-award="squad"] { background: #58412b; }
+.awardPortrait[data-award="theme"] { background: #263f47; }
+.awardPortrait[data-award="joke"] { background: #4a3525; }
 .adminAward { grid-template-columns: 38px minmax(0,1fr) auto; align-items: start; }
 .adminAward > span:last-child { color: var(--gold); font-weight: 700; }
 
