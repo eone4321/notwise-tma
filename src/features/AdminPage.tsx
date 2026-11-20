@@ -46,6 +46,7 @@ export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null })
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
   const [refreshingMarket, setRefreshingMarket] = useState(false);
+  const [testIndex, setTestIndex] = useState(0);
   const canAccess = Boolean(authData()) && profile?.isAdmin !== false;
 
   useEffect(() => {
@@ -97,6 +98,12 @@ export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null })
         'collections' in result ? <MarketDiagnostics data={result} refreshing={refreshingMarket} onRefresh={() => void refreshParser()}/> :
         !('total' in result) ?
         <section className="card awardCollection"><h2>Игроки с достижением</h2>
+          <button className="secondary" type="button" onClick={() => {
+            const keys = Object.keys(guideAchievements) as GuideAchievement[];
+            const next = keys[testIndex % keys.length];
+            setTestIndex(value => value + 1);
+            window.dispatchEvent(new CustomEvent('guide-award-test', { detail: next }));
+          }}>Тестовое уведомление</button>
           <ul className="compactList">{result.items.filter(({ id }) => Object.hasOwn(guideAchievements, id)).map(({ id, count, rule }) =>
             <li className="awardRow adminAward" key={id}>
               <AwardIcon award={id}/><div><strong>{guideAchievements[id].title}</strong><small>{rule}</small></div>

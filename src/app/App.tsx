@@ -98,7 +98,7 @@ return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathn
   referrals={<ReferralsPage profile={profile} failed={profileFailed} onSave={next => { setProfile(next); void awards.update().catch(() => {}); }} onRetry={() => {
     setProfileFailed(false);
     setProfileAttempt(value => value + 1);
-  }}/>}/></div>}</div>}</main><AwardToast award={awards.toast}/>{coach && !hamster && <><div className="dockCoachTint" aria-hidden="true"/><DockCoach step={coach} onContinue={advanceCoach}/></>}{showJoke && loc.pathname === '/secrets' && <RevealedSecrets close={() => setShowJoke(false)}/>}<Dock onGesture={coach ? advanceCoach : undefined} hamster={hamster} locked={hamsterLocked} onHamster={() => {
+  }}/>}/></div>}</div>}</main><AwardToast award={awards.toast} onDismiss={awards.dismissToast}/>{coach && !hamster && <><div className="dockCoachTint" aria-hidden="true"/><DockCoach step={coach} onContinue={advanceCoach}/></>}{showJoke && loc.pathname === '/secrets' && <RevealedSecrets close={() => setShowJoke(false)}/>}<Dock onGesture={coach ? advanceCoach : undefined} hamster={hamster} locked={hamsterLocked} onHamster={() => {
   if (hamsterLocked) return;
   if (hamster) {
     setHamster(false);

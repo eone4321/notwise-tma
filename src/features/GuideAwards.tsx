@@ -3,6 +3,7 @@ import { guideAchievements, type GuideAchievement } from '../domain/guide-achiev
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { GameGlyph } from '../ui/GameGlyph';
 import { GameArt } from '../ui/GameArt';
+import { lightHaptic } from '../telegram/client';
 import { authData, profileRequest } from './guideProfile';
 
 type Awards = { earned: GuideAchievement[]; joined?: boolean; chatIssue?: string };
@@ -16,11 +17,28 @@ export function useGuideAwards(user?: string) {
   const seen = useRef(new Set<GuideAchievement>());
   const ready = useRef(false);
   const timers = useRef<number[]>([]);
+
+  const dismissToast = useCallback(() => {
+    setNotices(queue => queue.slice(1));
+  }, []);
+
   useEffect(() => {
     if (!toast) return;
-    const timer = window.setTimeout(() => setNotices(queue => queue.slice(1)), 3000);
+    lightHaptic();
+    const timer = window.setTimeout(dismissToast, 4000);
     return () => window.clearTimeout(timer);
-  }, [toast]);
+  }, [toast, dismissToast]);
+
+  useEffect(() => {
+    const onTest = (event: Event) => {
+      const award = (event as CustomEvent<unknown>).detail;
+      if (typeof award === 'string' && Object.hasOwn(guideAchievements, award)) {
+        setNotices(queue => [...queue.filter(item => item !== award), award as GuideAchievement]);
+      }
+    };
+    window.addEventListener('guide-award-test', onTest);
+    return () => window.removeEventListener('guide-award-test', onTest);
+  }, []);
 
   const update = useCallback(async (action: AwardAction = 'achievements') => {
     if (!authData()) return;
@@ -90,7 +108,7 @@ export function useGuideAwards(user?: string) {
     };
   }, [runChatCheck, update, user]);
 
-  return { earned, chatIssue, toast, update, noteChatVisit };
+  return { earned, chatIssue, toast, dismissToast, update, noteChatVisit };
 }
 
 export function AwardIcon({ award, size = 34 }: { award: GuideAchievement; size?: number }) {
@@ -101,16 +119,24 @@ export function AwardIcon({ award, size = 34 }: { award: GuideAchievement; size?
   </span>;
 }
 
-export function AwardToast({ award }: { award?: GuideAchievement }) {
+export function AwardToast({ award, onDismiss }: { award?: GuideAchievement; onDismiss?: () => void }) {
   const reduce = useReducedMotion();
+  const entry = award ? guideAchievements[award] : null;
   return <div className="awardNoticeHost">
     <AnimatePresence initial={false} mode="wait">
-      {award && <motion.aside className="awardToast" role="status" key={award}
-        initial={{ y: reduce ? 0 : -24, opacity: 0, scale: reduce ? 1 : .92 }}
-        animate={{ y: 0, opacity: 1, scale: 1, transition: { duration: reduce ? .15 : .35, ease: [.21, 1.02, .73, 1] } }}
-        exit={{ y: reduce ? 0 : -12, opacity: 0, scale: reduce ? 1 : .96, transition: { duration: reduce ? .15 : .4, ease: [.06, .71, .55, 1] } }}>
-        <AwardIcon award={award} size={29}/>
-        <div><small>Достижение открыто</small><strong>{guideAchievements[award].title}</strong></div>
+      {award && entry && <motion.aside className="awardToast" role="status" key={award}
+        onClick={onDismiss}
+        initial={{ y: reduce ? 0 : -22, opacity: 0, scale: reduce ? 1 : .94 }}
+        animate={{ y: 0, opacity: 1, scale: 1, transition: reduce ? { duration: .15 } : { type: 'spring', stiffness: 420, damping: 28 } }}
+        exit={{ y: reduce ? 0 : -14, opacity: 0, scale: reduce ? 1 : .96, transition: { duration: reduce ? .15 : .24, ease: [.2, 0, .4, 1] } }}>
+        <span className="awardToastBadge"><AwardIcon award={award} size={40}/></span>
+        <div className="awardToastCopy">
+          <span className="awardToastEyebrow"><GameGlyph name="treasure"/>Новое достижение</span>
+          <strong>{entry.title}</strong>
+          <p>{entry.description}</p>
+        </div>
+        <span className="awardToastCheck" aria-hidden="true">✓</span>
+        <span className="awardToastTimer" aria-hidden="true"/>
       </motion.aside>}
     </AnimatePresence>
   </div>;
