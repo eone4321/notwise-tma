@@ -203,6 +203,8 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
  const [share, setShare] = useState(false);
  const fromInvite = authData() && /^g_[a-f0-9]{32}$/.test(telegramPopup()?.initDataUnsafe?.start_param ?? '');
  const homeTiles = [
+  { path: '/secrets', icon: '/game/stickers/9.webp', art: '/game/stickers/42.webp',
+    ru: ['Секреты', 'Скрытые квесты и достижения'], en: ['Secrets', 'Hidden quests and achievements'] },
   { path: '/capsules', icon: '/game/capsules/gold.webp', art: '/game/capsules/silver.webp',
     ru: ['Капсулы', 'Шансы на $NOT, яйца и цены открытия'], en: ['Capsules', 'Loot odds, $NOT and opening costs'] },
   { path: '/combat', icon: '/game/skills/1.png', art: '/game/skills/16.png',
@@ -215,8 +217,6 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
     ru: ['Сквады и войны', 'Ритуалы, карта осад и магазин'], en: ['Squads and wars', 'Rituals, sieges and shop'] },
   { path: '/collections', icon: '/game/albums/1.webp', art: '/game/stickers/1.webp',
     ru: ['Коллекции', 'Стикеры, альбомы и Getgems'], en: ['Collections', 'Stickers and Getgems'] },
-  { path: '/secrets', icon: '/game/stickers/9.webp', art: '/game/stickers/42.webp',
-    ru: ['Секреты', 'Скрытые квесты и достижения'], en: ['Secrets', 'Hidden quests and achievements'] },
   { path: '/ecosystem', icon: '/brand/notwise.svg', art: '/brand/projects/grouche.png',
     ru: ['Экосистема', 'Токены, проекты и курсы'], en: ['Ecosystem', 'Projects and token prices'] },
   { path: '/referrals', icon: '/game/items/wise-coin.webp', art: '/game/items/referral-egg.webp',
