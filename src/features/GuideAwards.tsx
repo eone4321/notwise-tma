@@ -5,15 +5,17 @@ import { GameGlyph } from '../ui/GameGlyph';
 import { GameArt } from '../ui/GameArt';
 import { authData, profileRequest } from './guideProfile';
 
-type Awards = { earned: GuideAchievement[]; joined?: boolean };
+type Awards = { earned: GuideAchievement[]; joined?: boolean; chatIssue?: string };
 type AwardAction = 'achievements' | 'mascot' | 'check_chat' | 'visit_squad';
 
 export function useGuideAwards(user?: string) {
   const [earned, setEarned] = useState<GuideAchievement[]>([]);
+  const [chatIssue, setChatIssue] = useState<string>();
   const [notices, setNotices] = useState<GuideAchievement[]>([]);
   const [toast] = notices;
   const seen = useRef(new Set<GuideAchievement>());
   const ready = useRef(false);
+  const timers = useRef<number[]>([]);
   useEffect(() => {
     if (!toast) return;
     const timer = window.setTimeout(() => setNotices(queue => queue.slice(1)), 3000);
@@ -23,6 +25,7 @@ export function useGuideAwards(user?: string) {
   const update = useCallback(async (action: AwardAction = 'achievements') => {
     if (!authData()) return;
     const result = await profileRequest<Awards>({ action }, undefined, action === 'visit_squad');
+    setChatIssue(result.earned.includes('community') ? undefined : result.chatIssue);
     const added = result.earned.filter(item => Object.hasOwn(guideAchievements, item) && !seen.current.has(item));
     added.forEach(item => seen.current.add(item));
     const newNotices = ready.current ? added : added.filter(item =>
@@ -35,10 +38,30 @@ export function useGuideAwards(user?: string) {
   }, []);
 
   const chatPending = useRef(false);
+  const runChatCheck = useCallback(() => {
+    if (seen.current.has('community')) return;
+    void update('check_chat').then(result => {
+      if (!result?.joined) return;
+      chatPending.current = false;
+      sessionStorage.removeItem('notwise.guide.chat-visit');
+      timers.current.forEach(id => window.clearTimeout(id));
+      timers.current = [];
+    }).catch(() => {});
+  }, [update]);
+
   function noteChatVisit() {
     chatPending.current = true;
     if (authData()) sessionStorage.setItem('notwise.guide.chat-visit', '1');
+    timers.current.forEach(id => window.clearTimeout(id));
+    timers.current = [3500, 9000].map(delay => window.setTimeout(() => {
+      if (document.visibilityState === 'visible') runChatCheck();
+    }, delay));
   }
+
+  useEffect(() => () => {
+    timers.current.forEach(id => window.clearTimeout(id));
+    timers.current = [];
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -49,22 +72,25 @@ export function useGuideAwards(user?: string) {
         refresh();
         return;
       }
-      void update('check_chat').then(result => {
-        if (!result?.joined) return;
-        chatPending.current = false;
-        sessionStorage.removeItem('notwise.guide.chat-visit');
-      }).catch(refresh);
+      runChatCheck();
     };
+    const checkNow = () => { runChatCheck(); };
     visible();
     window.addEventListener('guide-awards-refresh', refresh);
+    window.addEventListener('guide-awards-check-chat', checkNow);
+    window.addEventListener('focus', visible);
+    window.addEventListener('pageshow', visible);
     document.addEventListener('visibilitychange', visible);
     return () => {
       window.removeEventListener('guide-awards-refresh', refresh);
+      window.removeEventListener('guide-awards-check-chat', checkNow);
+      window.removeEventListener('focus', visible);
+      window.removeEventListener('pageshow', visible);
       document.removeEventListener('visibilitychange', visible);
     };
-  }, [update, user]);
+  }, [runChatCheck, update, user]);
 
-  return { earned, toast, update, noteChatVisit };
+  return { earned, chatIssue, toast, update, noteChatVisit };
 }
 
 export function AwardIcon({ award, size = 34 }: { award: GuideAchievement; size?: number }) {

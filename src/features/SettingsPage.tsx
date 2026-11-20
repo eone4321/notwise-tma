@@ -18,7 +18,7 @@ type Scope = keyof typeof scopeLabels;
 type Notifications = { ready: boolean; extraAvailable: boolean; enabled: Record<Scope, boolean> };
 const bot = 'https://t.me/NotWiseGuideBot';
 
-export function SettingsPage({ profile, earned }: { profile: GuideProfile | null; earned: GuideAchievement[] }) {
+export function SettingsPage({ profile, earned, chatIssue }: { profile: GuideProfile | null; earned: GuideAchievement[]; chatIssue?: string }) {
   const { pathname } = useLocation();
   const language = useGuideLocale(profile?.language);
   const en = language.locale === 'en';
@@ -48,7 +48,7 @@ export function SettingsPage({ profile, earned }: { profile: GuideProfile | null
       </section>
       <NotificationSettings english={en}/>
     </div>}
-    {pathname === '/support/achievements' && <Achievements earned={earned}/>}
+    {pathname === '/support/achievements' && <Achievements earned={earned} isAdmin={profile?.isAdmin === true} chatIssue={chatIssue}/>}
   </>;
 }
 
@@ -93,12 +93,23 @@ function NotificationSettings({ english: en }: { english: boolean }) {
   </section>;
 }
 
-function Achievements({ earned }: { earned: GuideAchievement[] }) {
+function Achievements({ earned, isAdmin, chatIssue }: { earned: GuideAchievement[]; isAdmin: boolean; chatIssue?: string }) {
   const total = Object.keys(guideAchievements).length;
+  const hasCommunity = earned.includes('community');
+  useEffect(() => {
+    if (authData() && !hasCommunity) {
+      window.dispatchEvent(new Event('guide-awards-check-chat'));
+    }
+  }, [hasCommunity]);
   return <section className="card awardCollection" lang="ru">
     <div className="progressCounts"><h2>Достижения гайда</h2><span>{earned.length}/{total}</span></div>
     <progress className="gameProgress" value={earned.length} max={total} aria-label="Открыто достижений"/>
     {!authData() && <p className="caption">Открой гайд в Telegram, чтобы сохранять достижения.</p>}
+    {isAdmin && chatIssue && !hasCommunity && <p className="caption">
+      {chatIssue === 'no_chat'
+        ? 'Проверка чата для «Свой в чате» не настроена: укажи GUIDE_CHAT_ID или привяжи чат обсуждений к каналу.'
+        : 'Для проверки «Свой в чате» добавь @NotWiseGuideBot в чат CryptoOne (нужен доступ к списку участников).'}
+    </p>}
     <ul className="compactList">{Object.entries(guideAchievements).map(([id, item]) => {
       const done = earned.includes(id as GuideAchievement);
       return <li className="awardRow" key={id} data-earned={done}>

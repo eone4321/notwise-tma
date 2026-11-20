@@ -32,13 +32,58 @@ async function channelStatus(id: string, token: string, chatId: string | number 
     signal: AbortSignal.timeout(3500),
   });
   const data = await response.json();
-  if (!response.ok || !data.ok || !data.result?.status) throw new Error('Channel check unavailable');
+  if (!response.ok || !data.ok || !data.result?.status) {
+    throw new Error(typeof data?.description === 'string' ? data.description : 'Channel check unavailable');
+  }
   return data.result;
 }
 
+function isJoinedStatus(result: { status?: string; is_member?: boolean }) {
+  return ['creator', 'administrator', 'member'].includes(result.status ?? '') ||
+    (result.status === 'restricted' && result.is_member === true);
+}
+
 async function channelMember(id: string, token: string) {
-  const { status, is_member: isMember } = await channelStatus(id, token);
-  return ['creator', 'administrator', 'member'].includes(status) || (status === 'restricted' && isMember === true);
+  return isJoinedStatus(await channelStatus(id, token));
+}
+
+async function resolveCommunityChatId(token: string): Promise<string | number | null> {
+  if (process.env.GUIDE_CHAT_ID) return process.env.GUIDE_CHAT_ID;
+  const cached = await redis<string | null>(['GET', namespace + 'linked-chat-id']).catch(() => null);
+  if (cached) return cached;
+  const channel = await fetch(`https://api.telegram.org/bot${token}/getChat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: '@cryptoeone' }),
+    signal: AbortSignal.timeout(3500),
+  }).then(response => response.json());
+  const linked = channel?.result?.linked_chat_id;
+  if (linked) {
+    await redis(['SET', namespace + 'linked-chat-id', String(linked), 'EX', 600]).catch(() => null);
+    return linked;
+  }
+  return null;
+}
+
+type CommunityCheck =
+  | { ok: true; joined: boolean }
+  | { ok: false; issue: 'no_chat' | 'bot_no_access' | 'unavailable' };
+
+async function checkCommunityMember(id: string, token: string): Promise<CommunityCheck> {
+  try {
+    const chatId = await resolveCommunityChatId(token);
+    if (!chatId) return { ok: false, issue: 'no_chat' };
+    const status = await channelStatus(id, token, chatId);
+    return { ok: true, joined: isJoinedStatus(status) };
+  } catch (error) {
+    const message = error instanceof Error ? error.message.toLowerCase() : '';
+    if (message.includes('chat not found') || message.includes('not a member') ||
+        message.includes('member list is inaccessible') || message.includes('kicked') ||
+        message.includes('forbidden')) {
+      return { ok: false, issue: 'bot_no_access' };
+    }
+    return { ok: false, issue: 'unavailable' };
+  }
 }
 
 async function guideAdmin(id: string, token: string) {
@@ -141,7 +186,21 @@ export default async function handler(request: Request) {
       ]);
       if (raw && (JSON.parse(raw) as Account).gameLinkVerified) await awardGuide(id, 'referral');
       if (invited >= 5) await awardGuide(id, 'five');
-      return json({ earned: await userAwards(id) });
+      let earned = await userAwards(id);
+      let chatIssue: string | undefined;
+      if (!earned.includes('community')) {
+        const shouldCheck = await redis(['SET', namespace + 'auto-chat:' + id, '1', 'NX', 'EX', 20]).catch(() => null);
+        if (shouldCheck) {
+          const check = await checkCommunityMember(id, token);
+          if (check.ok && check.joined) {
+            await awardGuide(id, 'community');
+            earned = await userAwards(id);
+          } else if (!check.ok && check.issue !== 'unavailable') {
+            chatIssue = check.issue;
+          }
+        }
+      }
+      return json(chatIssue ? { earned, chatIssue } : { earned });
     }
     if (action === 'mascot' || action === 'shared') {
       if (action === 'shared' && !await redis(['GETDEL', namespace + 'pending-share:' + id])) {
@@ -151,22 +210,15 @@ export default async function handler(request: Request) {
       return json({ earned: await userAwards(id) });
     }
     if (action === 'check_chat') {
-      if (!await redis(['SET', namespace + 'chat-check:' + id, '1', 'NX', 'EX', 3])) {
-        return json({ error: 'chat_unavailable' }, 429);
+      if (!await redis(['SET', namespace + 'chat-check:' + id, '1', 'NX', 'EX', 2])) {
+        return json({ joined: false, earned: await userAwards(id) });
       }
-      let chatId: string | number = process.env.GUIDE_CHAT_ID || '';
-      if (!chatId) {
-        const channel = await fetch(`https://api.telegram.org/bot${token}/getChat`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: '@cryptoeone' }), signal: AbortSignal.timeout(3500),
-        }).then(response => response.json());
-        chatId = channel.result?.linked_chat_id;
+      const check = await checkCommunityMember(id, token);
+      if (!check.ok) {
+        return json({ joined: false, chatIssue: check.issue, earned: await userAwards(id) });
       }
-      if (!chatId) return json({ error: 'chat_unavailable' }, 503);
-      const status = await channelStatus(id, token, chatId);
-      const joined = ['creator', 'administrator', 'member'].includes(status.status) || status.is_member === true;
-      if (joined) await awardGuide(id, 'community');
-      return json({ joined, earned: await userAwards(id) });
+      if (check.joined) await awardGuide(id, 'community');
+      return json({ joined: check.joined, earned: await userAwards(id) });
     }
     if (action === 'prepare_share') {
       if (!await redis(['SET', namespace + 'prepare-share:' + id, '1', 'NX', 'EX', 3])) {

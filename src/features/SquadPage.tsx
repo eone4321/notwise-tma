@@ -28,7 +28,7 @@ function SiegeTotals({ totals }: { totals: typeof siegeRewardTotals }) {
   </dl>;
 }
 
-function SiegeRewards() {
+function SiegeRewards({ onChatVisit }: { onChatVisit?: () => void }) {
   return <section className="card siegeRewards" id="siege-rewards">
     <h2>Награды за осаду</h2>
     <ol className="siegeRewardRules">
@@ -45,15 +45,15 @@ function SiegeRewards() {
       <summary><span><strong>Сколько дают все 20 участков</strong><small>Пример удержания всей карты за один раунд</small></span></summary>
       <SiegeTotals totals={siegeRewardTotals}/>
     </details>
-    <a className="secondary siegeChat" href={communityChat} onClick={() => trackGuide('action:chat')}>
+    <a className="secondary siegeChat" href={communityChat} onClick={() => { onChatVisit?.(); trackGuide('action:chat'); }}>
       <GameGlyph name="chat"/>Чат для планирования осад
     </a>
   </section>;
 }
 
-export function SquadPage({ gameEntry }: { gameEntry: string }) {
+export function SquadPage({ gameEntry, onChatVisit }: { gameEntry: string; onChatVisit?: () => void }) {
   const { pathname } = useLocation();
-  if (pathname === '/squads/war') return <><SiegeRewards/><SquadMap/><section className="card squadIntro">
+  if (pathname === '/squads/war') return <><SiegeRewards onChatVisit={onChatVisit}/><SquadMap/><section className="card squadIntro">
     <h2>Как участвовать в осаде</h2>
     <ol className="referralSteps">
       <li>Вступи в сквад. С 4-го уровня откроется карта осады.</li>
@@ -86,7 +86,7 @@ export function SquadPage({ gameEntry }: { gameEntry: string }) {
       <p>Сквады доступны с 3-го уровня, война — с 4-го. Один раунд длится 8 часов. В конце раунда награду получает сквад, который удерживает территорию.</p>
       <Link className="textLink" to="/squads/war">Как участвовать и забрать награду</Link>
     </section>
-    <SiegeRewards/>
+    <SiegeRewards onChatVisit={onChatVisit}/>
     <SquadMap/>
     <section className="card">
       <div className="mediaHeading"><GameArt path="/game/items/lighter.webp" size={45}/><h2>Ежедневный ритуал</h2></div>
