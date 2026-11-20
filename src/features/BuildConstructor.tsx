@@ -457,10 +457,15 @@ export function BuildConstructor() {
                 setPicker(null);
               }}>{copy('Снять', 'Remove')}</button>
             </div>
-            <PickerLevel title={copy('Заточка кольца', 'Ring sharpening')} min={0} max={20}
-              value={equipped.enchant} onChange={enchant => {
-                update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant }) });
-              }}/>
+            <div className="buildEquippedActions">
+              <PickerLevel title={copy('Заточка кольца', 'Ring sharpening')} min={0} max={20}
+                value={equipped.enchant} onChange={enchant => {
+                  update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant }) });
+                }}/>
+              <button className="primary buildEquippedDone" type="button" onClick={() => { lightHaptic(); setPicker(null); }}>
+                {copy('Готово', 'Done')}
+              </button>
+            </div>
           </div>;
         })()}
         {picker.kind === 'skill' && state.skills[picker.slot] && (() => {
@@ -482,27 +487,32 @@ export function BuildConstructor() {
               }}>{copy('Снять', 'Remove')}</button>
             </div>
             <p className="buildEquippedEffect">{skillEffect(skill.id, equipped.level, state.level, lang).map(row => row.join(' ')).join(' · ')}</p>
-            <PickerLevel title={copy('Уровень навыка', 'Skill level')} min={1} max={21}
-              value={equipped.level} onChange={level => {
-                update({ skills: replaceSlot(state.skills, picker.slot, { ...equipped, level }) });
-              }}/>
+            <div className="buildEquippedActions">
+              <PickerLevel title={copy('Уровень навыка', 'Skill level')} min={1} max={21}
+                value={equipped.level} onChange={level => {
+                  update({ skills: replaceSlot(state.skills, picker.slot, { ...equipped, level }) });
+                }}/>
+              <button className="primary buildEquippedDone" type="button" onClick={() => { lightHaptic(); setPicker(null); }}>
+                {copy('Готово', 'Done')}
+              </button>
+            </div>
           </div> : null;
         })()}
         {picker.kind === 'ring' ? ringCatalog.map(ring => {
           const locked = ring.minLevel > state.level;
           return <PickerOption key={ring.id} art={ringArt(ring.id)} title={ringName(ring, lang)}
             meta={'+' + ring.bonus + ' · ' + statLabels[ring.attribute][lang] + ' · ' + copy('с уровня ', 'level ') + ring.minLevel}
-            disabled={locked} selected={state.rings[picker.slot]?.ring.id === ring.id} onSelect={() => {
+            disabled={locked} selected={state.rings[picker.slot]?.ring.id === ring.id} onSelect={button => {
               lightHaptic();
               const equipped = state.rings[picker.slot];
               update({ rings: replaceSlot(state.rings, picker.slot, equipped?.ring.id === ring.id ? equipped : { ring, enchant: 0 }) });
-              setPicker(null);
+              button.closest('.dialogBody')?.scrollTo({ top: 0, behavior: 'smooth' });
             }}/>;
-        }) : <SkillPickerOptions state={state} slot={picker.slot} lang={lang} onSelect={id => {
+        }) : <SkillPickerOptions state={state} slot={picker.slot} lang={lang} onSelect={(id, button) => {
           lightHaptic();
           const equipped = state.skills[picker.slot];
           update({ skills: replaceSlot(state.skills, picker.slot, equipped?.id === id ? equipped : { id, level: 1 }) });
-          setPicker(null);
+          button.closest('.dialogBody')?.scrollTo({ top: 0, behavior: 'smooth' });
         }}/>}
       </div>
     </BuildPicker>}
@@ -582,7 +592,7 @@ function BuildPicker({ title, closeLabel, onClose, children }: { title: string; 
   </dialog>;
 }
 
-function SkillPickerOptions({ state, slot, lang, onSelect }: { state: BuildState; slot: number; lang: number; onSelect: (id: number) => void }) {
+function SkillPickerOptions({ state, slot, lang, onSelect }: { state: BuildState; slot: number; lang: number; onSelect: (id: number, button: HTMLButtonElement) => void }) {
   const [branch, setBranch] = useState<StatKey>(() => {
     const equipped = state.skills[slot];
     return (equipped && skillById.get(equipped.id)?.branch) || statKeys.find(stat => state.points[stat] > 0) || 'strength';
@@ -602,15 +612,15 @@ function SkillPickerOptions({ state, slot, lang, onSelect }: { state: BuildState
         : lang ? `Invest +${need} more in ${statLabels[branch][lang]}` : `Нужно ещё +${need} очк. в ветку`;
       return <PickerOption key={skill.id} art={skillArt(skill.id)} title={lang ? skill.name : skill.title}
         meta={used ? (lang ? 'Already equipped' : 'Уже в наборе') : available ? (lang ? skill.effect.split('.')[0].replace(/\{[^}]+\}/g, '…') : skill.summary) : requirement}
-        disabled={used || !available} selected={selected} onSelect={() => onSelect(skill.id)}/>;
+        disabled={used || !available} selected={selected} onSelect={button => onSelect(skill.id, button)}/>;
     })}
   </>;
 }
 
 function PickerOption({ art, title, meta, disabled, selected, onSelect }: {
-  art: string; title: string; meta: string; disabled: boolean; selected: boolean; onSelect: () => void;
+  art: string; title: string; meta: string; disabled: boolean; selected: boolean; onSelect: (button: HTMLButtonElement) => void;
 }) {
-  return <button className="buildPickerOption" aria-pressed={selected} disabled={disabled} type="button" onClick={onSelect}>
+  return <button className="buildPickerOption" aria-pressed={selected} disabled={disabled} type="button" onClick={event => onSelect(event.currentTarget)}>
     <GameArt path={art} size={36}/><span><strong>{title}</strong><small>{meta}</small></span>
     <span className="buildPickerCheck" aria-hidden="true">{selected ? '✓' : ''}</span>
   </button>;
