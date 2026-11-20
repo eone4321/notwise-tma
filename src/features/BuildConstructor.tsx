@@ -431,16 +431,17 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
                     applyMainRingEnchant(mainEnchantLevel - 1);
                   }
                 }}>−</button>
-              <input aria-label={copy('Уровень заточки', 'Enchant level')}
-                value={hasMixedRingEnchants ? (bulkConfirmLevel ?? '') : (mainEnchantLevel || '')}
-                placeholder={hasMixedRingEnchants ? '≠' : '0'}
-                inputMode="numeric" maxLength={2}
+              <select className="skinEnchantSelect" aria-label={copy('Уровень заточки', 'Enchant level')}
+                value={hasMixedRingEnchants ? (bulkConfirmLevel ?? '') : mainEnchantLevel}
                 onChange={event => {
-                  const digits = event.target.value.replace(/\D/g, '');
-                  const parsed = digits ? Number(digits) : 0;
-                  if (hasMixedRingEnchants) requestBulkRingEnchant(parsed);
-                  else applyMainRingEnchant(parsed);
-                }}/>
+                  lightHaptic();
+                  const level = Number(event.target.value);
+                  if (hasMixedRingEnchants) requestBulkRingEnchant(level);
+                  else applyMainRingEnchant(level);
+                }}>
+                {hasMixedRingEnchants && <option value="" disabled>≠</option>}
+                {Array.from({ length: 21 }, (_, level) => <option key={level} value={level}>+{level}</option>)}
+              </select>
               <button type="button" aria-label={copy('Увеличить заточку', 'Increase enchant')}
                 disabled={hasMixedRingEnchants ? (bulkConfirmLevel !== null && bulkConfirmLevel >= 20) : mainEnchantLevel >= 20}
                 onClick={() => {
@@ -632,13 +633,14 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
                       lightHaptic();
                       update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant: Math.max(0, equipped.enchant - 1) }) });
                     }}>−</button>
-                  <input aria-label={copy('Заточка кольца', 'Ring enchant')}
-                    value={equipped.enchant || ''} placeholder="0" inputMode="numeric" maxLength={2}
+                  <select className="skinEnchantSelect" aria-label={copy('Заточка кольца', 'Ring enchant')}
+                    value={equipped.enchant}
                     onChange={event => {
-                      const digits = event.target.value.replace(/\D/g, '');
-                      const val = digits ? Math.min(20, Math.max(0, Number(digits))) : 0;
-                      update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant: val }) });
-                    }}/>
+                      lightHaptic();
+                      update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant: Number(event.target.value) }) });
+                    }}>
+                    {Array.from({ length: 21 }, (_, level) => <option key={level} value={level}>+{level}</option>)}
+                  </select>
                   <button type="button" aria-label={copy('Увеличить заточку', 'Increase enchant')}
                     disabled={equipped.enchant >= 20}
                     onClick={() => {

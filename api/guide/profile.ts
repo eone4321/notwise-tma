@@ -1,7 +1,7 @@
 import { telegramUser } from '../../server/telegram-auth';
 import { redis } from '../../server/redis';
 import { readGuideAnalytics, recordGuideEvent } from '../../server/guide-analytics';
-import { awardGuide, awardStats, trackExplorer, userAwards } from '../../server/guide-achievements';
+import { awardGuide, awardStats, resetGuideAwards, trackExplorer, userAwards } from '../../server/guide-achievements';
 import { notificationSettings, setSalePreference, scopes } from '../../server/guide-notifications';
 import { guideProgress } from '../../server/guide-progress';
 import { marketDiagnostics, refreshMarket } from '../../server/getgems-market';
@@ -298,23 +298,21 @@ export default async function handler(request: Request) {
       if (progress === false) return json({ error: 'profile_required' }, 409);
       return json(progress);
     }
+    if (action === 'reset_my_awards') {
+      if (!await guideAdmin(id, token)) return json({ error: 'forbidden' }, 403);
+      await resetGuideAwards(id);
+      return json({ ok: true });
+    }
     if (action === 'reset_my_state') {
-      const achPrefix = 'notwise:guide:achievements:v1:';
-      const [marks, earned] = await Promise.all([
-        redis<string[]>(['HKEYS', namespace + 'progress:' + id]).catch(() => []),
-        redis<string[]>(['SMEMBERS', achPrefix + id]).catch(() => []),
-      ]);
+      const marks = await redis<string[]>(['HKEYS', namespace + 'progress:' + id]).catch(() => []);
       for (const mark of marks) {
         if (mark.startsWith('c:')) {
           await redis(['HINCRBY', namespace + 'completion-counts', mark.slice(2), -1]).catch(() => null);
         }
       }
-      for (const item of earned) {
-        await redis(['HINCRBY', achPrefix + 'totals', item, -1]).catch(() => null);
-      }
       await Promise.all([
         redis(['DEL', namespace + 'progress:' + id, namespace + 'progress-imported:' + id]).catch(() => null),
-        redis(['DEL', achPrefix + id, achPrefix + 'visited:' + id]).catch(() => null),
+        resetGuideAwards(id),
         redis(['DEL', namespace + 'auto-chat:' + id, namespace + 'chat-check:' + id]).catch(() => null),
       ]);
       return json({ ok: true });

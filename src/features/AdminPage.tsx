@@ -1,3 +1,4 @@
+import { dockCoachKey, themeCoachKey } from '../domain/onboarding';
 import { AwardIcon } from './GuideAwards';
 import { guideAchievements, type GuideAchievement } from '../domain/guide-achievements';
 import { useEffect, useState } from 'react';
@@ -372,9 +373,10 @@ function Analytics({ days, en }: { days: Daily[]; en: boolean }) {
 }
 
 
-type ResetTargetId = 'onboarding' | 'home_owl' | 'skin_calc' | 'build_calc' | 'secrets' | 'market_cache' | 'appearance' | 'views';
+type ResetTargetId = 'onboarding' | 'home_owl' | 'skin_calc' | 'build_calc' | 'secrets' | 'market_cache' | 'appearance' | 'views' | 'awards';
 
 const resetOptions: { id: ResetTargetId; title: string; titleEn: string; desc: string; descEn: string }[] = [
+  { id: 'awards', title: 'Мои достижения', titleEn: 'My achievements', desc: 'Сброс ачивок гайда и прогресса «Исследователя» в твоём аккаунте', descEn: 'Reset guide achievements and Explorer progress on your account' },
   { id: 'onboarding', title: 'Онбординг', titleEn: 'Onboarding', desc: 'Подсказки навигации и выбора темы при первом входе', descEn: 'Navigation and theme tooltips shown on first visit' },
   { id: 'home_owl', title: 'Сова на обложке', titleEn: 'Cover owl skin', desc: 'Сброс выбранного скина на главном экране (локально и в CloudStorage)', descEn: 'Reset selected owl skin on the home cover (local & CloudStorage)' },
   { id: 'skin_calc', title: 'Калькулятор скинов', titleEn: 'Skin calculator', desc: 'Выбранные детали, заточка и пресет', descEn: 'Selected skin parts, enchant levels, and preset' },
@@ -409,12 +411,19 @@ function AdminResetPanel({ en }: { en: boolean }) {
 
   const allSelected = selected.size === resetOptions.length;
 
-  function applyReset() {
-    if (selected.size === 0) return;
+  const [resetting, setResetting] = useState(false);
+
+  async function applyReset() {
+    if (selected.size === 0 || resetting) return;
+    setResetting(true);
     try {
+      if (selected.has('awards')) {
+        await profileRequest<{ ok: true }>({ action: 'reset_my_awards' });
+        sessionStorage.removeItem('notwise.guide.chat-visit');
+      }
       if (selected.has('onboarding')) {
-        localStorage.removeItem('notwise.guide.dock.v1');
-        localStorage.removeItem('notwise.guide.theme-tip.v1');
+        localStorage.removeItem(dockCoachKey);
+        localStorage.removeItem(themeCoachKey);
       }
       if (selected.has('home_owl')) {
         saveHomeOwlSkin(null);
@@ -444,6 +453,7 @@ function AdminResetPanel({ en }: { en: boolean }) {
       setStatus(en ? 'Selected data reset — reloading…' : 'Выбранные данные сброшены — перезагружаем…');
       window.setTimeout(() => window.location.reload(), 450);
     } catch {
+      setResetting(false);
       setStatus(en ? 'Could not clear some data.' : 'Не удалось очистить часть данных.');
     }
   }
@@ -453,7 +463,7 @@ function AdminResetPanel({ en }: { en: boolean }) {
       <div className="adminResetHead">
         <div>
           <h2>{en ? 'Selective reset' : 'Выборочный сброс'}</h2>
-          <p className="caption" style={{ margin: 0 }}>{en ? 'Select the items you want to reset on your device.' : 'Отметь пункты, которые нужно сбросить на твоём устройстве.'}</p>
+          <p className="caption" style={{ margin: 0 }}>{en ? 'Select the data you want to reset.' : 'Отметь данные, которые нужно сбросить.'}</p>
         </div>
         <button
           type="button"
@@ -483,7 +493,7 @@ function AdminResetPanel({ en }: { en: boolean }) {
       <button
         type="button"
         className="primary"
-        disabled={selected.size === 0}
+        disabled={selected.size === 0 || resetting}
         onClick={applyReset}
       >
         {en ? `Reset selected (${selected.size})` : `Сбросить выбранное (${selected.size})`}

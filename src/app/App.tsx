@@ -1,3 +1,4 @@
+import { dockCoachKey, themeCoachKey } from '../domain/onboarding';
 import { DetailLink } from '../ui/DetailLink';
 import { trackGuide, useGuideAnalytics } from '../features/guideAnalytics';
 import { channelInvite, communityChat, squadLink } from '../domain/guide-links';
@@ -57,8 +58,8 @@ function App() {
   const [hamster, setHamster] = useState(false);
   const [hamsterLocked, setHamsterLocked] = useState(false);
   const [coach, setCoach] = useState<'dock' | 'theme' | null>(() => {
-    if (localStorage.getItem('notwise.guide.dock.v1') !== '1') return 'dock';
-    return localStorage.getItem('notwise.guide.theme-tip.v1') === '1' ? null : 'theme';
+    if (localStorage.getItem(dockCoachKey) !== '1') return 'dock';
+    return localStorage.getItem(themeCoachKey) === '1' ? null : 'theme';
   });
   const [joke, setJoke] = useState(localStorage.getItem('notwise.guide.secrets.v1') === '1' || sessionStorage.getItem('notwise.guide.secrets.v1') === '1');
   const [showJoke, setShowJoke] = useState(false);
@@ -83,10 +84,10 @@ function App() {
   }, [profile]);
   const advanceCoach = () => {
     if (coach === 'dock') {
-      localStorage.setItem('notwise.guide.dock.v1', '1');
+      localStorage.setItem(dockCoachKey, '1');
       setCoach('theme');
     } else {
-      localStorage.setItem('notwise.guide.theme-tip.v1', '1');
+      localStorage.setItem(themeCoachKey, '1');
       setCoach(null);
     }
   };

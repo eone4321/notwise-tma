@@ -14,6 +14,19 @@ export async function awardGuide(id: string, achievement: GuideAchievement) {
   await redis(['EVAL', award, 2, prefix + id, stats, achievement]);
 }
 
+export function resetGuideAwards(id: string) {
+  return redis(['EVAL', `
+    local earned = redis.call('SMEMBERS', KEYS[1])
+    for _, achievement in ipairs(earned) do
+      local count = tonumber(redis.call('HGET', KEYS[2], achievement) or '0')
+      if count > 0 then
+        redis.call('HINCRBY', KEYS[2], achievement, -1)
+      end
+    end
+    return redis.call('DEL', KEYS[1], KEYS[3])
+  `, 3, prefix + id, stats, prefix + 'visited:' + id]);
+}
+
 export async function trackExplorer(id: string, event: unknown) {
   if (typeof event !== 'string' || !event.startsWith('view:')) return;
   const section = event.slice(5);
