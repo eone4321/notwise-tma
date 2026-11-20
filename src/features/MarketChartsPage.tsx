@@ -331,24 +331,36 @@ export function MarketChartsPage() {
 
   useEffect(() => {
     const controller = new AbortController();
+    const startedAt = performance.now();
+    const minLoaderMs = 420;
+    let timer = 0;
     setHistoryLoading(true);
     const enc = asset.enchantable ? (enchant === null ? 'all' : String(enchant)) : '0';
     const url = `/api/market/history?slug=${encodeURIComponent(asset.historySlug)}&enchant=${enc}&range=${range}`;
+    const finishLoading = () => {
+      const remaining = Math.max(0, minLoaderMs - (performance.now() - startedAt));
+      timer = window.setTimeout(() => {
+        if (!controller.signal.aborted) setHistoryLoading(false);
+      }, remaining);
+    };
     fetch(url, { signal: controller.signal })
       .then(res => (res.ok ? res.json() : null))
       .then(data => {
         if (!controller.signal.aborted) {
           setHistoryPoints(Array.isArray(data?.points) ? data.points : []);
-          setHistoryLoading(false);
+          finishLoading();
         }
       })
       .catch(() => {
         if (!controller.signal.aborted) {
           setHistoryPoints([]);
-          setHistoryLoading(false);
+          finishLoading();
         }
       });
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
   }, [asset.historySlug, asset.enchantable, enchant, range]);
 
   // Combine history points with live point if latest snapshot is fresher

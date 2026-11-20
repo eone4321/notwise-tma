@@ -3618,7 +3618,10 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 }
 .radarSubGateActions {
   display: grid;
-  gap: 8px;
+  gap: 6px;
+}
+.radarSubGateActions > button {
+  margin: 0;
 }
 .radarSubGateBack {
   margin: 0;
