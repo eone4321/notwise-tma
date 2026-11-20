@@ -4,7 +4,7 @@ export function DockCoach({ step, onContinue }: { step: 'dock' | 'theme'; onCont
   const { locale } = useGuideLocale();
   const en = locale === 'en';
   return (
-    <aside className="dockCoach card" aria-labelledby="dock-coach-title">
+    <aside className="dockCoach card" data-step={step} aria-labelledby="dock-coach-title">
       <h2 id="dock-coach-title">
         {step === 'dock'
           ? (en ? 'One button for navigation' : 'Одна кнопка для навигации')

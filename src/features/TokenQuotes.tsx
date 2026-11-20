@@ -7,18 +7,35 @@ import tokens from '../../public/data/tokens.json';
 import { tokenMarket, type TokenQuote } from './marketData';
 import { useGuideLocale } from './guideLocale';
 
-const usd = new Intl.NumberFormat('ru-RU', {
+const usdRu = new Intl.NumberFormat('ru-RU', {
+  style: 'currency', currency: 'USD', maximumFractionDigits: 2,
+});
+const usdEn = new Intl.NumberFormat('en-US', {
   style: 'currency', currency: 'USD', maximumFractionDigits: 2,
 });
 
-const notUsd = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 });
-const compactUsd = new Intl.NumberFormat('ru-RU', { notation: 'compact', maximumFractionDigits: 1 });
-const compactUsdEn = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
-const smallUsd = new Intl.NumberFormat('ru-RU', { maximumSignificantDigits: 3 });
+const notUsdRu = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 4 });
+const notUsdEn = new Intl.NumberFormat('en-US', {
+  style: 'currency', currency: 'USD', maximumFractionDigits: 4,
+});
+const compactUsdRu = new Intl.NumberFormat('ru-RU', { notation: 'compact', maximumFractionDigits: 1 });
+const compactUsdEn = new Intl.NumberFormat('en-US', {
+  style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1,
+});
+const smallUsdRu = new Intl.NumberFormat('ru-RU', { maximumSignificantDigits: 3 });
+const smallUsdEn = new Intl.NumberFormat('en-US', {
+  style: 'currency', currency: 'USD', maximumSignificantDigits: 3,
+});
 
-function formatQuote(symbol: string, price: number) {
-  if (symbol === 'NOT') return (price < 0.00005 ? '<0.0001' : notUsd.format(price)) + ' $';
-  return price < 0.01 ? smallUsd.format(price) + ' $' : usd.format(price);
+function formatQuote(symbol: string, price: number, en: boolean) {
+  if (symbol === 'NOT') {
+    if (price < 0.00005) return en ? '<$0.0001' : '<0,0001 $';
+    return en ? notUsdEn.format(price) : `${notUsdRu.format(price)} $`;
+  }
+  if (price < 0.01) {
+    return en ? smallUsdEn.format(price) : `${smallUsdRu.format(price)} $`;
+  }
+  return en ? usdEn.format(price) : usdRu.format(price);
 }
 
 function tokenIcon(symbol: string) {
@@ -26,27 +43,31 @@ function tokenIcon(symbol: string) {
 }
 
 export function tokenCapitalization(quote?: TokenQuote, en = false) {
-  const fmt = en ? compactUsdEn : compactUsd;
+  const formatCap = (value: number) => en ? compactUsdEn.format(value) : `${compactUsdRu.format(value)} $`;
   const capLabel = en ? 'MCap' : 'Кап.';
-  if (quote?.marketCapUsd) return { label: capLabel, value: fmt.format(quote.marketCapUsd) + ' $' };
-  if (quote?.fdvUsd) return { label: 'FDV', value: fmt.format(quote.fdvUsd) + ' $' };
+  if (quote?.marketCapUsd) return { label: capLabel, value: formatCap(quote.marketCapUsd) };
+  if (quote?.fdvUsd) return { label: 'FDV', value: formatCap(quote.fdvUsd) };
   return { label: capLabel, value: '—' };
 }
 
-function useQuotes() {
+function useQuotes(en: boolean) {
   const { data, pending, stale } = tokenMarket.useSnapshot();
   const rows = data?.items ?? [];
   const usable = tokens.tokens.flatMap(({ symbol }) => {
     const row = rows.find(quote => quote.symbol === symbol);
     const price = Number(row?.priceUsd);
-    return row && Number.isFinite(price) && price > 0 ? [{ ...row, displayPrice: formatQuote(symbol, price) }] : [];
+    return row && Number.isFinite(price) && price > 0 ? [{ ...row, displayPrice: formatQuote(symbol, price, en) }] : [];
   });
   return { rows, usable, pending, stale, reload: () => tokenMarket.refresh(true) };
 }
 
 function QuoteList({ quotes, en }: { quotes: ReturnType<typeof useQuotes>; en: boolean }) {
   const { rows, usable, pending, stale, reload } = quotes;
-  const updated = usable.find(row => row.fetchedAt)?.fetchedAt;
+  const rawUpdated = usable.find(row => row.fetchedAt)?.fetchedAt;
+  const hasValidDate = typeof rawUpdated === 'string' && Number.isFinite(Date.parse(rawUpdated));
+  const updated = hasValidDate ? rawUpdated : null;
+  const isStale = stale || usable.some(row => row.status === 'stale');
+  const showStatus = (pending && !usable.length) || !usable.length || isStale || hasValidDate;
   return <>
     <ul className="tokenRatesList" aria-busy={pending}>
       {tokens.tokens.map(({ symbol, name }) => {
@@ -65,27 +86,27 @@ function QuoteList({ quotes, en }: { quotes: ReturnType<typeof useQuotes>; en: b
         </li>;
       })}
     </ul>
-    <p className="caption" role="status">
+    {showStatus && <p className="caption" role="status">
       {pending && !usable.length
         ? (en ? 'Loading rates…' : 'Загружаем котировки…')
         : !usable.length
           ? (en ? 'Rates are temporarily unavailable.' : 'Котировки временно недоступны.')
           : <>
-            {stale || usable.some(row => row.status === 'stale')
+            {isStale
               ? (en ? 'Last saved rates' : 'Последние сохранённые данные')
               : (en ? 'Updated' : 'Обновлено')}
             {updated && <> · <time dateTime={updated}>{new Date(updated).toLocaleString(en ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time></>}
           </>}
-    </p>
+    </p>}
     {rows.some(row => row.fdvUsd && !row.marketCapUsd) && <p className="caption fdvNote">{en ? 'FDV values the total supply. Market cap counts circulating tokens.' : 'FDV — оценка всей эмиссии. Капитализация учитывает токены в обращении.'}</p>}
     <button className="refreshBtn" onClick={reload} disabled={pending}>{en ? 'Refresh rates' : 'Обновить курсы'}</button>
   </>;
 }
 
 export function TokenQuotes() {
-  const quotes = useQuotes();
   const { locale } = useGuideLocale();
   const en = locale === 'en';
+  const quotes = useQuotes(en);
   return <section className="card" aria-labelledby="token-rates">
     <h2 id="token-rates">{en ? 'Token rates' : 'Курсы токенов'}</h2>
     <QuoteList quotes={quotes} en={en}/>
@@ -95,9 +116,9 @@ export function TokenQuotes() {
 let lastTickerIndex = 0;
 
 export function TokenTicker() {
-  const quotes = useQuotes();
   const { locale } = useGuideLocale();
   const en = locale === 'en';
+  const quotes = useQuotes(en);
   const reducedMotion = useReducedMotion();
   const [index, setIndex] = useState(lastTickerIndex);
   const [hovered, setHovered] = useState(false);

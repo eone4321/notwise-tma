@@ -20,9 +20,9 @@ const squadItemUse: Record<string, [string, string]> = {
 };
 
 const squadItemNameEn: Record<string, string> = {
-  'scroll-enchant-ring': 'Ring Enchant Scroll',
+  'scroll-enchant-ring': 'Ring Enchanter',
   'lighter': 'Lighter',
-  'scroll-enchant-skin': 'Skin Enchant Scroll',
+  'scroll-enchant-skin': 'Skin Enchanter',
   'morpher': 'Morpher',
   'chiller': 'Chiller',
 };
@@ -64,8 +64,8 @@ function SiegeGuideCard({ onChatVisit, keepParent }: { onChatVisit?: () => void;
         <div>
           <strong>{en ? 'Siege power: what it is and how to build it' : 'Мощь осады: что это и как копить'}</strong>
           <p>{en
-            ? 'Attacking and defending territories uses personal siege power based on your earned SP (around ~1 power per 100 SP; XP does not affect it). SP grows fastest on the Dojo dummy (especially with skills) and in battles. Use the slider to choose how much available power to commit; unused power carries over to later rounds.'
-            : 'Для атаки и защиты земель нужна личная мощь — она зависит от заработанных SP (ориентир: ~1 мощь за 100 SP, опыт XP на неё не влияет). Быстрее всего SP растёт на манекене в Додзё (особенно с навыками) и в боях. Ползунком выбираешь, сколько доступной мощи влить; остаток не сгорает и переходит в следующие раунды.'}</p>
+            ? 'Attacking and defending territories uses personal siege power, which grows with earned SP. XP does not affect it. The Dojo dummy and battles are good ways to earn SP. Use the slider to choose how much power to commit this round. The rest carries over.'
+            : 'Для атаки и защиты земель нужна личная мощь. Она растёт вместе с заработанными SP, опыт XP на неё не влияет. Быстрее всего SP можно получить на манекене в Додзё и в боях. Ползунком выбери, сколько мощи вложить в раунд. Остаток сохранится для следующих раундов.'}</p>
         </div>
       </li>
       <li>
@@ -74,7 +74,7 @@ function SiegeGuideCard({ onChatVisit, keepParent }: { onChatVisit?: () => void;
           <strong>{en ? 'Three 8-hour rounds and territory capture' : 'Три раунда по 8 часов и захват'}</strong>
           <p>{en
             ? 'When your squad holds 0 territories, attack border territories on the edge of the map or neutral tiles (unclaimed tiles have a starting garrison). Once you hold territory, defend yours and expand into adjacent tiles that share a border (you cannot jump over enemy territory). The squad with the highest power contribution at the end of 8 hours wins the tile; ties reset the tile.'
-            : 'Пока у сквада 0 земель, атакуй пограничные земли с краю карты или нейтральные участки (у ничейных стоит стартовый гарнизон). Когда земли уже есть — защищай свои и захватывай соседние по общим границам (перепрыгнуть через чужую территорию нельзя). Землю берёт сквад с большим вкладом мощи к концу 8 ч; при ничьей участок обнуляется.'}</p>
+            : 'Пока у сквада 0 земель, атакуй пограничные земли с краю карты или нейтральные участки (у ничейных стоит стартовый гарнизон). Когда земли уже есть — защищай свои и захватывай соседние по общим границам (перепрыгнуть через чужую территорию нельзя). Землю берёт сквад с большим вкладом мощи к концу 8ч; при ничьей участок обнуляется.'}</p>
         </div>
       </li>
       <li>
@@ -211,7 +211,7 @@ export function SquadPage({ gameEntry, onChatVisit }: { gameEntry: string; onCha
         <div className="squadKpiTile">
           <span>{en ? 'Siege power' : 'Мощь осады'}</span>
           <strong>{en ? 'From your SP' : 'От твоих SP'}</strong>
-          <small>{en ? '~1 power per 100 SP' : '~1 мощь за 100 SP'}</small>
+          <small>{en ? 'Grows with skill points' : 'Растёт с очками навыков'}</small>
         </div>
         <div className="squadKpiTile">
           <span>{en ? 'Reward share' : 'Доля наград'}</span>

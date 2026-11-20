@@ -21,7 +21,7 @@ export function skillEffect(id: number, level: number, owlLevel: number, lang = 
   const multiplier = skillHpMultiplier(owlLevel);
   const format = (number: number) => formats[lang].format(number);
   const HP = ' HP';
-  const seconds = lang ? ' s' : ' с';
+  const seconds = lang ? ' s' : 'с';
   const rows: [string, string][] = [];
   const frac = amount - Math.floor(amount);
   const countRange = frac < 0.05 ? String(Math.floor(amount)) : frac > 0.95 ? String(Math.ceil(amount)) : `${Math.floor(amount)}–${Math.ceil(amount)}`;

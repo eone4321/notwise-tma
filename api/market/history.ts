@@ -8,8 +8,13 @@ export default async function handler(request: Request) {
   if (request.method !== 'GET') return new Response(null, { status: 405 });
   const url = new URL(request.url);
   const slug = (url.searchParams.get('slug') ?? '').trim().toLowerCase();
-  const enchantParam = Number(url.searchParams.get('enchant') ?? '0');
-  const enchant = Number.isSafeInteger(enchantParam) && enchantParam >= 0 && enchantParam <= 20 ? enchantParam : 0;
+  const rawEnchant = (url.searchParams.get('enchant') ?? '0').trim().toLowerCase();
+  const enchantParam = Number(rawEnchant);
+  const enchant: number | 'all' = rawEnchant === 'all'
+    ? 'all'
+    : Number.isSafeInteger(enchantParam) && enchantParam >= 0 && enchantParam <= 20
+      ? enchantParam
+      : 0;
   const rawRange = (url.searchParams.get('range') ?? '7d') as HistoryRange;
   const range: HistoryRange = validRanges.has(rawRange) ? rawRange : '7d';
 

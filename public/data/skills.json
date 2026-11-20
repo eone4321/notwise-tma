@@ -134,8 +134,8 @@
     "name": "Echoing Blow",
     "branch": "wisdom",
     "tier": 1,
-    "description": "Echo strike",
-    "effect": "Each hit repeats and deals extra damage.",
+    "description": "Déjà vu, but it hurts",
+    "effect": "For {t} s each of your hits echoes and deals {v}% of its damage once more.",
     "type": "active",
     "dojoEnergy": 50
   },

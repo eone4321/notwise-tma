@@ -11,6 +11,7 @@ export async function tonRates(addresses: string[]): Promise<TonRates> {
 
 export const usdtAddress = 'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs';
 
+// NOT Wise labels native TON (1e9 nanoton) as GRAM in-game.
 export async function gramToUsdt() {
   const rates = await tonRates(['ton', usdtAddress]);
   const usd = rates.TON?.prices?.USD;

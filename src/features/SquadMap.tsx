@@ -208,7 +208,7 @@ export function SquadMap() {
         {reward && <div className="squadMapRewardPill">
           <span>{reward[0] === 'coins' || reward[0] === 'squad_silver'
             ? getSiegeRewardLabel(reward[0], en)
-            : `${getSiegeRewardLabel(reward[0], en)} · ${en ? '24 h' : '24 ч'}`}</span>
+            : `${getSiegeRewardLabel(reward[0], en)} · ${en ? '24 h' : '24ч'}`}</span>
           <strong><SiegeRewardValue kind={reward[0]} amount={reward[1]}/></strong>
         </div>}
       </div>
@@ -220,7 +220,7 @@ export function SquadMap() {
           <strong>{en ? 'All-territory rewards: per round and full siege' : 'Награды всех земель: за раунд и за всю осаду'}</strong>
           <small>{en
             ? `1 round (${counts.total}): ${nf.format(coinsTotal)} coins · ${nf.format(silverTotal)} silver · 3 rounds (${counts.total * 3}): up to ${nf.format(coinsTotal * 3)} coins · ${nf.format(silverTotal * 3)} silver`
-            : `1 раунд ({counts.total}): ${nf.format(coinsTotal)} монет · ${nf.format(silverTotal)} серебра · 3 раунда (${counts.total * 3}): до ${nf.format(coinsTotal * 3)} монет · ${nf.format(silverTotal * 3)} серебра`.replace('{counts.total}', String(counts.total))}</small>
+            : `1 раунд (${counts.total}): ${nf.format(coinsTotal)} монет · ${nf.format(silverTotal)} серебра · 3 раунда (${counts.total * 3}): до ${nf.format(coinsTotal * 3)} монет · ${nf.format(silverTotal * 3)} серебра`}</small>
         </span>
       </summary>
       <div className="siegeRoundSwitch" role="group" aria-label={en ? 'Total rewards by number of rounds' : 'Суммарные награды по количеству раундов'}>

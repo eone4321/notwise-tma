@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import skills from '../../public/data/skills.json';
 import { GameArt } from '../ui/GameArt';
 import { DetailLink } from '../ui/DetailLink';
 import { lightHaptic } from '../telegram/client';
@@ -19,8 +20,8 @@ type Lifehack = {
 
 const categories: { id: HackCategory; label: [ru: string, en: string] }[] = [
   { id: 'all', label: ['Все', 'All'] },
-  { id: 'combat', label: ['Бои и PvP', 'Combat & PvP'] },
   { id: 'farm', label: ['Фарм и $NOT', 'Farm & $NOT'] },
+  { id: 'combat', label: ['Бои и PvP', 'Combat & PvP'] },
   { id: 'sp', label: ['SP и прокачка', 'SP & Leveling'] },
   { id: 'market', label: ['Маркет и экономия', 'Market & Economy'] },
   { id: 'rare', label: ['Редкое и ценное', 'Rare & Valuable'] },
@@ -38,17 +39,17 @@ const lifehacks: Lifehack[] = [
       'All 5 direct attack spells pierce both block & dodge',
     ],
     summary: [
-      'Не только «Молния»: «Снежок», «Огненный шар», «Астероид» и «Бросок отчаяния» тоже игнорируют 70% уклонения.',
+      'Lightning, Snowball, Fireball, Asteroid и Desperate Throw попадают даже при максимальном шансе уклонения в 70%.',
       'Not just Lightning: Snowball, Fireball, Asteroid & Desperate Throw also bypass 70% dodge and block.',
     ],
     lines: [
       [
-        'В коде боя все 5 прямых спеллов обходят проверку блока, зарядов «Уклонения» и ловкости.',
-        'Остановить их может только «Фазовый сдвиг», а «Щит из скорлупы» снижает входящий урон.',
-        'Исключение — «Вой берсерка»: это серия физических ударов, поэтому её можно заблокировать или увернуться.',
+        'Все 5 прямых заклинаний проходят сквозь блок и уклонение, включая уклонение от ловкости.',
+        'Остановить их может только «Phase Shift», а «Nutshell Aegis» снижает входящий урон.',
+        'Исключение — «Berserk Howl»: это серия физических ударов, поэтому её можно заблокировать или от неё увернуться.',
       ],
       [
-        'In battle code, all 5 direct spells bypass block checks, Evada Kedabra charges, and Agility dodge.',
+        'All 5 direct spells bypass block and dodge, including Agility-based dodge.',
         'Only Phase Shift blocks them completely, while Nutshell Aegis reduces their damage.',
         'Berserk Howl is the exception: it fires physical hits that respect block and dodge.',
       ],
@@ -70,9 +71,9 @@ const lifehacks: Lifehack[] = [
     ],
     lines: [
       [
-        'Счётчик серии сбрасывается только при промахе в блок, уклонении врага или «Фазовом сдвиге».',
-        'Таймера сгорания у серии нет — можно выждать «Подсказку духа» или зажать блок врага «Сковывающими цепями».',
-        '3-й чистый удар гарантированно запускает серию из 4 атак (200% урона) и оглушение на 1,5 с.',
+        'Счётчик серии сбрасывается только при промахе в блок, уклонении врага или «Phase Shift».',
+        'Таймера сгорания у серии нет — можно выждать «Spirit Guidance» или зажать блок врага «Crippling Chains».',
+        '3-й чистый удар гарантированно запускает серию из 4 атак (200% урона) и оглушение на 1,5с.',
       ],
       [
         'Your streak counter resets only on a blocked hit, enemy dodge, or Phase Shift.',
@@ -96,8 +97,8 @@ const lifehacks: Lifehack[] = [
     ],
     lines: [
       [
-        'Включай «Клык вампира» или «Эхо-удар» прямо перед своим 3-м попаданием — бонус сработает на все 4 удара комбо.',
-        'Если видишь, что враг вот-вот пробьёт 3-й удар серии, жми «Статический щит» — он отразит урон от всех 4 ударов подряд.',
+        'Включай «Vampire Fang» или «Echoing Blow» прямо перед своим 3-м попаданием — бонус сработает на все 4 удара комбо.',
+        'Если видишь, что враг вот-вот пробьёт 3-й удар серии, жми «Static Shield» — он отразит урон от всех 4 ударов подряд.',
       ],
       [
         'Activate Vampire Fang or Echoing Blow right before your 3rd clean hit to proc across all 4 flurry hits.',
@@ -111,21 +112,21 @@ const lifehacks: Lifehack[] = [
     tag: ['Бои · Защита', 'Combat · Defense'],
     icon: '/game/skills/8.png',
     title: [
-      'Заряды «Уклонения» не тратятся, если удар попал в твой блок',
+      'Заряды «Evada Kedabra» не тратятся, если удар попал в твой блок',
       'Evada Kedabra charges are saved when you block the hit',
     ],
     summary: [
-      'Продолжай менять зону блока даже под активным «Уклонением».',
+      'Продолжай менять зону блока даже под активным «Evada Kedabra».',
       'Keep switching your guard zone even while Evada Kedabra is active.',
     ],
     lines: [
       [
-        'Игра сначала проверяет совпадение зоны блока, и только если блок не угадал — списывает заряд «Уклонения».',
-        'Угаданный блок экономит 1–3 заряда «Уклонения» на следующие удары врага.',
+        'Игра сначала проверяет совпадение зоны блока, и только если блок не угадал — списывает заряд «Evada Kedabra».',
+        'Блок в нужной зоне сохраняет 1⁠–⁠3 заряда «Evada Kedabra» на следующие удары врага.',
       ],
       [
         'The engine checks your guard zone BEFORE consuming an Evada Kedabra charge.',
-        'Every attack you block preserves your 1–3 evade charges for subsequent unblocked swings.',
+        'Every attack you block preserves your 1⁠–⁠3 evade charges for subsequent unblocked swings.',
       ],
     ],
   },
@@ -135,20 +136,20 @@ const lifehacks: Lifehack[] = [
     tag: ['Бои · Тайминг', 'Combat · Timing'],
     icon: '/game/skills/16.png',
     title: [
-      'Окно 2 секунд после ульты 5-го тира: как наказывать и не подставляться',
+      'Окно 2 секунд после ульты 5-го тира: как наказывать и не подставляться',
       'The 2-second Tier-5 cast lock: how to punish and avoid self-traps',
     ],
     summary: [
-      '«Молния», «Снежок», «Огненный шар» и «Астероид» на 2 с замораживают твою атаку и смену блока.',
+      '«Lightning», «Snowball», «Fireball» и «Asteroid» на 2с замораживают твою атаку и смену блока.',
       'Tier-5 ultimates lock your own attack and guard switching for 2.0 seconds after cast.',
     ],
     lines: [
       [
-        'Никогда не жми ульту 5-го тира в чужой «Фазовый сдвиг» или «Статический щит» — потеряешь 125 маны и 2 секунды защиты.',
-        'Когда враг нажал ульту, его блок замирает на 2 с — сразу бей в открытую зону или включай «Вой берсерка».',
+        'Никогда не жми ульту 5-го тира в чужой «Phase Shift» (0 урона — потеряешь 125 маны и 2с блока защиты). «Nutshell Aegis» снижает урон ульты на 15%⁠–⁠33%, а «Static Shield» отражает только физические удары и супер-серию.',
+        'Когда враг нажал ульту, его блок замирает на 2с — сразу бей в открытую зону или включай «Berserk Howl».',
       ],
       [
-        'Never fire a Tier-5 ultimate into enemy Phase Shift or Static Shield—you waste 125 mana and freeze your guard for 2s.',
+        'Never fire a Tier-5 ultimate into enemy Phase Shift (0 damage, wasting 125 mana + 2s guard lock). Nutshell Aegis cuts Tier-5 damage by 15%⁠–⁠33%, whereas Static Shield only reflects physical/super-streak hits.',
         'When the enemy casts a Tier-5 spell, their guard is frozen for 2s—punish their open zone with Berserk Howl.',
       ],
     ],
@@ -159,17 +160,17 @@ const lifehacks: Lifehack[] = [
     tag: ['Бои · Математика', 'Combat · Math'],
     icon: '/game/skills/4.png',
     title: [
-      'Потолок 35% HP за удар и секрет «Щита из скорлупы»',
+      'Потолок 35% HP за удар и секрет «Nutshell Aegis»',
       '35% Max HP single-hit cap & Nutshell Aegis damage order',
     ],
     summary: [
-      'Обычный удар сначала режется до 35% макс. HP цели, и только потом «Щит из скорлупы» снимает ещё до 33%.',
-      'Single hits are clamped to 35% Max HP BEFORE Nutshell Aegis reduces them by another 15%–33%.',
+      'Обычный удар сначала режется до 35% макс. HP цели, и только потом «Nutshell Aegis» снимает ещё до 33%.',
+      'Single hits are clamped to 35% Max HP BEFORE Nutshell Aegis reduces them by another 15%⁠–⁠33%.',
     ],
     lines: [
       [
-        'Не стакай одновременно крит ×2, «Мощный удар» и «Двойную ставку» ×5 на одном ударе — всё выше 35% HP цели просто сгорит.',
-        'Танкам с «Щитом из скорлупы» ставь кольца Мудрости (колец Выносливости в игре нет, а щит тратит 8 маны за каждый удар).',
+        'Не объединяй крит ×2, «Power Punch» и «Double Down» ×5 на одном ударе — всё выше 35% HP цели просто сгорит.',
+        'Танкам с «Nutshell Aegis» ставь кольца Мудрости (колец Выносливости в игре нет, а щит тратит 8 маны за каждый удар).',
       ],
       [
         'Avoid over-stacking Crit ×2 + Power Punch + Double Down ×5 on a single swing—damage above 35% enemy Max HP is discarded.',
@@ -184,17 +185,17 @@ const lifehacks: Lifehack[] = [
     tag: ['Бои · Контрпик', 'Combat · Counter'],
     icon: '/game/skills/19.png',
     title: [
-      '«Железная воля» режет даже урон Супер-серии и число тиков яда',
+      '«Iron Will» режет даже урон Супер-серии и число тиков яда',
       'Iron Will reduces enemy Super Streak damage & cuts Toxic Spores ticks',
     ],
     summary: [
-      'За 2 маны пассивка ослабляет и все 4 удара чужой супер-серии, и длительность станов, и яд.',
+      'За 2 маны пассивка ослабляет и все 4 удара чужой супер-серии, и длительность станов, и яд.',
       'For just 2 mana per proc, Iron Will weakens enemy 4-hit flurries, stuns, chill, and poison ticks.',
     ],
     lines: [
       [
-        'На прокачке «Железная воля» снижает урон и стан вражеской супер-серии до −24%.',
-        'Против «Ядовитых спор» она уменьшает само количество тиков яда (с 5 до 3 тиков на высоком уровне).',
+        'На прокачке «Iron Will» снижает урон и стан вражеской супер-серии до −24%.',
+        'Против «Toxic Spores» она уменьшает само количество тиков яда (с 5 до 3 тиков на высоком уровне).',
       ],
       [
         'At high levels, Iron Will cuts both the damage and stun duration of enemy Super Streaks by up to 24%.',
@@ -208,20 +209,20 @@ const lifehacks: Lifehack[] = [
     tag: ['Бои · Микроконтроль', 'Combat · Micro'],
     icon: '/game/skills/5.png',
     title: [
-      'Как сжечь «Ядовитые споры» в 0 урона и блокировать в оглушении',
+      'Как сжечь «Toxic Spores» в 0 урона и блокировать в оглушении',
       'How to burn Toxic Spores for 0 damage & block while stunned',
     ],
     summary: [
-      'Яд бьёт только в те окна по 1,5 с, когда ты сам нанёс удар; а в стане можно менять блок.',
+      'Яд бьёт только в те окна по 1,5с, когда ты сам нанёс удар; а в стане можно менять блок.',
       'Poison only deals damage during 1.5s windows where you attack; stun never locks your guard.',
     ],
     lines: [
       [
-        'Счётчик «Ядовитых спор» тикает каждые 1,5 с, но урон проходит только если ты атаковал в этом окне — пауза в 1–2 удара сжигает яд впустую.',
-        'Под «Оглушающим выстрелом», «Астероидом» или станом от серии продолжай двигать щит каждую секунду — блок работает даже в стане!',
+        'Счётчик «Toxic Spores» тикает каждые 1,5с, но урон проходит только если ты атаковал в этом окне — пауза в 1⁠–⁠2 удара сжигает яд впустую.',
+        'Под «Stunning Shot», «Asteroid» или станом от серии продолжай менять зону блока — это работает даже при оглушении.',
       ],
       [
-        'Toxic Spores ticks every 1.5s and consumes a charge even if you do not attack—pausing your swing for 1–2 ticks burns enemy poison for 0 HP.',
+        'Toxic Spores ticks every 1.5s and consumes a charge even if you do not attack—pausing your swing for 1⁠–⁠2 ticks burns enemy poison for 0 HP.',
         'While stunned by Stunning Shot, Asteroid, or Super Streak, keep moving your guard every 1.0s—only Crippling Chains locks your block.',
       ],
     ],
@@ -232,17 +233,17 @@ const lifehacks: Lifehack[] = [
     tag: ['Бои · Прокачка', 'Combat · Scaling'],
     icon: '/game/skills/6.png',
     title: [
-      'Урон заклинаний и «Лечение» растут от Уровня совы, а не от Силы',
+      'Урон заклинаний и «Healing» растут от Уровня совы, а не от Силы',
       'Spell damage and Healing scale with Owl Level, not Strength',
     ],
     summary: [
-      'Очки Силы и кольца Силы усиливают только обычный удар и «Вой берсерка».',
+      'Очки Силы и кольца Силы усиливают только обычный удар и «Berserk Howl».',
       'Strength points and Strength rings only buff basic physical hits and Berserk Howl.',
     ],
     lines: [
       [
-        'Все заклинания («Молния», «Снежок», «Огненный шар», «Астероид», «Лечение», «Споры») умножаются от базового HP уровня совы.',
-        'Магам и контроллерам через «Снежок» (84% винрейта в симуляциях) Сила не нужна — качай Мудрость, Выносливость и Ловкость до 100.',
+        'Урон Lightning, Snowball, Fireball, Asteroid и Toxic Spores, а также объём Healing растут вместе с уровнем совы.',
+        'Магам и контроллерам через «Snowball» (84% винрейта в симуляциях) Сила не нужна — качай Мудрость, Выносливость и Ловкость до 100.',
       ],
       [
         'All spells (Lightning, Snowball, Fireball, Asteroid, Healing, Toxic Spores) scale strictly with owl level base HP.',
@@ -258,8 +259,8 @@ const lifehacks: Lifehack[] = [
     tag: ['SP и прокачка', 'SP & Leveling'],
     icon: '/game/items/chiller-open.webp',
     title: [
-      'Холодильник XP на границе 5 уровней',
-      'XP Chiller right before 5-level energy cliffs',
+      'Чиллер на границе 5 уровней',
+      'Chiller right before 5-level energy cliffs',
     ],
     summary: [
       'Замораживай опыт на ур. 4, 9, 14 или 19 перед скачком цены боя и полёта.',
@@ -268,12 +269,12 @@ const lifehacks: Lifehack[] = [
     lines: [
       [
         'Каждые 5 уровней цена боя растёт на +10 ⚡ (10 → 20 → 30 → 40…), а полёта — на +50 ⚡.',
-        'Открой дверцу Холодильника XP на ур. 4, 9, 14 или 19: капсулы продолжат давать монеты, предметы и $NOT без опыта.',
-        'Важно: если в инвентаре несколько Холодильников XP, для разморозки опыта нужно закрыть дверцу у всех.',
+        'Открой дверцу Чиллера на ур. 4, 9, 14 или 19: капсулы продолжат давать монеты, предметы и $NOT без опыта.',
+        'Важно: если в инвентаре несколько Чиллеров, для разморозки опыта нужно закрыть дверцу у всех.',
       ],
       [
         'Every 5 levels, battle cost increases by +10 ⚡ (10 → 20 → 30 → 40…) and flight cost by +50 ⚡.',
-        'Open your XP Chiller at level 4, 9, 14, or 19: capsules keep paying coins, items, and $NOT with 0 XP.',
+        'Open your Chiller at level 4, 9, 14, or 19: capsules keep paying coins, items, and $NOT with 0 XP.',
         'Note: if you own multiple Chillers, all of them must be closed to resume gaining XP.',
       ],
     ],
@@ -321,7 +322,7 @@ const lifehacks: Lifehack[] = [
     ],
     lines: [
       [
-        'Обсидиановая капсула (4 ч) удобна для быстрого оборота опыта и ежедневных квестов.',
+        'Обсидиановая капсула (4ч) удобна для быстрого оборота опыта и ежедневных квестов.',
         'Если цель — выбить крупные пулы $NOT, открывай Золотые капсулы (множитель ×5) и качай уровень капсул.',
       ],
       [
@@ -341,18 +342,18 @@ const lifehacks: Lifehack[] = [
       'Squad Shop is vastly cheaper than the regular shop',
     ],
     summary: [
-      'Покупай Морфер, Холодильник XP, Зажигалку и заточки за серебро сквада.',
-      'Buy Morpher, XP Chiller, Lighter, and Enchanters with squad silver.',
+      'Покупай Морфер, Чиллер, Зажигалку и заточки за серебро сквада.',
+      'Buy Morpher, Chiller, Lighter, and Enchanters with squad silver.',
     ],
     lines: [
       [
-        'Заточка кольца за 500 серебра даёт +1 к стату и +5% к фарму (в 10× выгоднее Заточки скина за 5 000 серебра!).',
-        'Холодильник XP стоит 25 000 серебра вместо 100 000 монет, а Морфер — 5 000 серебра вместо 250 Stars.',
-        'Зажигалка на 10 дней ритуалов обходится в 2 500 серебра вместо 5 000 золотых монет.',
+        'Заточка кольца за 500 серебра даёт +1 к стату и +5% к фарму (в 10× выгоднее Заточки скина за 5 000 серебра!).',
+        'Чиллер стоит 25 000 серебра вместо 100 000 монет, а Морфер — 5 000 серебра вместо 250 Stars.',
+        'Зажигалка на 10 дней ритуалов обходится в 2 500 серебра вместо 5 000 золотых монет.',
       ],
       [
         'Ring Enchanter at 500 silver gives +1 stat AND +5% farm (10× more silver-efficient than Skin Enchanter at 5,000 silver!).',
-        'XP Chiller costs 25,000 silver instead of 100,000 gold coins; Morpher costs 5,000 silver instead of 250 Stars.',
+        'Chiller costs 25,000 silver instead of 100,000 gold coins; Morpher costs 5,000 silver instead of 250 Stars.',
         'A 10-charge Lighter costs 2,500 silver instead of 5,000 gold coins.',
       ],
     ],
@@ -374,7 +375,7 @@ const lifehacks: Lifehack[] = [
     lines: [
       [
         'С +4 появляется риск рассыпать предмет в осколки скорлупы: на +4 успех 95% (риск 5%), на +5 — 90%, на +6 — 85% (шаг −5%).',
-        'Сначала заточи все 3 рабочих кольца до +3 (всего 4 500 серебра сквада за +45% к фарму).',
+        'Сначала заточи все 3 рабочих кольца до +3 (всего 4 500 серебра сквада за +45% к фарму).',
         'Для уровней +6 и выше сравнивай себестоимость заточки с готовыми лотами в разделе «Маркет и графики».',
       ],
       [
@@ -395,14 +396,14 @@ const lifehacks: Lifehack[] = [
       'Solve the Explorer Book riddle right before PvP sessions',
     ],
     summary: [
-      '+5 мудрости на 24 часа (= целому Обсидиановому кольцу!) и до ×3 наград за серию.',
+      '+5 мудрости на 24 часа (= целому Обсидиановому кольцу!) и до ×3 наград за серию.',
       '+5 Wisdom for 24h (equal to an entire Obsidian Ring!) plus up to 3× streak rewards.',
     ],
     lines: [
       [
-        '+5 к мудрости дают +100 маны и +3,5% шанса крита на сутки — спасает билды с низкой мудростью от нехватки маны.',
-        'Решай загадку прямо перед рейдами и тренировками.',
-        'Не ошибайся 3 раза (и не тяни дольше 60 секунд) — иначе книга сгорит.',
+        '+5 к мудрости дают +100 маны и +3,5% шанса крита на сутки — спасает билды с низкой мудростью от нехватки маны.',
+        'Решай загадку прямо перед нападениями и тренировками.',
+        'Не ошибайся 3 раза (и не тяни дольше 60 секунд) — иначе книга сгорит.',
       ],
       [
         '+5 Wisdom grants +100 mana and +3.5% crit chance for 24h—curing mana starvation on low-Wisdom builds.',
@@ -427,7 +428,7 @@ const lifehacks: Lifehack[] = [
     lines: [
       [
         'После 100 очков Ловкость даёт 0% уклонения.',
-        'Мудрость выше 100 перестаёт давать крит и добавляет только +20 маны за очко.',
+        'Мудрость выше 100 перестаёт давать крит и добавляет только +20 маны за очко.',
         'Учитывай бафф Книги (+5 мудрости) и баффы земель осад (+1…+2), чтобы не уходить в оверкап.',
       ],
       [
@@ -480,11 +481,11 @@ const lifehacks: Lifehack[] = [
     ],
     lines: [
       [
-        'Формула мощи: 100 × (1 + всех SP / 500)^0.3 — сова под Холодильником XP качает мощь без роста цены боя.',
-        'Награды за удержанные территории выплачиваются в каждом из 3 раундов осады (до 10 500 золота и 2 100 серебра за день).',
+        'Личная мощь растёт вместе с заработанными SP, а опыт XP на неё не влияет. Сова под Чиллером продолжает копить мощь без роста цены боя.',
+        'Награды за удержанные территории выплачиваются в каждом из 3 раундов осады (до 10 500 золота и 2 100 серебра за день).',
       ],
       [
-        'Power formula: 100 × (1 + totalSP / 500)^0.3—an owl frozen with XP Chiller keeps scaling siege power without raising battle energy cost.',
+        'Personal siege power grows with your earned SP, while XP does not affect it. An owl frozen with Chiller keeps accumulating siege power without raising battle energy cost.',
         'Territory rewards pay out across all 3 siege rounds per day (up to 10,500 gold and 2,100 squad silver).',
       ],
     ],
@@ -500,12 +501,12 @@ const lifehacks: Lifehack[] = [
       'Protecting 50,000+ coin balances with Seba Cola',
     ],
     summary: [
-      'При балансе > 50 000 монет банка за 1 500 окупается с одного отражённого рейда.',
+      'При балансе > 50 000 монет банка за 1 500 окупается с одного отражённого нападения.',
       'Once your balance exceeds 50,000 coins, a 1,500-coin Seba Cola pays for itself in one raid.',
     ],
     lines: [
       [
-        'В рейде победитель забирает 3% твоих текущих монет (на 100 000 монет потеряешь сразу 3 000).',
+        'В нападении победитель забирает 3% твоих текущих монет (на 100 000 монет потеряешь сразу 3 000).',
         'Пей Seba Cola только после завершения своих боёв: любая твоя атака мгновенно снимает 24-часовой купол.',
       ],
       [
@@ -524,17 +525,17 @@ const lifehacks: Lifehack[] = [
       'Montmorillonite — permanent 100% HP & +10% coins',
     ],
     summary: [
-      'Один из самых недооценённых и мощных артефактов в коде игры.',
-      'One of the most mechanically powerful artifacts in the game code.',
+      'Один из самых недооценённых и полезных артефактов в бою.',
+      'One of the most overlooked and useful artifacts in battle.',
     ],
     lines: [
       [
-        'Флаг full_health в коде держит здоровье всегда полным — 0 затрат на аптечки и всегда полное HP перед дуэлью.',
+        'Сова постоянно сохраняет полное здоровье — аптечки не нужны, а перед дуэлью HP уже восстановлено.',
         'Даёт постоянный бонус +10% к фарму монет в боях и полётах.',
-        'Шанс за открытие яйца: 0,07% (обычное), 0,14% (за 100 ⭐ / 3 000 скорлупы), 0,28% (золотое).',
+        'Шанс за открытие яйца: 0,07% (обычное), 0,14% (за 100 ⭐ / 3 000 скорлупы), 0,28% (золотое).',
       ],
       [
-        'Its full_health trait keeps your owl at 100% HP permanently—zero medicine expenses and full HP before every duel.',
+        'Your owl keeps full health at all times, so medicine is unnecessary and HP is restored before every duel.',
         'Grants a permanent +10% coin farm bonus in battles and flights.',
         'Chance per egg opening: 0.07% (Mystery), 0.14% (Season/100 ⭐), 0.28% (Golden Mystery).',
       ],
@@ -547,7 +548,7 @@ const lifehacks: Lifehack[] = [
     tag: ['Топ-редкость', 'Top Rarity'],
     icon: '/game/items/skin-jetton-golden.webp',
     title: [
-      'Крафт яиц за скорлупу и распыление лишних предметов',
+      'Крафт яиц за осколки скорлупы и распыление лишних предметов',
       'Eggshell Shard arbitrage & Golden Skin Jettons',
     ],
     summary: [
@@ -556,8 +557,8 @@ const lifehacks: Lifehack[] = [
     ],
     lines: [
       [
-        'Распыление в инвентаре возвращает ⌈Цена × (100 + 10×заточка) / 1300⌉ осколков: Золотое кольцо даёт 15 385 скорлупы (+10% за каждый +1)!',
-        'В Золотом загадочном яйце (15 000 скорлупы) шанс на Скин-жетон в 45× выше обычного яйца, плюс падает Эпический жетон и Заточки.',
+        'Распыление в инвентаре возвращает ⌈Цена × (100 + 10×заточка) / 1300⌉ осколков: Золотое кольцо даёт 15 385 осколков скорлупы (+10% за каждый +1)!',
+        'В Золотом загадочном яйце (15 000 осколков скорлупы) шанс на Скин-жетон в 45× выше обычного яйца, плюс падает Эпический скин-жетон и Заточки.',
       ],
       [
         'Breaking items yields ⌈BasePrice × (100 + 10×enchant) / 1300⌉ shards: a Golden Ring breaks into 15,385 shards (+10% per +1 enchant)!',
@@ -596,6 +597,10 @@ export function LifehacksPage() {
       <div className="lifehackList">
         {visible.map(hack => {
           const lines = en ? hack.lines[1] : hack.lines[0];
+          const combatCopy = [...hack.title, ...hack.summary, ...hack.lines.flat()].join(' ');
+          const relatedSkills = hack.category === 'combat'
+            ? skills.filter(skill => combatCopy.includes(skill.name))
+            : [];
           return (
             <article className="card lifehackCard" key={hack.id}>
               <div className="lifehackHead">
@@ -611,7 +616,22 @@ export function LifehacksPage() {
               <div className="memoLines lifehackDetails">
                 {lines.map(line => <p key={line}>{line}</p>)}
               </div>
-              {hack.link && (
+              {hack.category === 'combat' ? (
+                <div className="itemValueLinks">
+                  {relatedSkills.map(skill => (
+                    <DetailLink key={skill.id} className="itemValueChipLink" to={`/combat/skills/${skill.branch}/${skill.id}`}>
+                      <span>{skill.name}</span>
+                      <span className="rowChevron" aria-hidden="true" />
+                    </DetailLink>
+                  ))}
+                  {relatedSkills.length === 0 && (
+                    <DetailLink className="itemValueChipLink" to="/combat">
+                      <span>{en ? 'Combat and skills' : 'Бои и навыки'}</span>
+                      <span className="rowChevron" aria-hidden="true" />
+                    </DetailLink>
+                  )}
+                </div>
+              ) : hack.link && (
                 <DetailLink className="textLink lifehackLink" to={hack.link.to}>
                   {en ? hack.link.label[1] : hack.link.label[0]}
                 </DetailLink>
@@ -625,7 +645,7 @@ export function LifehacksPage() {
 }
 
 // ============================================================================
-// R5b: In-Code Item Game-Value Ranking (NOT market price — grounded in bundle)
+// Item value ranking
 // ============================================================================
 
 type ValueTier = 'all' | 'S+' | 'S' | 'A' | 'B' | 'C';
@@ -654,21 +674,21 @@ const rankedItems: RankedItemEntry[] = [
     id: 'chiller',
     tier: 'S+',
     icon: '/game/items/chiller-open.webp',
-    title: ['Холодильник XP', 'XP Chiller'],
+    title: ['Чиллер', 'Chiller'],
     role: ['Контроль уровня и цены энергии (freezes_xp: 1)', 'Level & energy cost control (freezes_xp: 1)'],
     whyValuable: [
       [
         'Самый недооценённый стратегический предмет: замораживает опыт из капсул, но сохраняет 100% монет, предметов и шансов на $NOT.',
         'Удерживает сову на ур. 4, 9, 14 или 19, позволяя фармить SP в Додзё и качать мощь для осад без роста стоимости боя (+10 ⚡) и полёта (+50 ⚡).',
-        'В Лавке сквада стоит 25 000 серебра вместо 100 000 золотых монет (при распылении даёт 7 693 скорлупы).',
+        'В Лавке сквада стоит 25 000 серебра вместо 100 000 золотых монет (при распылении даёт 7 693 осколка скорлупы).',
       ],
       [
-        'The most strategic control item in the game code: blocks capsule XP while keeping 100% of coins, items, and $NOT drops.',
+        'A strategic control item that blocks capsule XP while preserving coin, item, and $NOT drops.',
         'Holds your owl at level 4, 9, 14, or 19 so you can farm Dojo SP and scale siege power without crossing +10 ⚡ fight and +50 ⚡ flight energy cliffs.',
         'Costs 25,000 squad silver in Squad Shop vs 100,000 gold coins (breaks into 7,693 Eggshell Shards).',
       ],
     ],
-    links: [{ to: '/assets/item/chiller', label: ['Холодильник XP в Предметах', 'XP Chiller in Items'] }],
+    links: [{ to: '/assets/item/chiller', label: ['Чиллер в Предметах', 'Chiller in Items'] }],
   },
   {
     id: 'montmorillonite',
@@ -678,12 +698,12 @@ const rankedItems: RankedItemEntry[] = [
     role: ['Вечное 100% здоровье + 10% к фарму (full_health: true)', 'Permanent 100% HP + 10% coin farm (full_health: true)'],
     whyValuable: [
       [
-        'Большинство видит только +10% к монетам, но главный секрет в коде — флаг full_health: здоровье совы никогда не падает.',
+        'Кроме +10% к монетам, артефакт поддерживает здоровье совы на максимуме.',
         'Навсегда отменяет траты на Подорожник, Пластырь и Аптечку и гарантирует вход в каждый бой с полным запасом HP.',
-        'Даёт 76 923 осколка скорлупы при распылении (база 999 999 монет).',
+        'Даёт 76 923 осколка скорлупы при распылении (база 999 999 монет).',
       ],
       [
-        'Most players only notice +10% coins, missing its hidden full_health flag: your owl’s HP never drops.',
+        'The artifact adds +10% coins and keeps your owl at full health.',
         'Eliminates all medicine expenses (Plantain, Patch, First Aid Kit) forever and guarantees 100% HP going into every fight.',
         'Carries a 76,923 Eggshell Shard break value (999,999 coin base).',
       ],
@@ -694,23 +714,23 @@ const rankedItems: RankedItemEntry[] = [
     id: 'ring-enchanter',
     tier: 'S+',
     icon: '/game/items/scroll-enchant-ring.webp',
-    title: ['Заточка кольца и Универсальная заточка', 'Ring Enchanter & Universal Enchanter'],
+    title: ['Заточка кольца', 'Ring Enchanter'],
     role: ['+1 к боевому стату и +5% к монетам за ступень', '+1 combat stat AND +5% coin farm per level'],
     whyValuable: [
       [
-        'В Лавке сквада стоит всего 500 серебра — в 10 раз дешевле Заточки скина (5 000 серебра), но даёт те же +5% к фарму плюс +1 к характеристике!',
-        'Заточка до +3 безопасна на 100%: 9 свитков на 3 кольца (4 500 серебра) дают +9 к статам и +45% к фарму монет с нулевым риском.',
-        'Универсальная заточка из наград осад заменяет как Заточку кольца, так и дорогую Заточку скина.',
+        'В Лавке сквада стоит всего 500 серебра — в 10 раз дешевле Заточки скина (5 000 серебра), но даёт те же +5% к фарму плюс +1 к характеристике!',
+        'Заточка до +3 безопасна на 100%: 9 заточек на 3 кольца (4 500 серебра) дают +9 к статам и +45% к фарму монет с нулевым риском.',
+        '«Универсальная заточка» пока недоступна. Для колец используй Заточку кольца.',
       ],
       [
         'At 500 squad silver, it is 10× cheaper than Skin Enchanter (5,000 silver) while granting the exact same +5% farm bonus PLUS +1 combat stat!',
         'Enchanting up to +3 is 100% safe: 9 scrolls across 3 rings (4,500 silver) yield +9 stats and +45% coin farm with zero burn risk.',
-        'Universal Enchanter (from siege rewards) substitutes for either Ring or Skin Enchanter.',
+        'Universal Enchanter is currently unavailable. Use Ring Enchanter to sharpen rings.',
       ],
     ],
     links: [
       { to: '/assets/item/scroll-enchant-ring', label: ['Заточка кольца', 'Ring Enchanter'] },
-      { to: '/assets/item/enchanter', label: ['Универсальная заточка', 'Universal Enchanter'] },
+      { to: '/assets/item/enchanter', label: ['Универсальная заточка (не подтверждена)', 'Universal Enchanter (unconfirmed)'] },
     ],
   },
   {
@@ -721,12 +741,12 @@ const rankedItems: RankedItemEntry[] = [
     role: ['До +30 стата и +100% фарма в одном слоте (3 слота)', 'Up to +30 stat & +100% farm per slot (3 slots)'],
     whyValuable: [
       [
-        'Скрытый факт из каталога игры: колец Выносливости не существует — есть только Мудрость, Ловкость и Сила.',
-        'Кольцо мудрости — тихий фаворит почти для всех сборок: +10 базово (Золотое) даёт +200 маны на прокаст Тир-4/5 скиллов и +7% крита.',
-        'Даже ненужное Золотое кольцо при распылении даёт 15 385 скорлупы (хватает сразу на Золотое загадочное яйцо!).',
+        'Кольца повышают Мудрость, Ловкость или Силу.',
+        'Кольцо мудрости — тихий фаворит почти для всех сборок: +10 базово (Золотое) даёт +200 маны на прокаст Тир-4/5 скиллов и +7% крита.',
+        'Даже ненужное Золотое кольцо при распылении даёт 15 385 осколков скорлупы (хватает сразу на Золотое загадочное яйцо!).',
       ],
       [
-        'Hidden catalog fact: Endurance rings do not exist in-game—only Wisdom, Agility, and Strength rings exist.',
+        'Rings boost Wisdom, Agility, or Strength.',
         'Golden Ring of Wisdom (+10 base WIS) is the silent MVP for most builds, adding +200 mana to fund Tier-4/5 skills and Nutshell Aegis plus +7% crit.',
         'Even an unused Golden Ring breaks into 15,385 Eggshell Shards (enough to craft a Golden Mysterious Egg immediately!).',
       ],
@@ -745,9 +765,9 @@ const rankedItems: RankedItemEntry[] = [
     role: ['Полный сброс статов и навыков со 100% сохранением SP', 'Full stat & skill respec with 100% SP retention'],
     whyValuable: [
       [
-        'Возвращает все очки характеристик и все SP, потраченные на прокачку навыков, без штрафа (в отличие от Колбы и Дискеты с налогом 50%).',
+        'Возвращает все очки характеристик и все SP, потраченные на прокачку навыков, без штрафа (в отличие от Фласки и Дискеты с налогом 50%).',
         'Позволяет качаться на старте через простые скиллы, а на 20+ уровне пересобрать чистый мета-билд ровно под капы 100 Ловкости/Мудрости.',
-        'Покупай только в Лавке сквада за 5 000 серебра (экономия 250 Telegram Stars).',
+        'Покупай только в Лавке сквада за 5 000 серебра (экономия 250 Telegram Stars).',
       ],
       [
         'Refunds every attribute point and 100% of SP invested in skill levels with zero tax (unlike Flasks/Floppies which burn 50%).',
@@ -762,14 +782,14 @@ const rankedItems: RankedItemEntry[] = [
     tier: 'S',
     icon: '/game/items/book.webp',
     title: ['Эпическая книга первооткрывателей', 'Epic Book of Explorers'],
-    role: ['Ежедневный бафф +5 Мудрости на 24 ч и серия ×3', 'Daily +5 Wisdom buff for 24h & up to 3× streak loot'],
+    role: ['Ежедневный бафф +5 Мудрости на 24ч и серия ×3', 'Daily +5 Wisdom buff for 24h & up to 3× streak loot'],
     whyValuable: [
       [
-        'Игроки воспринимают её как викторину, но в коде боёв +5 Мудрости на сутки равны четвёртому Обсидиановому кольцу (+100 маны и +3,5% крита).',
-        'Серия правильных ответов разгоняет ежедневную награду монетами и XP до ×3 и окупает цену книги (20 000 монет) за несколько дней.',
+        'Это не только викторина: +5 Мудрости на сутки дают +100 маны и +3,5% к шансу критического удара — как четвёртое Обсидиановое кольцо.',
+        'Серия правильных ответов разгоняет ежедневную награду монетами и XP до ×3 и окупает цену книги (20 000 монет) за несколько дней.',
       ],
       [
-        'Often treated as a simple trivia game, its 24h +5 Wisdom buff equals an extra Obsidian Ring (+100 mana and +3.5% crit).',
+        'It is more than trivia: +5 Wisdom for 24 hours gives +100 mana and +3.5% crit chance, like a fourth Obsidian Ring.',
         'Daily answer streaks multiply coin and XP rewards up to 3×, paying back its 20,000 coin cost within days.',
       ],
     ],
@@ -779,23 +799,23 @@ const rankedItems: RankedItemEntry[] = [
     id: 'skins-and-jettons',
     tier: 'S',
     icon: '/game/items/skin-jetton-golden.webp',
-    title: ['Золотой / Эпический жетоны, NFT-скин и Заточка скина', 'Golden / Epic Skin Jettons, NFT Skin & Skin Enchanter'],
+    title: ['Золотой / Эпический скин-жетоны, NFT-скин и Заточка скина', 'Golden / Epic Skin Jettons, NFT Skin & Skin Enchanter'],
     role: ['До +40% базового фарма деталей + до +100% заточкой', 'Up to +40% base trait farm + up to +100% from enchanting'],
     whyValuable: [
       [
-        'В коде учитывается только 1 надетый скин (скины в инвентаре дают 0%). Максимум без заточки: Золотое оперение (+15%) + Цепь NOT (+10%) + 3 детали по +5% = +40%.',
-        'Золотой жетон гарантирует самую ценную деталь — Золотое оперение (+15%) и шанс на Цепь NOT.',
+        'Бонус к фарму даёт только надетый скин; скины в инвентаре бонуса не дают. Максимум без заточки: Золотое оперение (+15%) + Цепь NOT (+10%) + 3 детали по +5% = +40%.',
+        'Золотой скин-жетон гарантирует самую ценную деталь — Золотое оперение (+15%) и шанс на Цепь NOT.',
         'Точи скин до +3 (+15% без риска), но только после того, как заточил 3 кольца до +3.',
       ],
       [
-        'Only your 1 equipped skin counts in code (unequipped skins grant 0%). Max natural bonus: Golden body (+15%) + NOT Chain (+10%) + 3 traits (+15%) = +40%.',
+        'Only the equipped skin grants a farming bonus; skins in your inventory do not. Max without enchanting: Golden Plumage (+15%) + NOT Chain (+10%) + 3 traits (+15%) = +40%.',
         'Golden Skin Jetton guarantees the highest-value trait—Golden plumage (+15%)—plus a roll for NOT Chain.',
         'Enchant your main skin to +3 (+15% with 0% burn risk) right after finishing three +3 rings.',
       ],
     ],
     links: [
-      { to: '/assets/item/skin-jetton-golden', label: ['Золотой жетон', 'Golden Jetton'] },
-      { to: '/assets/item/skin-jetton-epic', label: ['Эпический жетон', 'Epic Jetton'] },
+      { to: '/assets/item/skin-jetton-golden', label: ['Золотой скин-жетон', 'Golden Skin Jetton'] },
+      { to: '/assets/item/skin-jetton-epic', label: ['Эпический скин-жетон', 'Epic Skin Jetton'] },
       { to: '/assets/item/scroll-enchant-skin', label: ['Заточка скина', 'Skin Enchanter'] },
     ],
   },
@@ -807,7 +827,7 @@ const rankedItems: RankedItemEntry[] = [
     role: ['10 дней ритуалов сквада и 24-часовые баффы статов', '10 days of squad rituals & 24h attribute buffs'],
     whyValuable: [
       [
-        'Один предмет за 2 500 серебра сквада (или 5 000 монет) закрывает 10 ежедневных ритуалов подряд (250 серебра в день).',
+        'Один предмет за 2 500 серебра сквада (или 5 000 монет) закрывает 10 ежедневных ритуалов подряд (250 серебра в день).',
         'Когда в ритуале участвует ≥50% сквада, все участники получают суточный бафф к боевым характеристикам + прогресс стикера №51.',
       ],
       [
@@ -825,11 +845,11 @@ const rankedItems: RankedItemEntry[] = [
     role: ['Гарантированный крафт редких яиц через распыление', 'Pity-system crafting for high-tier eggs via item breaking'],
     whyValuable: [
       [
-        'Скорлупа — скрытый арбитраж инвентаря: распыление лишнего Холодильника XP даёт 7 693 скорлупы, Обсидианового кольца — 5 154, Золотого — 15 385.',
-        'Копи 15 000 скорлупы на Золотое загадочное яйцо: в нём падают Эпический жетон, Заточки скина/кольца и Монтмориллонит (0,28%).',
+        'Осколки скорлупы — скрытый арбитраж инвентаря: распыление лишнего Чиллера даёт 7 693 осколка, Обсидианового кольца — 5 154, Золотого — 15 385.',
+        'Копи 15 000 осколков скорлупы на Золотое загадочное яйцо: в нём падают Эпический скин-жетон, Заточки скина/кольца и Монтмориллонит (0,28%).',
       ],
       [
-        'Shards enable inventory arbitrage: breaking a spare XP Chiller gives 7,693 shards, Obsidian Ring gives 5,154, and Golden Ring gives 15,385.',
+        'Shards enable inventory arbitrage: breaking a spare Chiller gives 7,693 shards, Obsidian Ring gives 5,154, and Golden Ring gives 15,385.',
         'Save 15,000 shards for the Golden Mysterious Egg—unlocking Epic Skin Jetton, Skin/Ring Enchanters, and 0.28% Montmorillonite odds.',
       ],
     ],
@@ -843,13 +863,13 @@ const rankedItems: RankedItemEntry[] = [
     tier: 'A',
     icon: '/game/items/seba-cola.webp',
     title: ['Seba Cola', 'Seba Cola'],
-    role: ['24 часа неуязвимости от рейдов и потери 3% монет', '24-hour raid immunity protecting 3% of your coin balance'],
+    role: ['24 часа неуязвимости от нападений и потери 3% монет', '24-hour raid immunity protecting 3% of your coin balance'],
     whyValuable: [
       [
-        'Строгая математика кода: рейд крадёт 3% баланса, поэтому при накоплении от 50 000 монет (на пути к Золотому кольцу за 200k или Монтмориллониту за 1M) банка за 1 500 монет окупается с первой же атаки.',
+        'Нападение забирает 3% баланса. При запасе от 50 000 монет (например, пока копишь на Золотое кольцо за 200 000 или Монтмориллонит за 1 000 000) Seba Cola за 1 500 монет окупается после одного отражённого нападения.',
       ],
       [
-        'Strict break-even math: since a raid steals 3% of your coins, holding >50,000 coins (while saving 200k for Golden Rings or 1M for Montmorillonite) makes a 1,500-coin Seba Cola profitable on the very first blocked raid.',
+        'A raid takes 3% of your balance. If you hold at least 50,000 coins (for example, while saving 200,000 for a Golden Ring or 1,000,000 for Montmorillonite), a 1,500-coin Seba Cola pays for itself after one blocked raid.',
       ],
     ],
     links: [{ to: '/assets/item/seba-cola', label: ['Seba Cola в Предметах', 'Seba Cola in Items'] }],
@@ -863,11 +883,11 @@ const rankedItems: RankedItemEntry[] = [
     whyValuable: [
       [
         'Спасают от 24-часового штрафа голода (×0,5 к монетам, XP и регену), если уезжаешь в отпуск или не заходишь каждые 3 дня.',
-        'Важная деталь кода: часы замораживают таймер, но НЕ снимают уже активный штраф голода — активируй их до того, как сова проголодалась.',
+        'Часы замораживают таймер, но не снимают уже активный штраф голода. Используй их до того, как сова проголодается.',
       ],
       [
         'Prevents the brutal 24h hunger penalty (0.5× coins, XP, and regen) when going AFK for more than 3 days.',
-        'Code nuance: adding a Clock extends immunity by 30 days but does NOT clear an already active hunger penalty—use it before hunger hits.',
+        'The Clock freezes the timer but does not remove an active hunger penalty. Use it before your owl gets hungry.',
       ],
     ],
     links: [{ to: '/assets/item/big-black-clock', label: ['Часы в Предметах', 'Clock in Items'] }],
@@ -876,22 +896,22 @@ const rankedItems: RankedItemEntry[] = [
     id: 'flask-and-floppy',
     tier: 'B',
     icon: '/game/items/flask-empty.webp',
-    title: ['Пустая колба SP и Пустая дискета XP', 'Empty SP Flask & Empty XP Floppy'],
+    title: ['Пустая фласка для SP и Пустая дискета XP', 'Empty SP Flask & Empty XP Floppy'],
     role: ['Упаковка SP и XP в NFT для продажи или переноса (налог 50%)', 'Bottling SP & XP into tradable NFTs (50% conversion tax)'],
     whyValuable: [
       [
-        'Для заполнения требуют вдвое больше ресурса, чем вмещают (200k SP → колба на 100k; 2M SP → колба на 1M).',
-        'Ловушка кода Колбы SP: при записи списываются ВСЕ свободные SP на балансе! Перед записью обязательно вложи излишек свободных SP в перки или навыки.',
+        'Для заполнения требуют вдвое больше ресурса, чем вмещают (200k SP → фласка на 100k; 2M SP → фласка на 1M).',
+        'При заполнении фласки списываются все свободные SP. Перед этим потрать лишние очки навыков на улучшения или навыки.',
         'Дискета XP полностью сжигает уровень, навыки и SP, возвращая сову в состояние яйца.',
       ],
       [
         'Require 2× the stored amount to fill (200k SP → 100k Half Flask; 2M SP → 1M Full Flask).',
-        'Critical SP Flask code trap: filling a flask drains ALL unspent free SP on your account! Spend excess free SP on perks/skills before bottling.',
+        'Filling an SP Flask spends all unallocated SP. Use any extra skill points on upgrades or skills first.',
         'Filling an XP Floppy burns all current XP, SP, and skills, resetting your owl back into an Egg.',
       ],
     ],
     links: [
-      { to: '/assets/item/flask-empty', label: ['Пустая колба SP', 'Empty SP Flask'] },
+      { to: '/assets/item/flask-empty', label: ['Пустая фласка для SP', 'Empty SP Flask'] },
       { to: '/assets/item/floppy-empty', label: ['Пустая дискета XP', 'Empty XP Floppy'] },
     ],
   },
@@ -900,15 +920,15 @@ const rankedItems: RankedItemEntry[] = [
     tier: 'C',
     icon: '/game/items/pear.webp',
     title: ['Еда и Аптечки (лучшие по соотношению цена / эффект)', 'Food & Medicine (best coin-to-stat efficiency)'],
-    role: ['Поддержание ≥10 сытости для полётов и лечение HP', 'Maintaining ≥10 satiety for flights & restoring HP'],
+    role: ['Защита от штрафа голода и лечение HP', 'Preventing the hunger penalty & restoring HP'],
     whyValuable: [
       [
-        'Еда: если любимая еда совы — Гусеница или Не Микки (200 монет за 10 сытости), бонус ×2 даёт все 20 сытости всего за 200 монет (вдвое выгоднее Груши и Круассана за 400).',
-        'Лекарства: Пластырь (150 монет за +20 HP = 7,5 монет/HP) и Аптечка (400 за +50 HP = 8 монет/HP) выгоднее Подорожника (10 монет/HP).',
+        'Еда: если любимая еда совы — Гусеница или Не Микки (200 монет за 10 сытости), бонус ×2 даёт все 20 сытости всего за 200 монет (вдвое выгоднее Груши и Круассана за 400).',
+        'Лекарства: Пластырь (150 монет за +20 HP = 7,5 монет/HP) и Аптечка (400 за +50 HP = 8 монет/HP) выгоднее Подорожника (10 монет/HP).',
       ],
       [
         'Food: if your owl’s favorite food is Caterpillar or Not Mickey (200 coins for 10 satiety), the 2× favorite multiplier fills all 20 satiety for just 200 coins (half the cost of Pear/Croissant).',
-        'Medicine: Patch (150 coins for +20 HP = 7.5 coins/HP) and First Aid Kit (400 for +50 HP = 8 coins/HP) beat Plantain (10 coins/HP).',
+        'Medicine: Patch (150 coins for +20 HP = 7.5 coins/HP) and First Aid Kit (400 for +50 HP = 8 coins/HP) beat Plantain (10 coins/HP).',
       ],
     ],
     links: [
@@ -946,8 +966,8 @@ export function ItemValueRankingPage() {
 
       <p className="itemValueIntro">
         {en
-          ? 'Ranked strictly by in-code mechanical impact and non-obvious utility (not secondary market price). Tap any item below to open its full card in Items.'
-          : 'Рейтинг составлен строго по механической пользе в коде игры и неочевидным сценариям применения (не по цене на маркете). Нажми на предмет, чтобы открыть его в разделе «Предметы».'}
+          ? 'This ranking reflects how useful each item is in play. Tap an item link for details.'
+          : 'Рейтинг учитывает практическую пользу предмета и ситуации, в которых он помогает. Нажми на предмет, чтобы открыть его в разделе «Предметы».'}
       </p>
 
       <div className="lifehackList">

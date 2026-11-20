@@ -3,7 +3,7 @@ import AutoScroll from 'embla-carousel-auto-scroll';
 import { Price } from './Price';
 import { DetailLink } from '../ui/DetailLink';
 import { artSrc } from '../ui/warmArt';
-import { collectionMarket } from './marketData';
+import { collectionMarket, explorerMarket, itemMarket } from './marketData';
 import collections from './market-collections';
 import { lightHaptic } from '../telegram/client';
 import { useGuideLocale } from './guideLocale';
@@ -18,7 +18,7 @@ const singleFeatured = [
 const marqueeCollections = [
   { id: 'genesis', ru: 'NOT Wise', en: 'NOT Wise', slug: 'col:genesis' },
   { id: 'skins', ru: 'Скины', en: 'Skins', slug: 'owl-skin' },
-  { id: 'items', ru: 'Предметы', en: 'Items', slug: 'ring-str-1' },
+  { id: 'items', ru: 'Предметы', en: 'Items', slug: 'col:items' },
   { id: 'owlings', ru: 'Owlings', en: 'Owlings', slug: 'col:owlings' },
   { id: 'eggs', ru: 'NFT-яйца', en: 'NFT Eggs', slug: 'col:eggs' },
   { id: 'classics', ru: 'Стикеры', en: 'Stickers', slug: 'col:classics' },
@@ -26,8 +26,15 @@ const marqueeCollections = [
   { id: 'family', ru: 'Family', en: 'Family', slug: 'col:family' },
 ] as const;
 
+function lowestFloor(rows: readonly { floor: number }[] = []) {
+  return rows.reduce<number | null>((lowest, { floor }) =>
+    Number.isFinite(floor) && floor > 0 && (lowest === null || floor < lowest) ? floor : lowest, null);
+}
+
 export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}) {
   const { data: market, pending } = collectionMarket.useSnapshot();
+  const { data: explorer } = explorerMarket.useSnapshot();
+  const { data: items } = itemMarket.useSnapshot();
   const { locale } = useGuideLocale();
   const en = locale === 'en';
   const fmtFloor = new Intl.NumberFormat(en ? 'en-US' : 'ru-RU', { maximumFractionDigits: 1 });
@@ -143,7 +150,10 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
         <div className="homeColTrack emblaContainer">
           {marqueeCollections.map(item => {
             const quote = market?.items.find(({ id }) => id === item.id);
-            const floor = quote?.floor ?? 0;
+            const trackedFloor = item.id === 'skins'
+              ? lowestFloor(explorer?.items.filter(row => row.slug === 'owl-skin'))
+              : item.id === 'items' ? lowestFloor(items?.items) : null;
+            const floor = quote?.floor ?? trackedFloor ?? 0;
             const hasPrice = Number.isFinite(floor) && floor > 0;
             return (
               <div className="emblaSlide" key={item.id}>
@@ -156,7 +166,9 @@ export function OwlPrices({ only }: { only?: 'eggs' | 'genesis' | 'items' } = {}
                     <img src={artSrc(`/brand/collections/${item.id}.png`)} alt="" width="56" height="56" draggable={false} />
                   </span>
                   <strong className="homeColName">{en ? item.en : item.ru}</strong>
-                  <span className="homeColFloor">
+                  <span className="homeColFloor" title={quote?.floor == null && trackedFloor !== null
+                    ? (en ? 'Lowest price among tracked listings' : 'Минимальная цена среди отслеживаемых лотов')
+                    : undefined}>
                     {hasPrice ? `${en ? 'from' : 'от'} ${fmtFloor.format(floor)}` : (pending && !market ? '…' : '—')}
                     {hasPrice && <img src={artSrc('/brand/tokens/gram.png')} alt="GRAM" width="12" height="12" draggable={false} />}
                   </span>

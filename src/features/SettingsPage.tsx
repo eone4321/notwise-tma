@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { NavLink, useLocation } from 'react-router';
+import { Navigate, NavLink, useLocation } from 'react-router';
 import { guideAchievements, type GuideAchievement } from '../domain/guide-achievements';
 import { AwardIcon } from './GuideAwards';
 import { GameGlyph } from '../ui/GameGlyph';
@@ -33,6 +33,10 @@ const guideAchievementsEn: Record<GuideAchievement, { title: string; description
 
 export function SettingsPage({ profile, earned, chatIssue }: { profile: GuideProfile | null; earned: GuideAchievement[]; chatIssue?: string }) {
   const { pathname, state } = useLocation();
+  const isKnownTab = pathname === '/support' || pathname === '/support/settings' || pathname === '/support/achievements';
+  if (!isKnownTab) {
+    return <Navigate to="/support" state={state} replace/>;
+  }
   const keepParent = state?.guideDetail === true;
   const language = useGuideLocale(profile?.language);
   const en = language.locale === 'en';

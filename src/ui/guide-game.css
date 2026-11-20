@@ -225,9 +225,12 @@
   padding: 10px;
   gap: 5px;
   border-radius: 10px;
+}
+[data-theme="graphite"] .guideGrid .guideTile {
   border-color: var(--game-panel-line);
   background: var(--game-panel);
   box-shadow: none;
+  -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
 .guideGrid .guideTile:last-child:nth-child(odd) {
@@ -239,6 +242,7 @@
 .guideTile .tileText b { font-size: 13px; line-height: 1.2; }
 .guideTile .tileText small { font-size: 11px; line-height: 1.35; margin-top: 3px; max-width: 23ch; }
 .guideTileIcon { height: 40px; display: inline-flex; align-items: center; justify-self: start; }
+.guideTileIcon > .gameAttribute { font-size: 40px; }
 .guideTile .guideTileArt {
   opacity: .31;
   right: -8px;
@@ -254,9 +258,19 @@
   gap: 4px;
   margin: 0 0 14px;
   padding: 4px;
-  border: 1px solid var(--game-panel-line);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
+  background: var(--glass-sheen), var(--glass-fill);
+  box-shadow: var(--glass-edge);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+[data-theme="graphite"] .choiceBar.profileTabs {
+  border-color: var(--game-panel-line);
   background: var(--game-panel);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 .profileTabs > :is(a, button) {
   flex: 1 1 0;
@@ -285,13 +299,55 @@
   border-color: transparent;
 }
 .profileTabs .gameGlyph { font-size: 14px; }
-.choiceBar.combatTabs { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.choiceBar.combatTabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .combatTabs > a:nth-child(2) { padding-inline: 8px; }
+.combatBranchTabs {
+  display: flex;
+  gap: 6px;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 3px 2px 7px;
+  margin-block: 10px 6px;
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.combatBranchTabs::-webkit-scrollbar { display: none; }
+.combatBranchTabs > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 0 auto;
+  gap: 6px;
+  min-block-size: 42px;
+  padding: 6px 10px;
+  border: 1px solid var(--game-panel-line);
+  border-radius: 9px;
+  background: var(--game-panel);
+  color: var(--text);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.combatBranchTabs > button[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--gold) 43%, var(--game-panel-line));
+  background: color-mix(in srgb, var(--game-tile), var(--gold) 12%);
+  color: var(--gold);
+}
+.combatBranchTabs .gameAttribute { font-size: 18px; }
+.combatBranchHeading { display: flex; align-items: center; justify-content: flex-start; gap: 10px; padding-block-end: 8px; border-block-end: 1px solid var(--game-panel-line); }
+.combatBranchHeading > .gameAttribute { font-size: 31px; }
+.combatBranchHeading > span { display: grid; gap: 2px; text-align: start; }
+.combatBranchHeading small { color: var(--muted); font-size: 12px; }
+.skillShelf > .caption { margin-block: 8px; }
+.skillRow { appearance: none; width: 100%; color: var(--text); font-family: inherit; font-size: inherit; text-align: start; cursor: pointer; }
+.skillRow:active { background: var(--game-tile); }
+.skillRow > span:not(.rowChevron) > strong { color: var(--text); }
 .choiceBar.capsuleTabs { display: grid; grid-template-columns: minmax(0, 1.26fr) minmax(0, 1.12fr) minmax(0, 0.92fr); }
 .choiceBar.capsuleTabs > a { padding-inline: 8px; white-space: nowrap; }
 @media (max-width: 365px) {
   .profileTabs .gameGlyph { font-size: 12px; }
   .profileTabs > :is(a, button) { font-size: 11px; gap: 4px; }
+  .choiceBar.combatTabs > a { padding-inline: 4px; font-size: 10px; gap: 3px; }
   .choiceBar.capsuleTabs > a { padding-inline: 6px; font-size: 11px; }
 }
 
@@ -305,6 +361,8 @@
 }
 .stickerShelf.card, .marketCollections.card, .combatBranches.card, .skillShelf.card, .awardCollection.card {
   border-radius: 12px;
+}
+[data-theme="graphite"] :is(.stickerShelf.card, .marketCollections.card, .combatBranches.card, .skillShelf.card, .awardCollection.card) {
   background: var(--game-panel);
   border-color: var(--game-panel-line);
   box-shadow: none;
@@ -386,6 +444,8 @@
 .inventoryPanel.card {
   --item-accent: var(--item-tone, var(--gold));
   border-radius: 12px;
+}
+[data-theme="graphite"] .inventoryPanel.card {
   background: var(--game-panel);
   border-color: var(--game-panel-line);
   box-shadow: none;
@@ -1053,24 +1113,15 @@
 .buildConstructor { display: grid; gap: 12px; margin-block-end: 16px; }
 .buildConstructor .buildPanel {
   margin: 0;
+  border-radius: 12px;
+}
+[data-theme="graphite"] .buildConstructor .buildPanel {
   background: var(--game-panel);
   border-color: var(--game-panel-line);
-  border-radius: 12px;
 }
 .buildHeading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .buildHeading h2, .buildPanel h2 { font-size: 16px; line-height: 1.25; margin: 0; }
 .buildHeading .close { flex: none; margin: 0; }
-.buildTextButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-block-size: 44px;
-  color: var(--game-tab-active);
-  font-size: 12px;
-  font-weight: 700;
-  text-align: start;
-}
-.buildTextButton:active { opacity: .7; }
 #build-guide-title, .buildSetup select { scroll-margin-block-start: calc(var(--top-inset) + 12px); }
 .buildSetup { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; gap: 12px; }
 .buildSetup .field { margin: 0; }
@@ -1165,7 +1216,6 @@
 .buildGuideGear dd { margin: 0; }
 .buildGuideEntry > button { min-block-size: 44px; margin-block-start: 10px; }
 .buildPickerOptions { display: grid; gap: 5px; }
-.buildPickerOptions > .buildTextButton { justify-self: start; }
 .buildPickerOption {
   border: 1px solid var(--game-panel-line);
   background: var(--game-tile);
@@ -1884,9 +1934,11 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 
 /* RPG Skin & Jetton Calculator */
 .skinLoadoutCard {
+  border-radius: 12px;
+}
+[data-theme="graphite"] .skinLoadoutCard {
   background: var(--game-panel);
   border-color: var(--game-panel-line);
-  border-radius: 12px;
 }
 .skinRarityPill {
   display: inline-flex;
@@ -2073,9 +2125,7 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .skinFarmTotalVal { font-size: 22px; color: var(--gold); white-space: nowrap; }
 
 .skinEnchantBox {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
   gap: 8px;
   min-height: 44px;
   padding: 9px 10px;
@@ -2083,50 +2133,70 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   border: 1px solid var(--game-panel-line);
   background: var(--game-tile);
 }
+.skinEnchantHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
 .skinEnchantMeta {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
-  flex: 1 1 0;
+  flex: 1 1 auto;
 }
 .skinEnchantText {
   display: grid;
   gap: 2px;
   min-width: 0;
-  flex: 1 1 0;
+  flex: 1 1 auto;
 }
 .skinEnchantMeta strong {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  min-width: 0;
   font-size: 13px;
   line-height: 1.25;
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .skinEnchantBonusTag {
-  display: inline-block;
-  min-width: 58px;
+  flex: none;
+  white-space: nowrap;
   color: var(--gold);
   font-size: 12px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+  text-align: end;
 }
+.skinEnchantBonusTag[data-mixed="true"] {
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--gold) 42%, var(--game-panel-line));
+  background: color-mix(in srgb, var(--gold) 12%, var(--game-panel));
+  font-size: 11px;
+}
+.skinEnchantControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+.skinEnchantHint,
 .skinEnchantMeta small {
   display: block;
+  min-width: 0;
+  flex: 1 1 auto;
   font-size: 11px;
-  line-height: 1.3;
+  line-height: 1.32;
   color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: break-word;
   font-variant-numeric: tabular-nums;
 }
 .skinEnchantStep {
   gap: 5px;
+  margin-inline-start: auto;
 }
 .skinEnchantStep button {
   width: 36px;
@@ -2995,8 +3065,11 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   border: 0;
   background: transparent;
 }
+.skinEnchantHint[data-risk="safe"],
 .skinEnchantMeta small[data-risk="safe"] { color: #8eeebb; }
+.skinEnchantHint[data-risk="mid"],
 .skinEnchantMeta small[data-risk="mid"] { color: var(--gold); }
+.skinEnchantHint[data-risk="high"],
 .skinEnchantMeta small[data-risk="high"] { color: #ff8e82; }
 
 .wardrobeRiskMeter { display: grid; gap: 4px; }
@@ -3025,7 +3098,9 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 }
 .wardrobeRiskScale {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
+  gap: 4px 8px;
   font-size: 10px;
   color: var(--muted);
 }
@@ -3423,6 +3498,31 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .buildRingEnchantCard {
   margin-top: 2px;
 }
+.buildRingBulkConfirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 8px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, var(--game-panel-line));
+  background: color-mix(in srgb, var(--gold) 10%, var(--game-panel));
+  font-size: 11.5px;
+  color: var(--text);
+}
+.buildRingBulkActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+}
+.buildRingBulkActions button {
+  margin: 0;
+  min-height: 30px;
+  padding: 3px 10px;
+  font-size: 11.5px;
+}
 
 
 /* =====================================================================
@@ -3459,8 +3559,8 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 }
 
 .radarCatTabs {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 5px;
   padding: 4px;
   border-radius: 12px;
@@ -3469,7 +3569,8 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 }
 .radarCatTabs button {
   margin: 0;
-  width: 100%;
+  flex: 1 0 auto;
+  width: auto;
   min-height: 34px;
   padding: 4px 4px;
   border-radius: 8px;
@@ -4156,7 +4257,8 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 }
 .radarSheetPanel {
   width: min(520px, 100%);
-  max-height: 82dvh;
+  height: min(82dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 12px));
+  min-height: 0;
   background: var(--game-panel);
   border-top: 1px solid var(--game-panel-line);
   border-radius: 20px 20px 0 0;
@@ -4222,13 +4324,9 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .radarSheetCats {
   flex: none;
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
   padding: 2px 0;
-}
-.radarSheetCats::-webkit-scrollbar {
-  display: none;
 }
 .radarSheetCats button {
   margin: 0;
@@ -4250,6 +4348,9 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   color: var(--gold);
 }
 .radarSheetList {
+  align-content: start;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   display: grid;
@@ -4689,20 +4790,16 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 }
 .lifehackCats {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
   padding: 2px 0;
-}
-.lifehackCats::-webkit-scrollbar {
-  display: none;
 }
 .lifehackCats button {
   margin: 0;
   width: auto;
   flex: none;
-  min-height: 32px;
-  padding: 4px 12px;
+  min-height: 34px;
+  padding: 5px 11px;
   border-radius: 999px;
   border: 1px solid var(--game-panel-line);
   background: var(--game-tile);
@@ -4773,6 +4870,11 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .lifehackLink {
   justify-self: start;
   font-size: 12.5px;
+}
+.lifehackList :is(h2, p, .lifehackTag, .lifehackLink, .itemValueChipLink) {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
 }
 
 
@@ -4897,47 +4999,64 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   position: relative;
   overflow: hidden;
   border-radius: 12px;
-  mask-image: linear-gradient(90deg, transparent 0%, #000 5%, #000 95%, transparent 100%);
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 5%, #000 95%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0%, #000 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 92%, transparent 100%);
 }
-.hScrollFadeViewport > .lifehackCats,
-.hScrollFadeViewport > .radarSheetCats {
-  padding-inline: 10px;
+.hScrollFadeViewport:has(> .lifehackCats) {
+  overflow: visible;
+  border-radius: 0;
+  mask-image: none;
+  -webkit-mask-image: none;
+}
+.hScrollFadeViewport > .lifehackCats {
+  padding-inline: 0;
 }
 
 .careTabsViewport {
   position: relative;
   overflow: hidden;
   border-radius: 14px;
-  background: var(--game-panel);
-  border: 1px solid var(--game-panel-line);
+  background: var(--glass-sheen), var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-edge);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   margin-bottom: 12px;
-  padding: 4px 0;
+  padding: 4px;
+}
+[data-theme="graphite"] .careTabsViewport {
+  background: var(--game-panel);
+  border-color: var(--game-panel-line);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 .careTabsViewportInner {
-  mask-image: linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%);
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%);
+  mask-image: none;
+  -webkit-mask-image: none;
 }
 .careTabs.careTabsScroll {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 5px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  padding: 0 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  overflow: visible;
+  padding: 0;
   margin: 0;
   background: transparent;
   border: none;
-}
-.careTabs.careTabsScroll::-webkit-scrollbar {
-  display: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 .careTabs.careTabsScroll > a {
-  flex: 1 0 auto;
-  min-width: max-content;
-  padding-inline: 11px;
+  min-width: 0;
+  padding: 6px 8px;
   white-space: nowrap;
+}
+@media (min-width: 480px) {
+  .careTabs.careTabsScroll {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 /* Item Value Tier List (R5b) */

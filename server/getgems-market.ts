@@ -10,6 +10,8 @@ const addresses = [...collections, ...stickers.collectionByAlbum.flatMap((addres
   address ? [{ id: 'album-' + index, address }] : [])];
 const itemsCollection = collections.find(row => row.id === 'items')!.address;
 const skinsCollection = collections.find(row => row.id === 'skins')!.address;
+const expCollection = collections.find(row => row.id === 'exp')?.address;
+const vouchersCollection = collections.find(row => row.id === 'vouchers')?.address;
 const snapshotKey = 'notwise:getgems:market:v2';
 const explorerKey = 'notwise:getgems:explorer:v1';
 const historyPrefix = 'notwise:getgems:hist:v1:';
@@ -130,6 +132,7 @@ function recordListing(
   nft: unknown,
   contentUri?: unknown,
   forcedSlug?: string,
+  collectionAddress: string = itemsCollection,
 ) {
   const id = forcedSlug ?? itemSlug(image, name, contentUri);
   if (!id || typeof nano !== 'string' || !/^\d{1,24}$/.test(nano) ||
@@ -138,7 +141,7 @@ function recordListing(
   if (!(price > 0) || !Number.isFinite(price)) return;
 
   if (!forcedSlug && price < (prices.get(id)?.floor ?? Infinity)) {
-    prices.set(id, { id, floor: price, href: itemCollectionMarketUrl(itemsCollection, id) });
+    prices.set(id, { id, floor: price, href: itemCollectionMarketUrl(collectionAddress, id) });
   }
 
   const enchant = parseEnchant(name);
@@ -233,7 +236,7 @@ async function getgemsCollectionCrawl(
     if (!Array.isArray(result?.items)) throw new Error('Invalid Getgems page');
     for (const row of result.items) {
       if (row?.sale?.type === 'FixPriceSale' && ['TON', 'GRAM'].includes(row.sale.currency)) {
-        recordListing(prices, buckets, row.image, row.name, row.sale.fullPrice, row.address, undefined, forcedSlug);
+        recordListing(prices, buckets, row.image, row.name, row.sale.fullPrice, row.address, undefined, forcedSlug, collectionAddress);
       }
     }
     if (result.cursor === null) return;
@@ -251,6 +254,12 @@ async function getgemsListings(token: string, supply: number | null): Promise<Cr
   await getgemsCollectionCrawl(token, itemsCollection, maxPages, prices, buckets);
   // Best-effort crawl of NOT Wise: Skins for enchanted skin floor tracking.
   await getgemsCollectionCrawl(token, skinsCollection, 15, prices, buckets, 'owl-skin').catch(() => null);
+  if (expCollection) {
+    await getgemsCollectionCrawl(token, expCollection, 10, prices, buckets).catch(() => null);
+  }
+  if (vouchersCollection) {
+    await getgemsCollectionCrawl(token, vouchersCollection, 10, prices, buckets).catch(() => null);
+  }
   return { items: [...prices.values()], buckets: finalizeBuckets(buckets) };
 }
 
@@ -358,6 +367,7 @@ async function toncenterCollectionCrawl(
         item.address,
         item.contentUri ?? sale.nft_item?.content?.uri,
         forcedSlug,
+        collectionAddress,
       );
     }
   }
@@ -370,6 +380,12 @@ async function toncenterListings(token: string, supply: number | null) {
   await toncenterCollectionCrawl(token, itemsCollection, limit, prices, buckets);
   // Best-effort crawl of NOT Wise: Skins so NFT skins & enchants are always populated.
   await toncenterCollectionCrawl(token, skinsCollection, 6, prices, buckets, 'owl-skin').catch(() => null);
+  if (expCollection) {
+    await toncenterCollectionCrawl(token, expCollection, 4, prices, buckets).catch(() => null);
+  }
+  if (vouchersCollection) {
+    await toncenterCollectionCrawl(token, vouchersCollection, 4, prices, buckets).catch(() => null);
+  }
   return { items: [...prices.values()], buckets: finalizeBuckets(buckets) };
 }
 
@@ -445,7 +461,7 @@ async function runSalesBackfill(targetSlug?: string): Promise<void> {
 
   if (targetSlug?.startsWith('col:')) {
     const colId = targetSlug.slice(4);
-    const col = collections.find(c => c.id === colId);
+    const col = addresses.find(c => c.id === colId);
     if (col) {
       results.push(await backfillCollectionSales(token, col.address, 100, `col:${col.id}`).catch(() => new Map()));
     }
@@ -457,6 +473,12 @@ async function runSalesBackfill(targetSlug?: string): Promise<void> {
     if (claimed !== 'OK') return;
     results.push(await backfillCollectionSales(token, itemsCollection, 300).catch(() => new Map()));
     results.push(await backfillCollectionSales(token, skinsCollection, 200, 'owl-skin').catch(() => new Map()));
+    if (expCollection) {
+      results.push(await backfillCollectionSales(token, expCollection, 120).catch(() => new Map()));
+    }
+    if (vouchersCollection) {
+      results.push(await backfillCollectionSales(token, vouchersCollection, 120).catch(() => new Map()));
+    }
     for (const col of collections) {
       if (col.id === 'items' || col.id === 'skins') continue;
       results.push(await backfillCollectionSales(token, col.address, 80, `col:${col.id}`).catch(() => new Map()));
@@ -672,23 +694,58 @@ export async function marketExplorer(): Promise<ExplorerSnapshot> {
   };
 }
 
+async function readAllEnchantPoints(slug: string): Promise<HistoryPoint[]> {
+  const hashes = await Promise.all(
+    Array.from({ length: 21 }, (_, lvl) =>
+      redis<Record<string, string> | string[] | null>(['HGETALL', `${historyPrefix}${slug}:${lvl}`]).catch(() => null),
+    ),
+  );
+  const byTs = new Map<number, { floor: number; count: number }>();
+  for (const hash of hashes) {
+    for (const pt of parseHistoryHash(hash)) {
+      const prev = byTs.get(pt.ts);
+      if (!prev) {
+        byTs.set(pt.ts, { floor: pt.floor, count: pt.count });
+      } else {
+        if (pt.floor < prev.floor) prev.floor = pt.floor;
+        prev.count += pt.count;
+      }
+    }
+  }
+  return [...byTs.entries()]
+    .map(([ts, v]) => ({ ts, floor: v.floor, count: v.count }))
+    .sort((a, b) => a.ts - b.ts);
+}
+
 export async function marketHistory(
   slug: string,
-  enchant: number,
+  enchant: number | 'all',
   range: HistoryRange,
-): Promise<{ slug: string; enchant: number; range: HistoryRange; points: HistoryPoint[] }> {
+): Promise<{ slug: string; enchant: number | 'all'; range: HistoryRange; points: HistoryPoint[] }> {
   const safeSlug = /^[a-z0-9:-]{1,48}$/.test(slug) ? slug : '';
-  const safeEnchant = Number.isSafeInteger(enchant) && enchant >= 0 && enchant <= 20 ? enchant : 0;
-  if (!safeSlug) return { slug: '', enchant: 0, range, points: [] };
-  const key = `${historyPrefix}${safeSlug}:${safeEnchant}`;
+  const safeEnchant: number | 'all' = enchant === 'all'
+    ? 'all'
+    : Number.isSafeInteger(enchant) && enchant >= 0 && enchant <= 20
+      ? enchant
+      : 0;
+  if (!safeSlug) return { slug: '', enchant: safeEnchant, range, points: [] };
   let points: HistoryPoint[] = [];
   try {
-    const raw = await redis<Record<string, string> | string[] | null>(['HGETALL', key]);
-    points = parseHistoryHash(raw);
-    if (points.length < 2) {
-      await runSalesBackfill(safeSlug.startsWith('col:') || safeSlug === 'owl-skin' ? safeSlug : undefined).catch(() => null);
-      const refreshed = await redis<Record<string, string> | string[] | null>(['HGETALL', key]);
-      points = parseHistoryHash(refreshed);
+    if (safeEnchant === 'all') {
+      points = await readAllEnchantPoints(safeSlug);
+      if (points.length < 2) {
+        await runSalesBackfill(safeSlug.startsWith('col:') || safeSlug === 'owl-skin' ? safeSlug : undefined).catch(() => null);
+        points = await readAllEnchantPoints(safeSlug);
+      }
+    } else {
+      const key = `${historyPrefix}${safeSlug}:${safeEnchant}`;
+      const raw = await redis<Record<string, string> | string[] | null>(['HGETALL', key]);
+      points = parseHistoryHash(raw);
+      if (points.length < 2) {
+        await runSalesBackfill(safeSlug.startsWith('col:') || safeSlug === 'owl-skin' ? safeSlug : undefined).catch(() => null);
+        const refreshed = await redis<Record<string, string> | string[] | null>(['HGETALL', key]);
+        points = parseHistoryHash(refreshed);
+      }
     }
   } catch { /* Redis unavailable */ }
   const now = Date.now();

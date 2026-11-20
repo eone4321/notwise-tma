@@ -2,7 +2,7 @@
   "system_overview": {
     "title": "Игровые Стикерпаки NOT Wise (Альбомы для минта)",
     "description": "В игре игроки выбивают стикеры из капсул и наград. Собрав полный тематический пак, игрок получает право сминтить официальный ончейн NFT-стикерпак на TON.",
-    "total_in_game_packs": 22
+    "total_in_game_packs": 20
   },
   "packs": [
     {"id": "wonderland", "name": "NOT Wise: Wonderland", "theme": "Сказочный мир", "verified": true},
@@ -22,8 +22,6 @@
     {"id": "the_family", "name": "NOT Wise: The Family", "theme": "Мафия и клановые совы", "verified": true},
     {"id": "golden_scarab", "name": "NOT Wise: Golden Scarab", "theme": "Древний Египет и фараоны", "verified": true},
     {"id": "back_to_school", "name": "NOT Wise: Back to School", "theme": "Школа и знания", "verified": true},
-    {"id": "exp_sp", "name": "NOT Wise: EXP & SP", "theme": "Геймерские атрибуты прокачки", "verified": true},
-    {"id": "stonks_goodies", "name": "NOT Wise Stonks x Goodies", "theme": "Трейдинг, графики и свечи", "verified": true},
     {"id": "naughty_mood", "name": "NOT Wise: Naughty Mood", "theme": "Пикантные и дерзкие эмоции", "verified": true},
     {"id": "wanted_sheriff", "name": "NOT Wise: Wanted Sheriff", "theme": "Дикий Запад и шерифы", "verified": true},
     {"id": "gg_pack", "name": "NOT Wise: GG Pack", "theme": "Киберспорт и Good Game", "verified": true}

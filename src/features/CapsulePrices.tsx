@@ -36,7 +36,7 @@ export function CapsulePrices({ tier }: { tier: Tier }) {
         onChange={event => setInputMinutes(event.target.value.replace(/\D/g, ''))}/></label>
     </div>
     <div className="capsuleResult" aria-live="polite">
-      {blank ? <p>{en ? 'Enter the time from the in-game timer.' : 'Введи время с игрового таймера.'}</p> : !valid ? <p>{en ? `Enter remaining time up to ${hours} h. Minutes must be 0 to 59.` : `Введи остаток до ${hours} ч. В поле минут — от 0 до 59.`}</p> :
+      {blank ? <p>{en ? 'Enter the time from the in-game timer.' : 'Введи время с игрового таймера.'}</p> : !valid ? <p>{en ? `Enter remaining time up to ${hours} h. Minutes must be 0 to 59.` : `Введи остаток до ${hours}ч. В поле минут — от 0 до 59.`}</p> :
         remaining === 0 ? <strong>{en ? 'Ready to open for free' : 'Можно открыть бесплатно'}</strong> : <>
           <div><small>Stars</small><Price value={stars} currency="stars"/></div>
           <div><small>{en ? 'GRAM · estimate' : 'GRAM · оценка'}</small><GramEstimate stars={stars} showUnavailable/></div>

@@ -1,4 +1,11 @@
-export default [
+export type MarketCollection = {
+  id: string;
+  name: string;
+  nameEn?: string;
+  address: string;
+};
+
+const marketCollections: MarketCollection[] = [
   {
     "id": "genesis",
     "name": "NOT Wise",
@@ -17,6 +24,7 @@ export default [
   {
     "id": "classics",
     "name": "NOT Wise :: Classics (Стикерпаки)",
+    "nameEn": "NOT Wise :: Classics (Sticker packs)",
     "address": "EQAh0jRY7l_jw7o2lI8N5Bl0bFo-5eOKYinsZ56ZRcKABnup"
   },
   {
@@ -35,6 +43,18 @@ export default [
     "address": "EQBfQA3gHs5It6jeb6Wo82q_Djei1w1SWb02Vlne-Kc5MSn6"
   },
   {
+    "id": "exp",
+    "name": "NOT Wise: Опыт",
+    "nameEn": "NOT Wise: Experience",
+    "address": "EQBVH3FIH97Om4WLzO_E3eQdQeXJk-ZjtyFK8OdstjiV5uXY"
+  },
+  {
+    "id": "vouchers",
+    "name": "NOT Wise: Ваучеры",
+    "nameEn": "NOT Wise: Vouchers",
+    "address": "EQAlewTAhX3tdPQWnYKrErFvMLiwaTnm1DuFCcBO6DiDajTi"
+  },
+  {
     "id": "skins",
     "name": "NOT Wise: Skins",
     "address": "EQC_CN9MU1igRcqmuWeUxxyB6_Uvr4JrnyUCaLe609qQNrRA"
@@ -45,3 +65,5 @@ export default [
     "address": "EQD8uo-PGjYTihplpM6hiUp9xAFp5F_8fXU7UADhjpyufvjK"
   }
 ];
+
+export default marketCollections;

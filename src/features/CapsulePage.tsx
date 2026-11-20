@@ -26,8 +26,8 @@ export function CapsulePage() {
     <section className="card leanList capsuleList">
       {tiers.map((tier, index) => <DetailLink className="mediaRow capsuleChoice" key={tier} to={'/capsules/' + tier}>
         <GameArt path={`/game/capsules/${tier}.webp`} size={46}/>
-        <span><strong>{getTierName(tier, en)}</strong><small>{en ? `Egg chance · ${eggChances[index]}` : `Шанс яйца · ${eggChances[index]}`}</small></span>
-        <span className="rowEnd"><b>{duration[tier] / 3_600_000} {en ? 'h' : 'ч'}</b><span className="rowChevron" aria-hidden="true"/></span>
+        <span><strong>{tier === 'silver' ? (en ? 'Moonlight Silver Capsule' : 'Капсула лунного серебра') : getTierName(tier, en)}</strong><small>{en ? `Egg chance · ${eggChances[index]}` : `Шанс яйца · ${eggChances[index]}`}</small></span>
+        <span className="rowEnd"><b>{duration[tier] / 3_600_000}{en ? ' h' : 'ч'}</b><span className="rowChevron" aria-hidden="true"/></span>
       </DetailLink>)}
     </section>
     <CapsuleDropGuide/>
@@ -54,7 +54,7 @@ function CapsuleDetail({ tier: currentTier, keepParent }: { tier: typeof tiers[n
       {tiers.map(tier => <Link key={tier} replace state={keepParent ? { guideDetail: true } : undefined} aria-current={tier === currentTier ? 'page' : undefined} to={'/capsules/' + tier}><GameArt path={`/game/capsules/${tier}.webp`} size={18}/>{getTierName(tier, en)}</Link>)}
     </nav>
     <div className="card mediaHeading capsuleHeading guideReward"><GameArt path={`/game/capsules/${currentTier}.webp`} size={58}/><div>
-      <h2>{getTierName(currentTier, en)} {en ? 'capsule' : 'капсула'}</h2><p>{capsuleNames[index]} · {en ? `free after ${hours} h` : `бесплатно через ${hours} ч`}</p>
+      <h2>{currentTier === 'silver' ? (en ? 'Moonlight Silver Capsule' : 'Капсула лунного серебра') : `${getTierName(currentTier, en)} ${en ? 'capsule' : 'капсула'}`}</h2><p>{capsuleNames[index]} · {en ? `free after ${hours} h` : `бесплатно через ${hours}ч`}</p>
     </div></div>
     <CapsulePrices key={currentTier} tier={currentTier}/>
     <details className="card mediaDetails guideDisclosure">
@@ -87,10 +87,17 @@ function CapsuleDetail({ tier: currentTier, keepParent }: { tier: typeof tiers[n
       </div>
       <ul className="compactList oddsList">
         {odds.map(row => <li className="mediaRow" key={row.amount}>
-          <span>{row.amount.toLocaleString(numLocale)} $NOT</span><strong>{chanceLabel(row.chance, en)}</strong>
+          <span>{row.amount.toLocaleString(numLocale)} $NOT{row.amount > 10_000 && <small style={{ display: 'block', color: 'var(--muted)', fontSize: 11 }}>{en ? 'Credited as 10,000 $NOT' : 'Начислится 10 000 $NOT'}</small>}</span><strong>{chanceLabel(row.chance, en)}</strong>
         </li>)}
       </ul>
-      <p className="caption">{en ? 'Each level adds 1% to the base chance multiplier. The game rolls the largest rewards first.' : 'Каждый уровень прибавляет 1% к множителю базового шанса. При расчёте игра сначала учитывает самые крупные награды.'}</p>
+      <div className="memoNote" style={{ marginTop: 10 }}>
+        <p>
+          {en
+            ? 'Single-reward cap: a single Notcoin reward is limited to 10,000 $NOT. Higher amounts shown in drop tables (100,000–10,000,000 $NOT) are credited as 10,000 $NOT.'
+            : 'Лимит награды: одна награда в Notcoin ограничена 10 000 $NOT. Более высокие суммы из таблиц выпадения (100 000–10 000 000 $NOT) начисляются как 10 000 $NOT.'}
+        </p>
+      </div>
+      <p className="caption" style={{ marginTop: 8 }}>{en ? 'Each level adds 1% to the base chance multiplier. The game rolls the largest rewards first.' : 'Каждый уровень прибавляет 1% к множителю базового шанса. При расчёте игра сначала учитывает самые крупные награды.'}</p>
     </section>
   </>;
 }

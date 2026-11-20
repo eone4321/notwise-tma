@@ -135,7 +135,9 @@ export function simulateDuel(first: Fighter, second: Fighter, seed: number, reve
     const duration = skill.duration;
     const value = Math.trunc(skill.value);
     const scaled = skill.value * source.stats.scale;
-    const lock = skill.tier === 5 ? 2000 : 0;
+    // GQ sandbox: Tier-5 ultimates lock for 2000ms; #13 (Berserk Howl) is omitted from gC and falls back to mC.castLockMs = 1200ms.
+    // Note: Live PvP client U$ applies a 1200ms predictive cast lock on all non-tier-5 active skills (server timestamps remain authoritative).
+    const lock = skill.tier === 5 ? 2000 : skill.id === 13 ? 1200 : 0;
     source.mana -= skill.mana;
     source.cooldowns.set(skill.id, now + skill.cooldown);
     source.castAt = now + 1000 + lock;

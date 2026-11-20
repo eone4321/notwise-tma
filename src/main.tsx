@@ -14,13 +14,18 @@ void (async () => {
   collectionMarket.refresh();
   const bar = document.querySelector<HTMLProgressElement>('.guideLoading progress');
   const percent = document.querySelector('.guideLoadPercent');
-  try {
-    if (localStorage.getItem('notwise.guide.language') === 'en') {
-      const labelNode = percent?.previousSibling;
-      if (labelNode && labelNode.nodeType === Node.TEXT_NODE) labelNode.textContent = 'Loading guide ';
-      if (bar) bar.setAttribute('aria-label', 'Loading images');
-    }
-  } catch { /* ignore */ }
+  let choice: string | null = null;
+  try { choice = localStorage.getItem('notwise.guide.language'); } catch { /* ignore */ }
+  const tgLang = window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code;
+  const rawLang = (typeof tgLang === 'string' && tgLang) || navigator.language || '';
+  const detected: 'en' | 'ru' = /^ru\b/i.test(rawLang) ? 'ru' : 'en';
+  const initialLocale = choice === 'ru' || choice === 'en' ? choice : detected;
+  document.documentElement.lang = initialLocale;
+  if (initialLocale === 'en') {
+    const labelNode = percent?.previousSibling;
+    if (labelNode && labelNode.nodeType === Node.TEXT_NODE) labelNode.textContent = 'Loading guide ';
+    if (bar) bar.setAttribute('aria-label', 'Loading images');
+  }
   const prepareArt = warmArt((loaded, total) => {
     if (bar && total) {
       bar.max = total;

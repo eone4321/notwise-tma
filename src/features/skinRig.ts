@@ -170,10 +170,16 @@ export function scopedStorageKey(base: string): string {
   return base + telegramUserStorageSuffix();
 }
 
+type TelegramWebAppCloudLike = {
+  isVersionAtLeast?: (version: string) => boolean;
+  CloudStorage?: CloudStorageLike;
+};
+
 function telegramCloudStorage(): CloudStorageLike | null {
   try {
-    const cs = (window as { Telegram?: { WebApp?: { CloudStorage?: CloudStorageLike } } })
-      .Telegram?.WebApp?.CloudStorage;
+    const tg = (window as { Telegram?: { WebApp?: TelegramWebAppCloudLike } }).Telegram?.WebApp;
+    if (typeof tg?.isVersionAtLeast !== 'function' || !tg.isVersionAtLeast('6.9')) return null;
+    const cs = tg.CloudStorage;
     return cs && typeof cs.getItem === 'function' && typeof cs.setItem === 'function' ? cs : null;
   } catch {
     return null;
@@ -222,7 +228,7 @@ export function saveHomeOwlSkin(selection: SkinSelection | null): void {
     if (selection === null) {
       localStorage.removeItem(key);
       if (key !== homeOwlStorageKey) localStorage.removeItem(homeOwlStorageKey);
-      cloud?.removeItem?.(homeOwlStorageKey);
+      if (typeof cloud?.removeItem === 'function') cloud.removeItem(homeOwlStorageKey);
     } else {
       const encoded = JSON.stringify(selection);
       localStorage.setItem(key, encoded);

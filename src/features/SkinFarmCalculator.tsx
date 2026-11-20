@@ -368,39 +368,39 @@ export function SkinFarmCalculator({
 
     <div className="wardrobeEnchantCard">
       <div className="skinEnchantBox">
-        <div className="skinEnchantMeta">
-          <GameArt path="/game/items/scroll-enchant-skin.webp" size={28}/>
-          <div className="skinEnchantText">
-            <strong>
-              <span>{copy('Заточка скина', 'Skin enchant')}</span>
-              <b className="skinEnchantBonusTag">{enchantLevel > 0 ? `+${enchantLevel} · +${enchantBonus}%` : '+0%'}</b>
-            </strong>
-            <small data-risk={riskZone}>
-              {enchantLevel >= 20
-                ? copy('Максимум +20 (+100%)', 'Max +20 (+100%)')
-                : enchantBurn > 0
-                  ? copy(`На +${nextEnchantTarget}: ${enchantSuccess}% успех · ${enchantBurn}% риск 🔥`, `To +${nextEnchantTarget}: ${enchantSuccess}% ok · ${enchantBurn}% burn 🔥`)
-                  : copy(`На +${nextEnchantTarget}: 100% без сгорания`, `To +${nextEnchantTarget}: 100% safe`)}
-            </small>
+        <div className="skinEnchantHead">
+          <div className="skinEnchantMeta">
+            <GameArt path="/game/items/scroll-enchant-skin.webp" size={28}/>
+            <strong>{copy('Заточка скина', 'Skin enchant')}</strong>
           </div>
+          <b className="skinEnchantBonusTag">{enchantLevel > 0 ? `+${enchantLevel} · +${enchantBonus}%` : '+0%'}</b>
         </div>
-        <div className="buildStatStep skinEnchantStep">
-          <button type="button" aria-label={copy('Уменьшить заточку', 'Decrease enchant')}
-            disabled={enchantLevel <= 0}
-            onClick={() => { lightHaptic(); setEnchant(enchantLevel <= 1 ? '' : String(enchantLevel - 1)); }}>−</button>
-          <select
-            className="skinEnchantSelect"
-            aria-label={copy('Выбрать уровень заточки скина', 'Choose skin enchant level')}
-            value={enchantLevel}
-            onChange={event => { lightHaptic(); const v = Number(event.target.value); setEnchant(v > 0 ? String(v) : ''); }}
-          >
-            {Array.from({ length: 21 }, (_, lvl) => (
-              <option key={lvl} value={lvl}>{lvl === 0 ? '0' : `+${lvl}`}</option>
-            ))}
-          </select>
-          <button type="button" aria-label={copy('Увеличить заточку', 'Increase enchant')}
-            disabled={enchantLevel >= 20}
-            onClick={() => { lightHaptic(); setEnchant(String(enchantLevel + 1)); }}>+</button>
+        <div className="skinEnchantControls">
+          <small className="skinEnchantHint" data-risk={riskZone}>
+            {enchantLevel >= 20
+              ? copy('Максимум +20 (+100%)', 'Max +20 (+100%)')
+              : enchantBurn > 0
+                ? copy(`На +${nextEnchantTarget}: ${enchantSuccess}% успех · ${enchantBurn}% риск 🔥`, `To +${nextEnchantTarget}: ${enchantSuccess}% ok · ${enchantBurn}% burn 🔥`)
+                : copy(`На +${nextEnchantTarget}: 100% без сгорания`, `To +${nextEnchantTarget}: 100% safe`)}
+          </small>
+          <div className="buildStatStep skinEnchantStep">
+            <button type="button" aria-label={copy('Уменьшить заточку', 'Decrease enchant')}
+              disabled={enchantLevel <= 0}
+              onClick={() => { lightHaptic(); setEnchant(enchantLevel <= 1 ? '' : String(enchantLevel - 1)); }}>−</button>
+            <select
+              className="skinEnchantSelect"
+              aria-label={copy('Выбрать уровень заточки скина', 'Choose skin enchant level')}
+              value={enchantLevel}
+              onChange={event => { lightHaptic(); const v = Number(event.target.value); setEnchant(v > 0 ? String(v) : ''); }}
+            >
+              {Array.from({ length: 21 }, (_, lvl) => (
+                <option key={lvl} value={lvl}>{lvl === 0 ? '0' : `+${lvl}`}</option>
+              ))}
+            </select>
+            <button type="button" aria-label={copy('Увеличить заточку', 'Increase enchant')}
+              disabled={enchantLevel >= 20}
+              onClick={() => { lightHaptic(); setEnchant(String(enchantLevel + 1)); }}>+</button>
+          </div>
         </div>
       </div>
 

@@ -1,5 +1,6 @@
+import { AlbumLogo } from '../ui/AlbumLogo';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useLocation, useSearchParams } from 'react-router';
 import { GameArt } from '../ui/GameArt';
 import { GameAttribute, GameGlyph } from '../ui/GameGlyph';
 import { Price } from './Price';
@@ -33,15 +34,19 @@ type HistoryRange = '24h' | '7d' | '30d' | 'all';
 type ChartMode = 'history' | 'curve';
 type HistoryPoint = { ts: number; floor: number; count: number };
 
-const fmtNum = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
-const fmtInt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
-const fmtUsd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+const fmtNumRu = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
+const fmtNumEn = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
+const fmtIntRu = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
+const fmtIntEn = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
+const fmtUsdRu = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+const fmtUsdEn = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
 const categories: { id: MarketCategory; label: string; labelEn: string }[] = [
   { id: 'rings', label: 'Кольца', labelEn: 'Rings' },
   { id: 'skins', label: 'Скины', labelEn: 'Skins' },
   { id: 'items', label: 'Предметы', labelEn: 'Items' },
   { id: 'collections', label: 'Коллекции', labelEn: 'Collections' },
+  { id: 'albums', label: 'Стикеры', labelEn: 'Stickers' },
 ];
 
 const ranges: { id: HistoryRange; label: string; labelEn: string }[] = [
@@ -51,10 +56,11 @@ const ranges: { id: HistoryRange; label: string; labelEn: string }[] = [
   { id: 'all', label: 'Всё', labelEn: 'All' },
 ];
 
-function formatGramCompact(val: number): string {
-  if (val >= 1_000_000) return `${fmtNum.format(val / 1_000_000)}M`;
-  if (val >= 10_000) return `${fmtNum.format(val / 1_000)}k`;
-  return fmtNum.format(val);
+function formatGramCompact(val: number, en = false): string {
+  const nf = en ? fmtNumEn : fmtNumRu;
+  if (val >= 1_000_000) return `${nf.format(val / 1_000_000)}M`;
+  if (val >= 10_000) return `${nf.format(val / 1_000)}k`;
+  return nf.format(val);
 }
 
 function formatShortTime(ts: number, range: HistoryRange, en = false): string {
@@ -79,36 +85,54 @@ function pluralLots(n: number, en = false): string {
 export function MarketChartsPage() {
   const { locale } = useGuideLocale();
   const en = locale === 'en';
+  const fmtNum = en ? fmtNumEn : fmtNumRu;
+  const fmtInt = en ? fmtIntEn : fmtIntRu;
+  const fmtUsd = en ? fmtUsdEn : fmtUsdRu;
   const statLabels = en ? ringStatLabelsEn : ringStatLabels;
   const tierLabels = en ? ringTierLabelsEn : ringTierLabels;
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialSlug = searchParams.get('slug') ?? '';
-  const initialCategory = searchParams.get('category') as MarketCategory | null;
+  const slugParam = searchParams.get('slug') ?? '';
+  const categoryParam = searchParams.get('category') as MarketCategory | null;
   const rawEnchantParam = searchParams.get('enchant');
   const parsedEnchant = rawEnchantParam !== null && rawEnchantParam !== '' ? Number(rawEnchantParam) : null;
 
-  const defaultAsset = useMemo(() => {
-    if (initialSlug && marketAssetBySlug.has(initialSlug)) return marketAssetBySlug.get(initialSlug)!;
-    if (initialCategory) {
-      const first = marketCatalog.find(a => a.category === initialCategory);
+  const asset: MarketAsset = useMemo(() => {
+    if (slugParam && marketAssetBySlug.has(slugParam)) return marketAssetBySlug.get(slugParam)!;
+    if (categoryParam) {
+      const first = marketCatalog.find(a => a.category === categoryParam);
       if (first) return first;
     }
     return marketCatalog[0];
-  }, [initialSlug, initialCategory]);
+  }, [slugParam, categoryParam]);
 
-  const [selectedSlug, setSelectedSlug] = useState(defaultAsset.slug);
-  // null means "Все" (all enchant levels combined) for enchantable items
-  const [enchant, setEnchant] = useState<number | null>(
-    parsedEnchant !== null && Number.isSafeInteger(parsedEnchant) && parsedEnchant >= 0 && parsedEnchant <= 20
+  // null means "All" (all enchant levels combined) for enchantable items
+  const enchant: number | null = useMemo(() => {
+    if (!asset.enchantable) return null;
+    return parsedEnchant !== null && Number.isSafeInteger(parsedEnchant) && parsedEnchant >= 0 && parsedEnchant <= 20
       ? parsedEnchant
-      : null,
-  );
+      : null;
+  }, [asset.enchantable, parsedEnchant]);
+
+  const updateQuery = (nextSlug: string, nextEnchant: number | null) => {
+    const nextAsset = marketAssetBySlug.get(nextSlug) ?? marketCatalog[0];
+    const next = new URLSearchParams();
+    next.set('slug', nextAsset.slug);
+    if (nextAsset.enchantable && nextEnchant !== null) {
+      next.set('enchant', String(nextEnchant));
+    }
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true, state: location.state });
+    }
+  };
+
   const [chartMode, setChartMode] = useState<ChartMode>('history');
   const [range, setRange] = useState<HistoryRange>('7d');
   const [sortAsc, setSortAsc] = useState(true);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const railRef = useRef<HTMLDivElement>(null);
+  const explorerRetryCount = useRef(0);
 
   useEffect(() => {
     const rail = railRef.current;
@@ -117,7 +141,7 @@ export function MarketChartsPage() {
     if (!activeEl) return;
     const targetLeft = Math.max(0, activeEl.offsetLeft - (rail.clientWidth - activeEl.offsetWidth) / 2);
     rail.scrollTo({ left: targetLeft, behavior: 'smooth' });
-  }, [enchant, selectedSlug]);
+  }, [enchant, asset.slug]);
 
   const { data: explorer, pending: explorerPending } = explorerMarket.useSnapshot();
   const { data: cols } = collectionMarket.useSnapshot();
@@ -128,33 +152,38 @@ export function MarketChartsPage() {
     explorerMarket.refresh();
   }, []);
 
-  // Auto-retry once if explorer came back empty during a cold server refresh
+  // Auto-retry at most once if explorer came back empty during a cold server refresh
   useEffect(() => {
-    if (explorerPending || (explorer?.items && explorer.items.length > 0)) return;
-    const t = window.setTimeout(() => explorerMarket.refresh(true), 2500);
+    if (explorer?.items && explorer.items.length > 0) {
+      explorerRetryCount.current = 0;
+      return;
+    }
+    if (explorerPending || explorerRetryCount.current >= 1) return;
+    const t = window.setTimeout(() => {
+      explorerRetryCount.current += 1;
+      explorerMarket.refresh(true);
+    }, 2500);
     return () => window.clearTimeout(t);
   }, [explorerPending, explorer]);
 
-  const asset: MarketAsset = marketAssetBySlug.get(selectedSlug) ?? marketCatalog[0];
   const category = asset.category;
 
-  // Sync URL params softly only when actually changed
+  // Sync URL params softly only when actually changed, preserving location.state (guideDetail)
   useEffect(() => {
     const next = new URLSearchParams();
     next.set('slug', asset.slug);
     if (asset.enchantable && enchant !== null) next.set('enchant', String(enchant));
     if (next.toString() !== searchParams.toString()) {
-      setSearchParams(next, { replace: true });
+      setSearchParams(next, { replace: true, state: location.state });
     }
-  }, [asset.slug, asset.enchantable, enchant, searchParams, setSearchParams]);
+  }, [asset.slug, asset.enchantable, enchant, searchParams, setSearchParams, location.state]);
 
-  // If switching to non-enchantable asset, reset enchant & mode
+  // If switching to non-enchantable asset, reset mode
   useEffect(() => {
-    if (!asset.enchantable) {
-      if (enchant !== null) setEnchant(null);
-      if (chartMode === 'curve') setChartMode('history');
+    if (!asset.enchantable && chartMode === 'curve') {
+      setChartMode('history');
     }
-  }, [asset.enchantable, enchant, chartMode]);
+  }, [asset.enchantable, chartMode]);
 
   const gramUsd = useMemo(() => {
     const raw = tokens?.items.find(t => t.symbol === 'GRAM')?.priceUsd;
@@ -192,10 +221,14 @@ export function MarketChartsPage() {
       if (floors.length) return Math.min(...floors);
     }
     if (activeBucket && activeBucket.floor > 0) return activeBucket.floor;
-    if (asset.category === 'collections') {
+    if (asset.slug.startsWith('col:')) {
       const colId = asset.slug.replace(/^col:/, '');
       const q = cols?.items.find(c => c.id === colId);
       return q?.floor && q.floor > 0 ? q.floor : null;
+    }
+    const explorerLoaded = Boolean(explorer?.items && explorer.items.length > 0);
+    if (asset.enchantable && enchant !== null && explorerLoaded) {
+      return null;
     }
     if (!asset.enchantable || enchant === 0 || enchant === null) {
       if (asset.slug === 'owl-skin') {
@@ -206,12 +239,12 @@ export function MarketChartsPage() {
       return q?.floor && q.floor > 0 ? q.floor : null;
     }
     return null;
-  }, [activeBucket, allAssetBuckets, asset, cols, itemsSnap, enchant]);
+  }, [activeBucket, allAssetBuckets, asset, cols, explorer, itemsSnap, enchant]);
 
   const liveCount = useMemo(() => {
     if (asset.enchantable && enchant === null) return totalAssetLots;
     if (activeBucket) return activeBucket.count;
-    if (asset.category === 'collections') {
+    if (asset.slug.startsWith('col:')) {
       const colId = asset.slug.replace(/^col:/, '');
       return cols?.items.find(c => c.id === colId)?.supply ?? null;
     }
@@ -225,7 +258,7 @@ export function MarketChartsPage() {
   useEffect(() => {
     const controller = new AbortController();
     setHistoryLoading(true);
-    const enc = asset.enchantable ? (enchant ?? 0) : 0;
+    const enc = asset.enchantable ? (enchant === null ? 'all' : String(enchant)) : '0';
     const url = `/api/market/history?slug=${encodeURIComponent(asset.historySlug)}&enchant=${enc}&range=${range}`;
     fetch(url, { signal: controller.signal })
       .then(res => (res.ok ? res.json() : null))
@@ -326,14 +359,13 @@ export function MarketChartsPage() {
     if (cat === category) return;
     const first = marketCatalog.find(a => a.category === cat);
     if (first) {
-      setSelectedSlug(first.slug);
-      setEnchant(null);
+      updateQuery(first.slug, null);
     }
   };
 
   const selectRing = (stat: RingStat, tier: RingTier) => {
     lightHaptic();
-    setSelectedSlug(`ring-${stat}-${tier}`);
+    updateQuery(`ring-${stat}-${tier}`, enchant);
   };
 
   const assetTitle = (a: MarketAsset) => (en ? a.nameEn : a.nameRu);
@@ -351,6 +383,30 @@ export function MarketChartsPage() {
 
   return (
     <div className="marketRadar">
+      {/* 1-Tap Item Selector Bar */}
+      <button
+        type="button"
+        className="radarSelectorBar"
+        onClick={() => { lightHaptic(); setPickerOpen(true); }}
+        aria-haspopup="dialog"
+      >
+        <span className="radarSelectorIcon">
+          {asset.albumId ? <AlbumLogo id={asset.albumId} size={36}/> : <GameArt path={asset.icon} size={36} />}
+        </span>
+        <span className="radarSelectorText">
+          <strong style={{ whiteSpace: 'normal', overflow: 'visible', textOverflow: 'clip', lineHeight: 1.25 }}>
+            {assetTitle(asset)}{asset.enchantable && enchant !== null && enchant > 0 ? ` +${enchant}` : ''}
+          </strong>
+          <small style={{ whiteSpace: 'normal', overflow: 'visible', textOverflow: 'clip', lineHeight: 1.25 }}>
+            {getgemsDisplayName}
+          </small>
+        </span>
+        <span className="radarSelectorAction">
+          <span>{en ? 'Select' : 'Выбрать'}</span>
+          <span className="rowChevron" aria-hidden="true" />
+        </span>
+      </button>
+
       {/* Category Tabs */}
       <div className="radarCatTabs" role="tablist" aria-label={en ? 'Market categories' : 'Категории рынка'}>
         {categories.map(cat => (
@@ -366,26 +422,6 @@ export function MarketChartsPage() {
           </button>
         ))}
       </div>
-
-      {/* 1-Tap Item Selector Bar */}
-      <button
-        type="button"
-        className="radarSelectorBar"
-        onClick={() => { lightHaptic(); setPickerOpen(true); }}
-        aria-haspopup="dialog"
-      >
-        <span className="radarSelectorIcon">
-          <GameArt path={asset.icon} size={36} />
-        </span>
-        <span className="radarSelectorText">
-          <strong>{assetTitle(asset)}{asset.enchantable && enchant !== null && enchant > 0 ? ` +${enchant}` : ''}</strong>
-          <small>{getgemsDisplayName}</small>
-        </span>
-        <span className="radarSelectorAction">
-          <span>{en ? 'Select' : 'Выбрать'}</span>
-          <span className="rowChevron" aria-hidden="true" />
-        </span>
-      </button>
 
       {/* Inline 1-Tap Ring Matrix (Stat + Tier) */}
       {category === 'rings' && asset.ringStat && asset.ringTier && (
@@ -441,7 +477,7 @@ export function MarketChartsPage() {
                 role="option"
                 aria-selected={enchant === null}
                 className={`radarEnchantChip ${enchant === null ? 'isActive' : ''} ${totalAssetLots > 0 ? 'hasLots' : ''}`}
-                onClick={() => { lightHaptic(); setEnchant(null); }}
+                onClick={() => { lightHaptic(); updateQuery(asset.slug, null); }}
               >
                 <strong>{en ? 'All' : 'Все'}</strong>
                 {totalAssetLots > 0 && <span className="radarChipCount">{totalAssetLots}</span>}
@@ -457,7 +493,7 @@ export function MarketChartsPage() {
                     role="option"
                     aria-selected={active}
                     className={`radarEnchantChip ${active ? 'isActive' : ''} ${count > 0 ? 'hasLots' : ''}`}
-                    onClick={() => { lightHaptic(); setEnchant(lvl); }}
+                    onClick={() => { lightHaptic(); updateQuery(asset.slug, lvl); }}
                   >
                     <strong>+{lvl}</strong>
                     {count > 0 && <span className="radarChipCount">{count}</span>}
@@ -475,7 +511,7 @@ export function MarketChartsPage() {
           <div className="radarHeroMeta">
             <span className="radarHeroLabel">
               {chartMode === 'curve'
-                ? (en ? 'Enchant curve on Getgems' : 'Кривая заточки на Getgems')
+                ? (en ? 'Getgems floor by enchant level' : 'Флор по уровням заточки на Getgems')
                 : (en ? 'Floor on Getgems' : 'Флор на Getgems')}
             </span>
             <button
@@ -514,7 +550,7 @@ export function MarketChartsPage() {
               )}
               {typeof liveCount === 'number' && liveCount > 0 && (
                 <span className="radarLotsBadge">
-                  {asset.category === 'collections' ? `${fmtInt.format(liveCount)} NFT` : pluralLots(liveCount, en)}
+                  {asset.slug.startsWith('col:') ? `${fmtInt.format(liveCount)} NFT` : pluralLots(liveCount, en)}
                 </span>
               )}
             </div>
@@ -541,7 +577,7 @@ export function MarketChartsPage() {
                 className={chartMode === 'curve' ? 'isActive' : undefined}
                 onClick={() => { lightHaptic(); setChartMode('curve'); }}
               >
-                {en ? `Curve +0…+${maxActiveEnchant}` : `Кривая +0…+${maxActiveEnchant}`}
+                {en ? `By enchant level` : `По уровням заточки`}
               </button>
             </div>
           ) : (
@@ -570,6 +606,7 @@ export function MarketChartsPage() {
             points={seriesPoints}
             range={range}
             loading={historyLoading}
+            maxActiveEnchant={maxActiveEnchant}
             canSwitchToCurve={Boolean(asset.enchantable && curvePoints.length >= 2)}
             onSwitchToCurve={() => { lightHaptic(); setChartMode('curve'); }}
             en={en}
@@ -578,7 +615,7 @@ export function MarketChartsPage() {
           <EnchantCurveChart
             points={curvePoints}
             activeEnchant={enchant}
-            onSelectEnchant={lvl => { lightHaptic(); setEnchant(lvl); }}
+            onSelectEnchant={lvl => { lightHaptic(); updateQuery(asset.slug, lvl); }}
             en={en}
           />
         )}
@@ -589,23 +626,23 @@ export function MarketChartsPage() {
             <small>{chartMode === 'curve' ? (en ? 'Min (+0)' : 'Мин. (+0)') : `${en ? 'Min' : 'Мин.'} (${activeRangeLabel})`}</small>
             <strong>
               {chartMode === 'curve'
-                ? (curvePoints.length ? `${formatGramCompact(Math.min(...curvePoints.map(p => p.floor)))} GRAM` : '—')
-                : (statMin ? `${formatGramCompact(statMin)} GRAM` : '—')}
+                ? (curvePoints.length ? `${formatGramCompact(Math.min(...curvePoints.map(p => p.floor)), en)} GRAM` : '—')
+                : (statMin ? `${formatGramCompact(statMin, en)} GRAM` : '—')}
             </strong>
           </div>
           <div>
             <small>{chartMode === 'curve' ? (en ? 'Max enchant' : 'Макс. заточка') : `${en ? 'Max' : 'Макс.'} (${activeRangeLabel})`}</small>
             <strong>
               {chartMode === 'curve'
-                ? (curvePoints.length ? `${formatGramCompact(Math.max(...curvePoints.map(p => p.floor)))} GRAM` : '—')
-                : (statMax ? `${formatGramCompact(statMax)} GRAM` : '—')}
+                ? (curvePoints.length ? `${formatGramCompact(Math.max(...curvePoints.map(p => p.floor)), en)} GRAM` : '—')
+                : (statMax ? `${formatGramCompact(statMax, en)} GRAM` : '—')}
             </strong>
           </div>
           <div>
-            <small>{asset.category === 'collections' ? (en ? 'Minted' : 'Выпущено') : (en ? 'Listed' : 'В продаже')}</small>
+            <small>{asset.slug.startsWith('col:') ? (en ? 'Minted' : 'Выпущено') : (en ? 'Listed' : 'В продаже')}</small>
             <strong>
               {typeof liveCount === 'number' && liveCount > 0
-                ? (asset.category === 'collections' ? `${fmtInt.format(liveCount)} NFT` : pluralLots(liveCount, en))
+                ? (asset.slug.startsWith('col:') ? `${fmtInt.format(liveCount)} NFT` : pluralLots(liveCount, en))
                 : '0'}
             </strong>
           </div>
@@ -649,7 +686,7 @@ export function MarketChartsPage() {
       )}
 
       {/* Live Getgems Lots List (STEPN-style) */}
-      {asset.category !== 'collections' && (
+      {!asset.slug.startsWith('col:') && (
         <section className="card radarLotsCard">
           <div className="radarLotsHeader">
             <div>
@@ -678,7 +715,7 @@ export function MarketChartsPage() {
                   rel="noreferrer"
                 >
                   <span className="radarLotIcon">
-                    <GameArt path={asset.icon} size={34} />
+                    {asset.albumId ? <AlbumLogo id={asset.albumId} size={34}/> : <GameArt path={asset.icon} size={34} />}
                   </span>
                   <span className="radarLotInfo">
                     <strong>{lot.name}</strong>
@@ -712,9 +749,9 @@ export function MarketChartsPage() {
                     <button
                       key={pt.enchant}
                       type="button"
-                      onClick={() => { lightHaptic(); setEnchant(pt.enchant); }}
+                      onClick={() => { lightHaptic(); updateQuery(asset.slug, pt.enchant); }}
                     >
-                      +{pt.enchant} ({formatGramCompact(pt.floor)})
+                      +{pt.enchant} ({formatGramCompact(pt.floor, en)})
                     </button>
                   ))}
                 </div>
@@ -734,7 +771,7 @@ export function MarketChartsPage() {
         </section>
       )}
 
-      {asset.category === 'collections' && (
+      {asset.slug.startsWith('col:') && (
         <section className="card radarLotsCard">
           <p className="caption" style={{ margin: 0 }}>
             {en ? 'Collection floor price and supply on Getgems.' : 'Минимальный флор и объём коллекции на Getgems.'}
@@ -762,8 +799,7 @@ export function MarketChartsPage() {
           en={en}
           onSelect={nextAsset => {
             lightHaptic();
-            setSelectedSlug(nextAsset.slug);
-            setEnchant(null);
+            updateQuery(nextAsset.slug, null);
             setPickerOpen(false);
           }}
           onClose={() => setPickerOpen(false)}
@@ -782,6 +818,7 @@ function InteractiveFloorChart({
   points,
   range,
   loading,
+  maxActiveEnchant,
   canSwitchToCurve,
   onSwitchToCurve,
   en,
@@ -789,10 +826,12 @@ function InteractiveFloorChart({
   points: HistoryPoint[];
   range: HistoryRange;
   loading: boolean;
+  maxActiveEnchant: number;
   canSwitchToCurve: boolean;
   onSwitchToCurve: () => void;
   en: boolean;
 }) {
+  const fmtNum = en ? fmtNumEn : fmtNumRu;
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
@@ -813,7 +852,7 @@ function InteractiveFloorChart({
         <p>{en ? 'No data for this enchant level in the selected range.' : 'Нет данных по этому уровню заточки за выбранный период.'}</p>
         {canSwitchToCurve && (
           <button type="button" className="radarInlineAction" onClick={onSwitchToCurve}>
-            {en ? 'View enchant curve (+0…+10)' : 'Смотреть кривую заточки (+0…+10)'}
+            {en ? `View prices by enchant level (+0…+${maxActiveEnchant})` : `Смотреть цены по уровням заточки (+0…+${maxActiveEnchant})`}
           </button>
         )}
       </div>
@@ -892,12 +931,12 @@ function InteractiveFloorChart({
         {/* Horizontal dashed grid */}
         {[0, 0.5, 1].map(ratio => {
           const y = padTop + ratio * innerH;
-          const labelVal = yMax - ratio * (yMax - yMin);
+          const labelVal = yMax * (1 - ratio);
           return (
             <g key={ratio}>
               <line x1={padX} y1={y} x2={width - padX} y2={y} className="radarGridLine" />
               <text x={width - padX} y={y - 3} textAnchor="end" className="radarAxisText">
-                {formatGramCompact(labelVal)}
+                {formatGramCompact(labelVal, en)}
               </text>
             </g>
           );
@@ -947,7 +986,7 @@ function InteractiveFloorChart({
           <span>{en ? 'Only one price point available so far.' : 'Пока доступна одна точка цены.'}</span>
           {canSwitchToCurve && (
             <button type="button" className="radarInlineAction" onClick={onSwitchToCurve}>
-              {en ? 'Enchant curve →' : 'Кривая заточки →'}
+              {en ? 'By enchant level →' : 'По уровням заточки →'}
             </button>
           )}
         </div>
@@ -970,7 +1009,7 @@ function EnchantCurveChart({
   if (points.length === 0) {
     return (
       <div className="radarChartEmpty">
-        <p>{en ? 'No active enchanted listings to build the curve.' : 'Нет активных лотов с заточкой для построения кривой.'}</p>
+        <p>{en ? 'No active listings to compare prices by enchant level.' : 'Нет активных лотов для сравнения цен по уровням заточки.'}</p>
       </div>
     );
   }
@@ -984,61 +1023,54 @@ function EnchantCurveChart({
   const innerH = height - padTop - padBottom;
 
   const maxVal = Math.max(...points.map(p => p.floor));
-  const minVal = Math.min(...points.map(p => p.floor));
-  const yMin = Math.max(0, minVal * 0.85);
   const yMax = maxVal * 1.12 || 1;
-
-  const coords = points.map((pt, i) => {
-    const x = points.length === 1 ? width / 2 : padX + (i / (points.length - 1)) * innerW;
-    const y = padTop + (1 - (pt.floor - yMin) / (yMax - yMin)) * innerH;
-    return { x, y, pt };
-  });
-
-  const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
-  const areaPath = coords.length > 1
-    ? `${linePath} L${coords[coords.length - 1].x.toFixed(1)},${(height - padBottom).toFixed(1)} L${coords[0].x.toFixed(1)},${(height - padBottom).toFixed(1)} Z`
-    : '';
+  const baseline = height - padBottom;
+  const slotWidth = innerW / points.length;
+  const barWidth = Math.min(26, slotWidth * 0.65);
+  const coords = points.map((pt, i) => ({
+    x: padX + (i + 0.5) * slotWidth,
+    y: baseline - (pt.floor / yMax) * innerH,
+    pt,
+  }));
 
   return (
     <div className="radarChartBox">
       <svg className="radarSvg" viewBox={`0 0 ${width} ${height}`}>
-        <defs>
-          <linearGradient id="radarCurveGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ffcc77" stopOpacity="0.34" />
-            <stop offset="100%" stopColor="#ffcc77" stopOpacity="0" />
-          </linearGradient>
-        </defs>
         {[0, 0.5, 1].map(ratio => {
           const y = padTop + ratio * innerH;
-          const labelVal = yMax - ratio * (yMax - yMin);
+          const labelVal = yMax * (1 - ratio);
           return (
             <g key={ratio}>
               <line x1={padX} y1={y} x2={width - padX} y2={y} className="radarGridLine" />
               <text x={width - padX} y={y - 3} textAnchor="end" className="radarAxisText">
-                {formatGramCompact(labelVal)}
+                {formatGramCompact(labelVal, en)}
               </text>
             </g>
           );
         })}
-        {areaPath && <path d={areaPath} fill="url(#radarCurveGrad)" />}
-        {coords.length > 1 && <path d={linePath} className="radarLinePath" />}
         {coords.map(({ x, y, pt }) => {
           const isCurrent = pt.enchant === activeEnchant;
+          const label = `+${pt.enchant} · ${formatGramCompact(pt.floor, en)} GRAM`;
           return (
             <g
               key={pt.enchant}
+              role="button"
+              tabIndex={0}
+              aria-label={label}
+              aria-pressed={isCurrent}
               style={{ cursor: 'pointer' }}
               onClick={() => onSelectEnchant(pt.enchant)}
+              onKeyDown={event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  onSelectEnchant(pt.enchant);
+                }
+              }}
             >
-              {isCurrent && <circle cx={x} cy={y} r="9" fill="rgba(255, 204, 119, 0.22)" />}
-              <circle
-                cx={x}
-                cy={y}
-                r={isCurrent ? 5 : 3.6}
-                fill={isCurrent ? '#ffcc77' : '#d6b479'}
-                stroke="#111112"
-                strokeWidth="1.8"
-              />
+              <title>{label}</title>
+              <rect x={x - slotWidth / 2} y={padTop} width={slotWidth} height={height - padTop} fill="transparent" />
+              <rect x={x - barWidth / 2} y={y} width={barWidth} height={baseline - y} rx="2"
+                fill={isCurrent ? '#ffcc77' : '#a88b60'} />
               <text
                 x={x}
                 y={height - 6}
@@ -1053,8 +1085,8 @@ function EnchantCurveChart({
       </svg>
       <p className="radarCurveHint">
         {en
-          ? 'Tap a point to switch the enchant level and view listings.'
-          : 'Нажми на точку, чтобы переключить уровень заточки и посмотреть лоты.'}
+          ? 'Tap a bar to switch the enchant level and view listings.'
+          : 'Нажми на столбик, чтобы переключить уровень заточки и посмотреть лоты.'}
       </p>
     </div>
   );
@@ -1117,7 +1149,7 @@ function MarketAssetPickerSheet({
       }
       return { floor: Number.isFinite(min) ? min : null, lots: totalLots };
     }
-    if (asset.category === 'collections') {
+    if (asset.slug.startsWith('col:')) {
       const colId = asset.slug.replace(/^col:/, '');
       const c = cols.find(row => row.id === colId);
       return { floor: c?.floor ?? null, lots: 0 };
@@ -1156,26 +1188,24 @@ function MarketAssetPickerSheet({
           />
         </label>
 
-        <div className="hScrollFadeViewport">
-          <div className="radarSheetCats">
+        <div className="radarSheetCats">
+          <button
+            type="button"
+            className={catFilter === 'all' ? 'isActive' : undefined}
+            onClick={() => setCatFilter('all')}
+          >
+            {en ? 'All' : 'Все'}
+          </button>
+          {categories.map(cat => (
             <button
+              key={cat.id}
               type="button"
-              className={catFilter === 'all' ? 'isActive' : undefined}
-              onClick={() => setCatFilter('all')}
+              className={catFilter === cat.id ? 'isActive' : undefined}
+              onClick={() => setCatFilter(cat.id)}
             >
-              {en ? 'All' : 'Все'}
+              {en ? cat.labelEn : cat.label}
             </button>
-            {categories.map(cat => (
-              <button
-                key={cat.id}
-                type="button"
-                className={catFilter === cat.id ? 'isActive' : undefined}
-                onClick={() => setCatFilter(cat.id)}
-              >
-                {en ? cat.labelEn : cat.label}
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
 
         <div className="radarSheetList">
@@ -1190,7 +1220,7 @@ function MarketAssetPickerSheet({
                 onClick={() => onSelect(asset)}
               >
                 <span className="radarSheetRowIcon">
-                  <GameArt path={asset.icon} size={34} />
+                  {asset.albumId ? <AlbumLogo id={asset.albumId} size={34}/> : <GameArt path={asset.icon} size={34} />}
                 </span>
                 <span className="radarSheetRowMeta">
                   <strong>{en ? asset.nameEn : asset.nameRu}</strong>
@@ -1198,7 +1228,7 @@ function MarketAssetPickerSheet({
                 </span>
                 <span className="radarSheetRowPrice">
                   {floor ? (
-                    <strong>{en ? `from ${formatGramCompact(floor)} GRAM` : `от ${formatGramCompact(floor)} GRAM`}</strong>
+                    <strong>{en ? `from ${formatGramCompact(floor, en)} GRAM` : `от ${formatGramCompact(floor, en)} GRAM`}</strong>
                   ) : (
                     <small>—</small>
                   )}
@@ -1246,7 +1276,7 @@ function MarketInfoSheet({ en, onClose }: { en: boolean; onClose: () => void }) 
                 <strong>Floor by enchant (+0…+20):</strong> the lowest active fixed-price listing on Getgems tracked separately for each enchant level.
               </p>
               <p>
-                <strong>Enchant curve:</strong> visualizes how the floor price scales from base +0 up to higher enchant levels.
+                <strong>Prices by enchant level.</strong> The chart shows the lowest listing price at each available level.
               </p>
               <p>
                 <strong>Buy vs self-enchant:</strong> compares the market price of a ready item against the expected self-enchant cost, accounting for burn risk above +3.
@@ -1258,7 +1288,7 @@ function MarketInfoSheet({ en, onClose }: { en: boolean; onClose: () => void }) 
                 <strong>Флор по заточке (+0…+20):</strong> минимальная актуальная цена на Getgems отдельно для каждого уровня заточки.
               </p>
               <p>
-                <strong>Кривая заточки:</strong> наглядно показывает, как растёт минимальная цена предмета от +0 к высоким уровням.
+                <strong>Цены по уровням заточки.</strong> График показывает минимальную цену предмета на каждом уровне, где есть лоты.
               </p>
               <p>
                 <strong>Купить vs точить:</strong> сравнивает цену готового предмета со средней себестоимостью самостоятельной заточки с учётом риска сгорания после +3.

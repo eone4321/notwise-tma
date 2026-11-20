@@ -35,6 +35,7 @@ export default async function handler() {
   const now = new Date().toISOString();
   const items = tokens.tokens.map(({ symbol, master_address }) => {
     const metrics = market?.data?.find(row => row.attributes.address === master_address)?.attributes;
+    // In-game GRAM labels native TON (Toncoin 1:1 rebrand), not the 2024 PoW Jetton.
     const coingeckoId = symbol === 'GRAM' ? 'the-open-network' : symbol === 'NOT' ? 'notcoin' : '';
     const tonapiUsd = positive(rates?.[master_address ?? 'TON']?.prices?.USD);
     const price = tonapiUsd ?? positive(native?.[coingeckoId]?.usd);

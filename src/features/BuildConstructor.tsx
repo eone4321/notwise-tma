@@ -174,6 +174,7 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
   const [choosePreset, setChoosePreset] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [ringEnchantPreview, setRingEnchantPreview] = useState(0);
+  const [bulkConfirmLevel, setBulkConfirmLevel] = useState<number | null>(null);
   const spent = totalAttributes(state.points);
   const budget = state.budget ?? state.level;
   const left = budget - spent;
@@ -181,23 +182,41 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
   const total = activeAttributes(state);
   const results = battleStats(state.level, total.strength, total.agility, total.wisdom, total.endurance);
   const nameOf = (skill: typeof combatSkills[number]) => lang ? skill.name : skill.title;
-  const equippedRingsCount = state.rings.filter(Boolean).length;
-  const mainEnchantLevel = equippedRingsCount > 0
-    ? Math.max(...state.rings.map(slot => slot?.enchant ?? 0))
-    : ringEnchantPreview;
+  const equippedRingEnchants = state.rings.flatMap(slot => (slot ? [slot.enchant] : []));
+  const equippedRingsCount = equippedRingEnchants.length;
+  const minRingEnchant = equippedRingsCount > 0 ? Math.min(...equippedRingEnchants) : ringEnchantPreview;
+  const maxRingEnchant = equippedRingsCount > 0 ? Math.max(...equippedRingEnchants) : ringEnchantPreview;
+  const totalRingEnchant = equippedRingEnchants.reduce((sum, lvl) => sum + lvl, 0);
+  const hasMixedRingEnchants = equippedRingsCount > 1 && minRingEnchant !== maxRingEnchant;
+  const mainEnchantLevel = hasMixedRingEnchants ? (bulkConfirmLevel ?? maxRingEnchant) : maxRingEnchant;
   const nextMainTarget = Math.min(20, mainEnchantLevel + 1);
   const mainEnchantSuccess = 100 - Math.max(0, (nextMainTarget - 1) - 2) * 5;
   const mainEnchantBurn = 100 - mainEnchantSuccess;
   const mainRiskZone = mainEnchantLevel < 3 ? 'safe' : mainEnchantLevel < 10 ? 'mid' : 'high';
+  const ringSlotsSummary = state.rings.map(slot => (slot ? `+${slot.enchant}` : '—')).join(' · ');
+
+  useEffect(() => {
+    if (!hasMixedRingEnchants) setBulkConfirmLevel(null);
+  }, [hasMixedRingEnchants]);
 
   function applyMainRingEnchant(nextLvl: number) {
     const clamped = Math.max(0, Math.min(20, nextLvl));
     setRingEnchantPreview(clamped);
+    setBulkConfirmLevel(null);
     if (state.rings.some(Boolean)) {
       update({
         rings: state.rings.map(slot => slot ? { ...slot, enchant: clamped } : null),
       });
     }
+  }
+
+  function requestBulkRingEnchant(nextLvl: number) {
+    const clamped = Math.max(0, Math.min(20, nextLvl));
+    if (hasMixedRingEnchants) {
+      setBulkConfirmLevel(clamped);
+      return;
+    }
+    applyMainRingEnchant(clamped);
   }
 
   const update = (change: Partial<BuildState>) => {
@@ -229,6 +248,7 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
     lightHaptic();
     trackGuide('build:preset');
     resetPractice();
+    setBulkConfirmLevel(null);
     setState(applyBuildPreset(build, state));
   }
 
@@ -270,6 +290,7 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
               setBudgetDraft(null);
               setSharedBanner(false);
               setRingEnchantPreview(0);
+              setBulkConfirmLevel(null);
               setState(initialBuild());
             }}>↺</button>
         </div>
@@ -375,39 +396,82 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
 
       <div className="wardrobeEnchantCard buildRingEnchantCard">
         <div className="skinEnchantBox">
-          <div className="skinEnchantMeta">
-            <GameArt path="/game/items/scroll-enchant-ring.webp" size={28}/>
-            <div className="skinEnchantText">
-              <strong>
-                <span>{copy('Заточка колец', 'Ring enchant')}</span>
-                <b className="skinEnchantBonusTag">
-                  {mainEnchantLevel > 0 ? `+${mainEnchantLevel} · +${mainEnchantLevel * 5}%` : '+0%'}
-                </b>
-              </strong>
-              <small data-risk={mainRiskZone}>
-                {mainEnchantLevel >= 20
+          <div className="skinEnchantHead">
+            <div className="skinEnchantMeta">
+              <GameArt path="/game/items/scroll-enchant-ring.webp" size={28}/>
+              <strong>{copy('Заточка колец', 'Ring enchant')}</strong>
+            </div>
+            <b className="skinEnchantBonusTag" data-mixed={hasMixedRingEnchants || undefined}>
+              {hasMixedRingEnchants
+                ? copy(`+${minRingEnchant}..+${maxRingEnchant} · разные`, `+${minRingEnchant}–+${maxRingEnchant} · mixed`)
+                : mainEnchantLevel > 0 ? `+${mainEnchantLevel} · +${mainEnchantLevel * 5}%` : '+0%'}
+            </b>
+          </div>
+          <div className="skinEnchantControls">
+            <small className="skinEnchantHint" data-risk={hasMixedRingEnchants ? 'mid' : mainRiskZone}>
+              {hasMixedRingEnchants
+                ? copy(
+                    `Слоты: ${ringSlotsSummary} (+${totalRingEnchant * 5}% монет). Для точечной правки открой слот.`,
+                    `Slots: ${ringSlotsSummary} (+${totalRingEnchant * 5}% coins). Tap a slot to edit individually.`
+                  )
+                : mainEnchantLevel >= 20
                   ? copy('Максимум +20 (+20 к стату · +100% монет)', 'Max +20 (+20 stat · +100% coins)')
                   : mainEnchantBurn > 0
                     ? copy(`На +${nextMainTarget}: ${mainEnchantSuccess}% успех · ${mainEnchantBurn}% риск 🔥`, `To +${nextMainTarget}: ${mainEnchantSuccess}% ok · ${mainEnchantBurn}% burn 🔥`)
                     : copy(`На +${nextMainTarget}: 100% без сгорания`, `To +${nextMainTarget}: 100% safe`)}
-              </small>
+            </small>
+            <div className="buildStatStep skinEnchantStep">
+              <button type="button" aria-label={copy('Уменьшить заточку', 'Decrease enchant')}
+                disabled={hasMixedRingEnchants ? (bulkConfirmLevel !== null && bulkConfirmLevel <= 0) : mainEnchantLevel <= 0}
+                onClick={() => {
+                  lightHaptic();
+                  if (hasMixedRingEnchants) {
+                    requestBulkRingEnchant(bulkConfirmLevel === null ? minRingEnchant : bulkConfirmLevel - 1);
+                  } else {
+                    applyMainRingEnchant(mainEnchantLevel - 1);
+                  }
+                }}>−</button>
+              <input aria-label={copy('Уровень заточки', 'Enchant level')}
+                value={hasMixedRingEnchants ? (bulkConfirmLevel ?? '') : (mainEnchantLevel || '')}
+                placeholder={hasMixedRingEnchants ? '≠' : '0'}
+                inputMode="numeric" maxLength={2}
+                onChange={event => {
+                  const digits = event.target.value.replace(/\D/g, '');
+                  const parsed = digits ? Number(digits) : 0;
+                  if (hasMixedRingEnchants) requestBulkRingEnchant(parsed);
+                  else applyMainRingEnchant(parsed);
+                }}/>
+              <button type="button" aria-label={copy('Увеличить заточку', 'Increase enchant')}
+                disabled={hasMixedRingEnchants ? (bulkConfirmLevel !== null && bulkConfirmLevel >= 20) : mainEnchantLevel >= 20}
+                onClick={() => {
+                  lightHaptic();
+                  if (hasMixedRingEnchants) {
+                    requestBulkRingEnchant(bulkConfirmLevel === null ? maxRingEnchant : bulkConfirmLevel + 1);
+                  } else {
+                    applyMainRingEnchant(mainEnchantLevel + 1);
+                  }
+                }}>+</button>
             </div>
           </div>
-          <div className="buildStatStep skinEnchantStep">
-            <button type="button" aria-label={copy('Уменьшить заточку', 'Decrease enchant')}
-              disabled={mainEnchantLevel <= 0}
-              onClick={() => { lightHaptic(); applyMainRingEnchant(mainEnchantLevel - 1); }}>−</button>
-            <input aria-label={copy('Уровень заточки', 'Enchant level')}
-              value={mainEnchantLevel || ''} placeholder="0" inputMode="numeric" maxLength={2}
-              onChange={event => {
-                const digits = event.target.value.replace(/\D/g, '');
-                applyMainRingEnchant(digits ? Number(digits) : 0);
-              }}/>
-            <button type="button" aria-label={copy('Увеличить заточку', 'Increase enchant')}
-              disabled={mainEnchantLevel >= 20}
-              onClick={() => { lightHaptic(); applyMainRingEnchant(mainEnchantLevel + 1); }}>+</button>
-          </div>
         </div>
+        {hasMixedRingEnchants && bulkConfirmLevel !== null && (
+          <div className="buildRingBulkConfirm" role="region" aria-live="polite">
+            <span>
+              {copy(
+                `Уравнять все ${equippedRingsCount} кольца на +${bulkConfirmLevel}?`,
+                `Set all ${equippedRingsCount} rings to +${bulkConfirmLevel}?`
+              )}
+            </span>
+            <div className="buildRingBulkActions">
+              <button type="button" className="buildPillButton" onClick={() => { lightHaptic(); setBulkConfirmLevel(null); }}>
+                {copy('Отмена', 'Cancel')}
+              </button>
+              <button type="button" className="buildPillButton buildEquippedDonePill" onClick={() => { lightHaptic(); applyMainRingEnchant(bulkConfirmLevel); }}>
+                {copy(`Применить +${bulkConfirmLevel}`, `Apply +${bulkConfirmLevel}`)}
+              </button>
+            </div>
+          </div>
+        )}
         <div className="wardrobeRiskMeter" aria-hidden="true">
           <div className="wardrobeRiskTrack">
             <div className="wardrobeRiskFill" data-risk={mainRiskZone} style={{ width: `${(mainEnchantLevel / 20) * 100}%` }}/>
@@ -547,41 +611,41 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
               }}>{copy('Снять', 'Remove')}</button>
             </div>
             <div className="skinEnchantBox buildModalEnchantBox">
-              <div className="skinEnchantMeta">
-                <div className="skinEnchantText">
-                  <strong>
-                    <span>{copy('Заточка кольца', 'Ring enchant')}</span>
-                    <b className="skinEnchantBonusTag">+{equipped.enchant} · +{equipped.enchant * 5}%</b>
-                  </strong>
-                  <small data-risk={ringRisk}>
-                    {equipped.enchant >= 20
-                      ? copy('Максимум +20 (+100% монет)', 'Max +20 (+100% coins)')
-                      : ringBurn > 0
-                        ? copy(`На +${ringNext}: ${ringSuccess}% успех · ${ringBurn}% риск 🔥`, `To +${ringNext}: ${ringSuccess}% ok · ${ringBurn}% burn 🔥`)
-                        : copy(`На +${ringNext}: 100% без сгорания`, `To +${ringNext}: 100% safe`)}
-                  </small>
+              <div className="skinEnchantHead">
+                <div className="skinEnchantMeta">
+                  <strong>{copy('Заточка кольца', 'Ring enchant')}</strong>
                 </div>
+                <b className="skinEnchantBonusTag">+{equipped.enchant} · +{equipped.enchant * 5}%</b>
               </div>
-              <div className="buildStatStep skinEnchantStep">
-                <button type="button" aria-label={copy('Уменьшить заточку', 'Decrease enchant')}
-                  disabled={equipped.enchant <= 0}
-                  onClick={() => {
-                    lightHaptic();
-                    update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant: Math.max(0, equipped.enchant - 1) }) });
-                  }}>−</button>
-                <input aria-label={copy('Заточка кольца', 'Ring sharpening')}
-                  value={equipped.enchant || ''} placeholder="0" inputMode="numeric" maxLength={2}
-                  onChange={event => {
-                    const digits = event.target.value.replace(/\D/g, '');
-                    const val = digits ? Math.min(20, Math.max(0, Number(digits))) : 0;
-                    update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant: val }) });
-                  }}/>
-                <button type="button" aria-label={copy('Увеличить заточку', 'Increase enchant')}
-                  disabled={equipped.enchant >= 20}
-                  onClick={() => {
-                    lightHaptic();
-                    update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant: Math.min(20, equipped.enchant + 1) }) });
-                  }}>+</button>
+              <div className="skinEnchantControls">
+                <small className="skinEnchantHint" data-risk={ringRisk}>
+                  {equipped.enchant >= 20
+                    ? copy('Максимум +20 (+100% монет)', 'Max +20 (+100% coins)')
+                    : ringBurn > 0
+                      ? copy(`На +${ringNext}: ${ringSuccess}% успех · ${ringBurn}% риск 🔥`, `To +${ringNext}: ${ringSuccess}% ok · ${ringBurn}% burn 🔥`)
+                      : copy(`На +${ringNext}: 100% без сгорания`, `To +${ringNext}: 100% safe`)}
+                </small>
+                <div className="buildStatStep skinEnchantStep">
+                  <button type="button" aria-label={copy('Уменьшить заточку', 'Decrease enchant')}
+                    disabled={equipped.enchant <= 0}
+                    onClick={() => {
+                      lightHaptic();
+                      update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant: Math.max(0, equipped.enchant - 1) }) });
+                    }}>−</button>
+                  <input aria-label={copy('Заточка кольца', 'Ring enchant')}
+                    value={equipped.enchant || ''} placeholder="0" inputMode="numeric" maxLength={2}
+                    onChange={event => {
+                      const digits = event.target.value.replace(/\D/g, '');
+                      const val = digits ? Math.min(20, Math.max(0, Number(digits))) : 0;
+                      update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant: val }) });
+                    }}/>
+                  <button type="button" aria-label={copy('Увеличить заточку', 'Increase enchant')}
+                    disabled={equipped.enchant >= 20}
+                    onClick={() => {
+                      lightHaptic();
+                      update({ rings: replaceSlot(state.rings, picker.slot, { ...equipped, enchant: Math.min(20, equipped.enchant + 1) }) });
+                    }}>+</button>
+                </div>
               </div>
             </div>
             <div className="wardrobeRiskMeter" aria-hidden="true">
@@ -609,7 +673,7 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
                 <strong>{nameOf(skill)}</strong>
                 <small>{skillMana(skill.tier, passive(skill), skill.id === 10)} {passive(skill)
                   ? copy('маны за срабатывание', 'mana / trigger')
-                  : copy('маны · откат ', 'mana · ') + skillCooldown(skill.tier) + copy(' с', ' s')}</small>
+                  : copy('маны · откат ', 'mana · ') + skillCooldown(skill.tier) + copy('с', ' s')}</small>
               </div>
               <button className="buildPillButton" type="button" onClick={() => {
                 lightHaptic();
@@ -619,34 +683,34 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
             </div>
             <p className="buildEquippedEffect">{skillEffect(skill.id, equipped.level, state.level, lang).map(row => row.join(' ')).join(' · ')}</p>
             <div className="skinEnchantBox buildModalEnchantBox">
-              <div className="skinEnchantMeta">
-                <div className="skinEnchantText">
-                  <strong>
-                    <span>{copy('Уровень навыка в Додзё', 'Dojo skill level')}</span>
-                    <b className="skinEnchantBonusTag">{copy(`Ур. ${equipped.level} / 21`, `Lv. ${equipped.level} / 21`)}</b>
-                  </strong>
+              <div className="skinEnchantHead">
+                <div className="skinEnchantMeta">
+                  <strong>{copy('Уровень навыка в Додзё', 'Dojo skill level')}</strong>
                 </div>
+                <b className="skinEnchantBonusTag">{copy(`Ур. ${equipped.level} / 21`, `Lv. ${equipped.level} / 21`)}</b>
               </div>
-              <div className="buildStatStep skinEnchantStep">
-                <button type="button" aria-label={copy('Уменьшить уровень', 'Decrease level')}
-                  disabled={equipped.level <= 1}
-                  onClick={() => {
-                    lightHaptic();
-                    update({ skills: replaceSlot(state.skills, picker.slot, { ...equipped, level: Math.max(1, equipped.level - 1) }) });
-                  }}>−</button>
-                <input aria-label={copy('Уровень навыка', 'Skill level')}
-                  value={equipped.level} inputMode="numeric" maxLength={2}
-                  onChange={event => {
-                    const digits = event.target.value.replace(/\D/g, '');
-                    const val = digits ? Math.min(21, Math.max(1, Number(digits))) : 1;
-                    update({ skills: replaceSlot(state.skills, picker.slot, { ...equipped, level: val }) });
-                  }}/>
-                <button type="button" aria-label={copy('Увеличить уровень', 'Increase level')}
-                  disabled={equipped.level >= 21}
-                  onClick={() => {
-                    lightHaptic();
-                    update({ skills: replaceSlot(state.skills, picker.slot, { ...equipped, level: Math.min(21, equipped.level + 1) }) });
-                  }}>+</button>
+              <div className="skinEnchantControls">
+                <div className="buildStatStep skinEnchantStep">
+                  <button type="button" aria-label={copy('Уменьшить уровень', 'Decrease level')}
+                    disabled={equipped.level <= 1}
+                    onClick={() => {
+                      lightHaptic();
+                      update({ skills: replaceSlot(state.skills, picker.slot, { ...equipped, level: Math.max(1, equipped.level - 1) }) });
+                    }}>−</button>
+                  <input aria-label={copy('Уровень навыка', 'Skill level')}
+                    value={equipped.level} inputMode="numeric" maxLength={2}
+                    onChange={event => {
+                      const digits = event.target.value.replace(/\D/g, '');
+                      const val = digits ? Math.min(21, Math.max(1, Number(digits))) : 1;
+                      update({ skills: replaceSlot(state.skills, picker.slot, { ...equipped, level: val }) });
+                    }}/>
+                  <button type="button" aria-label={copy('Увеличить уровень', 'Increase level')}
+                    disabled={equipped.level >= 21}
+                    onClick={() => {
+                      lightHaptic();
+                      update({ skills: replaceSlot(state.skills, picker.slot, { ...equipped, level: Math.min(21, equipped.level + 1) }) });
+                    }}>+</button>
+                </div>
               </div>
             </div>
             <button className="buildPillButton buildEquippedDonePill buildEquippedConfirmBtn" type="button" onClick={() => { lightHaptic(); requestClose(); }}>
@@ -825,7 +889,7 @@ function SkillPickerOptions({ state, slot, lang, onSelect }: { state: BuildState
       const requirement = state.level < 2 ? (lang ? 'From owl level 2' : 'Со 2-го уровня совы')
         : lang ? `Invest +${need} more in ${statLabels[branch][lang]}` : `Нужно ещё +${need} очк. в ветку`;
       return <PickerOption key={skill.id} art={skillArt(skill.id)} title={lang ? skill.name : skill.title}
-        meta={used ? (lang ? 'Already equipped' : 'Уже в наборе') : available ? (lang ? skill.effect.split('.')[0].replace(/\{[^}]+\}/g, '…') : skill.summary) : requirement}
+        meta={used ? (lang ? 'Already equipped' : 'Уже в наборе') : available ? (lang ? skill.effect.split('.')[0].replace(/\{[^|}]+\|([^}]+)\}/g, '$1').replace(/\{[^}]+\}/g, '…') : skill.summary) : requirement}
         disabled={used || !available} selected={selected} onSelect={button => onSelect(skill.id, button)}/>;
     })}
   </>;
@@ -847,17 +911,25 @@ function BuildAnalysis({ state, lang }: { state: BuildState; lang: number }) {
   if (review.freePoints > 0) notes.push({
     title: copy('Есть свободные очки', 'Unspent points'),
     detail: copy(`Осталось ${review.freePoints} очк. Мудрость даёт ману и крит, ловкость — уклонение, выносливость — HP.`,
-      `${review.freePoints} points left. Wisdom adds mana & crit, Agility adds dodge, Endurance adds HP.`),
+      `${review.freePoints} ${review.freePoints === 1 ? 'point' : 'points'} left. Wisdom adds mana & crit, Agility adds dodge, Endurance adds HP.`),
   });
   if (review.skillSlots > 0) notes.push({
-    title: copy('Свободные слоты навыков', 'Empty skill slots'),
-    detail: copy(`Можно поставить ещё ${review.skillSlots} навык(а) из открытых веток.`,
-      `You can equip ${review.skillSlots} more unlocked skill(s).`),
+    title: review.skillSlots === 1
+      ? copy('Свободный слот навыка', 'Empty skill slot')
+      : copy('Свободные слоты навыков', 'Empty skill slots'),
+    detail: copy(
+      `Можно поставить ещё ${review.skillSlots} ${review.skillSlots === 1 ? 'навык' : 'навыка'} из открытых веток.`,
+      `You can equip ${review.skillSlots} more unlocked ${review.skillSlots === 1 ? 'skill' : 'skills'}.`,
+    ),
   });
   if (review.ringSlots > 0) notes.push({
-    title: copy('Пустые слоты колец', 'Empty ring slots'),
-    detail: copy(`Свободно слотов колец: ${review.ringSlots}. Добавь кольца под нужную ветку.`,
-      `${review.ringSlots} empty ring slot(s).`),
+    title: review.ringSlots === 1
+      ? copy('Пустой слот кольца', 'Empty ring slot')
+      : copy('Пустые слоты колец', 'Empty ring slots'),
+    detail: copy(
+      `Свободно слотов колец: ${review.ringSlots}. Добавь кольца под нужную ветку.`,
+      `${review.ringSlots} empty ring ${review.ringSlots === 1 ? 'slot' : 'slots'}.`,
+    ),
   });
   if (review.flurryWithoutHint) notes.push({
     title: copy('Вой берсерка без фиксации блока', 'Berserk Howl without guard lock'),
@@ -868,7 +940,7 @@ function BuildAnalysis({ state, lang }: { state: BuildState; lang: number }) {
     title: copy('Уклонение упёрлось в потолок 70%', 'Dodge is capped at 70%'),
     detail: review.movableAgility > 0
       ? copy(`До ${review.movableAgility} очк. ловкости можно перекинуть в другой стат без потери уклонения.`,
-        `Up to ${review.movableAgility} Agility points can be moved elsewhere without losing dodge.`)
+        `Up to ${review.movableAgility} Agility ${review.movableAgility === 1 ? 'point' : 'points'} can be moved elsewhere without losing dodge.`)
       : copy('Выше 100 ловкости уклонение не растёт — проверь вклад колец и баффов.',
         'Dodge stops scaling at 100 Agility; check rings and buffs.'),
   });
@@ -886,7 +958,7 @@ function BuildAnalysis({ state, lang }: { state: BuildState; lang: number }) {
   return <div className="buildAnalysis">
     {rotations !== null && <div className="buildManaSummary">
       <span>{copy('Мана на бой', 'Battle mana')}</span>
-      <strong>{review.mana} · {copy(`хватит на ${rotations} кр.`, `${rotations} full cast(s)`)}</strong>
+      <strong>{review.mana} · {copy(`хватит на ${rotations} кр.`, `${rotations} ${rotations === 1 ? 'full cast' : 'full casts'}`)}</strong>
     </div>}
     {review.hasPassives && <p className="caption">{copy('Пассивные навыки тоже тратят ману при каждом срабатывании.', 'Passive skills spend mana on every trigger.')}</p>}
     {notes.length > 0 ? <ul className="buildAdvice">{notes.map(note =>

@@ -12,11 +12,10 @@ import { AlbumLogo } from '../ui/AlbumLogo';
 import { achievementActions } from './inventory';
 import { ProgressStatus, useProgress } from './GuideProgress';
 import marketCollections from './market-collections';
-import stickerData from './sticker-data';
+import stickerData, { albumNames as albums } from './sticker-data';
 import { chanceLabel, chancePerOpening } from '../domain/mechanics';
 import { useGuideLocale } from './guideLocale';
 
-const albums = ['Wonderland','Flying Saucer','Cosmo Zone','Summer Vibes','Wild Fortune','Hellborn','Mimizuku','Showtime','Power Mode','Naughty Mood','Hustle Pack','Spellbound','Wanted Sheriff','Internet Moments','Laa-Laa Land','Fine Art','The Family','GG Pack','Golden Scarab','Back to School'];
 const themes: Record<string, string> = { Showtime: 'Сцена и иллюзии' };
 const themesEn: Record<string, string> = {
   Wonderland: 'Fairytale world',
@@ -49,6 +48,8 @@ const purpose: Record<string, string> = {
   domains: 'Имена третьего уровня на TON, привязанные к домену notwise.ton.',
   merch: 'NFT, которые выпустили для обмена на физический мерч NOT Wise.',
   items: 'Кольца, артефакты и расходники, выпущенные как NFT из инвентаря игры.',
+  exp: 'Дискеты опыта (XP) и флаконы очков навыков (SP), выпущенные как NFT.',
+  vouchers: 'Ваучеры на 10 000 и 100 000 $NOT, выпущенные как NFT из инвентаря игры.',
   skins: 'NFT-скины для сов. Экипированные детали дают бонус к фарму монет.',
   family: 'Отдельная коллекция Not Wise Family на TON.',
 };
@@ -61,9 +62,17 @@ const purposeEn: Record<string, string> = {
   domains: 'Third-level TON domain names linked to notwise.ton.',
   merch: 'NFTs minted to redeem physical NOT Wise merchandise.',
   items: 'Rings, artifacts, and consumables minted as NFTs from the in-game inventory.',
+  exp: 'Experience (XP) floppies and skill point (SP) flasks minted as NFTs.',
+  vouchers: '10,000 and 100,000 $NOT vouchers minted as NFTs from the in-game inventory.',
   skins: 'NFT owl skins. Equipped skin parts boost coin farming.',
   family: 'Standalone Not Wise Family collection on TON.',
 };
+
+function collectionIcon(id: string): string {
+  if (id === 'exp') return '/game/items/floppy-100k.webp';
+  if (id === 'vouchers') return '/game/items/voucher-10k.webp';
+  return '/brand/collections/' + id + '.png';
+}
 
 const achievementActionsEn: Record<number, string> = {
   5: 'Play 10 days in a row.',
@@ -101,10 +110,13 @@ export function CollectionPage() {
   const stickerTitle = (item: (typeof stickers)[number]) => (isRu ? (item.name_ru || item.name) : item.name);
   const { collected, completed, setMark } = useProgress();
   const isDone = (id: number) => collected.includes(id) || completed.includes(id);
-  const albumNumber = Number(pathname.match(/albums\/(\d+)$/)?.[1]);
+  const albumMatch = /^\/collections\/albums\/(\d+)$/.exec(pathname);
+  const albumNumber = albumMatch ? Number(albumMatch[1]) : 0;
   const album = albumNumber >= 1 && albumNumber <= albums.length ? albumNumber : null;
   const marketView = pathname === '/collections/market';
   const chartsView = pathname === '/collections/charts';
+  const isMainView = pathname === '/collections';
+  const isUnknownSubroute = !isMainView && !marketView && !chartsView && album === null;
   const { data: market, pending } = collectionMarket.useSnapshot();
 
   const matches = album === null ? [] : [...stickers.filter(item => stickerAlbum(item.id) === album)].sort((a, b) => (a.rarity ?? 0) - (b.rarity ?? 0) || a.id - b.id);
@@ -121,18 +133,28 @@ export function CollectionPage() {
     : themesEn[title];
   const total = album === null ? stickers.length : matches.length;
   return <>
-    {album === null && !chartsView && <nav className="choiceBar profileTabs" aria-label={isRu ? 'Раздел коллекций' : 'Collections section'}>
+    {!isUnknownSubroute && album === null && !chartsView && <nav className="choiceBar profileTabs" aria-label={isRu ? 'Раздел коллекций' : 'Collections section'}>
       <Link to="/collections" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={!marketView ? 'page' : undefined}><GameGlyph name="gift"/>{isRu ? 'Стикеры' : 'Stickers'}</Link>
       <Link to="/collections/market" replace state={keepParent ? { guideDetail: true } : undefined} aria-current={marketView ? 'page' : undefined}><GameGlyph name="treasure"/>{isRu ? 'NFT на Getgems' : 'Getgems NFTs'}</Link>
     </nav>}
-    {chartsView ? <MarketChartsPage/> : marketView ? <section className="card marketCollections" aria-busy={!market && pending}>
+    {isUnknownSubroute ? <section className="card">
+      <h2>{pathname.startsWith('/collections/albums')
+        ? (isRu ? 'Альбом не найден' : 'Album not found')
+        : (isRu ? 'Страница не найдена' : 'Page not found')}</h2>
+      <p>{pathname.startsWith('/collections/albums')
+        ? (isRu ? `Такого альбома нет. Доступно ${albums.length} альбомов со стикерами.` : `This album does not exist. There are ${albums.length} sticker albums available.`)
+        : (isRu ? 'Запрошенный раздел коллекций не найден.' : 'The requested collections page was not found.')}</p>
+      <Link className="textLink" to="/collections" replace state={keepParent ? { guideDetail: true } : undefined}>
+        {isRu ? 'К альбомам и стикерам' : 'Back to albums and stickers'}
+      </Link>
+    </section> : chartsView ? <MarketChartsPage/> : marketView ? <section className="card marketCollections" aria-busy={!market && pending}>
       {marketCollections.map(item => {
         const quote = quotesById.get(item.id);
         const floor = quote?.floor;
         return <details className="mediaDetails marketCollection" key={item.id} id={item.id} open={hash === "#" + item.id || undefined}>
           <summary>
-            <GameArt path={'/brand/collections/' + item.id + '.png'} size={42}/>
-            <span><strong>{!isRu && item.id === 'classics' ? 'NOT Wise :: Classics (Sticker packs)' : item.name}</strong>
+            <GameArt path={collectionIcon(item.id)} size={42}/>
+            <span><strong>{!isRu ? (item.nameEn ?? item.name) : item.name}</strong>
               <small>{!market && pending ? (isRu ? 'Загружаем флор…' : 'Loading floor…') : floor && floor > 0
                 ? <span className="floorPrice" title={quote?.available === false ? (isRu ? 'Последняя доступная цена' : 'Last available price') : undefined}><Price value={floor} currency="gram" from/></span>
                 : (isRu ? 'Флор недоступен' : 'Floor unavailable')}</small></span>

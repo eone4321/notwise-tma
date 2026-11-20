@@ -9,7 +9,8 @@ import { useGuideLocale } from './guideLocale';
 
 const wallet = 'UQDm9yL64jkyN-3ejCnfmcVLq_zZu2u4YjR3qWg5w6itHPgz';
 const presets = [1, 3, 5, 10, 25, 50, 100, 250, 500, 1000];
-const stars = new Intl.NumberFormat('ru-RU');
+const starsRu = new Intl.NumberFormat('ru-RU');
+const starsEn = new Intl.NumberFormat('en-US');
 
 async function paymentConfirmed(id: string, initData: string) {
   const response = await fetch(`/api/donations/${encodeURIComponent(id)}`, {
@@ -24,6 +25,7 @@ async function paymentConfirmed(id: string, initData: string) {
 export function SupportPage({ isAdmin }: { isAdmin: boolean }) {
   const { locale } = useGuideLocale();
   const en = locale === 'en';
+  const stars = en ? starsEn : starsRu;
   const [amount, setAmount] = useState(5);
   const [message, setMessage] = useState('');
   const [order, setOrder] = useState('');

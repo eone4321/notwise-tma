@@ -237,6 +237,15 @@ export default async function handler(request: Request) {
       if (!await redis(['SET', namespace + 'prepare-share:' + id, '1', 'NX', 'EX', 3])) {
         return json({ error: 'share_unavailable' }, 429);
       }
+      const requestedLang = input.language === 'ru' || input.language === 'en'
+        ? input.language
+        : input.locale === 'ru' || input.locale === 'en'
+          ? input.locale
+          : null;
+      const headerLang = request.headers.get('accept-language') ?? '';
+      const isRu = requestedLang
+        ? requestedLang === 'ru'
+        : /^ru\b/i.test(user.language ?? headerLang);
       const raw = input.personal !== false ? await redis<string | null>(['HGET', accountsKey, id]) : null;
       const account = raw ? JSON.parse(raw) as Account : null;
       const code = account?.referralCode ?? '';
@@ -245,8 +254,14 @@ export default async function handler(request: Request) {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(3500),
         body: JSON.stringify({
           user_id: Number(id), allow_user_chats: true, allow_group_chats: true,
-          result: { type: 'article', id: 'guide', title: 'NOT Wise Guide',
-            input_message_content: { message_text: 'Гайд по NOT Wise 🦉\n' + url } },
+          result: {
+            type: 'article',
+            id: 'guide',
+            title: isRu ? 'Гайд по NOT Wise' : 'NOT Wise Guide',
+            input_message_content: {
+              message_text: (isRu ? 'Гайд по NOT Wise 🦉\n' : 'NOT Wise Guide 🦉\n') + url,
+            },
+          },
         }),
       }).then(response => response.json());
       if (!result.ok || typeof result.result?.id !== 'string') return json({ error: 'share_unavailable' }, 503);

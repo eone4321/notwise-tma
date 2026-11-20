@@ -22,16 +22,27 @@ function applySafeArea() {
   } else style.removeProperty('--tg-computed-top');
 }
 
+function supportsWebAppVersion(tg: any, version: string): boolean {
+  return typeof tg?.isVersionAtLeast === 'function' && tg.isVersionAtLeast(version);
+}
+
 export function syncTelegramTheme() {
   const graphite = document.documentElement.dataset.theme !== 'glass';
   const background = graphite ? '#111112' : '#080d1b';
   const dock = graphite ? '#181819' : '#131314';
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', background);
   const tg = window.Telegram?.WebApp;
-  // Older Telegram clients only accept their own theme colors.
-  try { tg?.setHeaderColor?.(background); } catch {}
-  try { tg?.setBackgroundColor?.(background); } catch {}
-  try { tg?.setBottomBarColor?.(dock); } catch {}
+  if (!tg) return;
+  // setHeaderColor / setBackgroundColor require 6.1 (hex header colors require 6.9); setBottomBarColor requires 7.10.
+  if (supportsWebAppVersion(tg, '6.1') && typeof tg.setHeaderColor === 'function') {
+    try { tg.setHeaderColor(supportsWebAppVersion(tg, '6.9') ? background : 'bg_color'); } catch {}
+  }
+  if (supportsWebAppVersion(tg, '6.1') && typeof tg.setBackgroundColor === 'function') {
+    try { tg.setBackgroundColor(background); } catch {}
+  }
+  if (supportsWebAppVersion(tg, '7.10') && typeof tg.setBottomBarColor === 'function') {
+    try { tg.setBottomBarColor(dock); } catch {}
+  }
 }
 
 export async function bootTelegram() {
@@ -48,9 +59,11 @@ export async function bootTelegram() {
       tg.ready();
       if (immersive) {
         tg.expand?.();
-        tg.requestFullscreen?.();
-        tg.disableVerticalSwipes?.();
-      } else if (tg.isFullscreen) tg.exitFullscreen?.();
+        if (supportsWebAppVersion(tg, '8.0') && typeof tg.requestFullscreen === 'function') tg.requestFullscreen();
+        if (supportsWebAppVersion(tg, '7.7') && typeof tg.disableVerticalSwipes === 'function') tg.disableVerticalSwipes();
+      } else if (tg.isFullscreen && supportsWebAppVersion(tg, '8.0') && typeof tg.exitFullscreen === 'function') {
+        tg.exitFullscreen();
+      }
       applySafeArea();
       tg.onEvent?.('safeAreaChanged', applySafeArea);
       tg.onEvent?.('contentSafeAreaChanged', applySafeArea);
@@ -95,8 +108,14 @@ export async function bootTelegram() {
 
 export function impactHaptic(style: 'light' | 'heavy') {
   try {
-    if (hapticFeedback.isSupported()) hapticFeedback.impactOccurred(style);
-    else window.Telegram?.WebApp?.HapticFeedback?.impactOccurred(style);
+    if (hapticFeedback.isSupported()) {
+      hapticFeedback.impactOccurred(style);
+      return;
+    }
+    const tg = window.Telegram?.WebApp;
+    if (supportsWebAppVersion(tg, '6.1') && typeof tg?.HapticFeedback?.impactOccurred === 'function') {
+      tg.HapticFeedback.impactOccurred(style);
+    }
   } catch {
     /* client may not support haptics */
   }
@@ -114,7 +133,9 @@ export function telegramPopup() {
 export async function openTelegramInvoice(url: string) {
   if (invoice.isSupported()) return invoice.open(url, 'url');
   const tg = window.Telegram?.WebApp;
-  if (tg?.openInvoice) return new Promise<string>((resolve) => tg.openInvoice(url, resolve));
+  if (supportsWebAppVersion(tg, '6.1') && typeof tg?.openInvoice === 'function') {
+    return new Promise<string>((resolve) => tg.openInvoice(url, resolve));
+  }
   window.open(url, '_blank', 'noopener,noreferrer');
   return 'opened';
 }

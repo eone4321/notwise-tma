@@ -10,9 +10,11 @@ import { useGuideLocale } from './guideLocale';
 const date = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' });
 const dateEn = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 const timeOnly = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const timeOnlyEn = new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 const dayLabel = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 const dayLabelEn = new Intl.DateTimeFormat('en-US', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 const number = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 4 });
+const numberEn = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 });
 type Members = { items: GuideMember[]; total: number };
 type Daily = { day: string; active: number; events: Partial<Record<GuideEvent, number>> };
 type Report = { days: Daily[] };
@@ -90,10 +92,15 @@ const guideBuildsEn: Record<keyof typeof guideBuilds, string> = {
   share: 'Shared build',
 };
 
-export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null }) {
+export function AdminPage({ profile, profileFailed = false, onRetryProfile }: {
+  profile: { isAdmin: boolean } | null;
+  profileFailed?: boolean;
+  onRetryProfile?: () => void;
+}) {
   const { locale } = useGuideLocale();
   const en = locale === 'en';
   const dateFmt = en ? dateEn : date;
+  const numFmt = en ? numberEn : number;
   const [tab, setTab] = useState<Tab>('analytics');
   const [result, setResult] = useState<Members | Report | Awards | MarketStatus | null>(null);
   const [offset, setOffset] = useState(0);
@@ -101,16 +108,17 @@ export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null })
   const [attempt, setAttempt] = useState(0);
   const [refreshingMarket, setRefreshingMarket] = useState(false);
   const [testIndex, setTestIndex] = useState(0);
-  const canAccess = Boolean(authData()) && profile?.isAdmin !== false;
+  const hasAuth = Boolean(authData());
+  const isAdmin = hasAuth && profile?.isAdmin === true;
 
   useEffect(() => {
-    if (!canAccess || tab === 'reset') return;
+    if (!isAdmin || tab === 'reset') return;
     const abort = new AbortController();
     profileRequest<Members | Report | Awards | MarketStatus>({ action: tab, offset }, abort.signal).then(setResult).catch(reason => {
       if (!abort.signal.aborted) setError(reason.message);
     });
     return () => abort.abort();
-  }, [canAccess, tab, offset, attempt]);
+  }, [isAdmin, tab, offset, attempt]);
 
   function open(next: Tab, nextOffset = 0) {
     if (next === tab && nextOffset === offset) return;
@@ -136,9 +144,15 @@ export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null })
     }
   }
 
+  const unauthorized = !hasAuth || (profile !== null && !profile.isAdmin) || error === 'forbidden';
+
   return <>
     <h1 className="pageTitle">{en ? 'Guide Admin' : 'Управление гайдом'}</h1>
-    {!canAccess || error === 'forbidden' ? <section className="card"><p>{en ? 'This section is available to the project owner in Telegram.' : 'Раздел доступен владельцу проекта в Telegram.'}</p></section> : <>
+    {unauthorized ? <section className="card"><p>{en ? 'This section is available to the project owner in Telegram.' : 'Раздел доступен владельцу проекта в Telegram.'}</p></section> :
+      profile === null && profileFailed ? <section className="card"><p>{en ? 'Failed to verify access.' : 'Не удалось проверить доступ.'}</p>
+        {onRetryProfile && <button className="secondary" onClick={onRetryProfile}>{en ? 'Retry' : 'Повторить'}</button>}
+      </section> :
+      profile === null ? <section className="card"><p role="status">{en ? 'Checking access…' : 'Проверяем доступ…'}</p></section> : <>
       <nav className="choiceBar" aria-label={en ? 'Guide Admin' : 'Управление гайдом'}>
         <button aria-pressed={tab === 'analytics'} onClick={() => open('analytics')}>{en ? 'Analytics' : 'Аналитика'}</button>
         <button aria-pressed={tab === 'market_status'} onClick={() => open('market_status')}>{en ? 'Price Parser' : 'Парсер цен'}</button>
@@ -162,11 +176,11 @@ export function AdminPage({ profile }: { profile: { isAdmin: boolean } | null })
           <ul className="compactList">{result.items.filter(({ id }) => Object.hasOwn(guideAchievements, id)).map(({ id, count, rule }) =>
             <li className="awardRow adminAward" key={id}>
               <AwardIcon award={id}/><div><strong>{en ? guideAchievementsEn[id] : guideAchievements[id].title}</strong><small>{rule}</small></div>
-              <span aria-label={en ? `Players: ${number.format(count)}` : `Игроков: ${number.format(count)}`}>{number.format(count)}</span>
+              <span aria-label={en ? `Players: ${numFmt.format(count)}` : `Игроков: ${numFmt.format(count)}`}>{numFmt.format(count)}</span>
             </li>)}</ul>
         </section> :
         <section className="card">
-          <h2>{en ? `Users · ${number.format(result.total)}` : `Пользователи · ${number.format(result.total)}`}</h2>
+          <h2>{en ? `Users · ${numFmt.format(result.total)}` : `Пользователи · ${numFmt.format(result.total)}`}</h2>
           <ul className="compactList">{result.items.map(member => <li className="mediaRow" key={member.id}>
             <div><strong>{member.name}</strong><small className="block">Telegram ID {member.id}</small>
               <small className="block">{en ? `First visit: ${dateFmt.format(member.joinedAt)} · Last visit: ${dateFmt.format(member.seenAt)}` : `Первый вход: ${dateFmt.format(member.joinedAt)} · Последний вход: ${dateFmt.format(member.seenAt)}`}</small>
@@ -214,12 +228,13 @@ function formatAge(timestamp: number | string | null, en = false) {
   if (!Number.isFinite(ms)) return '—';
   const mins = Math.max(0, Math.round((Date.now() - ms) / 60_000));
   const ago = mins === 0 ? (en ? 'just now' : 'только что') : (en ? `${mins}m ago` : `${mins} мин назад`);
-  return `${timeOnly.format(ms)} (${ago})`;
+  return `${(en ? timeOnlyEn : timeOnly).format(ms)} (${ago})`;
 }
 
 function MarketDiagnostics({ data, refreshing, onRefresh, en }: {
   data: MarketStatus; refreshing: boolean; onRefresh: () => void; en: boolean;
 }) {
+  const numFmt = en ? numberEn : number;
   const { data: tokens } = tokenMarket.useSnapshot();
   const mainCols = data.collections.filter(col => !col.id.startsWith('album-'));
   const albumCols = data.collections.filter(col => col.id.startsWith('album-'));
@@ -270,10 +285,10 @@ function MarketDiagnostics({ data, refreshing, onRefresh, en }: {
             {col.name}
             <small className="block">
               {col.available ? (col.source ? srcLabels[col.source] : (en ? 'ok' : 'ок')) : (en ? 'unavailable' : 'недоступно')}
-              {typeof col.supply === 'number' ? (en ? ` · ${number.format(col.supply)} pcs` : ` · ${number.format(col.supply)} шт.`) : ''}
+              {typeof col.supply === 'number' ? (en ? ` · ${numFmt.format(col.supply)} pcs` : ` · ${numFmt.format(col.supply)} шт.`) : ''}
             </small>
           </dt>
-          <dd>{col.floor !== null ? `${number.format(col.floor)} GRAM` : '—'}</dd>
+          <dd>{col.floor !== null ? `${numFmt.format(col.floor)} GRAM` : '—'}</dd>
         </div>)}
       </dl>
     </section>
@@ -286,10 +301,10 @@ function MarketDiagnostics({ data, refreshing, onRefresh, en }: {
             {en ? `Album #${col.id.slice(6)}` : `Альбом №${col.id.slice(6)}`}
             <small className="block">
               {col.available ? (col.source ? srcLabels[col.source] : (en ? 'ok' : 'ок')) : (en ? 'unavailable' : 'недоступно')}
-              {typeof col.supply === 'number' ? (en ? ` · minted ${number.format(col.supply)}` : ` · сминчено ${number.format(col.supply)}`) : ''}
+              {typeof col.supply === 'number' ? (en ? ` · minted ${numFmt.format(col.supply)}` : ` · сминчено ${numFmt.format(col.supply)}`) : ''}
             </small>
           </dt>
-          <dd>{col.floor !== null ? `${number.format(col.floor)} GRAM` : '—'}</dd>
+          <dd>{col.floor !== null ? `${numFmt.format(col.floor)} GRAM` : '—'}</dd>
         </div>)}
       </dl>
     </details>
@@ -299,7 +314,7 @@ function MarketDiagnostics({ data, refreshing, onRefresh, en }: {
       <dl className="analyticsRows">
         {data.items.items.map(item => <div key={item.id}>
           <dt>{item.id}</dt>
-          <dd>{number.format(item.floor)} GRAM</dd>
+          <dd>{numFmt.format(item.floor)} GRAM</dd>
         </div>)}
       </dl>
     </details>
@@ -320,6 +335,7 @@ function Analytics({ days, en }: { days: Daily[]; en: boolean }) {
   const [period, setPeriod] = useState(7);
   const interval = days.slice(0, period);
   const dayFmt = en ? dayLabelEn : dayLabel;
+  const numFmt = en ? numberEn : number;
   const buildsMap = en ? guideBuildsEn : guideBuilds;
   const pagesMap = en ? guidePagesEn : guidePages;
   const actionsMap = en ? guideActionsEn : guideActions;
@@ -336,21 +352,21 @@ function Analytics({ days, en }: { days: Daily[]; en: boolean }) {
       <p className="caption">{en ? 'UTC days. Repeated identical actions within 15 minutes are counted once.' : 'Дни по UTC. Повтор одного действия в течение 15 минут учитывается один раз.'}</p>
       <dl className="analyticsRows">
         {interval.map(day => <div key={day.day}>
-          <dt>{dayFmt.format(new Date(day.day))}</dt><dd>{number.format(day.active)} {en ? 'users' : 'чел.'}</dd>
+          <dt>{dayFmt.format(new Date(day.day))}</dt><dd>{numFmt.format(day.active)} {en ? 'users' : 'чел.'}</dd>
         </div>)}
       </dl>
     </section>
     <section className="card"><h2>{en ? 'Build calculator' : 'Конструктор билдов'}</h2><dl className="analyticsRows">
       {Object.entries(buildsMap).map(([key, label]) =>
-        <div key={key}><dt>{label}</dt><dd>{number.format(count('build', key))}</dd></div>)}
+        <div key={key}><dt>{label}</dt><dd>{numFmt.format(count('build', key))}</dd></div>)}
     </dl></section>
     <section className="card"><h2>{en ? 'Section views' : 'Открытия разделов'}</h2><dl className="analyticsRows">
       {Object.entries(pagesMap).sort(([a], [b]) => count('view', b) - count('view', a)).map(([key, label]) =>
-        <div key={key}><dt>{label}</dt><dd>{number.format(count('view', key))}</dd></div>)}
+        <div key={key}><dt>{label}</dt><dd>{numFmt.format(count('view', key))}</dd></div>)}
     </dl></section>
     <section className="card"><h2>{en ? 'Actions' : 'Действия'}</h2><dl className="analyticsRows">
       {Object.entries(actionsMap).map(([key, label]) =>
-        <div key={key}><dt>{label}</dt><dd>{number.format(count('action', key))}</dd></div>)}
+        <div key={key}><dt>{label}</dt><dd>{numFmt.format(count('action', key))}</dd></div>)}
     </dl></section>
   </>;
 }

@@ -15,7 +15,7 @@ import { OwlPrices } from '../features/OwlPrices';
 import { EcosystemPage } from '../features/EcosystemPage';
 import { TokenTicker } from '../features/TokenQuotes';
 import { GameArt } from '../ui/GameArt';
-import { GameGlyph } from '../ui/GameGlyph';
+import { GameAttribute, GameGlyph } from '../ui/GameGlyph';
 import { AlbumLogo } from '../ui/AlbumLogo';
 import { CarePage, InventoryPage, OwlPage } from '../features/InventoryPage';
 import { CombatPage } from '../features/CombatPage';
@@ -24,7 +24,7 @@ import { CapsulePage } from '../features/CapsulePage';
 import { OwlSkinCanvas } from '../features/OwlSkinCanvas';
 import { homeOwlChangeEvent, hydrateHomeOwlFromCloud, readHomeOwlSkin } from '../features/skinRig';
 import { achievementActions } from '../features/inventory';
-import {useEffect,useRef,useState}from'react';
+import {useCallback,useEffect,useRef,useState}from'react';
 import{Link,Navigate,useLocation,useNavigate}from'react-router';
 import{AnimatePresence,motion}from'motion/react';
 import all from'../../public/data/all_100_stickers.json';import quests from'../../public/data/secret_quests.json';import{impactHaptic,lightHaptic,telegramPopup}from'../telegram/client';
@@ -103,21 +103,22 @@ useEffect(() => {
   window.addEventListener('keydown', close);
   return () => window.removeEventListener('keydown', close);
 }, [hamster, hamsterLocked]);
-const closeJoke = () => {
+const updateAward = awards.update;
+const closeJoke = useCallback(() => {
   setShowJoke(false);
   if (jokePendingAward.current) {
     jokePendingAward.current = false;
-    void awards.update('joke').catch(() => {});
+    void updateAward('joke').catch(() => {});
   }
-};
+}, [updateAward]);
 useEffect(() => {
   if (loc.pathname !== '/secrets' && showJoke) closeJoke();
-});
+}, [loc.pathname, showJoke, closeJoke]);
 useEffect(()=>{telegramPopup()?.ready();const key='notwise.guide.startapp.v1';if(sessionStorage.getItem(key))return;const start=new URLSearchParams(location.search).get('startapp')??telegramPopup()?.initDataUnsafe?.start_param;if(start?.startsWith('b_')){sessionStorage.setItem(key,'1');const [buildPart]=start.split('--g_');nav('/combat/builds?build='+encodeURIComponent(buildPart),{replace:true});return;}const routes:Record<string,string>={capsules_gold:'/capsules/gold',eggs:'/owl',secrets:'/secrets',market:'/collections/market',charts:'/collections/charts'};if(start&&Object.hasOwn(routes,start)){sessionStorage.setItem(key,'1');nav(routes[start],{replace:true})}},[nav]);
 const ask=()=>{
   lightHaptic();
   const tg=telegramPopup();
-  if(tg?.showPopup){
+  if(tg?.isVersionAtLeast?.('6.2') && typeof tg.showPopup === 'function'){
     try {
       tg.showPopup({
         title: english ? 'Not Wise Secrets' : 'Секреты Not Wise',
@@ -132,12 +133,15 @@ const ask=()=>{
 function reveal(){setPopup(false);setJoke(true);setShowJoke(true);jokePendingAward.current=true;localStorage.setItem('notwise.guide.secrets.v1','1')}
 return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathname==='/'?'homeShell':'')}><header inert={hamster || coach !== null}><Link to="/" className="brand"><img src={artSrc('/brand/notwise.svg')} alt=""/><span>NOT WISE <i>GUIDE</i></span></Link>{loc.pathname === '/' && <TokenTicker/>}</header><main className="guideScreen" key={loc.pathname} inert={hamster || coach !== null}>{loc.pathname === '/' ? <Home onChatVisit={awards.noteChatVisit} onSquadVisit={() => { void awards.update('visit_squad').catch(() => {}); }} english={english} profile={profile} profileFailed={profileFailed} retryProfile={() => {
   setProfileFailed(false); setProfileAttempt(value => value + 1);
-}}/> : <div className="guidePageContent">{loc.pathname === '/admin' ? <AdminPage profile={profile}/> : loc.pathname === '/support' || loc.pathname.startsWith('/support/') ?
+}}/> : <div className="guidePageContent">{loc.pathname === '/admin' ? <AdminPage profile={profile} profileFailed={profileFailed} onRetryProfile={() => {
+  setProfileFailed(false);
+  setProfileAttempt(value => value + 1);
+}}/> : loc.pathname === '/support' || loc.pathname.startsWith('/support/') ?
   <SettingsPage profile={profile} earned={awards.earned} chatIssue={awards.chatIssue}/> : <Page english={english} profile={profile} onChatVisit={awards.noteChatVisit} ask={ask} joke={joke} showJoke={showJoke} popup={popup} reveal={reveal}
   referrals={<ReferralsPage profile={profile} failed={profileFailed} onSave={next => { setProfile(next); void awards.update().catch(() => {}); }} onRetry={() => {
     setProfileFailed(false);
     setProfileAttempt(value => value + 1);
-  }}/>}/>}</div>}</main><AwardToast award={awards.toast} onDismiss={awards.dismissToast}/>{coach && !hamster && <><div className="dockCoachTint" aria-hidden="true"/><DockCoach step={coach} onContinue={advanceCoach}/></>}{showJoke && loc.pathname === '/secrets' && <RevealedSecrets english={english} close={closeJoke}/>}<Dock english={english} onShortTap={coach === 'dock' ? advanceCoach : undefined} hamster={hamster} locked={hamsterLocked} onHamster={() => {
+  }}/>}/>}</div>}</main><AwardToast award={awards.toast} onDismiss={awards.dismissToast}/>{coach && !hamster && <><div className="dockCoachTint" data-step={coach} aria-hidden="true"/><DockCoach step={coach} onContinue={advanceCoach}/></>}{showJoke && loc.pathname === '/secrets' && <RevealedSecrets english={english} close={closeJoke}/>}<Dock english={english} disabled={coach === 'theme'} onShortTap={coach === 'dock' ? advanceCoach : undefined} hamster={hamster} locked={hamsterLocked} onHamster={() => {
   if (hamsterLocked) return;
   if (hamster) {
     setHamster(false);
@@ -154,7 +158,7 @@ return <GuideProgress user={profile?.userId}><div className={"shell "+(loc.pathn
   <p className="hamsterSpeech">{english ? '*#$@#, go poke yourself %*!' : '*#$@#, себя потыкай %*!'}</p>
   <img src={artSrc('/brand/hamster.png')} width="1264" height="1371" alt={english ? "CryptoOne Hamster" : "Хомяк CryptoOne"}/>
 </motion.aside>}</AnimatePresence></div></GuideProgress>}
-function Dock({ english: en, hamster, locked, onHamster, onShortTap }: { english: boolean; hamster: boolean; locked: boolean; onHamster: () => void; onShortTap?: () => void }) {
+function Dock({ english: en, disabled = false, hamster, locked, onHamster, onShortTap }: { english: boolean; disabled?: boolean; hamster: boolean; locked: boolean; onHamster: () => void; onShortTap?: () => void }) {
   const location = useLocation();
   const navigation = useGuideNavigation();
   const gesture = useRef({ count: 0, started: 0, pointer: -1, x: 0, y: 0, timer: 0 });
@@ -169,12 +173,16 @@ function Dock({ english: en, hamster, locked, onHamster, onShortTap }: { english
     state.count = 0;
   };
   useEffect(() => {
+    if (disabled) cancel();
+  }, [disabled]);
+  useEffect(() => {
     document.addEventListener('visibilitychange', cancel);
     return () => { document.removeEventListener('visibilitychange', cancel); cancel(); };
   }, []);
-  return <nav className="gameDock" aria-label={en ? "Navigation" : "Навигация"} data-mascot-open={hamster || undefined}>
-    <button className="logoBtn" disabled={locked} aria-label={hamster ? (en ? "Hide hamster" : "Спрятать хомяка") : (en ? "Back. Hold to go Home" : "Назад. Удерживайте для перехода на главную")}
+  return <nav className="gameDock" aria-label={en ? "Navigation" : "Навигация"} data-mascot-open={hamster || undefined} data-coach-locked={disabled || undefined} inert={disabled || undefined}>
+    <button className="logoBtn" disabled={locked || disabled} aria-label={hamster ? (en ? "Hide hamster" : "Спрятать хомяка") : (en ? "Back. Hold to go Home" : "Назад. Удерживайте для перехода на главную")}
       onPointerDown={event => {
+        if (disabled) return;
         const state = gesture.current;
         if (!event.isPrimary) { cancel(); return; }
         if (event.button !== 0) return;
@@ -184,8 +192,11 @@ function Dock({ english: en, hamster, locked, onHamster, onShortTap }: { english
         event.currentTarget.setPointerCapture(event.pointerId);
         state.timer = window.setTimeout(() => {
           cancel();
-          if (onShortTap) return; // Step 1 onboarding advances ONLY on short tap, never on long press
           impactHaptic('heavy');
+          if (onShortTap) {
+            onShortTap();
+            return;
+          }
           if (hamster) onHamster();
           else navigation.home();
         }, 500);
@@ -197,6 +208,7 @@ function Dock({ english: en, hamster, locked, onHamster, onShortTap }: { english
       onPointerCancel={cancel}
       onLostPointerCapture={() => { if (gesture.current.pointer !== -1) cancel(); }}
       onPointerUp={event => {
+        if (disabled) return;
         const state = gesture.current;
         if (event.pointerId !== state.pointer) return;
         clearTimeout(state.timer);
@@ -223,6 +235,7 @@ function Dock({ english: en, hamster, locked, onHamster, onShortTap }: { english
         }
       }}
       onClick={event => {
+        if (disabled) return;
         if (event.detail === 0) {
           lightHaptic();
           if (onShortTap) { onShortTap(); return; }
@@ -318,7 +331,7 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
     const [name, description] = en ? tile.en : tile.ru;
     return <Link to={tile.path} className="guideTile" key={tile.path}>
       <img className="guideTileArt" src={artSrc(tile.art)} alt="" width="108" height="108"/>
-      <span className="guideTileIcon">{tile.path === '/collections' ? <AlbumLogo id={1} size={44}/> : <GameArt path={tile.icon} size={40}/>}</span>
+      <span className="guideTileIcon">{tile.path === '/collections' ? <AlbumLogo id={1} size={44}/> : tile.path === '/combat' ? <GameAttribute name="wisdom"/> : <GameArt path={tile.icon} size={40}/>}</span>
       <span className="tileText"><b>{name}</b><small>{description}</small></span>
     </Link>;
   })}</div>
@@ -342,7 +355,7 @@ function ShareDialog({ close, english: en, referralCode }: { close: () => void; 
   function chooseRecipient() {
     lightHaptic();
     trackGuide('action:share_send');
-    void shareGuide(url);
+    void shareGuide(url, en ? 'NOT Wise Guide' : 'Гайд по NOT Wise');
     close();
   }
   return <dialog className="modal" ref={dialog} aria-labelledby="share-title"
