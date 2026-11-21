@@ -109,7 +109,7 @@ export default async function handler(request: Request) {
   }
 
   if (lots.length === 0) {
-    const toncenterToken = process.env.TONCENTER_TOKEN;
+    const toncenterToken = process.env.TONCENTER_API_KEY || process.env.TONCENTER_TOKEN;
     if (toncenterToken) {
       try {
         const base = 'https://toncenter.com/api/v3/nft/';

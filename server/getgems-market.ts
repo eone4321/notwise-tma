@@ -202,7 +202,7 @@ async function fetchGetgemsWebStats(address: string): Promise<{ floor: number | 
 }
 
 async function toncenterSupply(address: string): Promise<number | null> {
-  const token = process.env.TONCENTER_TOKEN;
+  const token = process.env.TONCENTER_API_KEY || process.env.TONCENTER_TOKEN;
   if (!token) return null;
   const url = `https://toncenter.com/api/v3/nft/collections?collection_address=${encodeURIComponent(address)}`;
   const res = await fetch(url, { headers: { 'X-API-Key': token }, signal: AbortSignal.timeout(4000) });

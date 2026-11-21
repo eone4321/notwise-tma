@@ -99,7 +99,7 @@ function hexTrace(b64: string): string {
 }
 
 async function fetchOnChainSales(collectionAddress: string, slug: string, filterBySlug: boolean): Promise<MarketSale[]> {
-  const toncenterToken = process.env.TONCENTER_TOKEN;
+  const toncenterToken = process.env.TONCENTER_API_KEY || process.env.TONCENTER_TOKEN;
   const tonapiToken = process.env.TONAPI_TOKEN;
   const sinceSec = Math.floor(Date.now() / 1000) - 7 * 86400;
   const trRes = await fetch(
