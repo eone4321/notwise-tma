@@ -41,6 +41,33 @@ type ChartMode = 'history' | 'curve';
 type HistoryPoint = { ts: number; floor: number; count: number };
 type MarketSale = { address: string; name: string; price: number; currency: string; at: number; image?: string; href: string };
 
+const marketHistoryCache = new Map<string, HistoryPoint[]>();
+const marketHistoryInflight = new Map<string, Promise<HistoryPoint[]>>();
+
+function historyCacheKey(slug: string, enc: string, range: HistoryRange) {
+  return `${slug}:${enc}:${range}`;
+}
+
+function fetchHistoryCached(slug: string, enc: string, range: HistoryRange): Promise<HistoryPoint[]> {
+  const key = historyCacheKey(slug, enc, range);
+  const cached = marketHistoryCache.get(key);
+  if (cached) return Promise.resolve(cached);
+  const inflight = marketHistoryInflight.get(key);
+  if (inflight) return inflight;
+  const url = `/api/market/history?slug=${encodeURIComponent(slug)}&enchant=${enc}&range=${range}`;
+  const req = fetch(url)
+    .then(res => (res.ok ? res.json() : null))
+    .then(data => {
+      const pts: HistoryPoint[] = Array.isArray(data?.points) ? data.points : [];
+      marketHistoryCache.set(key, pts);
+      return pts;
+    })
+    .catch(() => [] as HistoryPoint[])
+    .finally(() => { marketHistoryInflight.delete(key); });
+  marketHistoryInflight.set(key, req);
+  return req;
+}
+
 const fmtNumRu = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
 const fmtNumEn = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
 const fmtIntRu = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
@@ -350,58 +377,86 @@ export function MarketChartsPage() {
     return 0;
   }, [activeBucket, totalAssetLots, asset, cols, enchant]);
 
-  // Fetch historical points for the selected (slug, enchant, range)
-  const [historyPoints, setHistoryPoints] = useState<HistoryPoint[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(true);
+  // Fetch historical points for the selected (slug, enchant, range), keyed strictly so stale charts never flash
+  const enc = asset.enchantable ? (enchant === null ? 'all' : String(enchant)) : '0';
+  const activeHistoryKey = historyCacheKey(asset.historySlug, enc, range);
+  const [historyState, setHistoryState] = useState<{ key: string; points: HistoryPoint[] }>(() => ({
+    key: activeHistoryKey,
+    points: marketHistoryCache.get(activeHistoryKey) ?? [],
+  }));
+  const [historyLoading, setHistoryLoading] = useState(() => !marketHistoryCache.has(activeHistoryKey));
   const initialLoadDoneRef = useRef(false);
+  const prefetchedMountRef = useRef(false);
+
+  // Prefetch main category defaults, ranges & +0..+3 enchants on initial entry so switching tabs is instant
+  useEffect(() => {
+    if (prefetchedMountRef.current) return;
+    prefetchedMountRef.current = true;
+    const defaults: [string, string, HistoryRange][] = [
+      ['ring-str-1', 'all', '7d'],
+      ['owl-skin', 'all', '7d'],
+      ['scroll-enchant-ring', '0', '7d'],
+      ['col:genesis', '0', '7d'],
+      [asset.historySlug, enc, '24h'],
+      [asset.historySlug, enc, '7d'],
+      [asset.historySlug, enc, '30d'],
+      [asset.historySlug, enc, 'all'],
+    ];
+    if (asset.enchantable) {
+      defaults.push(
+        [asset.historySlug, '0', '7d'],
+        [asset.historySlug, '1', '7d'],
+        [asset.historySlug, '2', '7d'],
+        [asset.historySlug, '3', '7d'],
+      );
+    }
+    for (const [s, e, r] of defaults) {
+      void fetchHistoryCached(s, e, r);
+    }
+  }, [asset.historySlug, asset.enchantable, enc]);
 
   useEffect(() => {
-    const controller = new AbortController();
+    let cancelled = false;
     const isInitial = !initialLoadDoneRef.current;
     const startedAt = performance.now();
     const minLoaderMs = isInitial ? 900 : 0;
     let timer = 0;
+
+    const cached = marketHistoryCache.get(activeHistoryKey);
+    if (cached && !isInitial) {
+      setHistoryState({ key: activeHistoryKey, points: cached });
+      setHistoryLoading(false);
+      return;
+    }
+
     if (isInitial) setHistoryLoading(true);
-    const enc = asset.enchantable ? (enchant === null ? 'all' : String(enchant)) : '0';
-    const url = `/api/market/history?slug=${encodeURIComponent(asset.historySlug)}&enchant=${enc}&range=${range}`;
-    const finishLoading = () => {
+
+    const finishLoading = (pts: HistoryPoint[]) => {
       const remaining = isInitial ? Math.max(0, minLoaderMs - (performance.now() - startedAt)) : 0;
-      if (remaining === 0) {
-        if (!controller.signal.aborted) {
-          initialLoadDoneRef.current = true;
-          setHistoryLoading(false);
-        }
-        return;
-      }
-      timer = window.setTimeout(() => {
-        if (!controller.signal.aborted) {
-          initialLoadDoneRef.current = true;
-          setHistoryLoading(false);
-        }
-      }, remaining);
+      const apply = () => {
+        if (cancelled) return;
+        initialLoadDoneRef.current = true;
+        setHistoryState({ key: activeHistoryKey, points: pts });
+        setHistoryLoading(false);
+      };
+      if (remaining === 0) apply();
+      else timer = window.setTimeout(apply, remaining);
     };
-    fetch(url, { signal: controller.signal })
-      .then(res => (res.ok ? res.json() : null))
-      .then(data => {
-        if (!controller.signal.aborted) {
-          setHistoryPoints(Array.isArray(data?.points) ? data.points : []);
-          finishLoading();
-        }
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) {
-          setHistoryPoints([]);
-          finishLoading();
-        }
-      });
+
+    void fetchHistoryCached(asset.historySlug, enc, range).then(finishLoading);
+
     return () => {
-      controller.abort();
+      cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [asset.historySlug, asset.enchantable, enchant, range]);
+  }, [activeHistoryKey, asset.historySlug, enc, range]);
 
-  // Combine history points with live point if latest snapshot is fresher
+  const historyReady = historyState.key === activeHistoryKey;
+  const historyPoints = historyReady ? historyState.points : [];
+
+  // Combine history points with live point if latest snapshot is fresher (only when points belong to active key)
   const seriesPoints = useMemo(() => {
+    if (!historyReady) return [];
     const pts = [...historyPoints];
     if (liveFloor && liveFloor > 0) {
       const last = pts[pts.length - 1];
@@ -411,7 +466,7 @@ export function MarketChartsPage() {
       }
     }
     return pts;
-  }, [historyPoints, liveFloor, liveCount]);
+  }, [historyReady, historyPoints, liveFloor, liveCount]);
 
   // Build Enchant Curve points (+0..+20) from live buckets
   const curvePoints = useMemo(() => {
