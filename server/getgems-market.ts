@@ -10,6 +10,7 @@ const addresses = [...collections, ...stickers.collectionByAlbum.flatMap((addres
   address ? [{ id: 'album-' + index, address }] : [])];
 const itemsCollection = collections.find(row => row.id === 'items')!.address;
 const skinsCollection = collections.find(row => row.id === 'skins')!.address;
+const genesisCollection = collections.find(row => row.id === 'genesis')?.address;
 const expCollection = collections.find(row => row.id === 'exp')?.address;
 const vouchersCollection = collections.find(row => row.id === 'vouchers')?.address;
 const snapshotKey = 'notwise:getgems:market:v2';
@@ -35,7 +36,7 @@ type Listing = { id: string; floor: number; href: string };
 type ItemSource = 'getgems' | 'toncenter' | 'getgems-on-chain';
 type ItemsSnapshot = { items: Listing[]; status: 'ready' | 'stale' | 'unavailable'; updatedAt?: string; source?: ItemSource };
 type MarketSnapshot = { collections: CollectionQuote[]; items: ItemsSnapshot; attemptedAt: number };
-export type ExplorerLot = { address: string; name: string; price: number; href: string };
+export type ExplorerLot = { address: string; name: string; price: number; href: string; image?: string };
 export type ExplorerBucket = {
   slug: string; enchant: number; floor: number; count: number; lots: ExplorerLot[];
   change24h?: number | null; change7d?: number | null;
@@ -158,7 +159,8 @@ function recordListing(
   if (price < bucket.floor) bucket.floor = price;
 
   const displayName = typeof name === 'string' && name.trim() ? name.trim() : (enchant > 0 ? `${id} +${enchant}` : id);
-  const lot: ExplorerLot = { address: nft, name: displayName, price, href: getgemsNftUrl(nft) };
+  const safeImage = typeof image === 'string' && /^https:\/\/[\w.-]+\//i.test(image) ? image : undefined;
+  const lot: ExplorerLot = { address: nft, name: displayName, price, href: getgemsNftUrl(nft), ...(safeImage ? { image: safeImage } : {}) };
   // Keep top 12 cheapest lots per (slug, enchant) bucket.
   if (bucket.lots.length < 12) {
     bucket.lots.push(lot);
@@ -252,8 +254,11 @@ async function getgemsListings(token: string, supply: number | null): Promise<Cr
   const buckets = new Map<string, BucketAccumulator>();
   const maxPages = supply === null ? 40 : Math.ceil(supply / 100) + 3;
   await getgemsCollectionCrawl(token, itemsCollection, maxPages, prices, buckets);
-  // Best-effort crawl of NOT Wise: Skins for enchanted skin floor tracking.
+  // Best-effort crawl of NOT Wise: Skins and NOT Wise (Genesis Owls) for NFT images & floor tracking.
   await getgemsCollectionCrawl(token, skinsCollection, 15, prices, buckets, 'owl-skin').catch(() => null);
+  if (genesisCollection) {
+    await getgemsCollectionCrawl(token, genesisCollection, 10, prices, buckets, 'col:genesis').catch(() => null);
+  }
   if (expCollection) {
     await getgemsCollectionCrawl(token, expCollection, 10, prices, buckets).catch(() => null);
   }
@@ -378,8 +383,11 @@ async function toncenterListings(token: string, supply: number | null) {
   const buckets = new Map<string, BucketAccumulator>();
   const limit = supply === null ? 6 : Math.ceil(supply / 1000) + 2;
   await toncenterCollectionCrawl(token, itemsCollection, limit, prices, buckets);
-  // Best-effort crawl of NOT Wise: Skins so NFT skins & enchants are always populated.
+  // Best-effort crawl of NOT Wise: Skins and NOT Wise (Genesis Owls) so NFT images & enchants are populated.
   await toncenterCollectionCrawl(token, skinsCollection, 6, prices, buckets, 'owl-skin').catch(() => null);
+  if (genesisCollection) {
+    await toncenterCollectionCrawl(token, genesisCollection, 4, prices, buckets, 'col:genesis').catch(() => null);
+  }
   if (expCollection) {
     await toncenterCollectionCrawl(token, expCollection, 4, prices, buckets).catch(() => null);
   }

@@ -47,7 +47,7 @@ export function BattleReadout({ stats }: { stats: ReturnType<typeof battleStats>
   const tiles = [
     [<GameSymbol name="heart" size={19}/>, 'Здоровье', 'Health', format(stats.health) + ' HP'],
     [<GameSymbol name="bolt" size={19}/>, 'Мана', 'Mana', format(stats.mana)],
-    [<GameSymbol name="swords" size={19}/>, 'Обычный удар', 'Basic hit', format(stats.hit) + ' HP'],
+    [<GameSymbol name="swords" size={19}/>, 'Удар', 'Hit', format(stats.hit) + ' HP'],
     [<GameAttribute name="agility"/>, 'Уклонение', 'Dodge', format(stats.dodge) + '%'],
     [<GameGlyph name="sparkles"/>, 'Крит ×2', 'Crit ×2', format(stats.crit) + '%'],
   ] as const;

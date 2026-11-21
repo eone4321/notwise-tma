@@ -39,6 +39,7 @@ const marketSubscribeUrl = 'https://t.me/+Q2SrPBHP8vRmMmNi';
 type HistoryRange = '24h' | '7d' | '30d' | 'all';
 type ChartMode = 'history' | 'curve';
 type HistoryPoint = { ts: number; floor: number; count: number };
+type MarketSale = { address: string; name: string; price: number; currency: string; at: number; image?: string; href: string };
 
 const fmtNumRu = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
 const fmtNumEn = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
@@ -148,6 +149,9 @@ export function MarketChartsPage() {
   const [chartMode, setChartMode] = useState<ChartMode>('history');
   const [range, setRange] = useState<HistoryRange>('7d');
   const [sortAsc, setSortAsc] = useState(true);
+  const [feedTab, setFeedTab] = useState<'lots' | 'sales'>('lots');
+  const [salesList, setSalesList] = useState<MarketSale[]>([]);
+  const [salesLoading, setSalesLoading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const railRef = useRef<HTMLDivElement>(null);
@@ -221,6 +225,27 @@ export function MarketChartsPage() {
       setSubBusy(false);
     }
   }
+
+  useEffect(() => {
+    if (feedTab !== 'sales') return;
+    const controller = new AbortController();
+    setSalesLoading(true);
+    fetch(`/api/market/sales?slug=${encodeURIComponent(asset.slug)}`, { signal: controller.signal })
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (!controller.signal.aborted) {
+          setSalesList(Array.isArray(data?.sales) ? data.sales : []);
+          setSalesLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setSalesList([]);
+          setSalesLoading(false);
+        }
+      });
+    return () => controller.abort();
+  }, [asset.slug, feedTab]);
 
   useEffect(() => {
     explorerMarket.refresh();
@@ -834,26 +859,45 @@ export function MarketChartsPage() {
         </section>
       )}
 
-      {/* Live Getgems Lots List (STEPN-style) */}
-      {!asset.slug.startsWith('col:') && (
-        <section className="card radarLotsCard">
-          <div className="radarLotsHeader">
-            <div>
-              <h2>{en ? 'Getgems listings' : 'Лоты на Getgems'}</h2>
-              <small>{getgemsDisplayName}</small>
-            </div>
-            {sortedLots.length > 1 && (
+      {/* Live Getgems Lots & Sales Card */}
+      <section className="card radarLotsCard">
+        <div className="radarLotsHeader">
+          <div>
+            <div className="radarFeedTabs" role="tablist" aria-label={en ? 'Listings and sales' : 'Лоты и продажи'}>
               <button
                 type="button"
-                className="radarSortBtn"
-                onClick={() => { lightHaptic(); setSortAsc(v => !v); }}
+                role="tab"
+                aria-selected={feedTab === 'lots'}
+                className={feedTab === 'lots' ? 'isActive' : undefined}
+                onClick={() => { lightHaptic(); setFeedTab('lots'); }}
               >
-                {sortAsc ? (en ? 'Cheapest ↑' : 'Дешёвые ↑') : (en ? 'Priciest ↓' : 'Дорогие ↓')}
+                {en ? 'Listings' : 'Лоты'}
               </button>
-            )}
+              <button
+                type="button"
+                role="tab"
+                aria-selected={feedTab === 'sales'}
+                className={feedTab === 'sales' ? 'isActive' : undefined}
+                onClick={() => { lightHaptic(); setFeedTab('sales'); }}
+              >
+                {en ? 'Sales' : 'Продажи'}
+              </button>
+            </div>
+            <small>{getgemsDisplayName}</small>
           </div>
+          {feedTab === 'lots' && sortedLots.length > 1 && (
+            <button
+              type="button"
+              className="radarSortBtn"
+              onClick={() => { lightHaptic(); setSortAsc(v => !v); }}
+            >
+              {sortAsc ? (en ? 'Cheapest ↑' : 'Дешёвые ↑') : (en ? 'Priciest ↓' : 'Дорогие ↓')}
+            </button>
+          )}
+        </div>
 
-          {sortedLots.length > 0 ? (
+        {feedTab === 'lots' ? (
+          sortedLots.length > 0 ? (
             <div className="radarLotsList">
               {sortedLots.map(lot => (
                 <a
@@ -864,7 +908,7 @@ export function MarketChartsPage() {
                   rel="noreferrer"
                 >
                   <span className="radarLotIcon">
-                    {asset.albumId ? <AlbumLogo id={asset.albumId} size={34}/> : <GameArt path={asset.icon} size={34} />}
+                    <LotThumb src={lot.image} fallback={asset.icon} albumId={asset.albumId} />
                   </span>
                   <span className="radarLotInfo">
                     <strong>{lot.name}</strong>
@@ -887,9 +931,11 @@ export function MarketChartsPage() {
               <p>
                 {explorerPending && !explorer
                   ? (en ? 'Loading active listings from Getgems…' : 'Загружаем активные лоты с Getgems…')
-                  : (en
-                    ? `No fixed-price "${getgemsDisplayName}" listings on Getgems right now.`
-                    : `Сейчас на Getgems нет активных лотов «${getgemsDisplayName}» с фиксированной ценой.`)}
+                  : asset.slug.startsWith('col:') && asset.slug !== 'col:genesis'
+                    ? (en ? 'Collection floor price and supply on Getgems.' : 'Минимальный флор и объём коллекции на Getgems.')
+                    : (en
+                      ? `No fixed-price "${getgemsDisplayName}" listings on Getgems right now.`
+                      : `Сейчас на Getgems нет активных лотов «${getgemsDisplayName}» с фиксированной ценой.`)}
               </p>
               {asset.enchantable && curvePoints.length > 0 && (
                 <div className="radarSuggestedEnchants">
@@ -906,36 +952,56 @@ export function MarketChartsPage() {
                 </div>
               )}
             </div>
-          )}
+          )
+        ) : salesLoading ? (
+          <div className="radarEmptyLots">
+            <p>{en ? 'Loading recent sales from Getgems…' : 'Загружаем последние продажи с Getgems…'}</p>
+          </div>
+        ) : salesList.length > 0 ? (
+          <div className="radarLotsList">
+            {salesList.map((sale, idx) => (
+              <a
+                key={`${sale.address}-${sale.at}-${idx}`}
+                className="radarLotRow"
+                href={sale.href}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <span className="radarLotIcon">
+                  <LotThumb src={sale.image} fallback={asset.icon} albumId={asset.albumId} />
+                </span>
+                <span className="radarLotInfo">
+                  <strong>{sale.name}</strong>
+                  <small>{formatShortTime(sale.at, '30d', en)}</small>
+                </span>
+                <span className="radarLotPrice">
+                  {sale.currency === 'GRAM' ? (
+                    <Price value={sale.price} currency="gram" />
+                  ) : (
+                    <strong>{fmtNum.format(sale.price)} {sale.currency}</strong>
+                  )}
+                  {sale.currency === 'GRAM' && gramUsd && <small>≈ {fmtUsd.format(sale.price * gramUsd)}</small>}
+                </span>
+                <span className="rowChevron" aria-hidden="true" />
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div className="radarEmptyLots">
+            <p>{en ? 'No recent sales found for this asset yet.' : 'Недавних продаж по этой позиции пока не найдено.'}</p>
+          </div>
+        )}
 
-          <a
-            className="radarGetgemsBtn"
-            href={asset.collectionUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <span>{en ? 'Open all listings on Getgems' : 'Открыть все лоты на Getgems'}</span>
-            <span className="externalMark" aria-hidden="true" />
-          </a>
-        </section>
-      )}
-
-      {asset.slug.startsWith('col:') && (
-        <section className="card radarLotsCard">
-          <p className="caption" style={{ margin: 0 }}>
-            {en ? 'Collection floor price and supply on Getgems.' : 'Минимальный флор и объём коллекции на Getgems.'}
-          </p>
-          <a
-            className="radarGetgemsBtn"
-            href={asset.collectionUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <span>{en ? 'Open collection on Getgems' : 'Открыть коллекцию на Getgems'}</span>
-            <span className="externalMark" aria-hidden="true" />
-          </a>
-        </section>
-      )}
+        <a
+          className="radarGetgemsBtn"
+          href={asset.collectionUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <span>{en ? 'Open all listings on Getgems' : 'Открыть на Getgems'}</span>
+          <span className="externalMark" aria-hidden="true" />
+        </a>
+      </section>
 
       {/* Bottom-Sheet Item Picker with Instant Search */}
       {pickerOpen && (
@@ -1039,6 +1105,24 @@ export function MarketChartsPage() {
       </AnimatePresence>
     </div>
   );
+}
+
+function LotThumb({ src, fallback, albumId }: { src?: string; fallback: string; albumId?: number }) {
+  const [failed, setFailed] = useState(false);
+  if (src && !failed) {
+    return (
+      <img
+        className="radarLotImg"
+        src={src}
+        alt=""
+        width={34}
+        height={34}
+        loading="lazy"
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+  return albumId ? <AlbumLogo id={albumId} size={34} /> : <GameArt path={fallback} size={34} />;
 }
 
 function InteractiveFloorChart({

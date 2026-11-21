@@ -100,7 +100,7 @@ export const itemMarket = resource<{
 }>('/api/market/items?schema=5', 120_000, (old, next) =>
   next.status === 'unavailable' && old?.items.length ? { ...old, status: 'stale' } : next);
 
-export type ExplorerLot = { address: string; name: string; price: number; href: string };
+export type ExplorerLot = { address: string; name: string; price: number; href: string; image?: string };
 export type ExplorerBucket = {
   slug: string;
   enchant: number;

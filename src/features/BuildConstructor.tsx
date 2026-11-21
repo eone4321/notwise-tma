@@ -1012,10 +1012,12 @@ function BuildPractice({ result, comparison, lang, save, clear, state }: {
   const copy = (ru: string, en: string) => lang ? en : ru;
   const prior = comparison?.key === result.key && comparison !== result ? comparison : null;
   const pct = (wins: number, trials: number) => Math.round(wins * 100 / trials);
-  const totalWins = result.matchups.reduce((sum, row) => sum + row.wins, 0);
-  const totalTrials = result.matchups.reduce((sum, row) => sum + row.trials, 0);
+  const totalWins = result.median?.wins ?? result.matchups.reduce((sum, row) => sum + row.wins, 0);
+  const totalTrials = result.median?.trials ?? result.matchups.reduce((sum, row) => sum + row.trials, 0);
   const overall = pct(totalWins, totalTrials);
-  const priorOverall = prior ? pct(prior.matchups.reduce((s, r) => s + r.wins, 0), prior.matchups.reduce((s, r) => s + r.trials, 0)) : null;
+  const priorWins = prior ? (prior.median?.wins ?? prior.matchups.reduce((s, r) => s + r.wins, 0)) : 0;
+  const priorTrials = prior ? (prior.median?.trials ?? prior.matchups.reduce((s, r) => s + r.trials, 0)) : 0;
+  const priorOverall = prior && priorTrials > 0 ? pct(priorWins, priorTrials) : null;
   const deltaOverall = priorOverall !== null ? overall - priorOverall : null;
 
   const weakest = result.matchups.reduce((weak, row) => row.wins < weak.wins ? row : weak);
@@ -1038,11 +1040,14 @@ function BuildPractice({ result, comparison, lang, save, clear, state }: {
   return <div className="buildPracticeResult">
     <div className="buildOverallWinrate">
       <div>
-        <small>{copy('Спарринг с 4 эталонами · ', 'Vs 4 meta presets · ')}<span className="buildVerdict" data-tier={overall >= 58 ? 'high' : overall >= 48 ? 'mid' : 'low'}>{verdict}</span></small>
+        <small>{copy('Против медианного игрока (1 000 билдов) · ', 'Vs median player (1,000 builds) · ')}<span className="buildVerdict" data-tier={overall >= 58 ? 'high' : overall >= 48 ? 'mid' : 'low'}>{verdict}</span></small>
         <p className="caption">
-          {result.skillLevel !== undefined && copy(`Навыки врагов ${result.skillLevel} ур.`, `Opponent skills lvl ${result.skillLevel}`)}
-          {result.enchant !== undefined && copy(` · заточка +${result.enchant}`, ` · +${result.enchant}`)}
-          {copy(' (50% = уровень меты)', ' (50% = meta parity)')}
+          {result.median
+            ? copy(
+              `Медиана: колец ${result.median.ringsCount}${result.median.ringsCount > 0 ? ` (+${result.median.enchant})` : ''} · навыки ${result.median.skillLevel} ур. · ${result.median.trials} боёв`,
+              `Median: ${result.median.ringsCount} ring(s)${result.median.ringsCount > 0 ? ` (+${result.median.enchant})` : ''} · skills lv.${result.median.skillLevel} · ${result.median.trials} duels`,
+            )
+            : copy(' (50% = уровень меты)', ' (50% = meta parity)')}
         </p>
       </div>
       <div className="buildOverallValue">
