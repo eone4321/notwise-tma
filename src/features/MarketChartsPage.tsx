@@ -32,7 +32,7 @@ import { useGuideLocale } from './guideLocale';
 import { lightHaptic, telegramPopup } from '../telegram/client';
 import { artSrc } from '../ui/warmArt';
 import { authData, profileRequest } from './guideProfile';
-import { useGuideNavigation } from '../app/navigation';
+import { useBackOverlay, useGuideNavigation } from '../app/navigation';
 
 const marketSubscribeUrl = 'https://t.me/+Q2SrPBHP8vRmMmNi';
 
@@ -224,6 +224,8 @@ export function MarketChartsPage() {
   const [salesLoading, setSalesLoading] = useState(() => !marketSalesCache.has(asset.slug));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  useBackOverlay(pickerOpen, () => setPickerOpen(false));
+  useBackOverlay(infoOpen, () => setInfoOpen(false));
   const railRef = useRef<HTMLDivElement>(null);
   const explorerRetryCount = useRef(0);
 

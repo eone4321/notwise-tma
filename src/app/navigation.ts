@@ -1,4 +1,4 @@
-import { useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 
 type View = { scroll: number; open: string[] };
@@ -135,11 +135,33 @@ export function parentPath(path: string) {
   return parts.length > 1 ? '/' + parts.slice(0, -1).join('/') : '/';
 }
 
+const backHandlers: (() => boolean | void)[] = [];
+
+export function useBackOverlay(active: boolean, onClose: () => void) {
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+
+  useEffect(() => {
+    if (!active) return;
+    const handler = () => {
+      closeRef.current();
+      return true;
+    };
+    backHandlers.push(handler);
+    return () => {
+      const idx = backHandlers.lastIndexOf(handler);
+      if (idx >= 0) backHandlers.splice(idx, 1);
+    };
+  }, [active]);
+}
+
 export function useGuideNavigation() {
   const { pathname, hash, state } = useLocation();
   const navigate = useNavigate();
   return {
     back: () => {
+      const topHandler = backHandlers[backHandlers.length - 1];
+      if (topHandler && topHandler() !== false) return;
       if (state?.guideDetail === true && history.state?.idx > 0) {
         navigate(-1);
         return;
