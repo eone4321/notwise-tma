@@ -1,8 +1,8 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { BottomDrawer } from '../ui/BottomDrawer';
 import { DetailLink } from '../ui/DetailLink';
 import { GameArt } from '../ui/GameArt';
 import { GameGlyph } from '../ui/GameGlyph';
-import { useModal } from '../ui/useModal';
 import { artSrc } from '../ui/warmArt';
 import { lightHaptic } from '../telegram/client';
 import { battleLeagues } from './battle-leagues';
@@ -622,44 +622,8 @@ export function SkinFarmCalculator({
   </section>;
 }
 
-const sheetDrawerEasing = 'cubic-bezier(0.32, 0.72, 0, 1)';
-const sheetReduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
 function SkinModal({ title, closeLabel, onClose, children }: {
   title: string; closeLabel: string; onClose: () => void; children: ReactNode | ((requestClose: () => void) => ReactNode);
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const animation = useRef<Animation | null>(null);
-  const titleId = useId();
-  useModal(ref, true, true);
-  useLayoutEffect(() => {
-    const dialog = ref.current;
-    if (!dialog || typeof dialog.animate !== 'function' || sheetReduceMotion()) return;
-    animation.current = dialog.animate([{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }],
-      { duration: 460, easing: sheetDrawerEasing });
-    return () => animation.current?.cancel();
-  }, []);
-
-  function close() {
-    const dialog = ref.current;
-    if (!dialog || dialog.dataset.closing) return;
-    const from = getComputedStyle(dialog).transform;
-    animation.current?.cancel();
-    if (typeof dialog.animate !== 'function' || sheetReduceMotion()) { onClose(); return; }
-    dialog.dataset.closing = 'true';
-    animation.current = dialog.animate([{ transform: from }, { transform: 'translateY(100%)' }],
-      { duration: 360, easing: sheetDrawerEasing, fill: 'forwards' });
-    animation.current.finished.then(onClose, () => {});
-  }
-
-  return <dialog className="modal buildPickerModal" ref={ref} aria-labelledby={titleId}
-    onCancel={event => { event.preventDefault(); close(); }}
-    onClick={event => { if (event.target === event.currentTarget) close(); }}>
-    <div className="dialogBody">
-      <span className="sheetGrabber" aria-hidden="true"/>
-      <header className="buildHeading"><h2 id={titleId} data-dialog-title tabIndex={-1}>{title}</h2>
-        <button className="close" type="button" aria-label={closeLabel} onClick={() => { lightHaptic(); close(); }}>×</button></header>
-      {typeof children === 'function' ? children(close) : children}
-    </div>
-  </dialog>;
+  return <BottomDrawer title={title} closeLabel={closeLabel} onClose={onClose}>{children}</BottomDrawer>;
 }

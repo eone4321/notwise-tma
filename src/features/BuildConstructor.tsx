@@ -1,10 +1,10 @@
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { battleStats, skillCooldown, skillMana, startingAttribute } from '../domain/combat';
+import { BottomDrawer } from '../ui/BottomDrawer';
 import { GameArt } from '../ui/GameArt';
 import { GameAttribute, GameGlyph } from '../ui/GameGlyph';
 import { copyLink } from '../ui/copyLink';
-import { useModal } from '../ui/useModal';
 import { lightHaptic } from '../telegram/client';
 import { trackGuide } from './guideAnalytics';
 import { useGuideLocale } from './guideLocale';
@@ -863,46 +863,10 @@ function AttributeInput({ name, value, onCommit }: { name: string; value: number
     }}/>;
 }
 
-const buildSheetEasing = 'cubic-bezier(0.32, 0.72, 0, 1)';
-const buildSheetReduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
 function BuildPicker({ title, closeLabel, onClose, children }: {
   title: string; closeLabel: string; onClose: () => void; children: ReactNode | ((requestClose: () => void) => ReactNode);
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const animation = useRef<Animation | null>(null);
-  const titleId = useId();
-  useModal(ref, true, true);
-  useLayoutEffect(() => {
-    const dialog = ref.current;
-    if (!dialog || typeof dialog.animate !== 'function' || buildSheetReduceMotion()) return;
-    animation.current = dialog.animate([{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }],
-      { duration: 460, easing: buildSheetEasing });
-    return () => animation.current?.cancel();
-  }, []);
-
-  function close() {
-    const dialog = ref.current;
-    if (!dialog || dialog.dataset.closing) return;
-    const from = getComputedStyle(dialog).transform;
-    animation.current?.cancel();
-    if (typeof dialog.animate !== 'function' || buildSheetReduceMotion()) { onClose(); return; }
-    dialog.dataset.closing = 'true';
-    animation.current = dialog.animate([{ transform: from }, { transform: 'translateY(100%)' }],
-      { duration: 360, easing: buildSheetEasing, fill: 'forwards' });
-    animation.current.finished.then(onClose, () => {});
-  }
-
-  return <dialog className="modal buildPickerModal" ref={ref} aria-labelledby={titleId}
-    onCancel={event => { event.preventDefault(); close(); }}
-    onClick={event => { if (event.target === event.currentTarget) close(); }}>
-    <div className="dialogBody">
-      <span className="sheetGrabber" aria-hidden="true"/>
-      <header className="buildHeading"><h2 id={titleId} data-dialog-title tabIndex={-1}>{title}</h2>
-        <button className="close" type="button" aria-label={closeLabel} onClick={() => { lightHaptic(); close(); }}>×</button></header>
-      {typeof children === 'function' ? children(close) : children}
-    </div>
-  </dialog>;
+  return <BottomDrawer title={title} closeLabel={closeLabel} onClose={onClose}>{children}</BottomDrawer>;
 }
 
 function SkillPickerOptions({ state, slot, lang, onSelect }: { state: BuildState; slot: number; lang: number; onSelect: (id: number, button: HTMLButtonElement) => void }) {
