@@ -1,9 +1,29 @@
 import { useState } from 'react';
+import { useNavigationType } from 'react-router';
 import skills from '../../public/data/skills.json';
 import { GameArt } from '../ui/GameArt';
-import { DetailLink } from '../ui/DetailLink';
+import { MemoCard, type MemoLink } from '../ui/MemoCard';
 import { lightHaptic } from '../telegram/client';
 import { useGuideLocale } from './guideLocale';
+
+const lifehackFilterKey = 'notwise.guide.lifehacks.cat.v1';
+const itemValueFilterKey = 'notwise.guide.values.tier.v1';
+
+function readFilter<T extends string>(key: string, valid: readonly T[], fallback: T, restore: boolean): T {
+  if (!restore) {
+    try { sessionStorage.removeItem(key); } catch { /* Optional. */ }
+    return fallback;
+  }
+  try {
+    const saved = sessionStorage.getItem(key);
+    if (saved && (valid as readonly string[]).includes(saved)) return saved as T;
+  } catch { /* Optional. */ }
+  return fallback;
+}
+
+function writeFilter(key: string, value: string) {
+  try { sessionStorage.setItem(key, value); } catch { /* Optional. */ }
+}
 
 type HackCategory = 'all' | 'combat' | 'farm' | 'sp' | 'market' | 'rare';
 
@@ -569,10 +589,15 @@ const lifehacks: Lifehack[] = [
   },
 ];
 
+const lifehackCategoryIds = categories.map(c => c.id);
+
 export function LifehacksPage() {
   const { locale } = useGuideLocale();
   const en = locale === 'en';
-  const [cat, setCat] = useState<HackCategory>('all');
+  const navType = useNavigationType();
+  const [cat, setCat] = useState<HackCategory>(() =>
+    readFilter(lifehackFilterKey, lifehackCategoryIds, 'all', navType === 'POP'),
+  );
   const visible = cat === 'all' ? lifehacks : lifehacks.filter(h => h.category === cat);
 
   return (
@@ -586,7 +611,11 @@ export function LifehacksPage() {
               role="tab"
               aria-selected={cat === c.id}
               className={cat === c.id ? 'isActive' : undefined}
-              onClick={() => { lightHaptic(); setCat(c.id); }}
+              onClick={() => {
+                lightHaptic();
+                setCat(c.id);
+                writeFilter(lifehackFilterKey, c.id);
+              }}
             >
               {en ? c.label[1] : c.label[0]}
             </button>
@@ -594,53 +623,40 @@ export function LifehacksPage() {
         </div>
       </div>
 
-      <div className="lifehackList">
+      <div className="memoStack">
         {visible.map(hack => {
           const lines = en ? hack.lines[1] : hack.lines[0];
           const combatCopy = [...hack.title, ...hack.summary, ...hack.lines.flat()].join(' ');
           const relatedSkills = hack.category === 'combat'
             ? skills.filter(skill => combatCopy.includes(skill.name))
             : [];
+          const cardLinks: MemoLink[] = hack.category === 'combat'
+            ? [
+                ...relatedSkills.map(skill => ({
+                  to: `/combat/skills/${skill.branch}/${skill.id}`,
+                  label: skill.name,
+                })),
+                ...(hack.link ? [{ to: hack.link.to, label: en ? hack.link.label[1] : hack.link.label[0] }] : []),
+                ...(relatedSkills.length === 0 && !hack.link ? [{ to: '/combat', label: en ? 'Combat and skills' : 'Бои и навыки' }] : []),
+              ]
+            : hack.link
+              ? [{ to: hack.link.to, label: en ? hack.link.label[1] : hack.link.label[0] }]
+              : [];
+
           return (
-            <details className="card lifehackCard mediaDetails memoCollapsible" key={hack.id}>
-              <summary className="memoCollapsibleSummary">
-                <div className="lifehackHead">
-                  <span className="memoUnifiedIcon">
-                    <GameArt path={hack.icon} size={30} />
-                  </span>
-                  <div className="lifehackTitleWrap">
-                    <span className="lifehackTag">{en ? hack.tag[1] : hack.tag[0]}</span>
-                    <h2>{en ? hack.title[1] : hack.title[0]}</h2>
-                  </div>
-                </div>
-              </summary>
-              <div className="memoCollapsibleBody">
-                <p className="lifehackSummary">{en ? hack.summary[1] : hack.summary[0]}</p>
-                <div className="memoLines lifehackDetails">
-                  {lines.map(line => <p key={line}>{line}</p>)}
-                </div>
-                {hack.category === 'combat' ? (
-                  <div className="itemValueLinks">
-                    {relatedSkills.map(skill => (
-                      <DetailLink key={skill.id} className="itemValueChipLink" to={`/combat/skills/${skill.branch}/${skill.id}`}>
-                        <span>{skill.name}</span>
-                        <span className="rowChevron" aria-hidden="true" />
-                      </DetailLink>
-                    ))}
-                    {relatedSkills.length === 0 && (
-                      <DetailLink className="itemValueChipLink" to="/combat">
-                        <span>{en ? 'Combat and skills' : 'Бои и навыки'}</span>
-                        <span className="rowChevron" aria-hidden="true" />
-                      </DetailLink>
-                    )}
-                  </div>
-                ) : hack.link && (
-                  <DetailLink className="textLink lifehackLink" to={hack.link.to}>
-                    {en ? hack.link.label[1] : hack.link.label[0]}
-                  </DetailLink>
-                )}
+            <MemoCard
+              key={hack.id}
+              id={`hack-${hack.id}`}
+              icon={<GameArt path={hack.icon} size={hack.icon.includes('/skills/') ? 38 : 30} />}
+              title={en ? hack.title[1] : hack.title[0]}
+              meta={<span className="lifehackTag" data-cat={hack.category}>{en ? hack.tag[1] : hack.tag[0]}</span>}
+              links={cardLinks}
+            >
+              <p className="lifehackSummary">{en ? hack.summary[1] : hack.summary[0]}</p>
+              <div className="memoLines lifehackDetails">
+                {lines.map(line => <p key={line}>{line}</p>)}
               </div>
-            </details>
+            </MemoCard>
           );
         })}
       </div>
@@ -665,12 +681,12 @@ type RankedItemEntry = {
 };
 
 const tierFilters: { id: ValueTier; label: [ru: string, en: string] }[] = [
-  { id: 'all', label: ['Все тиры', 'All Tiers'] },
-  { id: 'S+', label: ['Тир S+ · Мета', 'Tier S+ · Meta'] },
-  { id: 'S', label: ['Тир S · Ключевые', 'Tier S · Core'] },
-  { id: 'A', label: ['Тир A · Выгодные', 'Tier A · High ROI'] },
-  { id: 'B', label: ['Тир B · Ситуативные', 'Tier B · Situational'] },
-  { id: 'C', label: ['Тир C · Расходники', 'Tier C · Consumables'] },
+  { id: 'all', label: ['Все', 'All'] },
+  { id: 'S+', label: ['S+ · Мета', 'S+ · Meta'] },
+  { id: 'S', label: ['S · Ключевые', 'S · Core'] },
+  { id: 'A', label: ['A · Выгодные', 'A · High ROI'] },
+  { id: 'B', label: ['B · Ситуативные', 'B · Situational'] },
+  { id: 'C', label: ['C · Расходники', 'C · Consumables'] },
 ];
 
 const rankedItems: RankedItemEntry[] = [
@@ -943,10 +959,15 @@ const rankedItems: RankedItemEntry[] = [
   },
 ];
 
+const tierFilterIds = tierFilters.map(t => t.id);
+
 export function ItemValueRankingPage() {
   const { locale } = useGuideLocale();
   const en = locale === 'en';
-  const [tier, setTier] = useState<ValueTier>('all');
+  const navType = useNavigationType();
+  const [tier, setTier] = useState<ValueTier>(() =>
+    readFilter(itemValueFilterKey, tierFilterIds, 'all', navType === 'POP'),
+  );
   const visible = tier === 'all' ? rankedItems : rankedItems.filter(item => item.tier === tier);
 
   return (
@@ -960,7 +981,11 @@ export function ItemValueRankingPage() {
               role="tab"
               aria-selected={tier === t.id}
               className={tier === t.id ? 'isActive' : undefined}
-              onClick={() => { lightHaptic(); setTier(t.id); }}
+              onClick={() => {
+                lightHaptic();
+                setTier(t.id);
+                writeFilter(itemValueFilterKey, t.id);
+              }}
             >
               {en ? t.label[1] : t.label[0]}
             </button>
@@ -968,47 +993,27 @@ export function ItemValueRankingPage() {
         </div>
       </div>
 
-      <p className="itemValueIntro">
-        {en
-          ? 'This ranking reflects how useful each item is in play. Tap an item link for details.'
-          : 'Рейтинг учитывает практическую пользу предмета и ситуации, в которых он помогает. Нажми на предмет, чтобы открыть его в разделе «Предметы».'}
-      </p>
-
-      <div className="lifehackList">
+      <div className="memoStack">
         {visible.map(item => {
           const points = en ? item.whyValuable[1] : item.whyValuable[0];
           return (
-            <details className="card itemValueCard mediaDetails memoCollapsible" key={item.id}>
-              <summary className="memoCollapsibleSummary">
-                <div className="itemValueHead">
-                  <span className="memoUnifiedIcon">
-                    <GameArt path={item.icon} size={30} />
-                  </span>
-                  <div className="lifehackTitleWrap" style={{ flex: 1 }}>
-                    <h2>{en ? item.title[1] : item.title[0]}</h2>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span className="itemValueTierBadge" data-tier={item.tier}>{item.tier}</span>
-                      <span className="lifehackTag">{en ? item.role[1] : item.role[0]}</span>
-                    </div>
-                  </div>
-                </div>
-              </summary>
-
-              <div className="memoCollapsibleBody">
-                <div className="memoLines lifehackDetails">
-                  {points.map(line => <p key={line}>{line}</p>)}
-                </div>
-
-                <div className="itemValueLinks">
-                  {item.links.map(link => (
-                    <DetailLink key={link.to} className="itemValueChipLink" to={link.to}>
-                      <span>{en ? link.label[1] : link.label[0]}</span>
-                      <span className="rowChevron" aria-hidden="true" />
-                    </DetailLink>
-                  ))}
-                </div>
+            <MemoCard
+              key={item.id}
+              id={`value-${item.id}`}
+              icon={<GameArt path={item.icon} size={30} />}
+              title={en ? item.title[1] : item.title[0]}
+              meta={
+                <span className="memoMetaInline">
+                  <span className="itemValueTierBadge" data-tier={item.tier}>{item.tier}</span>
+                  <span className="memoMetaText">{en ? item.role[1] : item.role[0]}</span>
+                </span>
+              }
+              links={item.links.map(link => ({ to: link.to, label: en ? link.label[1] : link.label[0] }))}
+            >
+              <div className="memoLines lifehackDetails">
+                {points.map(line => <p key={line}>{line}</p>)}
               </div>
-            </details>
+            </MemoCard>
           );
         })}
       </div>

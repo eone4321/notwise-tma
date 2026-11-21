@@ -7,6 +7,7 @@ import { Link, useLocation } from 'react-router';
 import { GameGlyph } from '../ui/GameGlyph';
 import { GameSymbol } from '../ui/GameSymbol';
 import { GameArt } from '../ui/GameArt';
+import { MemoCard } from '../ui/MemoCard';
 import { chanceLabel, chancePerOpening } from '../domain/mechanics';
 import { dropsFor, eggDrawCounts, itemNames, itemNamesEn } from './inventory';
 import marketCollections from './market-collections';
@@ -201,7 +202,9 @@ function ResourcesPage({ en }: { en: boolean }) {
   const lang = en ? 1 : 0;
   const resources = [
     {
+      id: 'care-xp',
       title: ['XP · Опыт', 'XP · Experience'],
+      subtitle: ['Источники, множители и сброс через дискету', 'Sources, multipliers & XP Floppy reset'],
       factors: ['От чего зависит награда XP', 'What changes XP rewards'],
       summary: ['Повышает уровень совы. На 2-м открываются навыки и Додзё, на 3-м — сквады, на 4-м — осады, на 5-м — полёт и задания. Уровень также повышает базовое здоровье и урон. Запись в дискету требует вдвое больше XP, чем она вмещает, и сбрасывает опыт, SP и навыки, возвращая сову в яйцо.', 'Raises your owl’s level. Skills and the Dojo unlock at level 2, squads at 3, sieges at 4, and flights and tasks at 5. Level also raises base health and damage. Filling a floppy requires twice the XP it holds and resets XP, SP, and skills, returning the owl to an egg.'],
       icon: <GameSymbol name="xp" size={24}/>,
@@ -210,7 +213,9 @@ function ResourcesPage({ en }: { en: boolean }) {
       links: [['/combat/stats#xp', 'Опыт для уровней', 'XP by level'], ['/capsules', 'Награды капсул', 'Capsule rewards']],
     },
     {
+      id: 'care-sp',
       title: ['SP · Очки навыков', 'SP · Skill points'],
+      subtitle: ['Фарм в Додзё, прокачка и мощь в осадах', 'Dojo farming, upgrades & siege power'],
       factors: ['Сколько SP даёт удар', 'SP per hit'],
       siege: ['Личная мощь в осадах растёт с заработанными SP. Мощь вкладывают в атаку или защиту территории. Учитываются заработанные очки, а не текущий остаток SP.', 'Personal siege power grows with earned SP. Commit that power to attack or defend a territory. Total SP earned matters, regardless of your unspent SP balance.'],
       summary: ['Трать SP на уровни уже открытых навыков, запас энергии и восстановление энергии и здоровья. Свободные SP можно записать в колбу для переноса. Для заполнения нужно вдвое больше SP, чем вмещает колба, и списывается весь свободный остаток.', 'Spend SP on unlocked skill levels, energy capacity, and energy and health regeneration. A flask lets you transfer SP. Filling it requires twice its capacity and spends your entire unallocated balance.'],
@@ -220,7 +225,9 @@ function ResourcesPage({ en }: { en: boolean }) {
       links: [['/combat', 'Открытие и прокачка навыков', 'Unlocking and upgrading skills'], ['/squads/war', 'Мощь в осадах', 'Siege power']],
     },
     {
+      id: 'care-coins',
       title: ['Монеты', 'Coins'],
+      subtitle: ['Источники дохода, множители и защита баланса', 'Income sources, multipliers & raid defense'],
       factors: ['Бонусы и штрафы к монетам', 'Coin bonuses and penalties'],
       summary: ['Ими платят в игровой лавке за еду, лекарства и экипировку.', 'Spend them in the in-game shop on food, medicine, and gear.'],
       icon: <GameArt path={itemPath('wise-coin.webp')} size={30}/>,
@@ -230,17 +237,15 @@ function ResourcesPage({ en }: { en: boolean }) {
     },
   ];
   return <>
-    {resources.map(resource => <details className="card memoCard mediaDetails memoCollapsible" key={resource.title[0]}>
-      <summary className="memoCollapsibleSummary">
-        <div className="memoCardHead">
-          <span className="memoUnifiedIcon">{resource.icon}</span>
-          <div>
-            <h2>{resource.title[lang]}</h2>
-            <p>{resource.factors[lang]}</p>
-          </div>
-        </div>
-      </summary>
-      <div className="memoCollapsibleBody">
+    {resources.map(resource => (
+      <MemoCard
+        key={resource.id}
+        id={resource.id}
+        icon={resource.icon}
+        title={resource.title[lang]}
+        meta={<p>{resource.subtitle[lang]}</p>}
+        links={resource.links.map(([to, ru, english]) => ({ to, label: en ? english : ru }))}
+      >
         <div className="resourceSections">
           <section>
             <h3>{en ? 'Where to earn it' : 'Где получить'}</h3>
@@ -256,10 +261,8 @@ function ResourcesPage({ en }: { en: boolean }) {
             {resource.siege && <p>{resource.siege[lang]}</p>}
           </section>
         </div>
-        <div className="itemValueLinks">{resource.links.map(([to, ru, english]) =>
-          <DetailLink key={to} className="itemValueChipLink" to={to}>{en ? english : ru}<span className="rowChevron" aria-hidden="true"/></DetailLink>)}</div>
-      </div>
-    </details>)}
+      </MemoCard>
+    ))}
   </>;
 }
 
@@ -295,181 +298,163 @@ export function CarePage() {
 
     {isModes ? <ModesPage/> : isLifehacks ? <LifehacksPage/> : isValues ? <ItemValueRankingPage/> : <div className="memoStack">
       <ResourcesPage en={en}/>
-      <details className="card memoCard mediaDetails memoCollapsible">
-        <summary className="memoCollapsibleSummary">
-          <div className="memoCardHead">
-            <span className="memoUnifiedIcon"><GameArt path={itemPath('book.webp')} size={30}/></span>
+      <MemoCard
+        id="care-daily"
+        icon={<GameArt path={itemPath('book.webp')} size={30}/>}
+        title={en ? 'Daily Cycle & Owl Care' : 'Ежедневный цикл и уход'}
+        meta={<p>{en ? 'Key timers, resets, and base vitals' : 'Ключевые таймеры, сбросы и базовые параметры'}</p>}
+        links={[{ to: '/assets/care', label: en ? 'All food and medicine' : 'Вся еда и лекарства' }]}
+      >
+        <div className="memoRows">
+          <div className="memoRow">
+            <span className="memoRowIcon"><GameArt path={itemPath('lighter.webp')} size={26}/></span>
             <div>
-              <h2>{en ? 'Daily Cycle & Owl Care' : 'Ежедневный цикл и уход'}</h2>
-              <p>{en ? 'Key timers, resets, and base vitals' : 'Ключевые таймеры, сбросы и базовые параметры'}</p>
-            </div>
-          </div>
-        </summary>
-        <div className="memoCollapsibleBody">
-          <div className="memoRows">
-            <div className="memoRow">
-              <span className="memoRowIcon"><GameArt path={itemPath('lighter.webp')} size={26}/></span>
-              <div>
-                <strong>{en ? 'Daily Resets at 00:00 UTC' : 'Сбросы в 00:00 UTC'}</strong>
-                <div className="memoLines">
-                  <p>{en ? 'Free full energy refill.' : 'Бесплатное полное восстановление энергии.'}</p>
-                  <p>{en ? '3 free revive rockets for flights.' : '3 бесплатные ракеты для полёта.'}</p>
-                  <p>{en ? 'Explorer Book riddle — up to 3× streak and +5 Wisdom for 24h.' : 'Загадка книги — до ×3 за серию и +5 мудрости на 24ч.'}</p>
-                  <p>{en ? 'Daily squad ritual.' : 'Ежедневный ритуал сквада.'}</p>
-                </div>
-              </div>
-            </div>
-            <div className="memoRow">
-              <span className="memoRowIcon"><GameArt path={itemPath('croissant.webp')} size={26}/></span>
-              <div>
-                <strong>{en ? 'Satiety — Every 3 Days' : 'Сытость — раз в 3 дня'}</strong>
-                <div className="memoLines">
-                  <p>{en ? 'Max 20; keep above 0 with food. Flights require Happiness ≥ 10 instead.' : 'Максимум 20; поддерживай едой. Для полёта нужно Счастье ≥ 10.'}</p>
-                  <p>{en ? 'Favorite food grants 2× satiety.' : 'Любимая еда даёт ×2 сытости.'}</p>
-                  <p>{en ? 'No food for 3 days triggers a 24h penalty: 0.5× coins & XP, and 2× slower HP/energy regen.' : 'Без еды 3 дня — штраф на 24ч: монеты и опыт ×0.5, реген HP и энергии в 2 раза медленнее.'}</p>
-                </div>
-              </div>
-            </div>
-            <div className="memoRow">
-              <span className="memoRowIcon"><GameSymbol name="heart" size={26}/></span>
-              <div>
-                <strong>{en ? 'Happiness — Flights & HP Regen' : 'Счастье — полёты и реген HP'}</strong>
-                <div className="memoLines">
-                  <p>{en ? 'Flights require Happiness ≥ 10 (otherwise: “Your owl is too sad to fly”).' : 'Для полёта нужно Счастье ≥ 10 (иначе: «Сова слишком грустит, чтобы лететь»).'}</p>
-                  <p>{en ? 'Higher happiness also speeds up passive health regeneration.' : 'Чем выше счастье, тем быстрее пассивная регенерация HP.'}</p>
-                </div>
-              </div>
-            </div>
-            <div className="memoRow">
-              <span className="memoRowIcon"><GameArt path={itemPath('big-black-clock.webp')} size={26}/></span>
-              <div>
-                <strong>{en ? 'Energy Reserve & Regen' : 'Запас и реген энергии'}</strong>
-                <div className="memoLines">
-                  <p>{en ? 'Base: 100 ⚡ and 80 ⚡/h regen (1 ⚡ per 45s).' : 'База: 100 ⚡ и реген 80 ⚡/ч (1 ⚡ за 45с).'}</p>
-                  <p>{en ? 'Wisdom perk adds +100 ⚡ reserve per level (up to 2,200 ⚡).' : 'Перк Мудрости даёт +100 ⚡ к запасу за уровень (до 2 200 ⚡).'}</p>
-                  <p>{en ? 'Agility perk speeds up regen by +3% per level (up to 130 ⚡/h).' : 'Перк Ловкости ускоряет реген на +3% за уровень (до 130 ⚡/ч).'}</p>
-                </div>
+              <strong>{en ? 'Daily Resets at 00:00 UTC' : 'Сбросы в 00:00 UTC'}</strong>
+              <div className="memoLines">
+                <p>{en ? 'Free full energy refill.' : 'Бесплатное полное восстановление энергии.'}</p>
+                <p>{en ? '3 free revive rockets for flights.' : '3 бесплатные ракеты для полёта.'}</p>
+                <p>{en ? 'Explorer Book riddle — up to 3× streak and +5 Wisdom for 24h.' : 'Загадка книги — до ×3 за серию и +5 мудрости на 24ч.'}</p>
+                <p>{en ? 'Daily squad ritual.' : 'Ежедневный ритуал сквада.'}</p>
               </div>
             </div>
           </div>
-          <DetailLink className="textLink" to="/assets/care">{en ? 'All food and medicine' : 'Вся еда и лекарства'}</DetailLink>
-        </div>
-      </details>
-
-      <details className="card memoCard energyGradCard mediaDetails memoCollapsible">
-        <summary className="memoCollapsibleSummary">
-          <div className="memoCardHead">
-            <span className="memoUnifiedIcon"><GameArt path={itemPath('chiller-open.webp')} size={30}/></span>
+          <div className="memoRow">
+            <span className="memoRowIcon"><GameArt path={itemPath('croissant.webp')} size={26}/></span>
             <div>
-              <h2>{en ? 'Battle, Flight & SP Farm Costs' : 'Стоимость боя, полёта и фарма SP'}</h2>
-              <p>{en ? 'Battles add +10 ⚡ every 5 levels; flights add +50 ⚡' : 'Бой растёт на +10 ⚡ каждые 5 уровней, полёт — на +50 ⚡'}</p>
-            </div>
-          </div>
-        </summary>
-        <div className="memoCollapsibleBody">
-          <div className="energyGradTable" role="table" aria-label={en ? 'Battle, flight, and SP farm costs by level' : 'Стоимость боя, полёта и фарма SP по уровням'}>
-            <div className="energyGradHead" role="row">
-              <span role="columnheader">{en ? 'Level' : 'Уровень'}</span>
-              <span role="columnheader">{en ? 'Battle' : 'Бой'}</span>
-              <span role="columnheader">{en ? 'Flight' : 'Полёт'}</span>
-              <span role="columnheader">{en ? 'SP Farm' : 'Фарм SP'}</span>
-            </div>
-            {energyTiers.map(tier => (
-              <div className="energyGradRow" role="row" key={tier.range[0]}>
-                <strong role="cell">{en ? tier.range[1] : tier.range[0]}</strong>
-                <span role="cell" className="isGold">{tier.fight} ⚡</span>
-                <span role="cell">{tier.flight} ⚡</span>
-                <span role="cell" className="isSp">{tier.sp}</span>
+              <strong>{en ? 'Satiety — Every 3 Days' : 'Сытость — раз в 3 дня'}</strong>
+              <div className="memoLines">
+                <p>{en ? 'Max 20; keep above 0 with food. Flights require Happiness ≥ 10 instead.' : 'Максимум 20; поддерживай едой. Для полёта нужно Счастье ≥ 10.'}</p>
+                <p>{en ? 'Favorite food grants 2× satiety.' : 'Любимая еда даёт ×2 сытости.'}</p>
+                <p>{en ? 'No food for 3 days triggers a 24h penalty: 0.5× coins & XP, and 2× slower HP/energy regen.' : 'Без еды 3 дня — штраф на 24ч: монеты и опыт ×0.5, реген HP и энергии в 2 раза медленнее.'}</p>
               </div>
-            ))}
+            </div>
           </div>
-
-          <div className="memoNote">
-            <div className="memoLines">
-              {en ? (
-                <>
-                  <p>In the Dojo (from Lv. 2), each hit costs <b>2 ⚡</b> and pays <b>SP = your owl level</b> (<b>×2</b> on Bang crit).</p>
-                  <p>Higher levels earn more SP per hit in the Dojo, while battles and flights cost more energy.</p>
-                  <p>To keep battle costs low, open <b>Chiller</b> right before level cliffs (Lv. 4, 9, 14, 19).</p>
-                </>
-              ) : (
-                <>
-                  <p>В Додзё (со 2-го ур.) удар стоит <b>2 ⚡</b> и даёт <b>SP = твой уровень</b> (крит Bang — <b>×2</b>).</p>
-                  <p>Чем выше уровень, тем больше SP с одного удара, но тем дороже бои и полёты.</p>
-                  <p>Если хочешь дёшево драться, включай <b>Чиллер</b> на границе ступеней (ур. 4, 9, 14, 19).</p>
-                </>
-              )}
+          <div className="memoRow">
+            <span className="memoRowIcon"><GameSymbol name="heart" size={26}/></span>
+            <div>
+              <strong>{en ? 'Happiness — Flights & HP Regen' : 'Счастье — полёты и реген HP'}</strong>
+              <div className="memoLines">
+                <p>{en ? 'Flights require Happiness ≥ 10 (otherwise: “Your owl is too sad to fly”).' : 'Для полёта нужно Счастье ≥ 10 (иначе: «Сова слишком грустит, чтобы лететь»).'}</p>
+                <p>{en ? 'Higher happiness also speeds up passive health regeneration.' : 'Чем выше счастье, тем быстрее пассивная регенерация HP.'}</p>
+              </div>
+            </div>
+          </div>
+          <div className="memoRow">
+            <span className="memoRowIcon"><GameArt path={itemPath('big-black-clock.webp')} size={26}/></span>
+            <div>
+              <strong>{en ? 'Energy Reserve & Regen' : 'Запас и реген энергии'}</strong>
+              <div className="memoLines">
+                <p>{en ? 'Base: 100 ⚡ and 80 ⚡/h regen (1 ⚡ per 45s).' : 'База: 100 ⚡ и реген 80 ⚡/ч (1 ⚡ за 45с).'}</p>
+                <p>{en ? 'Wisdom perk adds +100 ⚡ reserve per level (up to 2,200 ⚡).' : 'Перк Мудрости даёт +100 ⚡ к запасу за уровень (до 2 200 ⚡).'}</p>
+                <p>{en ? 'Agility perk speeds up regen by +3% per level (up to 130 ⚡/h).' : 'Перк Ловкости ускоряет реген на +3% за уровень (до 130 ⚡/ч).'}</p>
+              </div>
             </div>
           </div>
         </div>
-      </details>
+      </MemoCard>
 
-      <details className="card memoCard mediaDetails memoCollapsible">
-        <summary className="memoCollapsibleSummary">
-          <div className="memoCardHead">
-            <span className="memoUnifiedIcon"><GameArt path={itemPath('ring-wit-3.webp')} size={30}/></span>
-            <div>
-              <h2>{en ? 'Combat, Sieges & Defense' : 'Бой, осада и защита'}</h2>
-              <p>{en ? 'Stat caps, raid shields, and progression tools' : 'Ограничения статов, нападения и предметы прогресса'}</p>
-            </div>
+      <MemoCard
+        id="care-energy"
+        icon={<GameArt path={itemPath('chiller-open.webp')} size={30}/>}
+        title={en ? 'Battle, Flight & SP Farm Costs' : 'Стоимость боя, полёта и фарма SP'}
+        meta={<p>{en ? 'Battles add +10 ⚡ every 5 levels; flights add +50 ⚡' : 'Бой растёт на +10 ⚡ каждые 5 уровней, полёт — на +50 ⚡'}</p>}
+      >
+        <div className="energyGradTable" role="table" aria-label={en ? 'Battle, flight, and SP farm costs by level' : 'Стоимость боя, полёта и фарма SP по уровням'}>
+          <div className="energyGradHead" role="row">
+            <span role="columnheader">{en ? 'Level' : 'Уровень'}</span>
+            <span role="columnheader">{en ? 'Battle' : 'Бой'}</span>
+            <span role="columnheader">{en ? 'Flight' : 'Полёт'}</span>
+            <span role="columnheader">{en ? 'SP Farm' : 'Фарм SP'}</span>
           </div>
-        </summary>
-        <div className="memoCollapsibleBody">
-          <div className="memoRows">
-            <div className="memoRow">
-              <span className="memoRowIcon"><GameArt path={itemPath('ring-ag-3.webp')} size={26}/></span>
-              <div>
-                <strong>{en ? '70% Stat Cap at 100 Points' : 'Потолок статов — 70% на 100 очках'}</strong>
-                <div className="memoLines">
-                  <p>{en ? 'Dodge (Agility) and Crit (Wisdom) stop growing past 100 points.' : 'Выше 100 Ловкости (уклонение) и 100 Мудрости (крит) шансы не растут.'}</p>
-                  <p>{en ? 'Extra Wisdom above 100 only adds +20 mana per point.' : 'Лишняя Мудрость даёт только +20 маны за очко.'}</p>
-                  <p>{en ? 'Up to 3 skills can be equipped in battle; mana does not regenerate during a fight.' : 'В бой берётся до 3 навыков, мана за бой не восстанавливается.'}</p>
-                </div>
-              </div>
+          {energyTiers.map(tier => (
+            <div className="energyGradRow" role="row" key={tier.range[0]}>
+              <strong role="cell">{en ? tier.range[1] : tier.range[0]}</strong>
+              <span role="cell" className="isGold">{tier.fight} ⚡</span>
+              <span role="cell">{tier.flight} ⚡</span>
+              <span role="cell" className="isSp">{tier.sp}</span>
             </div>
-            <div className="memoRow">
-              <span className="memoRowIcon"><GameArt path={itemPath('seba-cola.webp')} size={26}/></span>
-              <div>
-                <strong>{en ? 'Raids & Balance Protection' : 'Нападения и защита баланса'}</strong>
-                <div className="memoLines">
-                  <p>{en ? 'The raid winner takes 3% of the defender’s coins.' : 'Победитель нападения забирает 3% монет.'}</p>
-                  <p>{en ? 'Every fight grants a 5-minute post-battle respite.' : 'После любого боя действует передышка 5 минут.'}</p>
-                  <p>{en ? 'After 3 consecutive raid losses, a shield activates until you return to the game.' : 'После 3 проигранных защит подряд включается щит до входа в игру.'}</p>
-                  <p>{en ? 'Seba Cola grants a 24h shield (breaks immediately if you attack).' : 'Seba Cola даёт защитный купол на 24ч (спадает при твоей атаке).'}</p>
-                </div>
-              </div>
-            </div>
-            <div className="memoRow">
-              <span className="memoRowIcon"><GameArt path={itemPath('morpher.webp')} size={26}/></span>
-              <div>
-                <strong>{en ? 'Respecs & Progress Transfer' : 'Сбросы и перенос прогресса'}</strong>
-                <div className="memoLines">
-                  {en ? (
-                    <>
-                      <p><b>Chiller</b> — freezes capsule XP while keeping coins and loot.</p>
-                      <p><b>Morpher</b> — resets stats and skills while keeping 100% of your SP.</p>
-                      <p><b>Empty SP Flask</b> — bottles free SP into an NFT (50% tax).</p>
-                      <p><b>Empty XP Floppy</b> — bottles XP before rebirth into an egg (50% tax).</p>
-                    </>
-                  ) : (
-                    <>
-                      <p><b>Чиллер</b> — морозит опыт из капсул.</p>
-                      <p><b>Морфер</b> — сбрасывает статы и навыки без потери SP.</p>
-                      <p><b>Пустая фласка для SP</b> — записывает накопленные SP.</p>
-                      <p><b>Пустая дискета XP</b> — сохраняет XP перед перерождением.</p>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="memoLinks">
-            <DetailLink className="textLink" to="/lifehacks">{en ? 'Game lifehacks' : 'Лайфхаки игры'}</DetailLink>
-            <DetailLink className="textLink" to="/item-values">{en ? 'Item value ranking' : 'Рейтинг ценности предметов'}</DetailLink>
-            <DetailLink className="textLink" to="/combat/builds">{en ? 'Build calculator' : 'Калькулятор билдов'}</DetailLink>
+          ))}
+        </div>
+
+        <div className="memoNote">
+          <div className="memoLines">
+            {en ? (
+              <>
+                <p>In the Dojo (from Lv. 2), each hit costs <b>2 ⚡</b> and pays <b>SP = your owl level</b> (<b>×2</b> on Bang crit).</p>
+                <p>Higher levels earn more SP per hit in the Dojo, while battles and flights cost more energy.</p>
+                <p>To keep battle costs low, open <b>Chiller</b> right before level cliffs (Lv. 4, 9, 14, 19).</p>
+              </>
+            ) : (
+              <>
+                <p>В Додзё (со 2-го ур.) удар стоит <b>2 ⚡</b> и даёт <b>SP = твой уровень</b> (крит Bang — <b>×2</b>).</p>
+                <p>Чем выше уровень, тем больше SP с одного удара, но тем дороже бои и полёты.</p>
+                <p>Если хочешь дёшево драться, включай <b>Чиллер</b> на границе ступеней (ур. 4, 9, 14, 19).</p>
+              </>
+            )}
           </div>
         </div>
-      </details>
+      </MemoCard>
+
+      <MemoCard
+        id="care-combat"
+        icon={<GameArt path={itemPath('ring-wit-3.webp')} size={30}/>}
+        title={en ? 'Combat, Sieges & Defense' : 'Бой, осада и защита'}
+        meta={<p>{en ? 'Stat caps, raid shields, and progression tools' : 'Ограничения статов, нападения и предметы прогресса'}</p>}
+        links={[
+          { to: '/lifehacks', label: en ? 'Game lifehacks' : 'Лайфхаки игры' },
+          { to: '/item-values', label: en ? 'Item value ranking' : 'Рейтинг ценности предметов' },
+          { to: '/combat/builds', label: en ? 'Build calculator' : 'Калькулятор билдов' },
+        ]}
+      >
+        <div className="memoRows">
+          <div className="memoRow">
+            <span className="memoRowIcon"><GameArt path={itemPath('ring-ag-3.webp')} size={26}/></span>
+            <div>
+              <strong>{en ? '70% Stat Cap at 100 Points' : 'Потолок статов — 70% на 100 очках'}</strong>
+              <div className="memoLines">
+                <p>{en ? 'Dodge (Agility) and Crit (Wisdom) stop growing past 100 points.' : 'Выше 100 Ловкости (уклонение) и 100 Мудрости (крит) шансы не растут.'}</p>
+                <p>{en ? 'Extra Wisdom above 100 only adds +20 mana per point.' : 'Лишняя Мудрость даёт только +20 маны за очко.'}</p>
+                <p>{en ? 'Up to 3 skills can be equipped in battle; mana does not regenerate during a fight.' : 'В бой берётся до 3 навыков, мана за бой не восстанавливается.'}</p>
+              </div>
+            </div>
+          </div>
+          <div className="memoRow">
+            <span className="memoRowIcon"><GameArt path={itemPath('seba-cola.webp')} size={26}/></span>
+            <div>
+              <strong>{en ? 'Raids & Balance Protection' : 'Нападения и защита баланса'}</strong>
+              <div className="memoLines">
+                <p>{en ? 'The raid winner takes 3% of the defender’s coins.' : 'Победитель нападения забирает 3% монет.'}</p>
+                <p>{en ? 'Every fight grants a 5-minute post-battle respite.' : 'После любого боя действует передышка 5 минут.'}</p>
+                <p>{en ? 'After 3 consecutive raid losses, a shield activates until you return to the game.' : 'После 3 проигранных защит подряд включается щит до входа в игру.'}</p>
+                <p>{en ? 'Seba Cola grants a 24h shield (breaks immediately if you attack).' : 'Seba Cola даёт защитный купол на 24ч (спадает при твоей атаке).'}</p>
+              </div>
+            </div>
+          </div>
+          <div className="memoRow">
+            <span className="memoRowIcon"><GameArt path={itemPath('morpher.webp')} size={26}/></span>
+            <div>
+              <strong>{en ? 'Respecs & Progress Transfer' : 'Сбросы и перенос прогресса'}</strong>
+              <div className="memoLines">
+                {en ? (
+                  <>
+                    <p><b>Chiller</b> — freezes capsule XP while keeping coins and loot.</p>
+                    <p><b>Morpher</b> — resets stats and skills while keeping 100% of your SP.</p>
+                    <p><b>Empty SP Flask</b> — bottles free SP into an NFT (50% tax).</p>
+                    <p><b>Empty XP Floppy</b> — bottles XP before rebirth into an egg (50% tax).</p>
+                  </>
+                ) : (
+                  <>
+                    <p><b>Чиллер</b> — морозит опыт из капсул.</p>
+                    <p><b>Морфер</b> — сбрасывает статы и навыки без потери SP.</p>
+                    <p><b>Пустая фласка для SP</b> — записывает накопленные SP.</p>
+                    <p><b>Пустая дискета XP</b> — сохраняет XP перед перерождением.</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </MemoCard>
     </div>}
   </>;
 }

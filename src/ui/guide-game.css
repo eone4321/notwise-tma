@@ -4946,10 +4946,6 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
    Care / Memo: Combat & Flight Energy Gradation Table
    ===================================================================== */
 
-.energyGradCard {
-  display: grid;
-  gap: 12px;
-}
 .energyGradTable {
   border-radius: 12px;
   border: 1px solid var(--game-panel-line);
@@ -5197,11 +5193,6 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .lifehackList > .card {
   margin: 0;
 }
-.memoCard {
-  display: grid;
-  gap: 10px;
-  padding: 13px 14px;
-}
 details.card.memoCollapsible {
   display: block;
   margin: 0;
@@ -5209,10 +5200,15 @@ details.card.memoCollapsible {
   gap: 0;
   border-radius: 16px;
   overflow: hidden;
+  scroll-margin-top: calc(var(--top-inset) + 12px);
   transition: border-color 140ms ease;
 }
 details.card.memoCollapsible[open] {
   border-color: color-mix(in srgb, var(--gold) 32%, var(--game-panel-line));
+}
+details.card.memoCollapsible:has(> summary.memoCollapsibleSummary:focus-visible) {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 details.card.memoCollapsible > summary.memoCollapsibleSummary {
   display: flex;
@@ -5223,33 +5219,37 @@ details.card.memoCollapsible > summary.memoCollapsibleSummary {
   padding: 10px 13px;
   border-radius: 0;
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
   transition: background 140ms ease;
 }
 details.card.memoCollapsible > summary.memoCollapsibleSummary:active {
   margin: 0;
   border-radius: 0;
+  color: inherit;
   background: color-mix(in srgb, var(--gold) 8%, transparent);
 }
 details.card.memoCollapsible > summary.memoCollapsibleSummary:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: -2px;
-  border-radius: 16px;
+  outline: none;
+  background: color-mix(in srgb, var(--gold) 7%, transparent);
 }
 details.card.memoCollapsible > summary.memoCollapsibleSummary::after {
   margin-inline: auto 4px;
 }
-details.card.memoCollapsible > summary.memoCollapsibleSummary .memoCardHead,
-details.card.memoCollapsible > summary.memoCollapsibleSummary .lifehackHead,
-details.card.memoCollapsible > summary.memoCollapsibleSummary .itemValueHead {
+details.card.memoCollapsible[open] > summary.memoCollapsibleSummary::after {
+  border-color: var(--gold);
+}
+details.card.memoCollapsible > summary.memoCollapsibleSummary .memoCardHead {
   flex: 1;
   min-width: 0;
 }
 details.card.memoCollapsible > summary.memoCollapsibleSummary h2 {
-  margin: 0 0 2px;
+  margin: 0;
   font-size: 15px;
-  font-weight: 800;
-  line-height: 1.24;
+  font-weight: 750;
+  line-height: 1.25;
+  color: var(--text);
   transition: color 140ms ease;
 }
 details.card.memoCollapsible[open] > summary.memoCollapsibleSummary h2 {
@@ -5260,6 +5260,22 @@ details.card.memoCollapsible > .memoCollapsibleBody {
   gap: 10px;
   padding: 11px 13px 13px;
   border-top: 1px solid var(--game-panel-line);
+  font-size: 13px;
+  line-height: 1.46;
+  color: var(--muted);
+}
+:where(details.card.memoCollapsible > .memoCollapsibleBody) p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.46;
+  color: var(--muted);
+}
+:where(details.card.memoCollapsible > .memoCollapsibleBody) h4,
+.memoCollapsibleBody .flightDetails h4 {
+  margin: 2px 0 -4px;
+  font-size: 12.5px;
+  font-weight: 750;
+  color: var(--gold);
 }
 .memoUnifiedIcon {
   flex: none;
@@ -5271,22 +5287,122 @@ details.card.memoCollapsible > .memoCollapsibleBody {
   display: grid;
   place-items: center;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.memoUnifiedIcon:has(img[src*="/game/skills/"]) .gameArt {
+  border-radius: 0;
 }
 .memoCardHead {
   display: flex;
   align-items: center;
   gap: 11px;
 }
-.memoCardHead h2 {
-  margin: 0 0 2px;
-  font-size: 16px;
-  line-height: 1.2;
+.memoHeadText {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
 }
-.memoCardHead p {
-  margin: 0;
+.memoHeadMeta {
+  min-width: 0;
   font-size: 12px;
+  line-height: 1.35;
   color: var(--muted);
-  line-height: 1.3;
+}
+.memoHeadMeta p {
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+.memoSubtitleRow {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.memoMetaInline {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 7px;
+}
+.memoMetaText {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--muted);
+  padding-top: 1px;
+}
+.memoCollapsibleBody .flightDetails {
+  margin-top: 0;
+  display: grid;
+  gap: 10px;
+}
+.memoCollapsibleBody .flightEnergyGrid {
+  margin-bottom: 0;
+}
+.memoCollapsibleBody .flightEnergyGrid > div,
+[data-theme="graphite"] .memoCollapsibleBody .flightEnergyGrid > div {
+  background: var(--game-tile);
+  border-color: var(--game-panel-line);
+}
+.memoCollapsibleBody .flightItemsList {
+  margin: 0;
+}
+.memoCollapsibleBody .flightItemsList li,
+[data-theme="graphite"] .memoCollapsibleBody .flightItemsList li {
+  padding: 10px 11px;
+  border-radius: 12px;
+  background: var(--game-tile);
+  border-color: var(--game-panel-line);
+}
+.memoCollapsibleBody .flightItemsList.flightDebuffs li,
+[data-theme="graphite"] .memoCollapsibleBody .flightItemsList.flightDebuffs li {
+  border-left: 3px solid #ff7b72;
+}
+.memoCollapsibleBody .flightItemsList .emojiIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  font-size: 17px;
+  line-height: 1;
+}
+.memoCollapsibleBody .flightItemsList p {
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+.memoCollapsibleBody .flightRules {
+  margin-top: 0;
+}
+.memoCollapsibleBody .flightRules li {
+  border-bottom-color: var(--game-panel-line);
+}
+.memoTableWrap {
+  border-radius: 12px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+}
+.memoTableWrap .priceTable {
+  margin: 0;
+  font-size: 12.5px;
+}
+.memoTableWrap .priceTable :is(th, td) {
+  padding: 7px 10px;
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+.memoTableWrap .priceTable thead th {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  border-bottom-color: var(--game-panel-line);
+  background: rgba(255, 255, 255, 0.02);
+}
+.memoTableWrap .priceTable tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
 }
 .memoRows {
   display: grid;
@@ -5352,6 +5468,9 @@ details.card.memoCollapsible > .memoCollapsibleBody {
   padding: 2px 0;
 }
 .lifehackCats button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   margin: 0;
   width: auto;
   flex: none;
@@ -5364,6 +5483,22 @@ details.card.memoCollapsible > .memoCollapsibleBody {
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 100ms ease;
+}
+.lifehackCats button:active {
+  transform: scale(0.97);
+}
+.lifehackCats button:not(.isActive):active {
+  background: color-mix(in srgb, var(--gold) 10%, var(--game-tile));
+  border-color: color-mix(in srgb, var(--gold) 30%, var(--game-panel-line));
+  color: var(--text);
+}
+.lifehackCats button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 .lifehackCats button.isActive {
   border-color: color-mix(in srgb, var(--gold) 50%, var(--game-panel-line));
@@ -5374,61 +5509,61 @@ details.card.memoCollapsible > .memoCollapsibleBody {
   display: grid;
   gap: 8px;
 }
-.lifehackCard {
-  display: grid;
-  gap: 8px;
-  padding: 13px 14px;
-}
-.lifehackHead {
-  display: flex;
+.lifehackTag {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-}
-.lifehackIcon {
-  flex: none;
-  width: 42px;
-  height: 42px;
-  border-radius: 11px;
+  justify-self: start;
+  width: fit-content;
+  min-height: 20px;
+  padding: 1px 7px;
+  border-radius: 6px;
   background: var(--game-tile);
   border: 1px solid var(--game-panel-line);
-  display: grid;
-  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--muted);
 }
-.lifehackTitleWrap {
-  min-width: 0;
-  display: grid;
-  gap: 2px;
+.lifehackTag[data-cat="combat"] {
+  background: rgba(170, 144, 247, 0.14);
+  border-color: rgba(170, 144, 247, 0.36);
+  color: #d6c6ff;
 }
-.lifehackTag {
-  font-size: 10.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.lifehackTag[data-cat="farm"] {
+  background: rgba(255, 204, 119, 0.14);
+  border-color: rgba(255, 204, 119, 0.36);
   color: var(--gold);
 }
-.lifehackTitleWrap h2 {
-  margin: 0;
-  font-size: 14.5px;
-  line-height: 1.25;
+.lifehackTag[data-cat="sp"] {
+  background: rgba(121, 168, 216, 0.14);
+  border-color: rgba(121, 168, 216, 0.36);
+  color: #93c4f5;
+}
+.lifehackTag[data-cat="market"] {
+  background: rgba(82, 209, 138, 0.14);
+  border-color: rgba(82, 209, 138, 0.34);
+  color: #7eeaa9;
+}
+.lifehackTag[data-cat="rare"] {
+  background: rgba(255, 179, 102, 0.15);
+  border-color: rgba(255, 179, 102, 0.4);
+  color: #ffcf87;
 }
 .lifehackSummary {
   margin: 0;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 13.5px;
+  font-weight: 650;
   color: var(--text);
-  line-height: 1.38;
+  line-height: 1.42;
 }
 .lifehackDetails {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--muted);
-  line-height: 1.44;
+  line-height: 1.46;
 }
-.lifehackLink {
-  justify-self: start;
-  font-size: 12.5px;
-}
-.lifehackList :is(h2, p, .lifehackTag, .lifehackLink, .itemValueChipLink) {
+.memoStack :is(h2, p, .lifehackTag, .memoMetaText, .itemValueChipLink),
+.lifehackList :is(h2, p, .lifehackTag, .memoMetaText, .itemValueChipLink) {
   overflow-wrap: normal;
   word-break: normal;
   hyphens: none;
@@ -5663,8 +5798,8 @@ details.card.memoCollapsible > .memoCollapsibleBody {
 
 .careTabsViewport {
   position: relative;
-  overflow: hidden;
-  border-radius: 14px;
+  overflow: visible;
+  border-radius: 16px;
   background: var(--glass-sheen), var(--glass-fill);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-edge);
@@ -5700,7 +5835,23 @@ details.card.memoCollapsible > .memoCollapsibleBody {
 .careTabs.careTabsScroll > a {
   min-width: 0;
   padding: 6px 8px;
+  border-radius: 11px;
   white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 100ms ease;
+}
+.careTabs.careTabsScroll > a:active {
+  transform: scale(0.98);
+}
+.careTabs.careTabsScroll > a:not([aria-current="page"]):active {
+  background: color-mix(in srgb, var(--gold) 10%, var(--game-tile));
+  color: var(--text);
+}
+.careTabs.careTabsScroll > a:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
 }
 @media (min-width: 480px) {
   .careTabs.careTabsScroll {
@@ -5713,33 +5864,17 @@ details.card.memoCollapsible > .memoCollapsibleBody {
   display: grid;
   gap: 10px;
 }
-.itemValueIntro {
-  margin: 0;
-  font-size: 12.5px;
-  line-height: 1.42;
-  color: var(--muted);
-}
-.itemValueCard {
-  display: grid;
-  gap: 8px;
-  padding: 13px 14px;
-}
-.itemValueHead {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
 .itemValueTierBadge {
   flex: none;
-  min-width: 34px;
-  height: 24px;
-  padding: 0 7px;
-  border-radius: 7px;
+  min-width: 30px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11.5px;
-  font-weight: 900;
+  font-size: 11px;
+  font-weight: 850;
   letter-spacing: 0.02em;
   background: rgba(255, 204, 119, 0.16);
   border: 1px solid rgba(255, 204, 119, 0.45);
@@ -5771,34 +5906,51 @@ details.card.memoCollapsible > .memoCollapsibleBody {
 .itemValueChipLink {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-height: 30px;
-  padding: 4px 10px;
-  border-radius: 9px;
+  gap: 6px;
+  min-height: 34px;
+  padding: 5px 11px;
+  border-radius: 10px;
   background: var(--game-tile);
   border: 1px solid color-mix(in srgb, var(--gold) 32%, var(--game-panel-line));
   color: var(--gold);
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 140ms ease, border-color 140ms ease, transform 100ms ease;
+}
+.itemValueChipLink .rowChevron {
+  border-color: currentColor;
+}
+.itemValueChipLink:active {
+  transform: scale(0.98);
+  background: color-mix(in srgb, var(--gold) 12%, var(--game-tile));
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--game-panel-line));
+}
+.itemValueChipLink:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 
 .resourceSections > section + section {
-  margin-block-start: 12px;
-  padding-block-start: 12px;
+  margin-block-start: 10px;
+  padding-block-start: 10px;
   border-block-start: 1px solid var(--game-panel-line);
 }
 .resourceSections h3 {
-  margin: 0 0 4px;
+  margin: 0 0 3px;
   color: var(--gold);
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 750;
 }
 .resourceSections p {
   margin: 0;
   color: var(--muted);
-  line-height: 1.5;
+  line-height: 1.46;
 }
-.resourceSections p + p { margin-block-start: 8px; }
+.resourceSections p + p { margin-block-start: 6px; }
 
 .ringEnchantBonuses {
   display: grid;
