@@ -103,7 +103,7 @@ async function fetchOnChainSales(collectionAddress: string, slug: string, filter
   const tonapiToken = process.env.TONAPI_TOKEN;
   const sinceSec = Math.floor(Date.now() / 1000) - 7 * 86400;
   const trRes = await fetch(
-    `https://toncenter.com/api/v3/nft/transfers?collection_address=${encodeURIComponent(collectionAddress)}&start_utime=${sinceSec}&limit=40&sort=desc`,
+    `https://toncenter.com/api/v3/nft/transfers?collection_address=${encodeURIComponent(collectionAddress)}&start_utime=${sinceSec}&limit=100&sort=desc`,
     {
       headers: toncenterToken ? { 'X-API-Key': toncenterToken } : {},
       signal: AbortSignal.timeout(5000),
@@ -115,56 +115,87 @@ async function fetchOnChainSales(collectionAddress: string, slug: string, filter
   const seenTraces = new Set<string>();
   const traceIds: string[] = [];
   for (const t of transfers) {
+    if (!t?.old_owner) continue;
     if (typeof t?.trace_id === 'string' && !seenTraces.has(t.trace_id)) {
       seenTraces.add(t.trace_id);
       traceIds.push(t.trace_id);
-      if (traceIds.length >= 16) break;
+      if (traceIds.length >= 60) break;
+    }
+  }
+  if (traceIds.length === 0) return [];
+
+  // Batch-filter out obvious listing/cancel traces via TON Center v3 actions (20 traces per call)
+  const excludedTraces = new Set<string>();
+  for (let i = 0; i < traceIds.length; i += 20) {
+    if (i > 0) await new Promise(resolve => setTimeout(resolve, 120));
+    const chunk = traceIds.slice(i, i + 20);
+    const params = new URLSearchParams();
+    for (const tid of chunk) params.append('trace_id', tid);
+    params.set('include_accounts', 'false');
+    params.set('limit', '100');
+    try {
+      const actRes = await fetch(`https://toncenter.com/api/v3/actions?${params.toString()}`, {
+        headers: toncenterToken ? { 'X-API-Key': toncenterToken } : {},
+        signal: AbortSignal.timeout(4000),
+      });
+      if (!actRes.ok) continue;
+      const actData = await actRes.json();
+      const actions = Array.isArray(actData?.actions) ? actData.actions : [];
+      for (const act of actions) {
+        if (typeof act?.trace_id !== 'string') continue;
+        if (act.type === 'nft_put_on_sale' || act.type === 'nft_cancel_sale') {
+          excludedTraces.add(act.trace_id);
+        }
+      }
+    } catch {
+      // If actions pre-filter fails, fall through and inspect candidate traces directly
     }
   }
 
+  const candidateTraces = traceIds.filter(tid => !excludedTraces.has(tid)).slice(0, 8);
   const sales: MarketSale[] = [];
-  // Query tonapi.io in gentle pairs with short pacing to avoid 429 rate limits
-  for (let i = 0; i < traceIds.length; i += 2) {
-    if (i > 0) await new Promise(resolve => setTimeout(resolve, 260));
-    const batch = traceIds.slice(i, i + 2);
-    const events = await Promise.all(
-      batch.map(async tid => {
-        try {
-          const res = await fetch(`https://tonapi.io/v2/events/${hexTrace(tid)}`, {
-            headers: tonapiToken ? { Authorization: `Bearer ${tonapiToken}` } : {},
-            signal: AbortSignal.timeout(4000),
-          });
-          return res.ok ? await res.json() : null;
-        } catch {
-          return null;
-        }
-      }),
-    );
-    for (const ev of events) {
-      if (!ev || ev.in_progress || !Array.isArray(ev.actions)) continue;
-      for (const act of ev.actions) {
-        const p = act?.NftPurchase;
-        if (act?.type !== 'NftPurchase' || act?.status !== 'ok' || !p?.nft) continue;
-        const name = typeof p.nft.metadata?.name === 'string' && p.nft.metadata.name.trim()
-          ? p.nft.metadata.name.trim()
-          : slug;
-        if (filterBySlug && nameToSlug(name) !== slug) continue;
-        const amount = p.amount;
-        const decimals = typeof amount?.decimals === 'number' ? amount.decimals : 9;
-        const val = Number(amount?.value ?? 0) / 10 ** decimals;
-        if (!Number.isFinite(val) || val <= 0) continue;
-        const currency = amount?.currency_type === 'native' ? 'GRAM' : String(amount?.token_name || 'TON');
-        const addr = String(p.nft.address ?? '');
-        sales.push({
-          address: addr,
-          name,
-          price: val,
-          currency,
-          at: Number(ev.timestamp) * 1000,
-          image: inferImage(slug, name, p.nft.metadata?.image),
-          href: addr ? getgemsNftUrl(addr) : `https://getgems.io/collection/${collectionAddress}`,
-        });
+
+  // Query tonapi.io sequentially with 1050ms pacing (strictly <= 1 req/sec)
+  for (let i = 0; i < candidateTraces.length; i++) {
+    if (i > 0) await new Promise(resolve => setTimeout(resolve, 1050));
+    const tid = candidateTraces[i];
+    let ev: any = null;
+    try {
+      const url = `https://tonapi.io/v2/events/${hexTrace(tid)}`;
+      const headers = tonapiToken ? { Authorization: `Bearer ${tonapiToken}` } : undefined;
+      let res = await fetch(url, { headers, signal: AbortSignal.timeout(4000) });
+      if (res.status === 429) {
+        await new Promise(resolve => setTimeout(resolve, 1100));
+        res = await fetch(url, { headers, signal: AbortSignal.timeout(4000) });
       }
+      if (res.ok) ev = await res.json();
+    } catch {
+      ev = null;
+    }
+
+    if (!ev || ev.in_progress || !Array.isArray(ev.actions)) continue;
+    for (const act of ev.actions) {
+      const p = act?.NftPurchase;
+      if (act?.type !== 'NftPurchase' || act?.status !== 'ok' || !p?.nft) continue;
+      const name = typeof p.nft.metadata?.name === 'string' && p.nft.metadata.name.trim()
+        ? p.nft.metadata.name.trim()
+        : slug;
+      if (filterBySlug && nameToSlug(name) !== slug) continue;
+      const amount = p.amount;
+      const decimals = typeof amount?.decimals === 'number' ? amount.decimals : 9;
+      const val = Number(amount?.value ?? 0) / 10 ** decimals;
+      if (!Number.isFinite(val) || val <= 0) continue;
+      const currency = amount?.currency_type === 'native' ? 'GRAM' : String(amount?.token_name || 'TON');
+      const addr = String(p.nft.address ?? '');
+      sales.push({
+        address: addr,
+        name,
+        price: val,
+        currency,
+        at: Number(ev.timestamp) * 1000,
+        image: inferImage(slug, name, p.nft.metadata?.image),
+        href: addr ? getgemsNftUrl(addr) : `https://getgems.io/collection/${collectionAddress}`,
+      });
     }
     if (sales.length >= 20) break;
   }
@@ -258,7 +289,7 @@ export default async function handler(request: Request) {
   sales.sort((a, b) => b.at - a.at);
   const finalSales = sales.slice(0, 24);
   if (finalSales.length > 0) {
-    await redis(['SET', cacheKey, JSON.stringify(finalSales), 'EX', 180]).catch(() => null);
+    await redis(['SET', cacheKey, JSON.stringify(finalSales), 'EX', 300]).catch(() => null);
   }
   return Response.json(
     { slug, sales: finalSales },
