@@ -83,6 +83,79 @@ function nameToSlug(name: unknown): string | undefined {
   if (n.includes('flask') && n.includes('full')) return 'flask-full';
 }
 
+function inferImage(slug: string, name: string, rawImage: unknown): string | undefined {
+  if (typeof rawImage === 'string' && /^https:\/\/[\w.-]+\//i.test(rawImage)) return rawImage;
+  if (slug === 'owl-skin') {
+    const match = /#(\d{1,6})/.exec(name);
+    if (match?.[1]) return `https://cdn.notwise.co/nft/skins/svg/${match[1]}.svg`;
+  }
+  return undefined;
+}
+
+function hexTrace(b64: string): string {
+  const bytes = atob(b64);
+  return Array.from(bytes, c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
+}
+
+async function fetchOnChainSales(collectionAddress: string, slug: string, filterBySlug: boolean): Promise<MarketSale[]> {
+  const trRes = await fetch(
+    `https://toncenter.com/api/v3/nft/transfers?collection_address=${encodeURIComponent(collectionAddress)}&limit=25&sort=desc`,
+    { signal: AbortSignal.timeout(4500) },
+  );
+  if (!trRes.ok) return [];
+  const trData = await trRes.json();
+  const transfers = Array.isArray(trData?.nft_transfers) ? trData.nft_transfers : [];
+  const seenTraces = new Set<string>();
+  const traceIds: string[] = [];
+  for (const t of transfers) {
+    if (typeof t?.trace_id === 'string' && !seenTraces.has(t.trace_id)) {
+      seenTraces.add(t.trace_id);
+      traceIds.push(t.trace_id);
+      if (traceIds.length >= 12) break;
+    }
+  }
+
+  const events = await Promise.all(
+    traceIds.map(async tid => {
+      try {
+        const res = await fetch(`https://tonapi.io/v2/events/${hexTrace(tid)}`, { signal: AbortSignal.timeout(4000) });
+        return res.ok ? await res.json() : null;
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  const sales: MarketSale[] = [];
+  for (const ev of events) {
+    if (!ev || ev.in_progress || !Array.isArray(ev.actions)) continue;
+    for (const act of ev.actions) {
+      const p = act?.NftPurchase;
+      if (act?.type !== 'NftPurchase' || act?.status !== 'ok' || !p?.nft) continue;
+      const name = typeof p.nft.metadata?.name === 'string' && p.nft.metadata.name.trim()
+        ? p.nft.metadata.name.trim()
+        : slug;
+      if (filterBySlug && nameToSlug(name) !== slug) continue;
+      const amount = p.amount;
+      const decimals = typeof amount?.decimals === 'number' ? amount.decimals : 9;
+      const val = Number(amount?.value ?? 0) / 10 ** decimals;
+      if (!Number.isFinite(val) || val <= 0) continue;
+      const currency = amount?.currency_type === 'native' ? 'GRAM' : String(amount?.token_name || 'TON');
+      const addr = String(p.nft.address ?? '');
+      sales.push({
+        address: addr,
+        name,
+        price: val,
+        currency,
+        at: Number(ev.timestamp) * 1000,
+        image: inferImage(slug, name, p.nft.metadata?.image),
+        href: addr ? getgemsNftUrl(addr) : `https://getgems.io/collection/${collectionAddress}`,
+      });
+    }
+  }
+  return sales.sort((a, b) => b.at - a.at).slice(0, 24);
+}
+
 export default async function handler(request: Request) {
   if (request.method !== 'GET') return new Response(null, { status: 405 });
   const url = new URL(request.url);
@@ -97,62 +170,64 @@ export default async function handler(request: Request) {
   }
 
   const token = process.env.GETGEMS_READ_TOKEN;
-  if (!token) {
-    return Response.json({ slug, sales: [] }, { headers: { 'Cache-Control': 'no-store' } });
-  }
+  const sales: MarketSale[] = [];
 
-  try {
-    const sales: MarketSale[] = [];
-    let cursor: string | null = null;
-    const maxPages = target.filterBySlug ? 4 : 1;
+  if (token) {
+    try {
+      let cursor: string | null = null;
+      const maxPages = target.filterBySlug ? 4 : 1;
 
-    for (let page = 0; page < maxPages; page++) {
-      const apiUrl = new URL(`${getgemsApi}/collection/history/${target.address}`);
-      apiUrl.searchParams.set('limit', '60');
-      apiUrl.searchParams.set('types', 'sold');
-      if (cursor) apiUrl.searchParams.set('after', cursor);
+      for (let page = 0; page < maxPages; page++) {
+        const apiUrl = new URL(`${getgemsApi}/collection/history/${target.address}`);
+        apiUrl.searchParams.set('limit', '60');
+        apiUrl.searchParams.set('types', 'sold');
+        if (cursor) apiUrl.searchParams.set('after', cursor);
 
-      const res = await fetch(apiUrl, {
-        headers: { Authorization: token },
-        signal: AbortSignal.timeout(5000),
-      });
-      if (!res.ok) break;
-      const data = await res.json();
-      const items = data?.response?.items;
-      if (!Array.isArray(items)) break;
-
-      for (const row of items) {
-        if (row?.typeData?.type !== 'sold') continue;
-        const price = Number(row.typeData.price);
-        if (!Number.isFinite(price) || price <= 0) continue;
-        if (target.filterBySlug && nameToSlug(row.name) !== slug) continue;
-        const at = Date.parse(row.time);
-        if (!Number.isFinite(at) || at <= 0) continue;
-        const currency = !row.typeData.currency || row.typeData.currency === 'TON' ? 'GRAM' : String(row.typeData.currency);
-        const safeImage = typeof row.image === 'string' && /^https:\/\/[\w.-]+\//i.test(row.image) ? row.image : undefined;
-        sales.push({
-          address: String(row.address ?? ''),
-          name: typeof row.name === 'string' && row.name.trim() ? row.name.trim() : slug,
-          price,
-          currency,
-          at,
-          ...(safeImage ? { image: safeImage } : {}),
-          href: typeof row.address === 'string' && row.address ? getgemsNftUrl(row.address) : `https://getgems.io/collection/${target.address}`,
+        const res = await fetch(apiUrl, {
+          headers: { Authorization: token },
+          signal: AbortSignal.timeout(5000),
         });
+        if (!res.ok) break;
+        const data = await res.json();
+        const items = data?.response?.items;
+        if (!Array.isArray(items)) break;
+
+        for (const row of items) {
+          if (row?.typeData?.type !== 'sold') continue;
+          const price = Number(row.typeData.price);
+          if (!Number.isFinite(price) || price <= 0) continue;
+          const name = typeof row.name === 'string' && row.name.trim() ? row.name.trim() : slug;
+          if (target.filterBySlug && nameToSlug(name) !== slug) continue;
+          const at = Date.parse(row.time);
+          if (!Number.isFinite(at) || at <= 0) continue;
+          const currency = !row.typeData.currency || row.typeData.currency === 'TON' ? 'GRAM' : String(row.typeData.currency);
+          sales.push({
+            address: String(row.address ?? ''),
+            name,
+            price,
+            currency,
+            at,
+            image: inferImage(slug, name, row.image),
+            href: typeof row.address === 'string' && row.address ? getgemsNftUrl(row.address) : `https://getgems.io/collection/${target.address}`,
+          });
+          if (sales.length >= 24) break;
+        }
+
         if (sales.length >= 24) break;
+        cursor = typeof data?.response?.cursor === 'string' && data.response.cursor ? data.response.cursor : null;
+        if (!cursor) break;
       }
-
-      if (sales.length >= 24) break;
-      cursor = typeof data?.response?.cursor === 'string' && data.response.cursor ? data.response.cursor : null;
-      if (!cursor) break;
-    }
-
-    sales.sort((a, b) => b.at - a.at);
-    return Response.json(
-      { slug, sales: sales.slice(0, 24) },
-      { headers: { 'Cache-Control': 'public, max-age=0, s-maxage=60' } },
-    );
-  } catch {
-    return Response.json({ slug, sales: [] }, { headers: { 'Cache-Control': 'no-store' } });
+    } catch { /* fall through to on-chain fallback */ }
   }
+
+  if (sales.length === 0) {
+    const onChain = await fetchOnChainSales(target.address, slug, target.filterBySlug).catch(() => []);
+    sales.push(...onChain);
+  }
+
+  sales.sort((a, b) => b.at - a.at);
+  return Response.json(
+    { slug, sales: sales.slice(0, 24) },
+    { headers: { 'Cache-Control': sales.length > 0 ? 'public, max-age=0, s-maxage=60' : 'no-store' } },
+  );
 }

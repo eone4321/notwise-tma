@@ -14,7 +14,7 @@ const genesisCollection = collections.find(row => row.id === 'genesis')?.address
 const expCollection = collections.find(row => row.id === 'exp')?.address;
 const vouchersCollection = collections.find(row => row.id === 'vouchers')?.address;
 const snapshotKey = 'notwise:getgems:market:v2';
-const explorerKey = 'notwise:getgems:explorer:v1';
+const explorerKey = 'notwise:getgems:explorer:v2';
 const historyPrefix = 'notwise:getgems:hist:v1:';
 const historyRetentionSec = 90 * 86400;
 const lockKey = snapshotKey + ':lock';
@@ -159,7 +159,11 @@ function recordListing(
   if (price < bucket.floor) bucket.floor = price;
 
   const displayName = typeof name === 'string' && name.trim() ? name.trim() : (enchant > 0 ? `${id} +${enchant}` : id);
-  const safeImage = typeof image === 'string' && /^https:\/\/[\w.-]+\//i.test(image) ? image : undefined;
+  let safeImage = typeof image === 'string' && /^https:\/\/[\w.-]+\//i.test(image) ? image : undefined;
+  if (!safeImage && forcedSlug === 'owl-skin') {
+    const skinMatch = /#(\d{1,6})/.exec(displayName);
+    if (skinMatch?.[1]) safeImage = `https://cdn.notwise.co/nft/skins/svg/${skinMatch[1]}.svg`;
+  }
   const lot: ExplorerLot = { address: nft, name: displayName, price, href: getgemsNftUrl(nft), ...(safeImage ? { image: safeImage } : {}) };
   // Keep top 12 cheapest lots per (slug, enchant) bucket.
   if (bucket.lots.length < 12) {

@@ -353,19 +353,31 @@ export function MarketChartsPage() {
   // Fetch historical points for the selected (slug, enchant, range)
   const [historyPoints, setHistoryPoints] = useState<HistoryPoint[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const initialLoadDoneRef = useRef(false);
 
   useEffect(() => {
     const controller = new AbortController();
+    const isInitial = !initialLoadDoneRef.current;
     const startedAt = performance.now();
-    const minLoaderMs = 900;
+    const minLoaderMs = isInitial ? 900 : 0;
     let timer = 0;
-    setHistoryLoading(true);
+    if (isInitial) setHistoryLoading(true);
     const enc = asset.enchantable ? (enchant === null ? 'all' : String(enchant)) : '0';
     const url = `/api/market/history?slug=${encodeURIComponent(asset.historySlug)}&enchant=${enc}&range=${range}`;
     const finishLoading = () => {
-      const remaining = Math.max(0, minLoaderMs - (performance.now() - startedAt));
+      const remaining = isInitial ? Math.max(0, minLoaderMs - (performance.now() - startedAt)) : 0;
+      if (remaining === 0) {
+        if (!controller.signal.aborted) {
+          initialLoadDoneRef.current = true;
+          setHistoryLoading(false);
+        }
+        return;
+      }
       timer = window.setTimeout(() => {
-        if (!controller.signal.aborted) setHistoryLoading(false);
+        if (!controller.signal.aborted) {
+          initialLoadDoneRef.current = true;
+          setHistoryLoading(false);
+        }
       }, remaining);
     };
     fetch(url, { signal: controller.signal })
