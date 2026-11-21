@@ -109,6 +109,70 @@ export default async function handler(request: Request) {
   }
 
   if (lots.length === 0) {
+    const toncenterToken = process.env.TONCENTER_TOKEN;
+    if (toncenterToken) {
+      try {
+        const base = 'https://toncenter.com/api/v3/nft/';
+        const itemsUrl = new URL('items', base);
+        itemsUrl.search = new URLSearchParams({
+          collection_address: collectionAddress,
+          limit: '1000',
+          offset: '0',
+          sort_by_last_transaction_lt: 'false',
+        }).toString();
+        const itemsRes = await fetch(itemsUrl, {
+          headers: { 'X-API-Key': toncenterToken },
+          signal: AbortSignal.timeout(5000),
+        });
+        if (itemsRes.ok) {
+          const itemsData = await itemsRes.json();
+          const listed = new Map<string, { address: string; image?: string; name?: string }>();
+          for (const row of itemsData?.nft_items ?? []) {
+            if (!row?.on_sale || !row?.sale_contract_address || !row?.address) continue;
+            const meta = itemsData.metadata?.[row.address]?.token_info?.find((e: { type?: string }) => e.type === 'nft_items');
+            listed.set(String(row.sale_contract_address).toLowerCase(), {
+              address: String(row.address),
+              image: meta?.image,
+              name: meta?.name,
+            });
+          }
+          const contracts = [...listed.keys()].slice(0, 40);
+          if (contracts.length > 0) {
+            const salesUrl = new URL('sales', base);
+            for (const c of contracts) salesUrl.searchParams.append('address', c);
+            const salesRes = await fetch(salesUrl, {
+              headers: { 'X-API-Key': toncenterToken },
+              signal: AbortSignal.timeout(5000),
+            });
+            if (salesRes.ok) {
+              const salesData = await salesRes.json();
+              for (const s of salesData?.nft_sales ?? []) {
+                if (s?.type !== 'getgems_sale' || s?.details?.is_complete !== false || !s?.address) continue;
+                const item = listed.get(String(s.address).toLowerCase());
+                if (!item) continue;
+                const price = Number(s.details.full_price) / 1e9;
+                if (!Number.isFinite(price) || price <= 0) continue;
+                const meta = salesData.metadata?.[item.address]?.token_info?.find((e: { type?: string }) => e.type === 'nft_items');
+                const name = typeof (item.name ?? meta?.name) === 'string' && (item.name ?? meta?.name).trim()
+                  ? (item.name ?? meta?.name).trim()
+                  : slug;
+                lots.push({
+                  address: item.address,
+                  name,
+                  price,
+                  enchant: parseEnchant(name),
+                  href: getgemsNftUrl(item.address),
+                  image: inferImage(slug, name, item.image ?? meta?.image),
+                });
+              }
+            }
+          }
+        }
+      } catch { /* fall through to tonapi */ }
+    }
+  }
+
+  if (lots.length === 0) {
     const tonapiToken = process.env.TONAPI_TOKEN;
     try {
       const res = await fetch(

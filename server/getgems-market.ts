@@ -201,6 +201,17 @@ async function fetchGetgemsWebStats(address: string): Promise<{ floor: number | 
   return { floor: stats.floorPrice > 0 ? stats.floorPrice : null, supply };
 }
 
+async function toncenterSupply(address: string): Promise<number | null> {
+  const token = process.env.TONCENTER_TOKEN;
+  if (!token) return null;
+  const url = `https://toncenter.com/api/v3/nft/collections?collection_address=${encodeURIComponent(address)}`;
+  const res = await fetch(url, { headers: { 'X-API-Key': token }, signal: AbortSignal.timeout(4000) });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const nextIdx = Number(data?.nft_collections?.[0]?.next_item_index);
+  return Number.isSafeInteger(nextIdx) && nextIdx >= 0 ? nextIdx : null;
+}
+
 async function collectionQuote(entry: typeof addresses[number], previous?: CollectionQuote): Promise<CollectionQuote> {
   try {
     // Getgems SSR stats match the live marketplace floor; public-api basic-info can lag behind actual listings.
@@ -212,11 +223,13 @@ async function collectionQuote(entry: typeof addresses[number], previous?: Colle
     if (!response.ok) throw new Error('Collection unavailable');
     const result = (await response.json())?.response;
     if (typeof result?.floor !== 'number' || result.floor < 0 || !Number.isFinite(result.floor)) throw new Error('Invalid collection floor');
-    const supply = Number.isSafeInteger(result.total_supply) && result.total_supply >= 0 ? result.total_supply as number : null;
+    let supply = Number.isSafeInteger(result.total_supply) && result.total_supply >= 0 ? result.total_supply as number : null;
+    if (supply === null) supply = await toncenterSupply(entry.address).catch(() => null);
     return { ...entry, floor: result.floor || null, supply, available: true, source: 'basic-info', updatedAt: new Date().toISOString() };
   } catch {
+    const chainSupply = await toncenterSupply(entry.address).catch(() => null);
     return {
-      ...entry, floor: previous?.floor ?? null, supply: previous?.supply ?? null,
+      ...entry, floor: previous?.floor ?? null, supply: chainSupply ?? previous?.supply ?? null,
       updatedAt: previous?.updatedAt ?? null, available: false, source: previous?.source,
     };
   }
