@@ -123,12 +123,12 @@ async function fetchOnChainSales(
 
   const seenTraces = new Set<string>();
   const traceIds: string[] = [];
-  const maxPages = maxPagesOverride ?? (filterBySlug ? 10 : 1);
-  const maxTraces = maxPages === 1 ? 60 : 360;
+  const maxPages = maxPagesOverride ?? (filterBySlug ? 10 : 4);
+  const maxTraces = maxPages === 1 ? 60 : filterBySlug ? 360 : 180;
 
   for (let page = 0; page < maxPages; page += 2) {
     if (page > 0) await new Promise(resolve => setTimeout(resolve, 220));
-    const batchPages = filterBySlug ? [page, page + 1].filter(p => p < maxPages) : [0];
+    const batchPages = maxPages > 1 ? [page, page + 1].filter(p => p < maxPages) : [0];
     const results = await Promise.all(
       batchPages.map(async p => {
         try {
@@ -242,7 +242,7 @@ async function fetchOnChainSales(
       if (siblingSlug === slug || list.length === 0) continue;
       const sorted = list.sort((a, b) => b.at - a.at).slice(0, 24);
       const payload: CachedSales = { updatedAt: now, sales: sorted };
-      writes.push(redis(['SET', `notwise:market:sales:v6:${siblingSlug}`, JSON.stringify(payload), 'EX', SALES_RETENTION_SEC]).catch(() => null));
+      writes.push(redis(['SET', `notwise:market:sales:v7:${siblingSlug}`, JSON.stringify(payload), 'EX', SALES_RETENTION_SEC]).catch(() => null));
     }
     await Promise.all(writes);
   }
@@ -258,7 +258,7 @@ export default async function handler(request: Request) {
     return Response.json({ error: 'Invalid slug' }, { status: 400 });
   }
 
-  const cacheKey = `notwise:market:sales:v6:${slug}`;
+  const cacheKey = `notwise:market:sales:v7:${slug}`;
   const nowMs = Date.now();
   const minAtMs = nowMs - 30 * 86400_000;
   let existingCached: MarketSale[] | null = null;

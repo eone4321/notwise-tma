@@ -88,7 +88,7 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 async function prependSale(slug: string, sale: MarketSale) {
-  const key = `notwise:market:sales:v6:${slug}`;
+  const key = `notwise:market:sales:v7:${slug}`;
   const raw = await redis<string | null>(['GET', key]).catch(() => null);
   let list: MarketSale[] = [];
   if (raw) {
