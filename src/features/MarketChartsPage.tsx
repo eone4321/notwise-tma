@@ -1430,7 +1430,7 @@ function InteractiveFloorChart({
           </span>
         </div>
       ) : saleCoords.length > 0 ? (
-        <div className="radarScrubTooltip" style={{ pointerEvents: 'none', opacity: 0.85, gap: 10 }}>
+        <div className="radarScrubTooltip" style={{ pointerEvents: 'none', opacity: 0.85, flexDirection: 'row', alignItems: 'center', gap: 10, padding: '3px 8px' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
             <i style={{ width: 7, height: 7, borderRadius: 99, background: '#ffcc77', display: 'inline-block' }} />
             {en ? 'Floor' : 'Флор'}
