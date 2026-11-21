@@ -16,11 +16,12 @@ const awardCopyEn: Record<GuideAchievement, { title: string; description: string
   community: { title: 'One of the Chat', description: 'Sometimes one step is enough to be among friends.' },
   squad: { title: 'Under One Wing', description: 'A strong flock always has a banner to rally under.' },
   theme: { title: 'Plumage Shift', description: 'Sometimes the world around changes with a single choice.' },
+  cover: { title: 'New Plumage', description: 'Sometimes changing your feathers is all it takes to make Home feel fresh.' },
   joke: { title: 'Price Tag', description: 'Not everything with a price tag actually costs money.' },
 };
 
 type Awards = { earned: GuideAchievement[]; joined?: boolean; chatIssue?: string };
-type AwardAction = 'achievements' | 'mascot' | 'check_chat' | 'visit_squad' | 'theme' | 'joke';
+type AwardAction = 'achievements' | 'mascot' | 'check_chat' | 'visit_squad' | 'theme' | 'cover' | 'joke';
 
 export function useGuideAwards(user?: string) {
   const [earned, setEarned] = useState<GuideAchievement[]>([]);
@@ -62,7 +63,7 @@ export function useGuideAwards(user?: string) {
     const newNotices = ready.current ? added : added.filter(item =>
       (action === 'mascot' && item === 'mascot') || (action === 'check_chat' && item === 'community') ||
       (action === 'visit_squad' && item === 'squad') || (action === 'theme' && item === 'theme') ||
-      (action === 'joke' && item === 'joke'));
+      (action === 'cover' && item === 'cover') || (action === 'joke' && item === 'joke'));
     if (newNotices.length) setNotices(queue => [...queue, ...newNotices]);
     setEarned([...seen.current]);
     ready.current = true;
@@ -109,8 +110,8 @@ export function useGuideAwards(user?: string) {
     const checkNow = () => { runChatCheck(); };
     const onAwardAction = (event: Event) => {
       const action = (event as CustomEvent<unknown>).detail;
-      if (action === 'theme' && !seen.current.has('theme')) {
-        void update('theme').catch(() => {});
+      if ((action === 'theme' || action === 'cover') && !seen.current.has(action)) {
+        void update(action).catch(() => {});
       }
     };
     visible();
@@ -139,6 +140,7 @@ export function AwardIcon({ award, size = 28 }: { award: GuideAchievement; size?
     {award === 'community' && <span className="awardPortraitMark"><GameGlyph name="chat"/></span>}
     {award === 'squad' && <span className="awardPortraitMark"><GameGlyph name="shield"/></span>}
     {award === 'theme' && <span className="awardPortraitMark"><GameGlyph name="sparkles"/></span>}
+    {award === 'cover' && <span className="awardPortraitMark"><GameGlyph name="skin"/></span>}
     {award === 'joke' && <span className="awardPortraitMark"><GameGlyph name="lock"/></span>}
   </span>;
 }

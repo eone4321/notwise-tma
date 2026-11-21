@@ -28,6 +28,7 @@ const guideAchievementsEn: Record<GuideAchievement, { title: string; description
   community: { title: 'One of the chat', description: 'Sometimes one step is enough to be among your own.' },
   squad: { title: 'Under one wing', description: 'A strong flock always has a banner to rally around.' },
   theme: { title: 'Molting season', description: 'Sometimes the world around changes with a single decision.' },
+  cover: { title: 'New Plumage', description: 'Sometimes changing your feathers is all it takes to make Home feel fresh.' },
   joke: { title: 'Price of curiosity', description: 'Not everything that asks for payment actually costs money.' },
 };
 

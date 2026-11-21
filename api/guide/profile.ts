@@ -215,7 +215,7 @@ export default async function handler(request: Request) {
       }
       return json(chatIssue ? { earned, chatIssue } : { earned });
     }
-    if (action === 'mascot' || action === 'shared' || action === 'theme' || action === 'joke') {
+    if (action === 'mascot' || action === 'shared' || action === 'theme' || action === 'cover' || action === 'joke') {
       if (action === 'shared' && !await redis(['GETDEL', namespace + 'pending-share:' + id])) {
         return json({ error: 'share_unavailable' }, 409);
       }

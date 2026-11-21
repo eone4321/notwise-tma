@@ -55,6 +55,7 @@ const guideAchievementsEn: Record<GuideAchievement, string> = {
   community: 'One of the chat',
   squad: 'Under one wing',
   theme: 'Molting season',
+  cover: 'New Plumage',
   joke: 'Price of curiosity',
 };
 

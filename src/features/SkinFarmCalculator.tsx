@@ -264,6 +264,7 @@ export function SkinFarmCalculator({
     const savedCopy = { ...selection };
     saveHomeOwlSkin(savedCopy);
     setHomeSkin(savedCopy);
+    window.dispatchEvent(new CustomEvent('guide-award-action', { detail: 'cover' }));
   }
 
   return <section className="card buildPanel wardrobeCard" id="skin-calculator" aria-labelledby="farm-title" tabIndex={-1}>

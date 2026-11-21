@@ -7,6 +7,7 @@ export const guideAchievements = {
   community: { title: 'Свой в чате', description: 'Иногда достаточно одного шага, чтобы оказаться среди своих.', icon: '/brand/awards/blue.png' },
   squad: { title: 'Под одним крылом', description: 'У сильной стаи всегда есть знак, под которым собираются вместе.', icon: '/brand/awards/tie.png' },
   theme: { title: 'Смена оперения', description: 'Иногда мир вокруг меняется одним решением.', icon: '/brand/awards/hoodie.png' },
+  cover: { title: 'Новое оперение', description: 'Иногда достаточно сменить перья, чтобы главная заиграла иначе.', icon: '/game/items/skin-jetton.webp' },
   joke: { title: 'Цена вопроса', description: 'Не всё, за что просят плату, действительно стоит денег.', icon: '/brand/awards/code.png' },
 } as const;
 
