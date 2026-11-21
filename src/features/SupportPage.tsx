@@ -117,13 +117,15 @@ export function SupportPage({ isAdmin }: { isAdmin: boolean }) {
   return <>
     <section className="card aboutGuide">
       <div className="mediaHeading">
-        <img src={artSrc('/brand/notwise.svg')} width="36" height="36" alt=""/>
+        <img src={artSrc('/brand/notwise.svg')} width="34" height="34" alt=""/>
         <h2>NOT Wise Guide</h2>
-        <span className="settingsVersionBadge">1.2</span>
+        <span className="settingsVersionBadge">v1.2</span>
       </div>
-      <p>{en ? 'We built an interactive knowledge base and market radar for NOT Wise: The GAME on TON.' : 'Мы собрали интерактивную базу знаний и аналитику по NOT Wise: The GAME на TON.'}</p>
-      <p>{en ? 'The guide covers leveling, owl care, combat skills, and capsule & egg drop rates.' : 'В гайде собраны прокачка, уход за совой, боевые навыки и награды из капсул и яиц.'}</p>
-      <p>{en ? 'Live Getgems floor prices and token rates are updated here too.' : 'Здесь же обновляются цены Getgems и курсы токенов.'}</p>
+      <p>
+        {en
+          ? 'Interactive knowledge base and market radar for NOT Wise: The GAME on TON — leveling, combat builds, capsule odds, Getgems floors and token rates.'
+          : 'Интерактивная база знаний и маркет-радар по NOT Wise: The GAME на TON — прокачка, билды, шансы капсул, флор Getgems и курсы токенов.'}
+      </p>
       <a className="textLink aboutSignature" href={channelInvite} onClick={() => trackGuide('action:channel')}>
         <img src={artSrc('/brand/cryptoone.svg')} width="18" height="19" alt=""/>CryptoOne | MEDIA &amp; PRO ХОМЯКИ
       </a>
@@ -158,21 +160,10 @@ export function SupportPage({ isAdmin }: { isAdmin: boolean }) {
       <p>{en ? 'NFT holders get access to the private market community chat brought together by CryptoOne since 2022.' : 'Владелец NFT получает доступ в закрытый чат сообщества участников рынка. CryptoOne объединяет их с 2022 года.'}</p>
       <a className="secondary" href="https://getgems.io/prohamsters" target="_blank" rel="noreferrer">{en ? 'Open on Getgems' : 'Открыть на Getgems'}</a>
     </section>
-    <section className="card">
-      <h2>{en ? 'Guide analytics' : 'Статистика гайда'}</h2>
-      <p>{en ? 'In Telegram we count section views and link taps in aggregate statistics. Message content and personal links are never recorded.' : 'В Telegram считаем открытия разделов и нажатия на ссылки в сводной статистике. Содержимое сообщений и личные ссылки в отчёт не попадают.'}</p>
-      {isAdmin && <DetailLink to="/admin" className="textLink">{en ? 'Open admin panel' : 'Открыть админку'}</DetailLink>}
-    </section>
-    <details className="card" id="game-settings">
-      <summary><strong>{en ? 'NOT Wise game settings' : 'Настройки игры NOT Wise'}</strong></summary>
-      <dl className="analyticsRows">
-        <div><dt>{en ? 'Graphics' : 'Графика'}</dt><dd>{en ? 'Three modes' : 'Три режима'}</dd></div>
-        <div><dt>{en ? 'Shadows & glow' : 'Тени и свечение'}</dt><dd>{en ? 'Separate toggles' : 'Отдельные переключатели'}</dd></div>
-        <div><dt>{en ? 'Weather, tilt & sound' : 'Погода, наклон и звук'}</dt><dd>{en ? 'Optional' : 'По желанию'}</dd></div>
-      </dl>
-      <p>{en ? 'Performance mode disables shadows and glow. Medium enables shadows, and High adds glow. Available modes depend on your device.' : 'Производительный режим убирает тени и свечение. Средний включает тени, максимальный — ещё и свечение. Набор режимов зависит от устройства.'}</p>
-      <p>{en ? 'Live weather requires location access. Tilt moves the camera at home and in the Dojo. Music and sound effects volume are adjusted separately.' : 'Живая погода требует доступа к геолокации. Наклон двигает камеру дома и в Додзе. Громкость музыки и эффектов настраивается отдельно.'}</p>
-      <p>{en ? 'Language is switched via the button at the top of the in-game settings. Graphics, world, and audio changes are applied with "Save".' : 'Язык меняется кнопкой в верхней части настроек игры. Изменения графики, мира и звука подтверждаются кнопкой «Сохранить».'}</p>
-    </details>
+    {isAdmin && (
+      <section className="card">
+        <DetailLink to="/admin" className="textLink">{en ? 'Open admin panel' : 'Открыть админку'}</DetailLink>
+      </section>
+    )}
   </>;
 }

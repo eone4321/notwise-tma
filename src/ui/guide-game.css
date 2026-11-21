@@ -3561,7 +3561,23 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   width: 100%;
 }
 .settingsResetDanger,
-[data-theme="graphite"] .aboutGuide .mediaHeading .settingsVersionBadge {
+[data-theme="graphite"] .aboutGuide {
+  padding: 14px 16px;
+}
+.aboutGuide .mediaHeading {
+  margin-bottom: 8px;
+}
+.aboutGuide p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.42;
+  color: var(--muted);
+}
+.aboutGuide .aboutSignature {
+  min-height: 28px;
+  font-size: 12px;
+}
+.aboutGuide .mediaHeading .settingsVersionBadge {
   margin-inline-start: auto;
 }
 .settingsVersionBadge {
