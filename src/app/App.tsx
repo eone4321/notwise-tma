@@ -25,10 +25,10 @@ import { CapsulePage } from '../features/CapsulePage';
 import { OwlSkinCanvas } from '../features/OwlSkinCanvas';
 import { homeOwlChangeEvent, hydrateHomeOwlFromCloud, readHomeOwlSkin } from '../features/skinRig';
 import { achievementActions } from '../features/inventory';
-import {useCallback,useEffect,useRef,useState}from'react';
+import {useCallback,useEffect,useEffectEvent,useRef,useState}from'react';
 import{Link,Navigate,useLocation,useNavigate}from'react-router';
 import{AnimatePresence,motion}from'motion/react';
-import all from'../../public/data/all_100_stickers.json';import quests from'../../public/data/secret_quests.json';import{impactHaptic,lightHaptic,telegramPopup}from'../telegram/client';
+import all from'../../public/data/all_100_stickers.json';import quests from'../../public/data/secret_quests.json';import{impactHaptic,lightHaptic,showTelegramBack,telegramPopup}from'../telegram/client';
 import { useGuideNavigation, useGuideScroll } from './navigation';
 import { DockCoach } from './DockCoach';
 import { AdminPage } from '../features/AdminPage';
@@ -167,6 +167,15 @@ function Dock({ english: en, disabled = false, hamster, locked, onHamster, onSho
     if (hamster) { onHamster(); return; }
     navigation.back();
   };
+  const onTelegramBack = useEffectEvent(() => {
+    if (disabled || locked) return;
+    if (onShortTap) onShortTap();
+    else back();
+  });
+  const canGoBack = location.pathname !== '/';
+  useEffect(() => {
+    if (canGoBack) return showTelegramBack(() => onTelegramBack());
+  }, [canGoBack]);
   const cancel = () => {
     const state = gesture.current;
     clearTimeout(state.timer);

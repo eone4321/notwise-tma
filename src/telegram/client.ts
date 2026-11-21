@@ -77,6 +77,7 @@ export async function bootTelegram() {
   // 2. @telegram-apps/sdk
   try {
     init();
+    if (backButton.mount.isAvailable()) backButton.mount();
     if (viewport.mount.isAvailable()) {
       await viewport.mount();
       viewport.bindCssVars();
@@ -95,7 +96,6 @@ export async function bootTelegram() {
         swipeBehavior.disableVertical();
       }
     }
-    if (backButton.isSupported()) backButton.mount();
     if (miniApp.ready.isAvailable()) miniApp.ready();
   } catch {
     /* fallback already handled */
@@ -123,6 +123,16 @@ export function impactHaptic(style: 'light' | 'heavy') {
 
 export function lightHaptic() {
   impactHaptic('light');
+}
+
+export function showTelegramBack(onBack: () => void) {
+  if (!backButton.show.isAvailable() || !backButton.onClick.isAvailable()) return;
+  const unsubscribe = backButton.onClick(onBack);
+  backButton.show();
+  return () => {
+    unsubscribe();
+    if (backButton.hide.isAvailable()) backButton.hide();
+  };
 }
 
 export function telegramPopup() {
