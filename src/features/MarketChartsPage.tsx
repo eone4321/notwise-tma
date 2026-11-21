@@ -1497,10 +1497,14 @@ function InteractiveFloorChart({
 
   const visibleSales = showSales ? sales : [];
   const floors = points.map(p => p.floor);
-  const salePrices = visibleSales.map(s => s.price);
-  const allVals = [...floors, ...salePrices];
-  const minVal = allVals.length ? Math.min(...allVals) : 0;
-  const maxVal = allVals.length ? Math.max(...allVals) : 0;
+  const minFloor = floors.length ? Math.min(...floors) : 0;
+  const maxFloor = floors.length ? Math.max(...floors) : 0;
+  const inBandSales = floors.length
+    ? visibleSales.map(s => s.price).filter(p => p >= minFloor * 0.65 && p <= maxFloor * 1.35)
+    : visibleSales.map(s => s.price);
+  const scaleVals = floors.length ? [...floors, ...inBandSales] : visibleSales.map(s => s.price);
+  const minVal = scaleVals.length ? Math.min(...scaleVals) : 0;
+  const maxVal = scaleVals.length ? Math.max(...scaleVals) : 0;
   const span = maxVal - minVal || Math.max(minVal * 0.14, 1);
   const yMin = Math.max(0, minVal - span * 0.14);
   const yMax = maxVal + span * 0.14;
@@ -1523,8 +1527,9 @@ function InteractiveFloorChart({
 
   const saleCoords = visibleSales.map(s => {
     const x = !hasTimeline ? padLeft + innerW / 2 : padLeft + Math.max(0, Math.min(1, (s.ts - tMin) / tSpan)) * innerW;
-    const y = padTop + (1 - (s.price - yMin) / ySpan) * innerH;
-    return { x, y, s };
+    const rawY = padTop + (1 - (s.price - yMin) / ySpan) * innerH;
+    const y = Math.max(padTop + 2, Math.min(height - padBottom - 2, rawY));
+    return { x, y, s, outlier: rawY < padTop + 2 || rawY > height - padBottom - 2 };
   });
 
   const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
