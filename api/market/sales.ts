@@ -101,7 +101,7 @@ function hexTrace(b64: string): string {
 async function fetchOnChainSales(collectionAddress: string, slug: string, filterBySlug: boolean): Promise<MarketSale[]> {
   const toncenterToken = process.env.TONCENTER_TOKEN;
   const tonapiToken = process.env.TONAPI_TOKEN;
-  const sinceSec = Math.floor(Date.now() / 1000) - 4 * 86400;
+  const sinceSec = Math.floor(Date.now() / 1000) - 7 * 86400;
   const trRes = await fetch(
     `https://toncenter.com/api/v3/nft/transfers?collection_address=${encodeURIComponent(collectionAddress)}&start_utime=${sinceSec}&limit=40&sort=desc`,
     {
@@ -203,7 +203,7 @@ export default async function handler(request: Request) {
       let cursor: string | null = null;
       const maxPages = target.filterBySlug ? 4 : 1;
       const nowMs = Date.now();
-      const minMs = nowMs - 4 * 86400_000;
+      const minMs = nowMs - 7 * 86400_000;
 
       for (let page = 0; page < maxPages; page++) {
         const apiUrl = new URL(`${getgemsApi}/collection/history/${target.address}`);

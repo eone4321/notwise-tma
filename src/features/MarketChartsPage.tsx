@@ -177,6 +177,8 @@ export function MarketChartsPage() {
   const [range, setRange] = useState<HistoryRange>('7d');
   const [sortAsc, setSortAsc] = useState(true);
   const [feedTab, setFeedTab] = useState<'lots' | 'sales'>('lots');
+  const [fallbackLots, setFallbackLots] = useState<(ExplorerLot & { enchant: number })[]>([]);
+  const [fallbackLotsLoading, setFallbackLotsLoading] = useState(false);
   const [salesList, setSalesList] = useState<MarketSale[]>([]);
   const [salesLoading, setSalesLoading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -494,7 +496,7 @@ export function MarketChartsPage() {
     return { ...calc, baseFloor, scrollFloor, diffPct, isSkin };
   }, [asset, enchant, liveFloor, assetBuckets, itemsSnap, bucketsBySlug]);
 
-  // Lots sorted (supports "Все" across all enchant levels + single enchant level)
+  // Lots sorted (supports "Все" across all enchant levels + single enchant level + on-demand fallback for collections/stickers)
   const sortedLots: (ExplorerLot & { enchant: number })[] = useMemo(() => {
     const list: (ExplorerLot & { enchant: number })[] = [];
     if (asset.enchantable && enchant === null) {
@@ -504,9 +506,41 @@ export function MarketChartsPage() {
     } else if (activeBucket) {
       for (const lot of activeBucket.lots) list.push({ ...lot, enchant: activeBucket.enchant });
     }
-    list.sort((a, b) => (sortAsc ? a.price - b.price : b.price - a.price));
-    return list.slice(0, 24);
-  }, [asset.enchantable, enchant, allAssetBuckets, activeBucket, sortAsc]);
+    const sourceList = list.length > 0 ? list : (enchant === null || enchant === 0 ? fallbackLots : fallbackLots.filter(l => l.enchant === enchant));
+    const sorted = [...sourceList];
+    sorted.sort((a, b) => (sortAsc ? a.price - b.price : b.price - a.price));
+    return sorted.slice(0, 24);
+  }, [asset.enchantable, enchant, allAssetBuckets, activeBucket, fallbackLots, sortAsc]);
+
+  useEffect(() => {
+    const hasExplorerLots = allAssetBuckets.some(b => b.lots.length > 0);
+    if (hasExplorerLots) {
+      setFallbackLots([]);
+      setFallbackLotsLoading(false);
+      return;
+    }
+    if (!asset.slug.startsWith('col:') && asset.slug !== 'owl-skin') {
+      setFallbackLots([]);
+      return;
+    }
+    const controller = new AbortController();
+    setFallbackLotsLoading(true);
+    fetch(`/api/market/lots?slug=${encodeURIComponent(asset.slug)}`, { signal: controller.signal })
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (!controller.signal.aborted) {
+          setFallbackLots(Array.isArray(data?.lots) ? data.lots : []);
+          setFallbackLotsLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setFallbackLots([]);
+          setFallbackLotsLoading(false);
+        }
+      });
+    return () => controller.abort();
+  }, [asset.slug, allAssetBuckets]);
 
   // Enchant rail levels to show (+0..+10 or up to highest active enchant)
   const maxActiveEnchant = useMemo(() => {
@@ -996,7 +1030,7 @@ export function MarketChartsPage() {
           ) : (
             <div className="radarEmptyLots">
               <p>
-                {explorerPending && !explorer
+                {(explorerPending && !explorer) || fallbackLotsLoading
                   ? (en ? 'Loading active listings from Getgems…' : 'Загружаем активные лоты с Getgems…')
                   : asset.slug.startsWith('col:') && asset.slug !== 'col:genesis'
                     ? (en ? 'Collection floor price and supply on Getgems.' : 'Минимальный флор и объём коллекции на Getgems.')
