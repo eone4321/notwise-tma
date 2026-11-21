@@ -16,7 +16,6 @@ const vouchersCollection = collections.find(row => row.id === 'vouchers')?.addre
 const snapshotKey = 'notwise:getgems:market:v2';
 const explorerKey = 'notwise:getgems:explorer:v2';
 const historyPrefix = 'notwise:getgems:hist:v1:';
-const historyRetentionSec = 90 * 86400;
 const lockKey = snapshotKey + ':lock';
 const interval = 15 * 60_000;
 const freshWindow = 20 * 60_000;
@@ -523,7 +522,7 @@ async function runSalesBackfill(targetSlug?: string): Promise<void> {
     await Promise.all(chunk.map(async ({ key, hour, price }) => {
       // HSETNX preserves any existing live floor snapshot while filling past hours with real sale prices.
       await redis(['HSETNX', key, hour, `${price}|1`]).catch(() => null);
-      await redis(['EXPIRE', key, historyRetentionSec]).catch(() => null);
+      await redis(['PERSIST', key]).catch(() => null);
     }));
   }
 }
@@ -597,7 +596,7 @@ async function recordHistory(attemptedAt: number, buckets: ExplorerBucket[] | nu
     const chunk = entries.slice(i, i + 12);
     await Promise.all(chunk.map(async ({ key, val }) => {
       await redis(['HSET', key, hourKey, val]).catch(() => null);
-      await redis(['EXPIRE', key, historyRetentionSec]).catch(() => null);
+      await redis(['PERSIST', key]).catch(() => null);
     }));
   }
 }

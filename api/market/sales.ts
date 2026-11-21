@@ -97,22 +97,29 @@ async function fetchOnChainSales(collectionAddress: string, slug: string, filter
   const toncenterToken = process.env.TONCENTER_API_KEY || process.env.TONCENTER_TOKEN;
   const headers: HeadersInit = toncenterToken ? { 'X-API-Key': toncenterToken } : {};
   const sinceSec = Math.floor(Date.now() / 1000) - 30 * 86400;
-  const trRes = await fetch(
-    `https://toncenter.com/api/v3/nft/transfers?collection_address=${encodeURIComponent(collectionAddress)}&start_utime=${sinceSec}&limit=100&sort=desc`,
-    { headers, signal: AbortSignal.timeout(5000) },
-  );
-  if (!trRes.ok) return [];
-  const trData = await trRes.json();
-  const transfers = Array.isArray(trData?.nft_transfers) ? trData.nft_transfers : [];
   const seenTraces = new Set<string>();
   const traceIds: string[] = [];
-  for (const t of transfers) {
-    if (!t?.old_owner) continue;
-    if (typeof t?.trace_id === 'string' && !seenTraces.has(t.trace_id)) {
-      seenTraces.add(t.trace_id);
-      traceIds.push(t.trace_id);
-      if (traceIds.length >= 60) break;
+  const maxPages = filterBySlug ? 4 : 1;
+  const maxTraces = filterBySlug ? 160 : 60;
+
+  for (let page = 0; page < maxPages; page++) {
+    if (page > 0) await new Promise(resolve => setTimeout(resolve, 110));
+    const trRes = await fetch(
+      `https://toncenter.com/api/v3/nft/transfers?collection_address=${encodeURIComponent(collectionAddress)}&start_utime=${sinceSec}&limit=100&offset=${page * 100}&sort=desc`,
+      { headers, signal: AbortSignal.timeout(5000) },
+    );
+    if (!trRes.ok) break;
+    const trData = await trRes.json();
+    const transfers = Array.isArray(trData?.nft_transfers) ? trData.nft_transfers : [];
+    for (const t of transfers) {
+      if (!t?.old_owner) continue;
+      if (typeof t?.trace_id === 'string' && !seenTraces.has(t.trace_id)) {
+        seenTraces.add(t.trace_id);
+        traceIds.push(t.trace_id);
+        if (traceIds.length >= maxTraces) break;
+      }
     }
+    if (transfers.length < 100 || traceIds.length >= maxTraces) break;
   }
   if (traceIds.length === 0) return [];
 
@@ -181,7 +188,7 @@ export default async function handler(request: Request) {
     return Response.json({ error: 'Invalid slug' }, { status: 400 });
   }
 
-  const cacheKey = `notwise:market:sales:v3:${slug}`;
+  const cacheKey = `notwise:market:sales:v4:${slug}`;
   const minAtMs = Date.now() - 30 * 86400_000;
   const cached = await redis<string | null>(['GET', cacheKey]).catch(() => null);
   if (cached) {
