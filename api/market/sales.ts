@@ -97,84 +97,129 @@ async function fetchOnChainSales(collectionAddress: string, slug: string, filter
   const toncenterToken = process.env.TONCENTER_API_KEY || process.env.TONCENTER_TOKEN;
   const headers: HeadersInit = toncenterToken ? { 'X-API-Key': toncenterToken } : {};
   const sinceSec = Math.floor(Date.now() / 1000) - 30 * 86400;
+
   const seenTraces = new Set<string>();
   const traceIds: string[] = [];
-  const maxPages = filterBySlug ? 4 : 1;
-  const maxTraces = filterBySlug ? 160 : 60;
+  const maxPages = filterBySlug ? 10 : 1;
+  const maxTraces = filterBySlug ? 360 : 60;
 
-  for (let page = 0; page < maxPages; page++) {
-    if (page > 0) await new Promise(resolve => setTimeout(resolve, 110));
-    const trRes = await fetch(
-      `https://toncenter.com/api/v3/nft/transfers?collection_address=${encodeURIComponent(collectionAddress)}&start_utime=${sinceSec}&limit=100&offset=${page * 100}&sort=desc`,
-      { headers, signal: AbortSignal.timeout(5000) },
+  for (let page = 0; page < maxPages; page += 2) {
+    if (page > 0) await new Promise(resolve => setTimeout(resolve, 220));
+    const batchPages = filterBySlug ? [page, page + 1].filter(p => p < maxPages) : [0];
+    const results = await Promise.all(
+      batchPages.map(async p => {
+        try {
+          const trRes = await fetch(
+            `https://toncenter.com/api/v3/nft/transfers?collection_address=${encodeURIComponent(collectionAddress)}&start_utime=${sinceSec}&limit=100&offset=${p * 100}&sort=desc`,
+            { headers, signal: AbortSignal.timeout(5000) },
+          );
+          if (!trRes.ok) return [];
+          const trData = await trRes.json();
+          return Array.isArray(trData?.nft_transfers) ? trData.nft_transfers : [];
+        } catch {
+          return [];
+        }
+      }),
     );
-    if (!trRes.ok) break;
-    const trData = await trRes.json();
-    const transfers = Array.isArray(trData?.nft_transfers) ? trData.nft_transfers : [];
-    for (const t of transfers) {
-      if (!t?.old_owner) continue;
-      if (typeof t?.trace_id === 'string' && !seenTraces.has(t.trace_id)) {
-        seenTraces.add(t.trace_id);
-        traceIds.push(t.trace_id);
-        if (traceIds.length >= maxTraces) break;
+    let done = false;
+    for (const transfers of results) {
+      for (const t of transfers) {
+        if (!t?.old_owner) continue;
+        if (typeof t?.trace_id === 'string' && !seenTraces.has(t.trace_id)) {
+          seenTraces.add(t.trace_id);
+          traceIds.push(t.trace_id);
+          if (traceIds.length >= maxTraces) { done = true; break; }
+        }
       }
+      if (transfers.length < 100) done = true;
+      if (done) break;
     }
-    if (transfers.length < 100 || traceIds.length >= maxTraces) break;
+    if (done) break;
   }
   if (traceIds.length === 0) return [];
 
   const sales: MarketSale[] = [];
+  const bySlug = new Map<string, MarketSale[]>();
   const seenSaleKeys = new Set<string>();
 
-  // Query TON Center v3 actions in chunks of 20 traces (includes item metadata)
+  // Query TON Center v3 actions in chunks of 20 traces, 2 chunks at a time (<= 9 req/sec)
+  const chunks: string[][] = [];
   for (let i = 0; i < traceIds.length; i += 20) {
-    if (i > 0) await new Promise(resolve => setTimeout(resolve, 120));
-    const chunk = traceIds.slice(i, i + 20);
-    const params = new URLSearchParams();
-    for (const tid of chunk) params.append('trace_id', tid);
-    params.set('limit', '100');
+    chunks.push(traceIds.slice(i, i + 20));
+  }
 
-    let actData: any = null;
-    try {
-      const actRes = await fetch(`https://toncenter.com/api/v3/actions?${params.toString()}`, {
-        headers,
-        signal: AbortSignal.timeout(5000),
-      });
-      if (!actRes.ok) continue;
-      actData = await actRes.json();
-    } catch {
-      continue;
+  for (let i = 0; i < chunks.length; i += 2) {
+    if (i > 0) await new Promise(resolve => setTimeout(resolve, 230));
+    const pair = chunks.slice(i, i + 2);
+    const actResponses: any[] = await Promise.all(
+      pair.map(async (chunk): Promise<any> => {
+        const params = new URLSearchParams();
+        for (const tid of chunk) params.append('trace_id', tid);
+        params.set('limit', '100');
+        try {
+          const actRes = await fetch(`https://toncenter.com/api/v3/actions?${params.toString()}`, {
+            headers,
+            signal: AbortSignal.timeout(5000),
+          });
+          return actRes.ok ? await actRes.json() : null;
+        } catch {
+          return null;
+        }
+      }),
+    );
+
+    for (const actData of actResponses) {
+      if (!actData) continue;
+      const actions = Array.isArray(actData?.actions) ? actData.actions : [];
+      const metadata = actData?.metadata && typeof actData.metadata === 'object' ? actData.metadata : {};
+
+      for (const act of actions) {
+        if (act?.type !== 'nft_purchase' || act?.success === false) continue;
+        const tid = typeof act.trace_id === 'string' ? act.trace_id : '';
+        const det = act.details;
+        const addr = String(det?.nft_item ?? '');
+        const price = Number(det?.price ?? 0) / 1e9;
+        if (!addr || !Number.isFinite(price) || price <= 0) continue;
+        const tokenInfo = metadata?.[addr]?.token_info?.[0];
+        const name = typeof tokenInfo?.name === 'string' && tokenInfo.name.trim() ? tokenInfo.name.trim() : slug;
+        const mappedSlug = filterBySlug ? nameToSlug(name) : slug;
+        const key = `${tid}:${addr}`;
+        if (seenSaleKeys.has(key)) continue;
+        seenSaleKeys.add(key);
+        const utime = Number(act.end_utime ?? act.start_utime ?? 0);
+        const sale: MarketSale = {
+          address: addr,
+          name,
+          price,
+          currency: 'GRAM',
+          at: utime * 1000,
+          image: inferImage(mappedSlug ?? slug, name, tokenInfo?.image),
+          href: getgemsNftUrl(addr) || `https://getgems.io/collection/${collectionAddress}`,
+        };
+
+        if (filterBySlug && mappedSlug) {
+          const arr = bySlug.get(mappedSlug);
+          if (arr) arr.push(sale);
+          else bySlug.set(mappedSlug, [sale]);
+        }
+        if (!filterBySlug || mappedSlug === slug) {
+          sales.push(sale);
+        }
+      }
     }
 
-    const actions = Array.isArray(actData?.actions) ? actData.actions : [];
-    const metadata = actData?.metadata && typeof actData.metadata === 'object' ? actData.metadata : {};
+    if (!filterBySlug && sales.length >= 24) break;
+  }
 
-    for (const act of actions) {
-      if (act?.type !== 'nft_purchase' || act?.success === false) continue;
-      const tid = typeof act.trace_id === 'string' ? act.trace_id : '';
-      const det = act.details;
-      const addr = String(det?.nft_item ?? '');
-      const price = Number(det?.price ?? 0) / 1e9;
-      if (!addr || !Number.isFinite(price) || price <= 0) continue;
-      const tokenInfo = metadata?.[addr]?.token_info?.[0];
-      const name = typeof tokenInfo?.name === 'string' && tokenInfo.name.trim() ? tokenInfo.name.trim() : slug;
-      if (filterBySlug && nameToSlug(name) !== slug) continue;
-      const key = `${tid}:${addr}`;
-      if (seenSaleKeys.has(key)) continue;
-      seenSaleKeys.add(key);
-      const utime = Number(act.end_utime ?? act.start_utime ?? 0);
-      sales.push({
-        address: addr,
-        name,
-        price,
-        currency: 'GRAM',
-        at: utime * 1000,
-        image: inferImage(slug, name, tokenInfo?.image),
-        href: getgemsNftUrl(addr) || `https://getgems.io/collection/${collectionAddress}`,
-      });
+  // Warm Redis cache for sibling items discovered in the same collection scan
+  if (filterBySlug && bySlug.size > 0) {
+    const writes: Promise<unknown>[] = [];
+    for (const [siblingSlug, list] of bySlug.entries()) {
+      if (siblingSlug === slug || list.length === 0) continue;
+      const sorted = list.sort((a, b) => b.at - a.at).slice(0, 24);
+      writes.push(redis(['SET', `notwise:market:sales:v5:${siblingSlug}`, JSON.stringify(sorted), 'EX', 300]).catch(() => null));
     }
-
-    if (sales.length >= 24) break;
+    await Promise.all(writes);
   }
 
   return sales.sort((a, b) => b.at - a.at).slice(0, 24);
@@ -188,7 +233,7 @@ export default async function handler(request: Request) {
     return Response.json({ error: 'Invalid slug' }, { status: 400 });
   }
 
-  const cacheKey = `notwise:market:sales:v4:${slug}`;
+  const cacheKey = `notwise:market:sales:v5:${slug}`;
   const minAtMs = Date.now() - 30 * 86400_000;
   const cached = await redis<string | null>(['GET', cacheKey]).catch(() => null);
   if (cached) {
