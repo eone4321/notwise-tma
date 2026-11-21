@@ -42,6 +42,13 @@ type HistoryPoint = { ts: number; floor: number; count: number };
 type ChartSalePoint = { ts: number; price: number; name: string };
 type MarketSale = { address: string; name: string; price: number; currency: string; at: number; image?: string; href: string };
 
+function parseSaleEnchant(name: string): number {
+  const match = /\+(\d{1,2})\s*$/.exec(name.trim());
+  if (!match) return 0;
+  const level = Number(match[1]);
+  return Number.isSafeInteger(level) && level >= 0 && level <= 20 ? level : 0;
+}
+
 const marketHistoryCache = new Map<string, HistoryPoint[]>();
 const marketHistoryInflight = new Map<string, Promise<HistoryPoint[]>>();
 
@@ -70,21 +77,83 @@ function fetchHistoryCached(slug: string, enc: string, range: HistoryRange): Pro
 }
 
 const marketSalesCache = new Map<string, MarketSale[]>();
+const marketSalesFetchedAt = new Map<string, number>();
 const marketSalesInflight = new Map<string, Promise<MarketSale[]>>();
+const bundleSyncedCollections = new Set<string>();
+const bundleCompleteCollections = new Set<string>();
+let salesBundleFetchedAt = 0;
+let salesBundleHasData = false;
+let salesBundleInflight: Promise<void> | null = null;
 
-function fetchSalesCached(slug: string): Promise<MarketSale[]> {
+function assetCollectionSlug(slug: string): string {
+  if (slug === 'owl-skin') return 'owl-skin';
+  if (slug.startsWith('col:')) return slug;
+  if (slug.startsWith('floppy-')) return 'col:exp';
+  if (slug.startsWith('voucher-')) return 'col:vouchers';
+  return 'col:items';
+}
+
+function fetchAllSalesOnce(force = false): Promise<void> {
+  if (!force && salesBundleFetchedAt > 0 && Date.now() - salesBundleFetchedAt < 120_000) {
+    return Promise.resolve();
+  }
+  if (salesBundleInflight) return salesBundleInflight;
+  salesBundleInflight = fetch('/api/market/sales?all=1')
+    .then(res => (res.ok ? res.json() : null))
+    .then(data => {
+      const bySlug = data?.bySlug;
+      if (bySlug && typeof bySlug === 'object') {
+        const now = Date.now();
+        for (const [slug, list] of Object.entries(bySlug)) {
+          if (Array.isArray(list)) {
+            marketSalesCache.set(slug, list as MarketSale[]);
+            marketSalesFetchedAt.set(slug, now);
+          }
+        }
+        if (Array.isArray(data?.completeSlugs)) {
+          for (const slug of data.completeSlugs) {
+            if (typeof slug === 'string' && !marketSalesCache.has(slug)) {
+              marketSalesCache.set(slug, []);
+              marketSalesFetchedAt.set(slug, now);
+            }
+          }
+        }
+        if (Array.isArray(data?.syncedCollections)) {
+          bundleSyncedCollections.clear();
+          for (const c of data.syncedCollections) {
+            if (typeof c === 'string') bundleSyncedCollections.add(c);
+          }
+        }
+        if (Array.isArray(data?.completeCollections)) {
+          bundleCompleteCollections.clear();
+          for (const c of data.completeCollections) {
+            if (typeof c === 'string') bundleCompleteCollections.add(c);
+          }
+        }
+        salesBundleHasData = Object.keys(bySlug).length > 0 || bundleSyncedCollections.size > 0;
+        salesBundleFetchedAt = now;
+      }
+    })
+    .catch(() => undefined)
+    .finally(() => { salesBundleInflight = null; });
+  return salesBundleInflight;
+}
+
+function fetchSalesCached(slug: string, force = false): Promise<MarketSale[]> {
   const cached = marketSalesCache.get(slug);
-  if (cached) return Promise.resolve(cached);
+  const age = Date.now() - (marketSalesFetchedAt.get(slug) ?? 0);
+  if (!force && cached && age < 120_000) return Promise.resolve(cached);
   const inflight = marketSalesInflight.get(slug);
   if (inflight) return inflight;
   const req = fetch(`/api/market/sales?slug=${encodeURIComponent(slug)}`)
     .then(res => (res.ok ? res.json() : null))
     .then(data => {
-      const list: MarketSale[] = Array.isArray(data?.sales) ? data.sales : [];
+      const list: MarketSale[] = Array.isArray(data?.sales) ? data.sales : (cached ?? []);
       marketSalesCache.set(slug, list);
+      marketSalesFetchedAt.set(slug, Date.now());
       return list;
     })
-    .catch(() => [] as MarketSale[])
+    .catch(() => cached ?? ([] as MarketSale[]))
     .finally(() => { marketSalesInflight.delete(slug); });
   marketSalesInflight.set(slug, req);
   return req;
@@ -95,16 +164,21 @@ function convertSaleToGram(
   tokenItems: { symbol: string; priceUsd: string | number | null }[] | undefined,
   gramUsd: number | null,
 ): number | null {
-  const cur = (sale.currency || '').trim().toUpperCase();
-  if (cur === 'GRAM' || cur === 'TON') return sale.price;
+  const cur = (sale.currency || '').trim().toUpperCase().replace(/^\$/, '');
+  if (cur === 'GRAM' || cur === 'TON' || cur === 'TONCOIN') return sale.price;
   if (!gramUsd || gramUsd <= 0) return null;
-  if (cur === 'USD' || cur === 'USDT' || cur === 'USDC') return sale.price / gramUsd;
-  const tok = tokenItems?.find(t => t.symbol.toUpperCase() === cur);
-  const tokUsd = tok?.priceUsd != null ? Number(tok.priceUsd) : 0;
-  if (Number.isFinite(tokUsd) && tokUsd > 0) {
-    return (sale.price * tokUsd) / gramUsd;
+  let rawGram: number | null = null;
+  if (cur === 'USD' || cur === 'USDT' || cur === 'USD₮' || cur === 'USDC') {
+    rawGram = sale.price / gramUsd;
+  } else {
+    const tok = tokenItems?.find(t => t.symbol.toUpperCase() === cur);
+    const tokUsd = tok?.priceUsd != null ? Number(tok.priceUsd) : 0;
+    if (Number.isFinite(tokUsd) && tokUsd > 0) {
+      rawGram = (sale.price * tokUsd) / gramUsd;
+    }
   }
-  return null;
+  if (rawGram === null || !Number.isFinite(rawGram) || rawGram <= 0) return null;
+  return rawGram >= 0.01 ? Math.round(rawGram * 100) / 100 : rawGram;
 }
 
 const fmtNumRu = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
@@ -305,14 +379,51 @@ export function MarketChartsPage() {
     if (cached) {
       setSalesState({ slug: asset.slug, list: cached });
       setSalesLoading(false);
-      return;
+      // Silently refresh in background if stale without showing any loading state
+      if (Date.now() - (marketSalesFetchedAt.get(asset.slug) ?? 0) >= 120_000) {
+        void fetchSalesCached(asset.slug, true).then(list => {
+          if (!cancelled) setSalesState({ slug: asset.slug, list });
+        });
+      }
+      return () => { cancelled = true; };
     }
-    setSalesLoading(true);
-    void fetchSalesCached(asset.slug).then(list => {
-      if (!cancelled) {
-        setSalesState({ slug: asset.slug, list });
+
+    const colSlug = assetCollectionSlug(asset.slug);
+    if (salesBundleFetchedAt > 0 && bundleCompleteCollections.has(colSlug)) {
+      marketSalesCache.set(asset.slug, []);
+      marketSalesFetchedAt.set(asset.slug, Date.now());
+      setSalesState({ slug: asset.slug, list: [] });
+      setSalesLoading(false);
+      return () => { cancelled = true; };
+    }
+
+    // If the bundle already loaded some collections, don't block item browsing with a loading placeholder
+    setSalesLoading(!salesBundleHasData);
+    void fetchAllSalesOnce().then(() => {
+      if (cancelled) return;
+      const fromBundle = marketSalesCache.get(asset.slug);
+      if (fromBundle) {
+        setSalesState({ slug: asset.slug, list: fromBundle });
+        setSalesLoading(false);
+        return;
+      }
+      if (bundleCompleteCollections.has(colSlug)) {
+        marketSalesCache.set(asset.slug, []);
+        marketSalesFetchedAt.set(asset.slug, Date.now());
+        setSalesState({ slug: asset.slug, list: [] });
+        setSalesLoading(false);
+        return;
+      }
+      if (salesBundleHasData) {
+        setSalesState({ slug: asset.slug, list: [] });
         setSalesLoading(false);
       }
+      void fetchSalesCached(asset.slug).then(list => {
+        if (!cancelled) {
+          setSalesState({ slug: asset.slug, list });
+          setSalesLoading(false);
+        }
+      });
     });
     return () => { cancelled = true; };
   }, [asset.slug]);
@@ -463,9 +574,7 @@ export function MarketChartsPage() {
     for (const [s, e, r] of defaults) {
       void fetchHistoryCached(s, e, r);
     }
-    for (const s of ['ring-str-1', 'owl-skin', 'scroll-enchant-ring', 'col:genesis']) {
-      void fetchSalesCached(s);
-    }
+    void fetchAllSalesOnce();
   }, [asset.historySlug, asset.enchantable, enc]);
 
   useEffect(() => {
@@ -645,23 +754,30 @@ export function MarketChartsPage() {
       ? `${asset.nameEn} · ${en ? 'all enchants' : 'все заточки'}`
       : asset.nameEn;
 
+  const displayedSales = useMemo(() => {
+    if (!asset.enchantable || enchant === null) return salesList;
+    return salesList.filter(s => parseSaleEnchant(s.name) === enchant);
+  }, [salesList, asset.enchantable, enchant]);
+
   const chartSales = useMemo<ChartSalePoint[]>(() => {
-    if (seriesPoints.length < 2 || salesList.length === 0) return [];
-    const tMin = seriesPoints[0].ts;
-    const tMax = seriesPoints[seriesPoints.length - 1].ts;
+    if (displayedSales.length === 0) return [];
+    const now = Date.now();
+    const rangeMs = range === '24h' ? 86_400_000 : range === '7d' ? 7 * 86_400_000 : 30 * 86_400_000;
+    const tMin = range === 'all' ? 0 : now - rangeMs;
     const out: ChartSalePoint[] = [];
-    for (const s of salesList) {
-      if (s.at < tMin || s.at > tMax) continue;
+    for (const s of displayedSales) {
+      if (s.at < tMin || s.at > now + 60_000) continue;
       const gp = convertSaleToGram(s, tokens?.items, gramUsd);
       if (gp !== null && Number.isFinite(gp) && gp > 0) {
         out.push({ ts: s.at, price: gp, name: s.name });
       }
     }
-    return out;
-  }, [seriesPoints, salesList, tokens?.items, gramUsd]);
+    return out.sort((a, b) => a.ts - b.ts);
+  }, [displayedSales, range, tokens?.items, gramUsd]);
 
-  const statMin = seriesPoints.length ? Math.min(...seriesPoints.map(p => p.floor)) : null;
-  const statMax = seriesPoints.length ? Math.max(...seriesPoints.map(p => p.floor)) : null;
+  const statVals = seriesPoints.length ? seriesPoints.map(p => p.floor) : chartSales.map(s => s.price);
+  const statMin = statVals.length ? Math.min(...statVals) : null;
+  const statMax = statVals.length ? Math.max(...statVals) : null;
   const activeRangeObj = ranges.find(r => r.id === range);
   const activeRangeLabel = en ? activeRangeObj?.labelEn : activeRangeObj?.label;
 
@@ -921,6 +1037,7 @@ export function MarketChartsPage() {
             points={seriesPoints}
             sales={chartSales}
             range={range}
+            gramUsd={gramUsd}
             loading={effectiveHistoryLoading}
             maxActiveEnchant={maxActiveEnchant}
             canSwitchToCurve={Boolean(asset.enchantable && curvePoints.length >= 2)}
@@ -1130,9 +1247,9 @@ export function MarketChartsPage() {
           <div className="radarEmptyLots">
             <p>{en ? 'Loading recent sales from Getgems…' : 'Загружаем последние продажи с Getgems…'}</p>
           </div>
-        ) : salesList.length > 0 ? (
+        ) : displayedSales.length > 0 ? (
           <div className="radarLotsList">
-            {salesList.map((sale, idx) => {
+            {displayedSales.map((sale, idx) => {
               const gramPrice = convertSaleToGram(sale, tokens?.items, gramUsd);
               const displayPrice = gramPrice ?? sale.price;
               const isGram = gramPrice !== null;
@@ -1163,6 +1280,22 @@ export function MarketChartsPage() {
                 </a>
               );
             })}
+          </div>
+        ) : asset.enchantable && enchant !== null && salesList.length > 0 ? (
+          <div className="radarEmptyLots">
+            <p>
+              {en
+                ? `No sales at +${enchant} in the last 30 days.`
+                : `За последние 30 дней не было продаж уровня +${enchant}.`}
+            </p>
+            <div className="radarSuggestedEnchants">
+              <button
+                type="button"
+                onClick={() => { lightHaptic(); updateQuery(asset.slug, null); }}
+              >
+                {en ? `Show all enchants (${salesList.length})` : `Показать все заточки (${salesList.length})`}
+              </button>
+            </div>
           </div>
         ) : (
           <div className="radarEmptyLots">
@@ -1305,10 +1438,23 @@ function LotThumb({ src, fallback, albumId }: { src?: string; fallback: string; 
   return albumId ? <AlbumLogo id={albumId} size={34} /> : <GameArt path={fallback} size={34} />;
 }
 
+type ChartSelection =
+  | { kind: 'floor'; idx: number; pinned: boolean }
+  | { kind: 'sale'; idx: number; pinned: boolean };
+
+function formatSaleBadge(name: string): string | null {
+  const enc = parseSaleEnchant(name);
+  if (enc > 0) return `+${enc}`;
+  const skin = /#(\d{1,6})/.exec(name);
+  if (skin?.[1]) return `#${skin[1]}`;
+  return null;
+}
+
 function InteractiveFloorChart({
   points,
   sales = [],
   range,
+  gramUsd,
   loading,
   maxActiveEnchant,
   canSwitchToCurve,
@@ -1318,6 +1464,7 @@ function InteractiveFloorChart({
   points: HistoryPoint[];
   sales?: ChartSalePoint[];
   range: HistoryRange;
+  gramUsd: number | null;
   loading: boolean;
   maxActiveEnchant: number;
   canSwitchToCurve: boolean;
@@ -1325,71 +1472,111 @@ function InteractiveFloorChart({
   en: boolean;
 }) {
   const fmtNum = en ? fmtNumEn : fmtNumRu;
+  const fmtUsd = en ? fmtUsdEn : fmtUsdRu;
   const svgRef = useRef<SVGSVGElement>(null);
-  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  const [selection, setSelection] = useState<ChartSelection | null>(null);
+  const [showSales, setShowSales] = useState(true);
+
+  useEffect(() => {
+    setSelection(null);
+  }, [points, sales, range]);
 
   const width = 320;
-  const height = 148;
-  const padX = 12;
-  const padTop = 18;
+  const height = 152;
+  const padLeft = 10;
+  const padRight = 40;
+  const padTop = 14;
   const padBottom = 22;
-  const innerW = width - padX * 2;
+  const innerW = width - padLeft - padRight;
   const innerH = height - padTop - padBottom;
 
+  const visibleSales = showSales ? sales : [];
   const floors = points.map(p => p.floor);
-  const minVal = points.length ? Math.min(...floors) : 0;
-  const maxVal = points.length ? Math.max(...floors) : 0;
-  const span = maxVal - minVal || Math.max(minVal * 0.12, 1);
-  const yMin = Math.max(0, minVal - span * 0.15);
-  const yMax = maxVal + span * 0.15;
+  const salePrices = visibleSales.map(s => s.price);
+  const allVals = [...floors, ...salePrices];
+  const minVal = allVals.length ? Math.min(...allVals) : 0;
+  const maxVal = allVals.length ? Math.max(...allVals) : 0;
+  const span = maxVal - minVal || Math.max(minVal * 0.14, 1);
+  const yMin = Math.max(0, minVal - span * 0.14);
+  const yMax = maxVal + span * 0.14;
+  const ySpan = Math.max(yMax - yMin, 1e-6);
 
-  const coords = points.map((pt, idx) => {
-    const x = points.length === 1 ? width / 2 : padX + (idx / (points.length - 1)) * innerW;
-    const y = padTop + (1 - (pt.floor - yMin) / (yMax - yMin)) * innerH;
+  const allTs = [
+    ...points.map(p => p.ts),
+    ...visibleSales.map(s => s.ts),
+  ];
+  const tMin = allTs.length ? Math.min(...allTs) : 0;
+  const tMax = allTs.length ? Math.max(...allTs) : 0;
+  const tSpan = Math.max(tMax - tMin, 1);
+  const hasTimeline = allTs.length >= 2 && tMax > tMin;
+
+  const coords = points.map(pt => {
+    const x = !hasTimeline ? padLeft + innerW / 2 : padLeft + ((pt.ts - tMin) / tSpan) * innerW;
+    const y = padTop + (1 - (pt.floor - yMin) / ySpan) * innerH;
     return { x, y, pt };
   });
 
-  const tMin = points.length >= 2 ? points[0].ts : 0;
-  const tSpan = points.length >= 2 ? Math.max(points[points.length - 1].ts - tMin, 1) : 1;
-  const saleCoords = points.length >= 2
-    ? sales.map(s => {
-        const x = padX + Math.max(0, Math.min(1, (s.ts - tMin) / tSpan)) * innerW;
-        const rawY = padTop + (1 - (s.price - yMin) / (yMax - yMin)) * innerH;
-        const y = Math.max(padTop + 2, Math.min(height - padBottom - 2, rawY));
-        return { x, y, s };
-      })
-    : [];
+  const saleCoords = visibleSales.map(s => {
+    const x = !hasTimeline ? padLeft + innerW / 2 : padLeft + Math.max(0, Math.min(1, (s.ts - tMin) / tSpan)) * innerW;
+    const y = padTop + (1 - (s.price - yMin) / ySpan) * innerH;
+    return { x, y, s };
+  });
 
   const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
   const areaPath = coords.length > 1
     ? `${linePath} L${coords[coords.length - 1].x.toFixed(1)},${(height - padBottom).toFixed(1)} L${coords[0].x.toFixed(1)},${(height - padBottom).toFixed(1)} Z`
     : '';
 
-  const active = hoverIdx !== null ? coords[hoverIdx] : null;
-  const nearestSale = active && saleCoords.length > 0
-    ? saleCoords.reduce<{ dist: number; item: typeof saleCoords[number] | null }>(
-        (best, cur) => {
-          const dist = Math.abs(cur.x - active.x);
-          return dist < best.dist ? { dist, item: cur } : best;
-        },
-        { dist: 16, item: null },
-      ).item
-    : null;
+  const activeFloor = selection?.kind === 'floor' ? coords[selection.idx] ?? null : null;
+  const activeSaleIdx = selection?.kind === 'sale' && saleCoords[selection.idx] ? selection.idx : -1;
+  const activeSale = activeSaleIdx >= 0 ? saleCoords[activeSaleIdx] : null;
+  const activeSaleBadge = activeSale ? formatSaleBadge(activeSale.s.name) : null;
 
-  const handlePointer = (clientX: number) => {
-    if (!svgRef.current || coords.length < 2) return;
+  const stepSale = (delta: number) => {
+    if (saleCoords.length === 0) return;
+    lightHaptic();
+    const cur = activeSaleIdx >= 0 ? activeSaleIdx : saleCoords.length - 1;
+    const next = (cur + delta + saleCoords.length) % saleCoords.length;
+    setSelection({ kind: 'sale', idx: next, pinned: true });
+  };
+
+  const pickTarget = (clientX: number, clientY: number, pinned: boolean) => {
+    if (!svgRef.current || (coords.length === 0 && saleCoords.length === 0)) return;
     const rect = svgRef.current.getBoundingClientRect();
     const relX = ((clientX - rect.left) / rect.width) * width;
-    let best = 0;
-    let bestDist = Infinity;
-    for (let i = 0; i < coords.length; i++) {
-      const dist = Math.abs(coords[i].x - relX);
-      if (dist < bestDist) {
-        bestDist = dist;
-        best = i;
+    const relY = ((clientY - rect.top) / rect.height) * height;
+
+    // Prioritize picking a specific sale diamond in 2D space so stacked/clustered sales are easy to inspect
+    if (saleCoords.length > 0) {
+      let bestSaleIdx = -1;
+      let bestSaleDist = 16;
+      for (let i = 0; i < saleCoords.length; i++) {
+        const dx = saleCoords[i].x - relX;
+        const dy = saleCoords[i].y - relY;
+        const dist = Math.hypot(dx, dy);
+        if (dist < bestSaleDist) {
+          bestSaleDist = dist;
+          bestSaleIdx = i;
+        }
+      }
+      if (bestSaleIdx !== -1) {
+        setSelection({ kind: 'sale', idx: bestSaleIdx, pinned });
+        return;
       }
     }
-    setHoverIdx(best);
+
+    if (coords.length > 0) {
+      let best = 0;
+      let bestDist = Infinity;
+      for (let i = 0; i < coords.length; i++) {
+        const dist = Math.abs(coords[i].x - relX);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = i;
+        }
+      }
+      setSelection({ kind: 'floor', idx: best, pinned });
+    }
   };
 
   if (loading) {
@@ -1406,7 +1593,7 @@ function InteractiveFloorChart({
       </div>
     );
   }
-  if (points.length === 0) {
+  if (points.length === 0 && sales.length === 0) {
     return (
       <div className="radarChartEmpty">
         <p>{en ? 'No data for this enchant level in the selected range.' : 'Нет данных по этому уровню заточки за выбранный период.'}</p>
@@ -1418,54 +1605,144 @@ function InteractiveFloorChart({
       </div>
     );
   }
+
   return (
     <div className="radarChartBox">
-      {active ? (
-        <div className="radarScrubTooltip">
-          <strong>{fmtNum.format(active.pt.floor)} GRAM</strong>
-          <span>
-            {formatShortTime(active.pt.ts, range, en)}
-            {active.pt.count > 0 ? ` · ${pluralLots(active.pt.count, en)}` : ''}
-            {nearestSale ? ` · ${en ? 'Sale' : 'Продажа'}: ${fmtNum.format(nearestSale.s.price)} GRAM` : ''}
-          </span>
-        </div>
-      ) : saleCoords.length > 0 ? (
-        <div className="radarScrubTooltip" style={{ pointerEvents: 'none', opacity: 0.85, flexDirection: 'row', alignItems: 'center', gap: 10, padding: '3px 8px' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-            <i style={{ width: 7, height: 7, borderRadius: 99, background: '#ffcc77', display: 'inline-block' }} />
-            {en ? 'Floor' : 'Флор'}
-          </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-            <i style={{ width: 7, height: 7, borderRadius: 99, background: '#4ade80', display: 'inline-block' }} />
-            {en ? `Sales (${saleCoords.length})` : `Продажи (${saleCoords.length})`}
-          </span>
-        </div>
-      ) : null}
+      <div className="radarChartSubbar">
+        {activeSale ? (
+          <div className="radarChartReadout isSale">
+            <span className="radarReadoutLeft">
+              <i className="radarKeyDiamond" aria-hidden="true" />
+              <strong>{fmtNum.format(activeSale.s.price)} GRAM</strong>
+              {activeSaleBadge && <span className="radarReadoutTag">{activeSaleBadge}</span>}
+              {gramUsd && <small>≈ {fmtUsd.format(activeSale.s.price * gramUsd)}</small>}
+            </span>
+            <span className="radarReadoutRight">
+              <span>{formatShortTime(activeSale.s.ts, range, en)}</span>
+              {saleCoords.length > 1 && (
+                <span className="radarSaleNav">
+                  <button
+                    type="button"
+                    className="radarReadoutStep"
+                    aria-label={en ? 'Previous sale' : 'Предыдущая продажа'}
+                    onClick={() => stepSale(-1)}
+                  >
+                    ‹
+                  </button>
+                  <span className="radarSaleIdx">{activeSaleIdx + 1}/{saleCoords.length}</span>
+                  <button
+                    type="button"
+                    className="radarReadoutStep"
+                    aria-label={en ? 'Next sale' : 'Следующая продажа'}
+                    onClick={() => stepSale(1)}
+                  >
+                    ›
+                  </button>
+                </span>
+              )}
+              {selection?.pinned && (
+                <button
+                  type="button"
+                  className="radarReadoutClear"
+                  aria-label={en ? 'Close' : 'Закрыть'}
+                  onClick={() => setSelection(null)}
+                >
+                  ×
+                </button>
+              )}
+            </span>
+          </div>
+        ) : activeFloor ? (
+          <div className="radarChartReadout">
+            <span className="radarReadoutLeft">
+              <i className="radarKeyDot" aria-hidden="true" />
+              <strong>{fmtNum.format(activeFloor.pt.floor)} GRAM</strong>
+              {gramUsd && <small>≈ {fmtUsd.format(activeFloor.pt.floor * gramUsd)}</small>}
+            </span>
+            <span className="radarReadoutRight">
+              <span>
+                {formatShortTime(activeFloor.pt.ts, range, en)}
+                {activeFloor.pt.count > 0 ? ` · ${pluralLots(activeFloor.pt.count, en)}` : ''}
+              </span>
+              {selection?.pinned && (
+                <button
+                  type="button"
+                  className="radarReadoutClear"
+                  aria-label={en ? 'Close' : 'Закрыть'}
+                  onClick={() => setSelection(null)}
+                >
+                  ×
+                </button>
+              )}
+            </span>
+          </div>
+        ) : (
+          <div className="radarChartLegend">
+            <div className="radarLegendItems">
+              {coords.length > 0 && (
+                <span className="radarLegendItem">
+                  <i className="radarKeyDot" aria-hidden="true" />
+                  {en ? 'Floor' : 'Флор'}
+                </span>
+              )}
+              {sales.length > 0 && (
+                <button
+                  type="button"
+                  className={`radarLegendToggle ${showSales ? 'isActive' : ''}`}
+                  aria-pressed={showSales}
+                  onClick={() => { lightHaptic(); setShowSales(v => !v); setSelection(null); }}
+                >
+                  <i className="radarKeyDiamond" aria-hidden="true" />
+                  <span>{en ? `Sales · ${sales.length}` : `Продажи · ${sales.length}`}</span>
+                </button>
+              )}
+            </div>
+            {(coords.length >= 2 || saleCoords.length > 0) && (
+              <span className="radarLegendHint">{en ? 'Tap chart' : 'Коснись графика'}</span>
+            )}
+          </div>
+        )}
+      </div>
+
       <svg
         ref={svgRef}
         className="radarSvg"
         viewBox={`0 0 ${width} ${height}`}
-        onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); handlePointer(e.clientX); }}
-        onPointerMove={e => { if (e.buttons > 0 || e.pointerType === 'mouse') handlePointer(e.clientX); }}
-        onPointerUp={() => setHoverIdx(null)}
-        onPointerLeave={() => setHoverIdx(null)}
-        onPointerCancel={() => setHoverIdx(null)}
+        onPointerDown={e => {
+          const isTouch = e.pointerType !== 'mouse';
+          if (e.pointerType === 'mouse') e.currentTarget.setPointerCapture(e.pointerId);
+          pickTarget(e.clientX, e.clientY, isTouch);
+        }}
+        onPointerMove={e => {
+          if (e.buttons > 0 || e.pointerType === 'mouse') {
+            pickTarget(e.clientX, e.clientY, e.pointerType !== 'mouse');
+          }
+        }}
+        onPointerUp={e => {
+          if (e.pointerType === 'mouse' && !selection?.pinned) setSelection(null);
+        }}
+        onPointerLeave={() => {
+          if (!selection?.pinned) setSelection(null);
+        }}
+        onPointerCancel={() => {
+          if (!selection?.pinned) setSelection(null);
+        }}
       >
         <defs>
           <linearGradient id="radarGoldGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ffcc77" stopOpacity="0.34" />
+            <stop offset="0%" stopColor="#ffcc77" stopOpacity="0.32" />
             <stop offset="100%" stopColor="#ffcc77" stopOpacity="0" />
           </linearGradient>
         </defs>
 
-        {/* Horizontal dashed grid */}
+        {/* Horizontal dashed grid with true yMin..yMax labels in dedicated right gutter */}
         {[0, 0.5, 1].map(ratio => {
           const y = padTop + ratio * innerH;
-          const labelVal = yMax * (1 - ratio);
+          const labelVal = yMax - ratio * ySpan;
           return (
             <g key={ratio}>
-              <line x1={padX} y1={y} x2={width - padX} y2={y} className="radarGridLine" />
-              <text x={width - padX} y={y - 3} textAnchor="end" className="radarAxisText">
+              <line x1={padLeft} y1={y} x2={width - padRight} y2={y} className="radarGridLine" />
+              <text x={width - 4} y={y + 3} textAnchor="end" className="radarAxisText">
                 {formatGramCompact(labelVal, en)}
               </text>
             </g>
@@ -1475,66 +1752,84 @@ function InteractiveFloorChart({
         {areaPath && <path d={areaPath} fill="url(#radarGoldGrad)" />}
         {coords.length > 1 && <path d={linePath} className="radarLinePath" />}
 
-        {/* Real completed sales overlay dots */}
-        {saleCoords.map((sc, idx) => (
-          <circle
-            key={`${sc.s.ts}-${idx}`}
-            cx={sc.x}
-            cy={sc.y}
-            r={nearestSale === sc ? '4.5' : '3.1'}
-            fill="#4ade80"
-            stroke="#111112"
-            strokeWidth="1.5"
-            opacity="0.95"
-          />
-        ))}
+        {/* Completed sales overlay — native lavender diamond markers */}
+        {saleCoords.map((sc, idx) => {
+          const isActive = activeSale === sc;
+          const size = isActive ? 4.4 : 3.2;
+          return (
+            <g key={`${sc.s.ts}-${idx}`} className="radarSaleMarker">
+              <circle
+                cx={sc.x}
+                cy={sc.y}
+                r={isActive ? 9.5 : 6.4}
+                fill={isActive ? 'rgba(211, 194, 255, 0.30)' : 'rgba(211, 194, 255, 0.13)'}
+              />
+              <polygon
+                points={`${sc.x},${sc.y - size} ${sc.x + size},${sc.y} ${sc.x},${sc.y + size} ${sc.x - size},${sc.y}`}
+                fill={isActive ? '#f5f6ff' : '#d3c2ff'}
+                stroke="var(--game-tile)"
+                strokeWidth="1.35"
+              />
+            </g>
+          );
+        })}
 
         {/* Single-point or endpoint dot */}
         {coords.length === 1 ? (
           <g>
-            <circle cx={coords[0].x} cy={coords[0].y} r="10" fill="rgba(255, 204, 119, 0.18)" />
-            <circle cx={coords[0].x} cy={coords[0].y} r="4.5" fill="#ffcc77" stroke="#111112" strokeWidth="2" />
+            <circle cx={coords[0].x} cy={coords[0].y} r="9.5" fill="rgba(255, 204, 119, 0.18)" />
+            <circle cx={coords[0].x} cy={coords[0].y} r="4.2" fill="#ffcc77" stroke="var(--game-tile)" strokeWidth="2" />
           </g>
-        ) : (
+        ) : coords.length > 1 ? (
           <circle
             cx={coords[coords.length - 1].x}
             cy={coords[coords.length - 1].y}
-            r="3.5"
+            r="3.4"
             fill="#ffcc77"
+            stroke="var(--game-tile)"
+            strokeWidth="1.2"
           />
+        ) : null}
+
+        {/* Active floor scrub crosshair */}
+        {activeFloor && (
+          <g>
+            <line x1={activeFloor.x} y1={padTop} x2={activeFloor.x} y2={height - padBottom} className="radarCrosshair" />
+            <circle cx={activeFloor.x} cy={activeFloor.y} r="4.8" fill="#ffcc77" stroke="var(--game-tile)" strokeWidth="2" />
+          </g>
         )}
 
-        {/* Scrub crosshair */}
-        {active && (
+        {/* Active sale crosshair */}
+        {activeSale && (
           <g>
-            <line x1={active.x} y1={padTop} x2={active.x} y2={height - padBottom} className="radarCrosshair" />
-            <circle cx={active.x} cy={active.y} r="5" fill="#ffcc77" stroke="#111112" strokeWidth="2" />
+            <line x1={activeSale.x} y1={padTop} x2={activeSale.x} y2={height - padBottom} className="radarCrosshair isSale" />
+            <line x1={padLeft} y1={activeSale.y} x2={width - padRight} y2={activeSale.y} className="radarCrosshair isSale" />
           </g>
         )}
 
         {/* X axis start/end labels */}
-        {coords.length >= 2 && (
+        {hasTimeline && (
           <>
-            <text x={padX} y={height - 5} textAnchor="start" className="radarAxisText">
-              {formatShortTime(coords[0].pt.ts, range, en)}
+            <text x={padLeft} y={height - 5} textAnchor="start" className="radarAxisText">
+              {formatShortTime(tMin, range, en)}
             </text>
-            <text x={width - padX} y={height - 5} textAnchor="end" className="radarAxisText">
-              {formatShortTime(coords[coords.length - 1].pt.ts, range, en)}
+            <text x={width - padRight} y={height - 5} textAnchor="end" className="radarAxisText">
+              {formatShortTime(tMax, range, en)}
             </text>
           </>
         )}
       </svg>
 
-          {points.length === 1 && (
-            <div className="radarSinglePointNote">
-              <span>{en ? 'Only one price point available so far.' : 'Пока доступна одна точка цены.'}</span>
-              {canSwitchToCurve && (
-                <button type="button" className="radarInlineAction" onClick={onSwitchToCurve}>
-                  {en ? 'By enchant level →' : 'По уровням заточки →'}
-                </button>
-              )}
-            </div>
+      {points.length === 1 && (
+        <div className="radarSinglePointNote">
+          <span>{en ? 'Only one floor point available so far.' : 'Пока доступна одна точка флора.'}</span>
+          {canSwitchToCurve && (
+            <button type="button" className="radarInlineAction" onClick={onSwitchToCurve}>
+              {en ? 'By enchant level →' : 'По уровням заточки →'}
+            </button>
           )}
+        </div>
+      )}
     </div>
   );
 }

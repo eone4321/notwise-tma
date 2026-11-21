@@ -1,353 +1,131 @@
-import { getgemsNftUrl } from '../../src/domain/ton-address';
-import collections from '../../src/features/market-collections';
-import stickers from '../../src/features/sticker-data';
-import { redis } from '../../server/redis';
+import {
+  MAX_SALES_PER_SLUG,
+  SALES_FRESH_MS,
+  SALES_HASH_KEY,
+  SALES_RETENTION_MS,
+  isCollectionSynced30d,
+  mergeSales,
+  parseCachedEntry,
+  readAllSalesBundle,
+  resolveCollectionTarget,
+  scanGetgemsCollectionSales,
+  scanToncenterCollectionSales,
+  type CachedSlugSales,
+  type MarketSale,
+} from '../../server/market-sales.js';
+import { redis } from '../../server/redis.js';
 
 export const config = { runtime: 'edge' };
 
-const getgemsApi = 'https://api.getgems.io/public-api/v1';
-
-export type MarketSale = {
-  address: string;
-  name: string;
-  price: number;
-  currency: string;
-  at: number;
-  image?: string;
-  href: string;
-};
-
-function resolveCollection(slug: string): { address: string; filterBySlug: boolean } | null {
-  if (slug === 'owl-skin') {
-    const col = collections.find(c => c.id === 'skins');
-    return col ? { address: col.address, filterBySlug: false } : null;
-  }
-  if (slug.startsWith('col:album-')) {
-    const id = Number(slug.slice('col:album-'.length));
-    const addr = stickers.collectionByAlbum[id];
-    return addr ? { address: addr, filterBySlug: false } : null;
-  }
-  if (slug.startsWith('col:')) {
-    const id = slug.slice(4);
-    const col = collections.find(c => c.id === id);
-    return col ? { address: col.address, filterBySlug: false } : null;
-  }
-  if (slug.startsWith('floppy-')) {
-    const col = collections.find(c => c.id === 'exp');
-    if (col) return { address: col.address, filterBySlug: true };
-  }
-  if (slug.startsWith('voucher-')) {
-    const col = collections.find(c => c.id === 'vouchers');
-    if (col) return { address: col.address, filterBySlug: true };
-  }
-  const items = collections.find(c => c.id === 'items');
-  return items ? { address: items.address, filterBySlug: true } : null;
-}
-
-function nameToSlug(name: unknown): string | undefined {
-  if (typeof name !== 'string') return;
-  const n = name.trim().toLowerCase();
-  if (n.startsWith('not wise skin')) return 'owl-skin';
-  if (n.includes('golden skin jetton')) return 'skin-jetton-golden';
-  if (n.includes('epic skin jetton')) return 'skin-jetton-epic';
-  if (n.includes('skin jetton')) return 'skin-jetton';
-  if (n.includes('dubai chocolate')) return 'dubai-chocolate';
-  if (n.includes('pear')) return 'pear';
-  if (n.includes('first aid kit')) return 'first-aid-kit';
-  if (n.includes('color string lights')) return 'string-light-color';
-  if (n.includes('string lights')) return 'string-lights';
-  if (n.includes('birch')) return 'birch';
-  if (n.includes('empire state') || n.includes('new york')) return 'new-york';
-  if (n.includes('lighter')) return 'lighter';
-  if (n.includes('chiller')) return 'chiller';
-  if (n.includes('ring enchanter')) return 'scroll-enchant-ring';
-  if (n.includes('skin enchanter')) return 'scroll-enchant-skin';
-  if (n.includes('morpher')) return 'morpher';
-  if (n.includes('clock')) return 'big-black-clock';
-  if (n.includes('montmorillonite')) return 'montmorillonite';
-  const ring = /\bring of (strength|agility|wisdom)\b/.exec(n);
-  if (ring) {
-    const stat = { strength: 'str', agility: 'ag', wisdom: 'wit' }[ring[1]];
-    const tier = /\b(golden|iii)\b/.test(n) ? 3 : /\b(obsidian|ii)\b/.test(n) ? 2 : /\b(wooden|i)\b/.test(n) ? 1 : null;
-    return tier ? `ring-${stat}-${tier}` : undefined;
-  }
-  if (n.includes('voucher') && n.includes('100k')) return 'voucher-100k';
-  if (n.includes('voucher') && n.includes('10k')) return 'voucher-10k';
-  if (n.includes('floppy') && n.includes('100k')) return 'floppy-100k';
-  if (n.includes('floppy') && n.includes('1m')) return 'floppy-1m';
-  if (n.includes('floppy') && n.includes('10m')) return 'floppy-10m';
-  if (n.includes('floppy') && n.includes('100m')) return 'floppy-100m';
-  if (n.includes('floppy') && n.includes('1b')) return 'floppy-1b';
-  if (n.includes('floppy') && n.includes('empty')) return 'floppy-empty';
-  if (n.includes('flask') && n.includes('empty')) return 'flask-empty';
-  if (n.includes('flask') && n.includes('half')) return 'flask-half';
-  if (n.includes('flask') && n.includes('full')) return 'flask-full';
-}
-
-function inferImage(slug: string, name: string, rawImage: unknown): string | undefined {
-  if (typeof rawImage === 'string' && /^https:\/\/[\w.-]+\//i.test(rawImage)) return rawImage;
-  if (slug === 'owl-skin') {
-    const match = /#(\d{1,6})/.exec(name);
-    if (match?.[1]) return `https://cdn.notwise.co/nft/skins/svg/${match[1]}.svg`;
-  }
-  return undefined;
-}
-
-const SALES_FRESH_MS = 120_000;
-const SALES_RETENTION_SEC = 30 * 86400;
-
-type CachedSales = { updatedAt: number; sales: MarketSale[] };
-
-function mergeSales(incoming: MarketSale[], existing: MarketSale[], minAtMs: number): MarketSale[] {
-  const seen = new Set<string>();
-  const out: MarketSale[] = [];
-  for (const s of [...incoming, ...existing]) {
-    if (!s || s.at < minAtMs) continue;
-    const key = `${s.address.toLowerCase()}:${Math.round(s.at / 1000)}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(s);
-  }
-  return out.sort((a, b) => b.at - a.at).slice(0, 24);
-}
-
-async function fetchJsonWithRetry(url: string, headers: HeadersInit): Promise<any> {
-  let res = await fetch(url, { headers, signal: AbortSignal.timeout(5500) });
-  if (res.status === 429) {
-    await new Promise(resolve => setTimeout(resolve, 350));
-    res = await fetch(url, { headers, signal: AbortSignal.timeout(5500) });
-  }
-  return res.ok ? await res.json() : null;
-}
-
-async function fetchOnChainSales(
-  collectionAddress: string,
-  slug: string,
-  filterBySlug: boolean,
-  sinceMsOverride?: number,
-): Promise<MarketSale[]> {
-  const toncenterToken = process.env.TONCENTER_API_KEY || process.env.TONCENTER_TOKEN;
-  const headers: HeadersInit = toncenterToken ? { 'X-API-Key': toncenterToken } : {};
-  const thirtyDaysAgoSec = Math.floor(Date.now() / 1000) - 30 * 86400;
-  const isDelta = typeof sinceMsOverride === 'number';
-  const sinceSec = isDelta
-    ? Math.max(thirtyDaysAgoSec, Math.floor(sinceMsOverride / 1000) - 300)
-    : thirtyDaysAgoSec;
-  const transferLimit = isDelta ? 400 : filterBySlug ? 1000 : 400;
-  const maxTraces = isDelta ? 240 : filterBySlug ? 360 : 180;
-
-  const trData = await fetchJsonWithRetry(
-    `https://toncenter.com/api/v3/nft/transfers?collection_address=${encodeURIComponent(collectionAddress)}&start_utime=${sinceSec}&limit=${transferLimit}&sort=desc`,
-    headers,
-  ).catch(() => null);
-  const transfers = Array.isArray(trData?.nft_transfers) ? trData.nft_transfers : [];
-  const seenTraces = new Set<string>();
-  const traceIds: string[] = [];
-  for (const t of transfers) {
-    if (!t?.old_owner) continue;
-    if (typeof t?.trace_id === 'string' && !seenTraces.has(t.trace_id)) {
-      seenTraces.add(t.trace_id);
-      traceIds.push(t.trace_id);
-      if (traceIds.length >= maxTraces) break;
-    }
-  }
-  if (traceIds.length === 0) return [];
-
-  const sales: MarketSale[] = [];
-  const bySlug = new Map<string, MarketSale[]>();
-  const seenSaleKeys = new Set<string>();
-
-  // Query TON Center v3 actions in chunks of 12 traces (avoids limit=100 truncation on batch traces)
-  const chunks: string[][] = [];
-  for (let i = 0; i < traceIds.length; i += 12) {
-    chunks.push(traceIds.slice(i, i + 12));
-  }
-
-  for (let i = 0; i < chunks.length; i += 2) {
-    if (i > 0) await new Promise(resolve => setTimeout(resolve, 230));
-    const pair = chunks.slice(i, i + 2);
-    const actResponses: any[] = await Promise.all(
-      pair.map(async (chunk): Promise<any> => {
-        const params = new URLSearchParams();
-        for (const tid of chunk) params.append('trace_id', tid);
-        params.set('limit', '100');
-        try {
-          return await fetchJsonWithRetry(`https://toncenter.com/api/v3/actions?${params.toString()}`, headers);
-        } catch {
-          return null;
-        }
-      }),
-    );
-
-    for (const actData of actResponses) {
-      if (!actData) continue;
-      const actions = Array.isArray(actData?.actions) ? actData.actions : [];
-      const metadata = actData?.metadata && typeof actData.metadata === 'object' ? actData.metadata : {};
-
-      for (const act of actions) {
-        if (act?.type !== 'nft_purchase' || act?.success === false) continue;
-        const tid = typeof act.trace_id === 'string' ? act.trace_id : '';
-        const det = act.details;
-        const addr = String(det?.nft_item ?? '');
-        const price = Number(det?.price ?? 0) / 1e9;
-        if (!addr || !Number.isFinite(price) || price <= 0) continue;
-        const tokenInfo = metadata?.[addr]?.token_info?.[0];
-        const name = typeof tokenInfo?.name === 'string' && tokenInfo.name.trim() ? tokenInfo.name.trim() : slug;
-        const mappedSlug = filterBySlug ? nameToSlug(name) : slug;
-        const key = `${tid}:${addr}`;
-        if (seenSaleKeys.has(key)) continue;
-        seenSaleKeys.add(key);
-        const utime = Number(act.end_utime ?? act.start_utime ?? 0);
-        const sale: MarketSale = {
-          address: addr,
-          name,
-          price,
-          currency: 'GRAM',
-          at: utime * 1000,
-          image: inferImage(mappedSlug ?? slug, name, tokenInfo?.image),
-          href: getgemsNftUrl(addr) || `https://getgems.io/collection/${collectionAddress}`,
-        };
-
-        if (filterBySlug && mappedSlug) {
-          const arr = bySlug.get(mappedSlug);
-          if (arr) arr.push(sale);
-          else bySlug.set(mappedSlug, [sale]);
-        }
-        if (!filterBySlug || mappedSlug === slug) {
-          sales.push(sale);
-        }
-      }
-    }
-
-    if (!filterBySlug && sales.length >= 24) break;
-  }
-
-  // Warm Redis cache for sibling items discovered in the same collection scan
-  if (filterBySlug && bySlug.size > 0 && !isDelta) {
-    const now = Date.now();
-    const writes: Promise<unknown>[] = [];
-    for (const [siblingSlug, list] of bySlug.entries()) {
-      if (siblingSlug === slug || list.length === 0) continue;
-      const sorted = list.sort((a, b) => b.at - a.at).slice(0, 24);
-      const payload: CachedSales = { updatedAt: now, sales: sorted };
-      writes.push(redis(['SET', `notwise:market:sales:v7:${siblingSlug}`, JSON.stringify(payload), 'EX', SALES_RETENTION_SEC]).catch(() => null));
-    }
-    await Promise.all(writes);
-  }
-
-  return sales.sort((a, b) => b.at - a.at).slice(0, 24);
-}
+export type { MarketSale };
 
 export default async function handler(request: Request) {
   if (request.method !== 'GET') return new Response(null, { status: 405 });
   const url = new URL(request.url);
+  const nowMs = Date.now();
+  const minAtMs = nowMs - SALES_RETENTION_MS;
+
+  if (url.searchParams.get('all') === '1') {
+    const bundle = await readAllSalesBundle(minAtMs);
+    return Response.json(bundle, {
+      headers: {
+        'Cache-Control': Object.keys(bundle.bySlug).length > 0 ? 'public, max-age=0, s-maxage=60' : 'no-store',
+      },
+    });
+  }
+
   const slug = (url.searchParams.get('slug') ?? '').trim().toLowerCase();
   if (!/^[a-z0-9:-]{1,48}$/.test(slug)) {
     return Response.json({ error: 'Invalid slug' }, { status: 400 });
   }
 
-  const cacheKey = `notwise:market:sales:v7:${slug}`;
-  const nowMs = Date.now();
-  const minAtMs = nowMs - 30 * 86400_000;
-  let existingCached: MarketSale[] | null = null;
-  let cachedUpdatedAt = 0;
-  const cached = await redis<string | null>(['GET', cacheKey]).catch(() => null);
-  if (cached) {
-    try {
-      const parsed = JSON.parse(cached) as Partial<CachedSales>;
-      if (parsed && Array.isArray(parsed.sales)) {
-        existingCached = parsed.sales.filter(s => s.at >= minAtMs);
-        cachedUpdatedAt = typeof parsed.updatedAt === 'number' ? parsed.updatedAt : 0;
-        if (cachedUpdatedAt > 0 && nowMs - cachedUpdatedAt < SALES_FRESH_MS) {
-          return Response.json({ slug, sales: existingCached }, { headers: { 'Cache-Control': 'public, max-age=0, s-maxage=60' } });
-        }
-      }
-    } catch { /* ignore */ }
+  const rawCached = await redis<string | null>(['HGET', SALES_HASH_KEY, slug]).catch(() => null);
+  const cached = parseCachedEntry(rawCached, minAtMs);
+
+  if (cached && cached.complete30d && cached.updatedAt > 0 && nowMs - cached.updatedAt < SALES_FRESH_MS) {
+    return Response.json(
+      { slug, sales: cached.sales },
+      { headers: { 'Cache-Control': 'public, max-age=0, s-maxage=60' } },
+    );
   }
 
-  const target = resolveCollection(slug);
+  const target = resolveCollectionTarget(slug);
   if (!target) {
     return Response.json({ slug, sales: [] }, { headers: { 'Cache-Control': 'public, max-age=0, s-maxage=60' } });
   }
 
-  // Adaptive incremental delta scan from (cachedUpdatedAt - 5m) so overnight bursts are never missed
-  if (existingCached !== null && cachedUpdatedAt > 0) {
-    const delta = await fetchOnChainSales(target.address, slug, target.filterBySlug, cachedUpdatedAt).catch(() => []);
-    const merged = mergeSales(delta, existingCached, minAtMs);
-    const payload: CachedSales = { updatedAt: nowMs, sales: merged };
-    await redis(['SET', cacheKey, JSON.stringify(payload), 'EX', SALES_RETENTION_SEC]).catch(() => null);
-    return Response.json(
-      { slug, sales: merged },
-      { headers: { 'Cache-Control': merged.length > 0 ? 'public, max-age=0, s-maxage=60' : 'no-store' } },
-    );
+  // If the parent collection is already synced over 30d and fresh, an uncached slug simply has 0 sales
+  if (!cached) {
+    const colState = await isCollectionSynced30d(target.address, minAtMs);
+    if (colState.complete30d && colState.fresh) {
+      return Response.json(
+        { slug, sales: [] },
+        { headers: { 'Cache-Control': 'public, max-age=0, s-maxage=60' } },
+      );
+    }
   }
 
-  const token = process.env.GETGEMS_READ_TOKEN;
-  const sales: MarketSale[] = [];
+  const thirtyDaysAgoSec = Math.floor(minAtMs / 1000);
+  const isDelta = Boolean(cached && cached.complete30d && cached.updatedAt > 0);
+  const sinceSec = isDelta
+    ? Math.max(thirtyDaysAgoSec, Math.floor(cached!.updatedAt / 1000) - 300)
+    : thirtyDaysAgoSec;
 
-  if (token) {
-    try {
-      let cursor: string | null = null;
-      const maxPages = target.filterBySlug ? 4 : 1;
-      const nowMs = Date.now();
-      const minMs = nowMs - 30 * 86400_000;
+  let incoming: MarketSale[] = [];
+  let reachedEnd = false;
+  let scanned = false;
 
-      for (let page = 0; page < maxPages; page++) {
-        const apiUrl = new URL(`${getgemsApi}/collection/history/${target.address}`);
-        apiUrl.searchParams.set('minTime', String(minMs));
-        apiUrl.searchParams.set('maxTime', String(nowMs));
-        apiUrl.searchParams.set('limit', '100');
-        apiUrl.searchParams.set('types', 'sold');
-        if (cursor) apiUrl.searchParams.set('after', cursor);
+  const gg = await scanGetgemsCollectionSales({
+    collectionAddress: target.address,
+    collectionSlug: target.collectionSlug,
+    filterBySlug: target.filterBySlug,
+    targetSlug: slug,
+    minMs: sinceSec * 1000,
+    maxMs: nowMs,
+    maxPages: isDelta ? 3 : target.filterBySlug ? 12 : 4,
+    timeBudgetMs: isDelta ? 3500 : 5000,
+  });
 
-        const res = await fetch(apiUrl, {
-          headers: { Authorization: token },
-          signal: AbortSignal.timeout(5000),
-        });
-        if (!res.ok) break;
-        const data = await res.json();
-        const items = data?.response?.items;
-        if (!Array.isArray(items)) break;
-
-        for (const row of items) {
-          if (row?.typeData?.type !== 'sold') continue;
-          const price = Number(row.typeData.price);
-          if (!Number.isFinite(price) || price <= 0) continue;
-          const name = typeof row.name === 'string' && row.name.trim() ? row.name.trim() : slug;
-          if (target.filterBySlug && nameToSlug(name) !== slug) continue;
-          const at = Date.parse(row.time);
-          if (!Number.isFinite(at) || at <= 0) continue;
-          const currency = !row.typeData.currency || row.typeData.currency === 'TON' ? 'GRAM' : String(row.typeData.currency);
-          sales.push({
-            address: String(row.address ?? ''),
-            name,
-            price,
-            currency,
-            at,
-            image: inferImage(slug, name, row.image),
-            href: typeof row.address === 'string' && row.address ? getgemsNftUrl(row.address) : `https://getgems.io/collection/${target.address}`,
-          });
-          if (sales.length >= 24) break;
-        }
-
-        if (sales.length >= 24) break;
-        cursor = typeof data?.response?.cursor === 'string' && data.response.cursor ? data.response.cursor : null;
-        if (!cursor) break;
-      }
-    } catch { /* fall through to on-chain fallback */ }
+  if (gg) {
+    scanned = true;
+    reachedEnd = gg.reachedEnd;
+    incoming = gg.bySlug.get(slug) ?? [];
   }
 
-  if (sales.length === 0) {
-    const onChain = await fetchOnChainSales(target.address, slug, target.filterBySlug).catch(() => []);
-    sales.push(...onChain);
+  if (!scanned || (!isDelta && incoming.length === 0 && !reachedEnd)) {
+    const tc = await scanToncenterCollectionSales({
+      collectionAddress: target.address,
+      collectionSlug: target.collectionSlug,
+      filterBySlug: target.filterBySlug,
+      targetSlug: slug,
+      sinceSec,
+      maxPages: isDelta ? 2 : target.filterBySlug ? 10 : 4,
+      timeBudgetMs: isDelta ? 3500 : 6000,
+    });
+    scanned = true;
+    reachedEnd = reachedEnd || tc.reachedEnd;
+    const tcList = tc.bySlug.get(slug) ?? [];
+    if (tcList.length > 0) {
+      incoming = mergeSales(incoming, tcList, minAtMs);
+    }
   }
 
-  sales.sort((a, b) => b.at - a.at);
-  const finalSales = sales.filter(s => s.at >= minAtMs).slice(0, 24);
-  const payload: CachedSales = { updatedAt: Date.now(), sales: finalSales };
-  await redis(['SET', cacheKey, JSON.stringify(payload), 'EX', SALES_RETENTION_SEC]).catch(() => null);
+  const merged = mergeSales(incoming, cached?.sales ?? [], minAtMs);
+  const complete30d = Boolean(
+    cached?.complete30d
+    || (sinceSec <= thirtyDaysAgoSec + 60 && (reachedEnd || merged.length >= MAX_SALES_PER_SLUG)),
+  );
+
+  const payload: CachedSlugSales = {
+    updatedAt: nowMs,
+    complete30d,
+    sales: merged,
+  };
+  await redis(['HSET', SALES_HASH_KEY, slug, JSON.stringify(payload)]).catch(() => null);
+  await redis(['PERSIST', SALES_HASH_KEY]).catch(() => null);
+
   return Response.json(
-    { slug, sales: finalSales },
-    { headers: { 'Cache-Control': finalSales.length > 0 ? 'public, max-age=0, s-maxage=60' : 'no-store' } },
+    { slug, sales: merged },
+    { headers: { 'Cache-Control': merged.length > 0 ? 'public, max-age=0, s-maxage=60' : 'no-store' } },
   );
 }

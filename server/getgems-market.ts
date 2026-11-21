@@ -1,5 +1,6 @@
-import { itemCollectionMarketUrl, itemIdToSlug } from '../src/domain/item-market-links.js';
+import { itemCollectionMarketUrl } from '../src/domain/item-market-links.js';
 import { getgemsNftUrl } from '../src/domain/ton-address.js';
+import { parseEnchant, resolveItemSlug, syncMarketSales } from './market-sales.js';
 import { redis } from './redis.js';
 import collections from '../src/features/market-collections.js';
 import stickers from '../src/features/sticker-data.js';
@@ -56,68 +57,7 @@ let memory: MarketSnapshot | null = null;
 let memoryExplorer: ExplorerSnapshot | null = null;
 let refreshInFlight: Promise<MarketSnapshot | null> | null = null;
 
-function parseEnchant(name: unknown): number {
-  if (typeof name !== 'string') return 0;
-  const match = /\+(\d{1,2})\s*$/.exec(name.trim());
-  if (!match) return 0;
-  const level = Number(match[1]);
-  return Number.isSafeInteger(level) && level >= 0 && level <= 20 ? level : 0;
-}
-
-function nameToSlug(name: unknown): string | undefined {
-  if (typeof name !== 'string') return;
-  const n = name.trim().toLowerCase();
-  if (n.startsWith('not wise skin')) return 'owl-skin';
-  if (n.includes('golden skin jetton')) return 'skin-jetton-golden';
-  if (n.includes('epic skin jetton')) return 'skin-jetton-epic';
-  if (n.includes('skin jetton')) return 'skin-jetton';
-  if (n.includes('dubai chocolate')) return 'dubai-chocolate';
-  if (n.includes('pear')) return 'pear';
-  if (n.includes('first aid kit')) return 'first-aid-kit';
-  if (n.includes('color string lights')) return 'string-light-color';
-  if (n.includes('string lights')) return 'string-lights';
-  if (n.includes('birch')) return 'birch';
-  if (n.includes('empire state') || n.includes('new york')) return 'new-york';
-  if (n.includes('lighter')) return 'lighter';
-  if (n.includes('chiller')) return 'chiller';
-  if (n.includes('ring enchanter')) return 'scroll-enchant-ring';
-  if (n.includes('skin enchanter')) return 'scroll-enchant-skin';
-  if (n.includes('morpher')) return 'morpher';
-  if (n.includes('clock')) return 'big-black-clock';
-  if (n.includes('montmorillonite')) return 'montmorillonite';
-  const ring = /\bring of (strength|agility|wisdom)\b/.exec(n);
-  if (ring) {
-    const stat = { strength: 'str', agility: 'ag', wisdom: 'wit' }[ring[1]];
-    const tier = /\b(golden|iii)\b/.test(n) ? 3 : /\b(obsidian|ii)\b/.test(n) ? 2 : /\b(wooden|i)\b/.test(n) ? 1 : null;
-    return tier ? `ring-${stat}-${tier}` : undefined;
-  }
-  if (n.includes('voucher') && n.includes('100k')) return 'voucher-100k';
-  if (n.includes('voucher') && n.includes('10k')) return 'voucher-10k';
-  if (n.includes('floppy') && n.includes('100k')) return 'floppy-100k';
-  if (n.includes('floppy') && n.includes('1m')) return 'floppy-1m';
-  if (n.includes('floppy') && n.includes('10m')) return 'floppy-10m';
-  if (n.includes('floppy') && n.includes('100m')) return 'floppy-100m';
-  if (n.includes('floppy') && n.includes('1b')) return 'floppy-1b';
-  if (n.includes('floppy') && n.includes('empty')) return 'floppy-empty';
-  if (n.includes('flask') && n.includes('empty')) return 'flask-empty';
-  if (n.includes('flask') && n.includes('half')) return 'flask-half';
-  if (n.includes('flask') && n.includes('full')) return 'flask-full';
-}
-
-function itemSlug(image: unknown, name: unknown, contentUri?: unknown) {
-  if (typeof image === 'string') {
-    const match = /\/items\/img\/([\w-]+)\.(?:png|webp)(?:[?#]|$)/i.exec(image);
-    if (match?.[1]) return match[1].toLowerCase();
-  }
-  if (typeof contentUri === 'string') {
-    const match = /\/items\/(\d+)\//i.exec(contentUri);
-    if (match?.[1]) {
-      const slug = itemIdToSlug[Number(match[1])];
-      if (slug) return slug;
-    }
-  }
-  return nameToSlug(name);
-}
+const itemSlug = resolveItemSlug;
 
 type BucketAccumulator = {
   slug: string; enchant: number; floor: number; count: number; seen: Set<string>; lots: ExplorerLot[];
@@ -323,8 +263,8 @@ async function onChainListings(supply: number | null): Promise<CrawlResult> {
 type TonCenterMeta = { token_info?: { type?: string; image?: string; name?: string }[] };
 type TonCenterItem = { address: string; on_sale?: boolean; sale_contract_address?: string; content?: { uri?: string } };
 type TonCenterSale = {
-  type?: string; address?: string; nft_address?: string; marketplace_address?: string;
-  details?: { is_complete?: boolean; full_price?: string };
+  type?: string; address?: string; nft_address?: string; nft_owner_address?: string; marketplace_address?: string;
+  details?: { is_complete?: boolean; full_price?: string; end_flag?: boolean; is_canceled?: boolean; last_bid?: string; last_member?: string };
   nft_item?: { content?: { uri?: string } };
 };
 
@@ -334,7 +274,7 @@ async function toncenterJson<T>(url: URL, token: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-type TonCenterTransfer = { old_owner?: string; transaction_now?: number };
+type TonCenterTransfer = { old_owner?: string; new_owner?: string; nft_address?: string; transaction_now?: number };
 
 async function toncenterCollectionCrawl(
   token: string,
@@ -420,7 +360,8 @@ async function backfillCollectionSales(
   forcedSlug?: string,
 ): Promise<Map<string, Map<string, number>>> {
   const base = 'https://toncenter.com/api/v3/nft/';
-  const ownerToTime = new Map<string, number>();
+  const zeroAddr = '0:0000000000000000000000000000000000000000000000000000000000000000';
+  const ownerToTransfer = new Map<string, { time: number; newOwner: string; nft: string }>();
   const pageSize = Math.min(100, maxTransfers);
   const pages = Math.ceil(maxTransfers / pageSize);
   for (let page = 0; page < pages; page++) {
@@ -434,9 +375,9 @@ async function backfillCollectionSales(
     const data = await toncenterJson<{ nft_transfers?: TonCenterTransfer[] }>(url, token).catch(() => null);
     const list = data?.nft_transfers ?? [];
     for (const tr of list) {
-      if (tr.old_owner && typeof tr.transaction_now === 'number' && tr.transaction_now > 0) {
+      if (tr.old_owner && tr.new_owner && tr.new_owner !== zeroAddr && tr.nft_address && typeof tr.transaction_now === 'number' && tr.transaction_now > 0) {
         const key = tr.old_owner.toLowerCase();
-        if (!ownerToTime.has(key)) ownerToTime.set(key, tr.transaction_now);
+        if (!ownerToTransfer.has(key)) ownerToTransfer.set(key, { time: tr.transaction_now, newOwner: tr.new_owner.toLowerCase(), nft: tr.nft_address.toLowerCase() });
       }
     }
     if (list.length < pageSize) break;
@@ -444,26 +385,35 @@ async function backfillCollectionSales(
 
   // key: `${slug}:${enchant}` -> Map<hourKey, minPrice>
   const hourly = new Map<string, Map<string, number>>();
-  const contracts = [...ownerToTime.keys()];
+  const contracts = [...ownerToTransfer.keys()];
   for (let i = 0; i < contracts.length; i += 40) {
     if (i) await new Promise(resolve => setTimeout(resolve, 100));
     const url = new URL('sales', base);
     for (const addr of contracts.slice(i, i + 40)) url.searchParams.append('address', addr);
     const data = await toncenterJson<{ nft_sales?: TonCenterSale[]; metadata?: Record<string, TonCenterMeta> }>(url, token).catch(() => null);
     for (const sale of data?.nft_sales ?? []) {
-      if (sale.type !== 'getgems_sale' || sale.details?.is_complete !== true || !sale.address || !sale.details.full_price) continue;
-      if (!/^\d{1,24}$/.test(sale.details.full_price)) continue;
-      const price = Number(sale.details.full_price) / 1e9;
+      if (!sale.address || !sale.nft_address) continue;
+      const tr = ownerToTransfer.get(sale.address.toLowerCase());
+      if (!tr || tr.nft !== sale.nft_address.toLowerCase()) continue;
+      if (sale.nft_owner_address && tr.newOwner === sale.nft_owner_address.toLowerCase()) continue;
+      let priceStr = '';
+      if (sale.type === 'getgems_sale' && sale.details?.is_complete === true) {
+        priceStr = String(sale.details.full_price ?? '');
+      } else if (sale.type === 'getgems_auction' && sale.details?.end_flag === true && sale.details?.is_canceled === false && sale.details?.last_member) {
+        priceStr = String(sale.details.last_bid ?? '');
+      } else {
+        continue;
+      }
+      if (!/^\d{1,24}$/.test(priceStr)) continue;
+      const price = Number(priceStr) / 1e9;
       if (!(price > 0) || !Number.isFinite(price)) continue;
-      const txNow = ownerToTime.get(sale.address.toLowerCase());
-      if (!txNow) continue;
-      const nftAddr = sale.nft_address ?? '';
+      const nftAddr = sale.nft_address;
       const meta = nftAddr ? data?.metadata?.[nftAddr]?.token_info?.find(entry => entry.type === 'nft_items') : undefined;
       const slug = forcedSlug ?? itemSlug(meta?.image, meta?.name, sale.nft_item?.content?.uri);
       if (!slug) continue;
       const enchant = forcedSlug?.startsWith('col:') ? 0 : parseEnchant(meta?.name);
       const bucketKey = `${slug}:${enchant}`;
-      const hourKey = String(Math.floor((txNow * 1000) / 3_600_000));
+      const hourKey = String(Math.floor((tr.time * 1000) / 3_600_000));
       let hours = hourly.get(bucketKey);
       if (!hours) {
         hours = new Map();
@@ -659,10 +609,12 @@ async function market(force = false) {
 
 export async function refreshMarket() {
   const snapshot = await market(true);
+  const salesSync = await syncMarketSales({ timeBudgetMs: 22_000 }).catch(() => null);
   const available = snapshot?.collections.filter(row => row.available).length ?? 0;
   return { collections: available, total: addresses.length, itemTypes: snapshot?.items.items.length ?? 0,
     itemsStatus: snapshot?.items.status, itemSource: snapshot?.items.source,
-    explorerBuckets: memoryExplorer?.buckets.length ?? 0 };
+    explorerBuckets: memoryExplorer?.buckets.length ?? 0,
+    salesSync };
 }
 
 export async function collectionQuotes(): Promise<CollectionQuote[]> {

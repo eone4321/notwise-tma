@@ -1221,13 +1221,21 @@
 .buildGuideEntry > button { min-block-size: 44px; margin-block-start: 10px; }
 .buildPickerOptions { display: grid; gap: 5px; }
 .buildPickerOption {
+  grid-template-columns: 36px minmax(0, 1fr) 15px;
+  width: 100%;
+  margin: 0;
   border: 1px solid var(--game-panel-line);
   background: var(--game-tile);
-  border-radius: 9px;
-  min-block-size: 52px;
-  padding: 6px 8px;
+  border-radius: 10px;
+  min-block-size: 54px;
+  padding: 7px 10px;
+  cursor: pointer;
 }
+.buildPickerOption > :first-child { justify-self: center; }
+.buildPickerOption > span:nth-child(2) { min-width: 0; overflow-wrap: anywhere; }
 .buildPickerOption[aria-pressed="true"] { background: color-mix(in srgb, var(--game-tile), var(--gold) 10%); border-color: color-mix(in srgb, var(--game-panel-line), var(--gold) 45%); }
+.buildPickerOption:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+.buildPickerOption:disabled { cursor: default; }
 .buildPickerOption:disabled > .gameArt { opacity: .55; }
 .buildPickerOption:disabled strong { color: var(--muted); }
 .buildBranchFilter { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin-block: 4px 6px; }
@@ -2931,22 +2939,24 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   height: clamp(134px, 37vw, 158px);
 }
 .wardrobeStageHud {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: 100%;
-  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
+  gap: 6px;
 }
 .wardrobeBonusPill,
 .wardrobeStageHud .skinJettonMatch {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 6px;
   min-width: 0;
-  min-height: 38px;
+  max-width: 100%;
+  min-height: 32px;
   margin: 0;
   padding: 6px 10px;
-  border-radius: 10px;
+  border-radius: 999px;
   background: var(--game-panel);
   border: 1px solid var(--game-panel-line);
   font-size: 12px;
@@ -2956,8 +2966,17 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   box-sizing: border-box;
 }
 .wardrobeBonusPill {
-  border-color: color-mix(in srgb, var(--gold) 50%, var(--game-panel-line));
   color: var(--gold);
+}
+.wardrobeStageHud .skinJettonMatch { justify-content: flex-start; }
+.wardrobeStageHud .skinJettonMatch::after {
+  content: '';
+  inline-size: 5px;
+  block-size: 5px;
+  flex: none;
+  border: solid var(--muted);
+  border-width: 1px 1px 0 0;
+  transform: rotate(45deg);
 }
 .wardrobeStageHud .skinJettonMatch {
   color: var(--text);
@@ -2969,6 +2988,12 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   white-space: nowrap;
 }
 .wardrobeBonusPill strong { font-weight: 800; font-variant-numeric: tabular-nums; }
+.wardrobeCard .skinEnchantStep :is(button, select) {
+  min-height: 36px;
+  border-radius: 999px;
+  background: var(--game-tile);
+}
+.wardrobeCard .skinEnchantStep button:active:not(:disabled) { border-color: var(--gold); }
 
 .wardrobeSlotTabs {
   display: grid;
@@ -3744,12 +3769,18 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 }
 .buildEquippedConfirmBtn {
   width: 100%;
-  min-height: 36px;
+  min-height: 40px;
   justify-content: center;
   margin-top: 2px;
   border-radius: 9px;
   font-size: 12.5px;
   font-weight: 700;
+}
+.buildEquippedTop > .buildPillButton {
+  min-height: 36px;
+  margin: 0;
+  padding-inline: 10px;
+  border-radius: 9px;
 }
 .buildModalEnchantBox {
   padding: 7px 9px;
@@ -4187,14 +4218,198 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   border-radius: 12px;
   background: var(--game-tile);
   border: 1px solid var(--game-panel-line);
-  padding: 6px 4px 4px;
-  touch-action: none;
+  padding: 8px 6px 5px;
+  display: grid;
+  gap: 4px;
+}
+.radarChartSubbar {
+  min-height: 26px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+}
+.radarChartLegend,
+.radarChartReadout {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.radarLegendItems {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.radarLegendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+}
+.radarLegendToggle {
+  margin: 0;
+  width: auto;
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-panel);
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.radarLegendToggle.isActive {
+  border-color: color-mix(in srgb, var(--lavender) 48%, var(--game-panel-line));
+  background: color-mix(in srgb, var(--lavender) 14%, var(--game-panel));
+  color: var(--lavender);
+}
+.radarLegendToggle:not(.isActive) .radarKeyDiamond {
+  opacity: 0.45;
+}
+.radarLegendHint {
+  font-size: 10.5px;
+  color: var(--muted);
+  opacity: 0.72;
+  white-space: nowrap;
+}
+.radarKeyDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--gold);
+  display: inline-block;
+  flex: none;
+}
+.radarKeyDiamond {
+  width: 7px;
+  height: 7px;
+  border-radius: 1.5px;
+  background: var(--lavender);
+  transform: rotate(45deg);
+  display: inline-block;
+  flex: none;
+}
+.radarChartReadout {
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--game-panel) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold) 38%, var(--game-panel-line));
+}
+.radarChartReadout.isSale {
+  border-color: color-mix(in srgb, var(--lavender) 48%, var(--game-panel-line));
+}
+.radarReadoutLeft {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+.radarReadoutLeft .radarKeyDot,
+.radarReadoutLeft .radarKeyDiamond {
+  align-self: center;
+}
+.radarReadoutLeft strong {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.radarChartReadout.isSale .radarReadoutLeft strong {
+  color: var(--lavender);
+}
+.radarReadoutLeft small {
+  font-size: 10.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.radarReadoutRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 10.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.radarReadoutRight > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.radarReadoutClear {
+  margin: 0;
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  flex: none;
+  cursor: pointer;
+}
+.radarReadoutTag {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lavender) 16%, var(--game-tile));
+  color: var(--lavender);
+  white-space: nowrap;
+}
+.radarSaleNav {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+.radarReadoutStep {
+  margin: 0;
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--lavender);
+  font-size: 13px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  flex: none;
+  cursor: pointer;
+}
+.radarSaleIdx {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  min-width: 22px;
+  text-align: center;
 }
 .radarSvg {
   display: block;
   width: 100%;
   height: auto;
   user-select: none;
+  touch-action: none;
 }
 .radarGridLine {
   stroke: rgba(255, 255, 255, 0.08);
@@ -4213,6 +4428,12 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   stroke-width: 1.2;
   stroke-dasharray: 3 2;
 }
+.radarCrosshair.isSale {
+  stroke: rgba(211, 194, 255, 0.52);
+}
+.radarSaleMarker {
+  pointer-events: none;
+}
 .radarAxisText {
   fill: rgba(255, 255, 255, 0.45);
   font-size: 9.5px;
@@ -4222,28 +4443,6 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .radarAxisText.isActive {
   fill: #ffcc77;
   font-weight: 800;
-}
-.radarScrubTooltip {
-  position: absolute;
-  top: 8px;
-  left: 10px;
-  z-index: 3;
-  display: grid;
-  gap: 1px;
-  padding: 5px 9px;
-  border-radius: 8px;
-  background: rgba(17, 17, 18, 0.92);
-  border: 1px solid color-mix(in srgb, var(--gold) 45%, var(--game-panel-line));
-  pointer-events: none;
-}
-.radarScrubTooltip strong {
-  font-size: 13px;
-  color: var(--gold);
-  font-variant-numeric: tabular-nums;
-}
-.radarScrubTooltip span {
-  font-size: 10.5px;
-  color: var(--muted);
 }
 
 .radarSinglePointNote,
@@ -5542,9 +5741,19 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 :is(.buildLoadoutCard, .wardrobeCard) .buildIconReset > span[aria-hidden] { font-size: 14px; }
 
 .wardrobeExtrasBody .skinRingSlotSelect {
-  width: 72px;
+  width: auto;
+  min-width: 72px;
+  min-height: 32px;
   flex: none;
+  margin: 0;
+  cursor: pointer;
 }
+.wardrobeExtrasBody .skinRingSlotSelect[data-equipped] {
+  color: var(--gold);
+  border-color: color-mix(in srgb, var(--gold) 45%, var(--game-panel-line));
+}
+.wardrobeExtrasBody .skinRingSlotSelect:focus-visible,
+.wardrobeArtifactBtn:focus-visible { outline: 2px solid var(--gold); }
 
 .wardrobeCard, .wardrobeStage {
   grid-template-columns: minmax(0, 1fr);
@@ -5559,4 +5768,10 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   min-width: 0;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+.skinTraitOption .wardrobeChipThumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--game-panel);
 }
