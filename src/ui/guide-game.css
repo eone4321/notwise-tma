@@ -4064,8 +4064,11 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 
 .radarHeroCard {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   padding: 14px;
+  min-width: 0;
+  max-width: 100%;
 }
 .radarHeroTop {
   display: grid;
@@ -4220,13 +4223,19 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   border: 1px solid var(--game-panel-line);
   padding: 8px 6px 5px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 .radarChartSubbar {
   min-height: 26px;
   padding: 0 6px;
   display: flex;
   align-items: center;
+  min-width: 0;
+  max-width: 100%;
 }
 .radarChartLegend,
 .radarChartReadout {
@@ -4234,8 +4243,10 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 4px 8px;
   min-width: 0;
+  max-width: 100%;
 }
 .radarLegendItems {
   display: inline-flex;
@@ -5173,6 +5184,38 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   display: grid;
   gap: 12px;
   padding: 14px;
+}
+details.card.memoCollapsible {
+  display: block;
+  padding: 0;
+  gap: 0;
+}
+details.card.memoCollapsible > summary.memoCollapsibleSummary {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 60px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+details.card.memoCollapsible > summary.memoCollapsibleSummary .memoCardHead,
+details.card.memoCollapsible > summary.memoCollapsibleSummary .lifehackHead,
+details.card.memoCollapsible > summary.memoCollapsibleSummary .itemValueHead {
+  flex: 1;
+  min-width: 0;
+}
+details.card.memoCollapsible > summary.memoCollapsibleSummary .memoCardHead h2,
+details.card.memoCollapsible > summary.memoCollapsibleSummary .lifehackTitleWrap h2,
+details.card.memoCollapsible > summary.memoCollapsibleSummary .itemValueHead h2 {
+  margin: 0 0 2px;
+  font-size: 15.5px;
+  line-height: 1.24;
+}
+details.card.memoCollapsible > .memoCollapsibleBody {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--game-panel-line);
 }
 .memoCardHead {
   display: flex;

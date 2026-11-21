@@ -1482,13 +1482,10 @@ function InteractiveFloorChart({
   }, [points, sales, range]);
 
   const width = 320;
-  const height = 152;
-  const padLeft = 10;
-  const padRight = 40;
-  const padTop = 14;
-  const padBottom = 22;
-  const innerW = width - padLeft - padRight;
-  const innerH = height - padTop - padBottom;
+  const height = 156;
+  const padLeft = 14;
+  const padTop = 18;
+  const padBottom = 24;
 
   const visibleSales = showSales ? sales : [];
   const floors = points.map(p => p.floor);
@@ -1500,6 +1497,14 @@ function InteractiveFloorChart({
   const yMin = Math.max(0, minVal - span * 0.14);
   const yMax = maxVal + span * 0.14;
   const ySpan = Math.max(yMax - yMin, 1e-6);
+
+  const maxYLabelLen = Math.max(
+    ...[0, 0.5, 1].map(ratio => formatGramCompact(yMax - ratio * ySpan, en).length),
+    1,
+  );
+  const padRight = Math.max(46, Math.ceil(maxYLabelLen * 5.8 + 12));
+  const innerW = width - padLeft - padRight;
+  const innerH = height - padTop - padBottom;
 
   const allTs = [
     ...points.map(p => p.ts),
@@ -1708,6 +1713,7 @@ function InteractiveFloorChart({
         ref={svgRef}
         className="radarSvg"
         viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="xMidYMid meet"
         onPointerDown={e => {
           const isTouch = e.pointerType !== 'mouse';
           if (e.pointerType === 'mouse') e.currentTarget.setPointerCapture(e.pointerId);
@@ -1854,41 +1860,48 @@ function EnchantCurveChart({
   }
 
   const width = 320;
-  const height = 148;
-  const padX = 20;
-  const padTop = 20;
+  const height = 152;
+  const padLeft = 14;
+  const padTop = 18;
   const padBottom = 24;
-  const innerW = width - padX * 2;
-  const innerH = height - padTop - padBottom;
 
   const maxVal = Math.max(...points.map(p => p.floor));
   const yMax = maxVal * 1.12 || 1;
+  const maxYLabelLen = Math.max(
+    ...[0, 0.5, 1].map(ratio => formatGramCompact(yMax * (1 - ratio), en).length),
+    1,
+  );
+  const padRight = Math.max(46, Math.ceil(maxYLabelLen * 5.8 + 12));
+  const innerW = width - padLeft - padRight;
+  const innerH = height - padTop - padBottom;
   const baseline = height - padBottom;
   const slotWidth = innerW / points.length;
   const barWidth = Math.min(26, slotWidth * 0.65);
   const coords = points.map((pt, i) => ({
-    x: padX + (i + 0.5) * slotWidth,
+    x: padLeft + (i + 0.5) * slotWidth,
     y: baseline - (pt.floor / yMax) * innerH,
     pt,
   }));
+  const labelStep = points.length > 14 ? 3 : points.length > 9 ? 2 : 1;
 
   return (
     <div className="radarChartBox">
-      <svg className="radarSvg" viewBox={`0 0 ${width} ${height}`}>
+      <svg className="radarSvg" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet">
         {[0, 0.5, 1].map(ratio => {
           const y = padTop + ratio * innerH;
           const labelVal = yMax * (1 - ratio);
           return (
             <g key={ratio}>
-              <line x1={padX} y1={y} x2={width - padX} y2={y} className="radarGridLine" />
-              <text x={width - padX} y={y - 3} textAnchor="end" className="radarAxisText">
+              <line x1={padLeft} y1={y} x2={width - padRight} y2={y} className="radarGridLine" />
+              <text x={width - 4} y={y + 3} textAnchor="end" className="radarAxisText">
                 {formatGramCompact(labelVal, en)}
               </text>
             </g>
           );
         })}
-        {coords.map(({ x, y, pt }) => {
+        {coords.map(({ x, y, pt }, idx) => {
           const isCurrent = pt.enchant === activeEnchant;
+          const showLabel = isCurrent || idx === 0 || idx === coords.length - 1 || idx % labelStep === 0;
           const label = `+${pt.enchant} · ${formatGramCompact(pt.floor, en)} GRAM`;
           return (
             <g
@@ -1910,14 +1923,16 @@ function EnchantCurveChart({
               <rect x={x - slotWidth / 2} y={padTop} width={slotWidth} height={height - padTop} fill="transparent" />
               <rect x={x - barWidth / 2} y={y} width={barWidth} height={baseline - y} rx="2"
                 fill={isCurrent ? '#ffcc77' : '#a88b60'} />
-              <text
-                x={x}
-                y={height - 6}
-                textAnchor="middle"
-                className={isCurrent ? 'radarAxisText isActive' : 'radarAxisText'}
-              >
-                +{pt.enchant}
-              </text>
+              {showLabel && (
+                <text
+                  x={x}
+                  y={height - 6}
+                  textAnchor="middle"
+                  className={isCurrent ? 'radarAxisText isActive' : 'radarAxisText'}
+                >
+                  +{pt.enchant}
+                </text>
+              )}
             </g>
           );
         })}

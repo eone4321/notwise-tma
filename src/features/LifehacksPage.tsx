@@ -602,41 +602,45 @@ export function LifehacksPage() {
             ? skills.filter(skill => combatCopy.includes(skill.name))
             : [];
           return (
-            <article className="card lifehackCard" key={hack.id}>
-              <div className="lifehackHead">
-                <span className="lifehackIcon">
-                  <GameArt path={hack.icon} size={36} />
-                </span>
-                <div className="lifehackTitleWrap">
-                  <span className="lifehackTag">{en ? hack.tag[1] : hack.tag[0]}</span>
-                  <h2>{en ? hack.title[1] : hack.title[0]}</h2>
+            <details className="card lifehackCard mediaDetails memoCollapsible" key={hack.id}>
+              <summary className="memoCollapsibleSummary">
+                <div className="lifehackHead">
+                  <span className="lifehackIcon">
+                    <GameArt path={hack.icon} size={36} />
+                  </span>
+                  <div className="lifehackTitleWrap">
+                    <span className="lifehackTag">{en ? hack.tag[1] : hack.tag[0]}</span>
+                    <h2>{en ? hack.title[1] : hack.title[0]}</h2>
+                  </div>
                 </div>
-              </div>
-              <p className="lifehackSummary">{en ? hack.summary[1] : hack.summary[0]}</p>
-              <div className="memoLines lifehackDetails">
-                {lines.map(line => <p key={line}>{line}</p>)}
-              </div>
-              {hack.category === 'combat' ? (
-                <div className="itemValueLinks">
-                  {relatedSkills.map(skill => (
-                    <DetailLink key={skill.id} className="itemValueChipLink" to={`/combat/skills/${skill.branch}/${skill.id}`}>
-                      <span>{skill.name}</span>
-                      <span className="rowChevron" aria-hidden="true" />
-                    </DetailLink>
-                  ))}
-                  {relatedSkills.length === 0 && (
-                    <DetailLink className="itemValueChipLink" to="/combat">
-                      <span>{en ? 'Combat and skills' : 'Бои и навыки'}</span>
-                      <span className="rowChevron" aria-hidden="true" />
-                    </DetailLink>
-                  )}
+              </summary>
+              <div className="memoCollapsibleBody">
+                <p className="lifehackSummary">{en ? hack.summary[1] : hack.summary[0]}</p>
+                <div className="memoLines lifehackDetails">
+                  {lines.map(line => <p key={line}>{line}</p>)}
                 </div>
-              ) : hack.link && (
-                <DetailLink className="textLink lifehackLink" to={hack.link.to}>
-                  {en ? hack.link.label[1] : hack.link.label[0]}
-                </DetailLink>
-              )}
-            </article>
+                {hack.category === 'combat' ? (
+                  <div className="itemValueLinks">
+                    {relatedSkills.map(skill => (
+                      <DetailLink key={skill.id} className="itemValueChipLink" to={`/combat/skills/${skill.branch}/${skill.id}`}>
+                        <span>{skill.name}</span>
+                        <span className="rowChevron" aria-hidden="true" />
+                      </DetailLink>
+                    ))}
+                    {relatedSkills.length === 0 && (
+                      <DetailLink className="itemValueChipLink" to="/combat">
+                        <span>{en ? 'Combat and skills' : 'Бои и навыки'}</span>
+                        <span className="rowChevron" aria-hidden="true" />
+                      </DetailLink>
+                    )}
+                  </div>
+                ) : hack.link && (
+                  <DetailLink className="textLink lifehackLink" to={hack.link.to}>
+                    {en ? hack.link.label[1] : hack.link.label[0]}
+                  </DetailLink>
+                )}
+              </div>
+            </details>
           );
         })}
       </div>
@@ -974,33 +978,37 @@ export function ItemValueRankingPage() {
         {visible.map(item => {
           const points = en ? item.whyValuable[1] : item.whyValuable[0];
           return (
-            <article className="card itemValueCard" key={item.id}>
-              <div className="itemValueHead">
-                <span className="lifehackIcon">
-                  <GameArt path={item.icon} size={36} />
-                </span>
-                <div className="lifehackTitleWrap" style={{ flex: 1 }}>
-                  <h2>{en ? item.title[1] : item.title[0]}</h2>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span className="itemValueTierBadge" data-tier={item.tier}>{item.tier}</span>
-                    <span className="lifehackTag">{en ? item.role[1] : item.role[0]}</span>
+            <details className="card itemValueCard mediaDetails memoCollapsible" key={item.id}>
+              <summary className="memoCollapsibleSummary">
+                <div className="itemValueHead">
+                  <span className="lifehackIcon">
+                    <GameArt path={item.icon} size={36} />
+                  </span>
+                  <div className="lifehackTitleWrap" style={{ flex: 1 }}>
+                    <h2>{en ? item.title[1] : item.title[0]}</h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span className="itemValueTierBadge" data-tier={item.tier}>{item.tier}</span>
+                      <span className="lifehackTag">{en ? item.role[1] : item.role[0]}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </summary>
 
-              <div className="memoLines lifehackDetails">
-                {points.map(line => <p key={line}>{line}</p>)}
-              </div>
+              <div className="memoCollapsibleBody">
+                <div className="memoLines lifehackDetails">
+                  {points.map(line => <p key={line}>{line}</p>)}
+                </div>
 
-              <div className="itemValueLinks">
-                {item.links.map(link => (
-                  <DetailLink key={link.to} className="itemValueChipLink" to={link.to}>
-                    <span>{en ? link.label[1] : link.label[0]}</span>
-                    <span className="rowChevron" aria-hidden="true" />
-                  </DetailLink>
-                ))}
+                <div className="itemValueLinks">
+                  {item.links.map(link => (
+                    <DetailLink key={link.to} className="itemValueChipLink" to={link.to}>
+                      <span>{en ? link.label[1] : link.label[0]}</span>
+                      <span className="rowChevron" aria-hidden="true" />
+                    </DetailLink>
+                  ))}
+                </div>
               </div>
-            </article>
+            </details>
           );
         })}
       </div>
