@@ -405,23 +405,66 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
         })}
       </div>
 
-      <details className="mediaDetails buildAdvanced" id="build-advanced">
-        <summary><strong>{copy('Запас очков и баффы (осада, книга)', 'Custom budget and temporary buffs')}</strong></summary>
-        <p className="caption">{copy('Оценка калькулятора: 5 очков на 2-м уровне и ещё одно за каждый следующий. Если в игре суммарно вложенных и свободных очков больше или меньше, введи свой запас. Временные усиления указываются отдельно.', 'Estimated budget: 5 points at level 2 and one more per subsequent level. Enter your own total of spent and unspent points if it differs in game. Add temporary buffs separately.')}</p>
-        <label className="field">{copy('Всего очков для распределения', 'Total points to allocate')}
-          <input value={budgetDraft ?? state.budget ?? ''} placeholder={String(budget)} inputMode="numeric" maxLength={3}
-            onChange={event => setBudgetDraft(event.target.value.replace(/\D/g, ''))}
-            onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur(); }}
-            onBlur={() => {
-              if (budgetDraft !== null) update({ budget: budgetDraft === '' ? null : Number(budgetDraft) });
-              setBudgetDraft(null);
-            }}/>
-        </label>
-        <div className="calculatorGrid">{statKeys.map(stat => <label className="field" key={stat}>
-          <span><GameAttribute name={stat}/> {statLabels[stat][lang]}</span>
-          <input value={state.buffs[stat] || ''} placeholder="0" inputMode="numeric" maxLength={3}
-            onChange={event => update({ buffs: { ...state.buffs, [stat]: Number(event.target.value.replace(/\D/g, '')) } })}/>
-        </label>)}</div>
+      <details className="mediaDetails farmExtras wardrobeExtrasCard buildAdvancedCard" id="build-advanced">
+        <summary>
+          <GameGlyph name="sparkles"/>
+          <strong>{copy('Запас очков и баффы (осада, книга)', 'Custom budget & buffs')}</strong>
+          {(state.budget !== null || totalAttributes(state.buffs) > 0) && (
+            <b className="farmExtrasValue">
+              {totalAttributes(state.buffs) > 0 ? `+${totalAttributes(state.buffs)}` : state.budget}
+            </b>
+          )}
+        </summary>
+        <div className="wardrobeExtrasBody">
+          <p className="caption buildAdvancedNote">
+            {copy(
+              'Базовый запас: 5 очк. на 2-м ур. и +1 за каждый следующий. Если в игре иначе — задай вручную; временные баффы укажи ниже.',
+              'Base budget: 5 pts at Lv.2 and +1 per level. Override total below if different; add temporary buffs separately.'
+            )}
+          </p>
+          <label className="wardrobeExtraRow buildAdvancedRow">
+            <span className="wardrobeExtraInfo">
+              <GameGlyph name="settings"/>
+              <span>
+                <strong>{copy('Всего очков', 'Total points')}</strong>
+                <small>{copy('Вложенные + свободные', 'Spent + unspent')}</small>
+              </span>
+            </span>
+            <input
+              className="wardrobeTogglePill buildAdvancedInput"
+              value={budgetDraft ?? state.budget ?? ''}
+              placeholder={String(budget)}
+              inputMode="numeric"
+              maxLength={3}
+              aria-label={copy('Всего очков для распределения', 'Total points to allocate')}
+              onChange={event => setBudgetDraft(event.target.value.replace(/\D/g, ''))}
+              onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur(); }}
+              onBlur={() => {
+                if (budgetDraft !== null) update({ budget: budgetDraft === '' ? null : Number(budgetDraft) });
+                setBudgetDraft(null);
+              }}
+            />
+          </label>
+          <div className="buildBuffsGrid">
+            {statKeys.map(stat => (
+              <label className="wardrobeExtraRow buildBuffRow" key={stat}>
+                <span className="wardrobeExtraInfo">
+                  <GameAttribute name={stat}/>
+                  <strong>{statLabels[stat][lang]}</strong>
+                </span>
+                <input
+                  className="wardrobeTogglePill buildAdvancedInput"
+                  data-equipped={state.buffs[stat] > 0 || undefined}
+                  value={state.buffs[stat] || ''}
+                  placeholder="0"
+                  inputMode="numeric"
+                  maxLength={3}
+                  onChange={event => update({ buffs: { ...state.buffs, [stat]: Number(event.target.value.replace(/\D/g, '')) } })}
+                />
+              </label>
+            ))}
+          </div>
+        </div>
       </details>
       </div>
     </section>
@@ -571,41 +614,68 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
       </div>
     </details>
 
-    <section className="card buildPanel buildGuide" aria-labelledby="build-guide-title">
-      <div className="buildHeading">
+    <details
+      className="card buildPanel buildGuide buildCollapsePanel"
+      aria-labelledby="build-guide-title"
+      open={showAllBuilds || undefined}
+      onToggle={event => {
+        const next = event.currentTarget.open;
+        if (next === showAllBuilds) return;
+        lightHaptic();
+        if (next) trackGuide('build:analyze');
+        setShowAllBuilds(next);
+        try { sessionStorage.setItem('notwise.guide.builds.show-all.v1', next ? '1' : '0'); } catch { /* Optional. */ }
+      }}
+    >
+      <summary className="buildCollapseSummary">
         <h2 id="build-guide-title">{copy('Тактика и все 10 сборок', 'All 10 archetypes')}</h2>
-        <button type="button" className="buildPillButton" onClick={() => {
-          lightHaptic();
-          setShowAllBuilds(open => {
-            const next = !open;
-            if (next) trackGuide('build:analyze');
-            try { sessionStorage.setItem('notwise.guide.builds.show-all.v1', next ? '1' : '0'); } catch { /* Optional. */ }
-            return next;
-          });
-        }}>{showAllBuilds ? copy('Свернуть', 'Hide') : copy('Показать все', 'Show all')}</button>
+        <span className="buildGuideCountPill">10</span>
+      </summary>
+      <p className="caption buildGuideIntro">{copy('Разбор сильных и слабых сторон каждой готовой сборки.', 'Strengths, weaknesses and full skill requirements for each preset.')}</p>
+      <div className="buildArchetypeList">
+        {builds.map(build => {
+          const requirements = requiredAttributes(build.skills);
+          const adapted = applyBuildPreset(build, state);
+          const fullBuild = build.skills.every(id => adapted.skills.some(slot => slot?.id === id));
+          return (
+            <details className="mediaDetails buildArchetypeCard" id={'build-guide-' + build.id} key={build.id}>
+              <summary>
+                <span className="memoUnifiedIcon" aria-hidden="true"><GameArt path={skillArt(build.signature)} size={30}/></span>
+                <span>
+                  <strong>{build.name[lang]}</strong>
+                  <small>{build.role[lang]}</small>
+                </span>
+              </summary>
+              <div className="buildArchetypeBody">
+                <p>{build.play[lang]}</p>
+                <div className="buildTradeoffBox">
+                  <strong>{copy('Слабое место', 'Weak spot')}</strong>
+                  <span>{build.tradeoff[lang]}</span>
+                </div>
+                <div className="buildGuideSkills">
+                  {build.skills.map(id => {
+                    const skill = skillById.get(id)!;
+                    return <span className="buildGuideSkillChip" key={id}><GameArt path={skillArt(id)} size={20}/>{nameOf(skill)}</span>;
+                  })}
+                </div>
+                <dl className="buildGuideGear">
+                  <div>
+                    <dt>{copy('Очки для 3 навыков', 'Points for 3 skills')}</dt>
+                    <dd>{statKeys.filter(stat => requirements[stat] > 0).map(stat => statLabels[stat][lang] + ' ' + requirements[stat]).join(' · ')}</dd>
+                  </div>
+                  <div>
+                    <dt>{copy('Кольца по слотам', 'Rings by slot')}</dt>
+                    <dd>{build.rings.map(stat => statLabels[stat][lang]).join(' · ')}</dd>
+                  </div>
+                </dl>
+                {!fullBuild && <p className="caption">{copy('На твоём уровне применится стартовый вариант.', 'Your level uses the starter version.')}</p>}
+                <button className="secondary" type="button" onClick={() => applyPreset(build)}>{copy('Применить эту сборку', 'Apply build')}</button>
+              </div>
+            </details>
+          );
+        })}
       </div>
-      <p className="caption">{copy('Разбор сильных и слабых сторон каждой готовой сборки.', 'Strengths, weaknesses and full skill requirements for each preset.')}</p>
-      {showAllBuilds && builds.map(build => {
-        const requirements = requiredAttributes(build.skills);
-        const adapted = applyBuildPreset(build, state);
-        const fullBuild = build.skills.every(id => adapted.skills.some(slot => slot?.id === id));
-        return <details className="mediaDetails buildGuideEntry" id={'build-guide-' + build.id} key={build.id}>
-          <summary><GameArt path={skillArt(build.signature)} size={33}/><span><strong>{build.name[lang]}</strong><small>{build.role[lang]}</small></span></summary>
-          <p>{build.play[lang]}</p>
-          <p className="buildGuideTradeoff"><strong>{copy('Слабое место', 'Weak spot')}</strong> {build.tradeoff[lang]}</p>
-          <div className="buildGuideSkills">{build.skills.map(id => {
-            const skill = skillById.get(id)!;
-            return <span key={id}><GameArt path={skillArt(id)} size={22}/>{nameOf(skill)}</span>;
-          })}</div>
-          <dl className="buildGuideGear">
-            <div><dt>{copy('Очки для трёх навыков', 'Points for all three skills')}</dt><dd>{statKeys.filter(stat => requirements[stat] > 0).map(stat => statLabels[stat][lang] + ' ' + requirements[stat]).join(' · ')}</dd></div>
-            <div><dt>{copy('Кольца по слотам', 'Rings by slot')}</dt><dd>{build.rings.map(stat => statLabels[stat][lang]).join(' · ')}</dd></div>
-          </dl>
-          {!fullBuild && <p className="caption">{copy('На твоём уровне применится стартовый вариант.', 'Your level uses the starter version.')}</p>}
-          <button className="secondary" type="button" onClick={() => applyPreset(build)}>{copy('Применить эту сборку', 'Apply build')}</button>
-        </details>;
-      })}
-    </section>
+    </details>
 
     </div>
 

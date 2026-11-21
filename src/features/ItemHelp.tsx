@@ -1,6 +1,6 @@
-import { useId, useLayoutEffect, useRef, useState } from 'react';
+import { useState } from 'react';
+import { BottomDrawer } from '../ui/BottomDrawer';
 import { GameArt } from '../ui/GameArt';
-import { useModal } from '../ui/useModal';
 import { lightHaptic } from '../telegram/client';
 import { GameGlyph } from '../ui/GameGlyph';
 import { useGuideLocale } from './guideLocale';
@@ -74,9 +74,6 @@ const ringHelp = {
   use: ['Выбирай силу для обычных ударов, ловкость для уклонения или мудрость для маны и критов. Навыки открываются за очки, вложенные в ветку.', 'Choose Strength for basic hits, Agility for dodging or Wisdom for mana and crits. Invest points in a branch to unlock its skills.'],
 } as const;
 
-const drawerEasing = 'cubic-bezier(0.32, 0.72, 0, 1)';
-const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
 export function ItemHelp({ name, file, art, effect, source }: {
   name: string; file: string; art?: string; effect: string; source?: string;
 }) {
@@ -100,44 +97,16 @@ export function ItemHelp({ name, file, art, effect, source }: {
 function ItemHelpSheet({ title, art, mechanic, use, source, lang, onClose }: {
   title: string; art: string; mechanic: string; use?: string; source?: string; lang: number; onClose: () => void;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const animation = useRef<Animation | null>(null);
-  const titleId = useId();
-  useModal(ref, true);
-  useLayoutEffect(() => {
-    const dialog = ref.current;
-    if (!dialog || reduceMotion()) return;
-    animation.current = dialog.animate([{ translate: '0 100%' }, { translate: '0 0' }],
-      { duration: 500, easing: drawerEasing });
-    return () => animation.current?.cancel();
-  }, []);
-
-  function close() {
-    const dialog = ref.current;
-    if (!dialog || dialog.dataset.closing) return;
-    const from = getComputedStyle(dialog).translate;
-    animation.current?.cancel();
-    if (reduceMotion()) { onClose(); return; }
-    dialog.dataset.closing = 'true';
-    animation.current = dialog.animate([{ translate: from }, { translate: '0 100%' }],
-      { duration: 400, easing: drawerEasing, fill: 'forwards' });
-    animation.current.finished.then(onClose, () => {});
-  }
-
-  return <dialog ref={ref} className="modal itemHelpSheet" aria-labelledby={titleId}
-    onCancel={event => { event.preventDefault(); close(); }}
-    onClick={event => { if (event.target === event.currentTarget) close(); }}>
-    <div className="itemSheetContent">
-      <header className="itemSheetHeader">
-        <button className="close" type="button" aria-label={lang ? 'Close' : 'Закрыть'} onClick={() => { lightHaptic(); close(); }}>×</button>
-        <GameArt path={art} size={64}/>
-        <h2 id={titleId} data-dialog-title tabIndex={-1}>{title}</h2>
-      </header>
+  return (
+    <BottomDrawer title={title} closeLabel={lang ? 'Close' : 'Закрыть'} onClose={onClose} panelClassName="itemHelpDrawer">
       <div className="itemSheetBody">
+        <div className="itemSheetArtHero">
+          <GameArt path={art} size={56}/>
+        </div>
         <p>{mechanic}</p>
         {use && <section><h3>{lang ? 'When to use it' : 'Когда пригодится'}</h3><p>{use}</p></section>}
         {source && <small>{source}</small>}
       </div>
-    </div>
-  </dialog>;
+    </BottomDrawer>
+  );
 }

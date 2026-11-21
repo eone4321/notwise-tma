@@ -4,8 +4,8 @@ import { trackGuide, useGuideAnalytics } from '../features/guideAnalytics';
 import { channelInvite, communityChat, squadLink } from '../domain/guide-links';
 import { startMarketUpdates } from '../features/marketData';
 import { copyLink } from '../ui/copyLink';
+import { BottomDrawer } from '../ui/BottomDrawer';
 import { GuideProgress, ProgressStatus, useProgress } from '../features/GuideProgress';
-import { useModal } from '../ui/useModal';
 import { artSrc } from '../ui/warmArt';
 import { SquadPage } from '../features/SquadPage';
 import { ReferralsPage, warmFriendAvatar } from '../features/ReferralsPage';
@@ -341,11 +341,9 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
  </>;
 }
 function ShareDialog({ close, english: en, referralCode }: { close: () => void; english: boolean; referralCode?: string }) {
-  const dialog = useRef<HTMLDialogElement>(null);
   const field = useRef<HTMLInputElement>(null);
   const [feedback, setFeedback] = useState('');
   const url = guideShareUrl(referralCode);
-  useModal(dialog, true);
   async function copy() {
     lightHaptic();
     const copied = await copyLink(url, field.current);
@@ -353,26 +351,26 @@ function ShareDialog({ close, english: en, referralCode }: { close: () => void; 
     setFeedback(copied ? en ? 'Link copied.' : 'Ссылка скопирована.'
       : en ? 'Link selected. Choose Copy.' : 'Ссылка выделена. Выбери «Копировать» в меню выделения.');
   }
-  function chooseRecipient() {
+  function chooseRecipient(requestClose: () => void) {
     lightHaptic();
     trackGuide('action:share_send');
     void shareGuide(url, en ? 'NOT Wise Guide' : 'Гайд по NOT Wise');
-    close();
+    requestClose();
   }
-  return <dialog className="modal" ref={dialog} aria-labelledby="share-title"
-    onCancel={event => { event.preventDefault(); close(); }}
-    onClick={event => { if (event.target === event.currentTarget) close(); }}>
-    <div className="dialogBody">
-      <div className="tokenRatesDialogHeader"><h2 id="share-title" data-dialog-title tabIndex={-1}>{en ? 'Share the guide' : 'Поделиться гайдом'}</h2>
-        <button className="close" onClick={close} aria-label={en ? 'Close' : 'Закрыть'}>×</button></div>
-      <label className="field shareLink"><span className="sr-only">{en ? 'Guide link' : 'Ссылка на гайд'}</span>
-        <input ref={field} readOnly value={url} onFocus={event => event.currentTarget.select()}/>
-      </label>
-      <button className="primary" onClick={chooseRecipient}>{en ? 'Choose a recipient' : 'Выбрать получателя'}</button>
-      <button className="secondary" onClick={() => void copy()}>{en ? 'Copy link' : 'Скопировать ссылку'}</button>
-      {feedback && <p className="supportStatus" role="status">{feedback}</p>}
-    </div>
-  </dialog>;
+  return (
+    <BottomDrawer title={en ? 'Share the guide' : 'Поделиться гайдом'} closeLabel={en ? 'Close' : 'Закрыть'} onClose={close}>
+      {requestClose => (
+        <div className="drawerActionStack">
+          <label className="field shareLink"><span className="sr-only">{en ? 'Guide link' : 'Ссылка на гайд'}</span>
+            <input ref={field} readOnly value={url} onFocus={event => event.currentTarget.select()}/>
+          </label>
+          <button className="primary" onClick={() => chooseRecipient(requestClose)}>{en ? 'Choose a recipient' : 'Выбрать получателя'}</button>
+          <button className="secondary" onClick={() => void copy()}>{en ? 'Copy link' : 'Скопировать ссылку'}</button>
+          {feedback && <p className="supportStatus" role="status">{feedback}</p>}
+        </div>
+      )}
+    </BottomDrawer>
+  );
 }
 function Card({children}:{children:React.ReactNode}){return <section className="card">{children}</section>}
 function Page({ english: en, profile, onChatVisit, ask, joke, showJoke, popup, reveal, referrals }: {
@@ -464,37 +462,30 @@ function Secrets({ english: en, ask, joke, showJoke, popup, reveal }: { english:
   </>;
 }
 function RevealedSecrets({ english: en, close }: { english: boolean; close: () => void }) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  useModal(dialog, true);
-  return <dialog className="modal" ref={dialog} aria-labelledby="secret-reveal-title"
-    onCancel={event => { event.preventDefault(); close(); }}
-    onClick={event => { if (event.target === event.currentTarget) close(); }}>
-    <div className="dialogBody">
-      <div className="tokenRatesDialogHeader">
-        <h2 id="secret-reveal-title" data-dialog-title tabIndex={-1}>{en ? 'Just kidding 😄' : 'Ладно, пошутили 😄'}</h2>
-        <button className="close" aria-label={en ? 'Close' : 'Закрыть'} onClick={close}>×</button>
-      </div>
-      <p>{en ? 'All secrets are completely free.' : 'Все секреты бесплатны.'}</p>
-      <button className="primary" onClick={close}>{en ? 'To secrets' : 'К секретам'}</button>
-      <DetailLink className="secondary" to="/support" onClick={close}>{en ? 'Support the project' : 'Поддержать проект'}</DetailLink>
-    </div>
-  </dialog>;
+  return (
+    <BottomDrawer title={en ? 'Just kidding 😄' : 'Ладно, пошутили 😄'} closeLabel={en ? 'Close' : 'Закрыть'} onClose={close}>
+      {requestClose => (
+        <div className="drawerActionStack">
+          <p>{en ? 'All secrets are completely free.' : 'Все секреты бесплатны.'}</p>
+          <button className="primary" onClick={requestClose}>{en ? 'To secrets' : 'К секретам'}</button>
+          <DetailLink className="secondary" to="/support" onClick={requestClose}>{en ? 'Support the project' : 'Поддержать проект'}</DetailLink>
+        </div>
+      )}
+    </BottomDrawer>
+  );
 }
 function SecretDialog({ english: en, reveal }: { english: boolean; reveal: () => void }) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  useModal(dialog, true);
-  return <dialog className="modal" ref={dialog} aria-labelledby="modalTitle" onCancel={event => {event.preventDefault();reveal();}}
-    onClick={event => { if (event.target === event.currentTarget) reveal(); }}>
-    <div className="dialogBody">
-      <div className="tokenRatesDialogHeader">
-        <h2 id="modalTitle" data-dialog-title tabIndex={-1}>{en ? 'Not Wise Secrets' : 'Секреты Not Wise'}</h2>
-        <button className="close" onClick={reveal} aria-label={en ? 'Close dialog' : 'Закрыть окно'}>×</button>
-      </div>
-      <p>{en ? 'Pay 1 ⭐ (Telegram Stars) to unlock all secrets' : 'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты'}</p>
-      <button className="primary" onClick={reveal}>{en ? 'Pay' : 'Заплатить'}</button>
-      <button className="secondary" onClick={reveal}>{en ? 'Back' : 'Назад'}</button>
-    </div>
-  </dialog>;
+  return (
+    <BottomDrawer title={en ? 'Not Wise Secrets' : 'Секреты Not Wise'} closeLabel={en ? 'Close dialog' : 'Закрыть окно'} onClose={reveal}>
+      {requestClose => (
+        <div className="drawerActionStack">
+          <p>{en ? 'Pay 1 ⭐ (Telegram Stars) to unlock all secrets' : 'Заплати 1 ⭐ (Telegram Stars), чтобы открыть все секреты'}</p>
+          <button className="primary" onClick={requestClose}>{en ? 'Pay' : 'Заплатить'}</button>
+          <button className="secondary" onClick={requestClose}>{en ? 'Back' : 'Назад'}</button>
+        </div>
+      )}
+    </BottomDrawer>
+  );
 }
 export {App};
 

@@ -1271,10 +1271,45 @@
 .buildReadout dt :is(.gameAttribute, .gameGlyph) { font-size: 18px; }
 .buildReadout dd { margin: 0; color: var(--text); font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .buildPanel > .caption { margin-block: 5px 8px; }
-.buildAdvanced { margin-block-start: 0; padding-bottom: 0; border-top-color: var(--game-panel-line); }
-.buildAdvanced[open] { padding-bottom: 4px; }
-.buildAdvanced > summary, .buildGuideEntry > summary { min-block-size: 46px; font-size: 13px; }
-.buildAdvanced > small { color: var(--muted); }
+.buildAdvancedCard { margin-block-start: 2px; }
+.buildAdvancedNote { margin: 0 0 2px; font-size: 12px; line-height: 1.4; }
+.buildAdvancedInput {
+  width: 68px;
+  min-height: 32px;
+  margin: 0;
+  padding: 4px 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border-radius: 9px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--text);
+}
+.buildAdvancedInput:focus {
+  border-color: var(--gold);
+  outline: none;
+}
+.buildAdvancedInput[data-equipped] {
+  color: var(--gold);
+  border-color: color-mix(in srgb, var(--gold) 45%, var(--game-panel-line));
+}
+.buildBuffsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+.buildBuffRow {
+  padding: 8px 10px;
+  gap: 10px;
+}
+.buildBuffRow .wardrobeExtraInfo {
+  gap: 8px;
+}
+.buildBuffRow .wardrobeExtraInfo strong {
+  font-size: 13px;
+}
 .buildEquip { display: grid; gap: 2px; padding-block: 5px; }
 .buildEquip:last-child { padding-block-end: 0; }
 .buildEquipMain { grid-template-columns: 34px minmax(0, 1fr) 9px; width: 100%; min-height: 49px; border-radius: 8px; }
@@ -1282,20 +1317,96 @@
 .buildEquipMain:only-child { grid-column: 1 / -1; }
 .buildEquipMain:active, .buildPickerOption:active:not(:disabled) { background: var(--game-tile); }
 .buildEquip .buildSkillEffect { grid-column: 1 / -1; padding-inline-start: 43px; margin: 0 0 5px; font-size: 12px; color: var(--muted); }
-.buildGuideEntry { border-top: 1px solid var(--game-panel-line); }
-.buildGuideEntry > summary { min-block-size: 54px; display: flex; align-items: center; gap: 9px; cursor: pointer; }
-.buildGuideEntry > summary small { color: var(--muted); font-size: 11px; margin-block-start: 2px; }
-.buildGuideEntry[open] { padding-block-end: 12px; }
-.buildGuideEntry p { margin-block: 8px; font-size: 13px; }
-.buildGuideTradeoff { color: var(--muted); }
-.buildGuideTradeoff strong { color: var(--text); display: block; }
-.buildGuideSkills { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-block: 12px 9px; }
-.buildGuideSkills > span { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; }
-.buildGuideGear { display: grid; gap: 6px; margin: 0; font-size: 12px; }
-.buildGuideGear > div { display: grid; gap: 1px; }
-.buildGuideGear dt { color: var(--muted); }
-.buildGuideGear dd { margin: 0; }
-.buildGuideEntry > button { min-block-size: 44px; margin-block-start: 10px; }
+.buildGuideCountPill {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 750;
+  color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 12%, var(--game-tile));
+  border: 1px solid color-mix(in srgb, var(--gold) 30%, var(--game-panel-line));
+}
+.buildGuideIntro { margin: 0 0 8px; font-size: 12.5px; }
+.buildArchetypeList { display: grid; gap: 6px; }
+.buildArchetypeCard {
+  border-radius: 12px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  overflow: hidden;
+  padding: 0;
+  transition: border-color 140ms ease;
+}
+.buildArchetypeCard[open] {
+  border-color: color-mix(in srgb, var(--gold) 35%, var(--game-panel-line));
+  padding-bottom: 0;
+}
+.buildArchetypeCard > summary {
+  min-block-size: 52px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 11px;
+  margin: 0;
+  cursor: pointer;
+}
+.buildArchetypeCard > summary small {
+  display: block;
+  color: var(--muted);
+  font-size: 11.5px;
+  margin-block-start: 1px;
+}
+.buildArchetypeCard[open] > summary strong { color: var(--gold); }
+.buildArchetypeCard[open] > summary::after { border-color: var(--gold); }
+.buildArchetypeBody {
+  display: grid;
+  gap: 9px;
+  padding: 10px 11px 11px;
+  border-top: 1px solid var(--game-panel-line);
+  background: color-mix(in srgb, var(--game-panel) 65%, var(--game-tile));
+}
+.buildArchetypeBody > p { margin: 0; font-size: 13px; line-height: 1.45; }
+.buildTradeoffBox {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--game-panel);
+  border: 1px solid var(--game-panel-line);
+  font-size: 12px;
+  color: var(--muted);
+}
+.buildTradeoffBox strong { color: var(--gold); font-size: 12px; }
+.buildGuideSkills { display: flex; flex-wrap: wrap; gap: 5px; }
+.buildGuideSkillChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--game-panel);
+  border: 1px solid var(--game-panel-line);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.buildGuideGear {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+}
+.buildGuideGear > div {
+  display: grid;
+  gap: 2px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  background: var(--game-panel);
+  border: 1px solid var(--game-panel-line);
+}
+.buildGuideGear dt { color: var(--muted); font-size: 11px; }
+.buildGuideGear dd { margin: 0; font-weight: 650; }
+.buildArchetypeBody > button { min-block-size: 40px; margin: 0; }
 .buildPickerOptions { display: grid; gap: 5px; }
 .buildPickerOption {
   grid-template-columns: 36px minmax(0, 1fr) 15px;
@@ -3009,15 +3120,7 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   height: 30px;
 }
 @media (max-width: 440px) {
-  .buildLoadoutCard .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) {
-    width: 30px;
-    height: 30px;
-    padding: 0;
-  }
-  .buildLoadoutCard .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) > span:last-child {
-    display: none;
-  }
-  .wardrobeCard .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) {
+  :is(.buildLoadoutCard, .wardrobeCard) .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) {
     width: auto;
     height: 30px;
     padding-inline: 7px;
@@ -3027,18 +3130,19 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   }
 }
 @media (max-width: 390px) {
-  .wardrobeCard .buildLoadoutTop,
-  .wardrobeCard .buildLoadoutControls,
-  .wardrobeCard .buildLoadoutRight {
+  :is(.buildLoadoutCard, .wardrobeCard) .buildLoadoutTop,
+  :is(.buildLoadoutCard, .wardrobeCard) .buildLoadoutControls,
+  :is(.buildLoadoutCard, .wardrobeCard) .buildLoadoutRight {
     gap: 3px;
   }
   .wardrobeCard .skinRarityPill,
-  .wardrobeCard .buildPresetChip {
+  :is(.buildLoadoutCard, .wardrobeCard) .buildPresetChip,
+  .buildLoadoutCard .buildLevelPill {
     padding-inline: 6px;
     gap: 3px;
     font-size: 10.5px;
   }
-  .wardrobeCard .buildPresetChip {
+  :is(.buildLoadoutCard, .wardrobeCard) .buildPresetChip {
     flex: 0 0 auto;
     max-width: none;
   }
@@ -3047,7 +3151,7 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
     height: 26px;
     font-size: 13px;
   }
-  .wardrobeCard .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) {
+  :is(.buildLoadoutCard, .wardrobeCard) .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) {
     height: 26px;
     padding-inline: 5px;
     gap: 2px;
@@ -4891,12 +4995,13 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   animation: radarFadeIn 0.2s ease both;
 }
 .radarSheetBackdrop.isClosing {
-  animation: radarFadeOut 0.22s ease both;
+  animation: radarFadeOut 0.21s ease forwards;
 }
 .radarSheetPanel {
   width: min(520px, 100%);
-  height: 82vh;
-  height: min(82dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 12px));
+  height: auto;
+  max-height: 82vh;
+  max-height: min(82dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 12px));
   min-height: 0;
   background: var(--game-panel);
   border-top: 1px solid var(--game-panel-line);
@@ -4905,10 +5010,11 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   display: flex;
   flex-direction: column;
   gap: 10px;
-  animation: radarSlideUp 0.26s cubic-bezier(0.32, 0.72, 0, 1) both;
+  will-change: transform;
+  animation: radarSlideUp 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .radarSheetBackdrop.isClosing .radarSheetPanel {
-  animation: radarSlideDown 0.22s cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation: radarSlideDown 0.21s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 .buildSheetPanel .buildHeading {
   flex: none;
@@ -4929,7 +5035,7 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   opacity: 0.65;
 }
 .buildSheetPanel .dialogBody {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -4942,14 +5048,40 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   margin: 0 0 4px;
 }
 .buildSheetPanel .buildPickerOptions,
-.buildSheetPanel .calcInfoSheetBody {
-  flex: 1 1 auto;
+.buildSheetPanel .calcInfoSheetBody,
+.buildSheetPanel .itemSheetBody,
+.radarInfoBody {
+  flex: 0 1 auto;
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   padding-inline-end: 2px;
-  padding-bottom: 6px;
+  padding-bottom: 4px;
+}
+.itemSheetArtHero {
+  display: flex;
+  justify-content: center;
+  padding-block: 2px 4px;
+}
+.drawerActionStack {
+  display: grid;
+  gap: 8px;
+}
+.drawerActionStack > p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.drawerActionStack > .field {
+  margin: 0 0 4px;
+}
+.drawerActionStack > :is(button, a) {
+  margin-top: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
 }
 .radarSheetHandle {
   flex: none;
@@ -5029,9 +5161,10 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 }
 .radarSheetList {
   align-content: start;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   display: grid;
   gap: 6px;
@@ -5130,12 +5263,12 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   to { opacity: 0; }
 }
 @keyframes radarSlideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from { transform: translate3d(0, 100%, 0); }
+  to { transform: translate3d(0, 0, 0); }
 }
 @keyframes radarSlideDown {
-  from { transform: translateY(0); }
-  to { transform: translateY(100%); }
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, 100%, 0); }
 }
 
 

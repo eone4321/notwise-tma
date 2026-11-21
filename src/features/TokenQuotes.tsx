@@ -1,7 +1,7 @@
+import { BottomDrawer } from '../ui/BottomDrawer';
 import { DetailLink } from '../ui/DetailLink';
-import { useModal } from '../ui/useModal';
 import { artSrc } from '../ui/warmArt';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import tokens from '../../public/data/tokens.json';
 import { tokenMarket, type TokenQuote } from './marketData';
@@ -124,9 +124,7 @@ export function TokenTicker() {
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [opened, setOpened] = useState(false);
-  const dialog = useRef<HTMLDialogElement>(null);
   const { usable } = quotes;
-  useModal(dialog, opened);
 
   useEffect(() => {
     if (reducedMotion || hovered || focused || opened || usable.length < 2) return;
@@ -154,17 +152,16 @@ export function TokenTicker() {
         </AnimatePresence> : <span className="tokenTickerEmpty">USD</span>}
       </span>
     </button>
-    <dialog className="modal tokenRatesDialog" ref={dialog} aria-labelledby="ticker-rates-title"
-      onCancel={event => { event.preventDefault(); setOpened(false); }} onClick={event => {
-        if (event.target === event.currentTarget) setOpened(false);
-      }}>
-      <div className="tokenRatesDialogBody">
-        <div className="tokenRatesDialogHeader">
-          <h2 id="ticker-rates-title" data-dialog-title tabIndex={-1}>{en ? 'Token rates' : 'Курсы токенов'}</h2>
-          <button className="close" type="button" aria-label={en ? 'Close rates' : 'Закрыть курсы'} onClick={() => setOpened(false)}>×</button>
+    {opened && (
+      <BottomDrawer
+        title={en ? 'Token rates' : 'Курсы токенов'}
+        closeLabel={en ? 'Close rates' : 'Закрыть курсы'}
+        onClose={() => setOpened(false)}
+      >
+        <div className="buildPickerOptions">
+          <QuoteList quotes={quotes} en={en}/>
         </div>
-        <QuoteList quotes={quotes} en={en}/>
-      </div>
-    </dialog>
+      </BottomDrawer>
+    )}
   </>;
 }
