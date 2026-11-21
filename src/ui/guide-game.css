@@ -5545,3 +5545,18 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   width: 72px;
   flex: none;
 }
+
+.wardrobeCard, .wardrobeStage {
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+.wardrobeCard .buildLoadoutTop { flex-wrap: wrap; }
+.wardrobeCard .wardrobeTabLabel {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.skinTraitOption > span:nth-child(2) {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

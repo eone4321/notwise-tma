@@ -138,7 +138,7 @@ export function SkinFarmCalculator({
   const [enchant, setEnchant] = useState(saved.enchant);
   const [gear, setGear] = useState(saved.gear);
   const [presetId, setPresetId] = useState<number | null>(saved.presetId);
-  const [activeTab, setActiveTab] = useState<SkinSlotKey>('body');
+  const [slotPicker, setSlotPicker] = useState<SkinSlotKey | null>(null);
   const [presetModalOpen, setPresetModalOpen] = useState(false);
   const [leagueOpen, setLeagueOpen] = useState(false);
   const leagueRef = useRef<HTMLDivElement>(null);
@@ -254,8 +254,6 @@ export function SkinFarmCalculator({
     }
   }
 
-  const activeTraits = skinTraitsBySlot[activeTab];
-  const equippedInTab = findTrait(activeTab, selection[activeTab]);
   const isOnHome = sameSkinSelection(selection, homeSkin);
 
   function handleSetHome() {
@@ -324,22 +322,20 @@ export function SkinFarmCalculator({
       </div>
     </div>
 
-    <div className="wardrobeSlotTabs" role="tablist" aria-label={copy('Слоты образа', 'Skin slots')}>
+    <div className="wardrobeSlotTabs" role="group" aria-label={copy('Слоты образа', 'Skin slots')}>
       {slotOrder.map(slot => {
         const meta = skinSlotMeta[slot];
         const key = selection[slot];
         const trait = findTrait(slot, key);
         const bonus = skinPartBonus(slot, key);
-        const selected = activeTab === slot;
         return <button
           key={slot}
           type="button"
-          role="tab"
-          aria-selected={selected}
+          aria-haspopup="dialog"
           className="wardrobeSlotTab"
           data-filled={Boolean(trait) || undefined}
           data-gold={key === 'Golden' || key === 'NOT_Chain' || undefined}
-          onClick={() => { lightHaptic(); setActiveTab(slot); }}
+          onClick={() => { lightHaptic(); setSlotPicker(slot); }}
         >
           <span className="wardrobeTabIcon">
             {slot === 'body' && key && bodySwatches[key]
@@ -352,49 +348,30 @@ export function SkinFarmCalculator({
       })}
     </div>
 
-    <div className="wardrobeTrayWrap" role="tabpanel" aria-label={copy(skinSlotMeta[activeTab].ru, skinSlotMeta[activeTab].en)}>
-      <div className="wardrobeTrayHead">
-        <span>
-          <strong>{copy(skinSlotMeta[activeTab].ru, skinSlotMeta[activeTab].en)}:</strong>{' '}
-          {equippedInTab ? copy(equippedInTab.ru, equippedInTab.en) : copy(skinSlotMeta[activeTab].emptyRu, skinSlotMeta[activeTab].emptyEn)}
-        </span>
-        {equippedInTab && <small>+{equippedInTab.bonus}%</small>}
-      </div>
-      <div className="wardrobeTrayViewport">
-        <div className="wardrobeTray">
-          <button
-            type="button"
-            className="wardrobeItemChip"
-            aria-pressed={selection[activeTab] === null}
-            onClick={() => applySlot(activeTab, null)}
-          >
-            <span className="wardrobeChipThumb"><SlotGlyph slot={activeTab}/></span>
-            <span>{activeTab === 'body' ? copy('База', 'Base') : copy('Снять', 'None')}</span>
-            <small>0%</small>
-          </button>
-          {activeTraits.map(option => {
-            const isEquipped = selection[activeTab] === option.key;
-            const isSpecial = option.key === 'Golden' || option.key === 'NOT_Chain';
-            return <button
-              key={option.key}
-              type="button"
-              className="wardrobeItemChip"
-              data-gold={isSpecial || undefined}
-              aria-pressed={isEquipped}
-              onClick={() => applySlot(activeTab, isEquipped ? null : option.key)}
-            >
-              <span className="wardrobeChipThumb">
-                {activeTab === 'body' && bodySwatches[option.key]
-                  ? <span className="skinColorDot" style={{ background: bodySwatches[option.key] }} aria-hidden="true"/>
-                  : <SlotGlyph slot={activeTab}/>}
-              </span>
-              <span>{copy(option.ru, option.en)}</span>
-              <small>+{option.bonus}%</small>
-            </button>;
-          })}
-        </div>
-      </div>
-    </div>
+    {slotPicker && <SkinModal
+      title={copy(skinSlotMeta[slotPicker].ru, skinSlotMeta[slotPicker].en)}
+      closeLabel={copy('Закрыть', 'Close')}
+      onClose={() => setSlotPicker(null)}
+    >
+      {close => <div className="buildPickerOptions">
+        {[{ key: null, ru: slotPicker === 'body' ? 'Базовое оперение' : 'Снять', en: slotPicker === 'body' ? 'Base plumage' : 'None', bonus: 0 },
+          ...skinTraitsBySlot[slotPicker]].map(option => {
+          const selected = selection[slotPicker] === option.key;
+          const swatch = slotPicker === 'body' && option.key ? bodySwatches[option.key] : null;
+          return <button key={option.key ?? 'empty'} className="buildPickerOption skinTraitOption"
+            type="button" aria-pressed={selected} onClick={() => {
+              applySlot(slotPicker, option.key);
+              close();
+            }}>
+            <span className="wardrobeChipThumb" aria-hidden="true">
+              {swatch ? <span className="skinColorDot" style={{ background: swatch }}/> : <SlotGlyph slot={slotPicker}/>}
+            </span>
+            <span><strong>{copy(option.ru, option.en)}</strong><small>+{option.bonus}% {copy('к монетам', 'coins')}</small></span>
+            <span className="buildPickerCheck" aria-hidden="true">{selected ? '✓' : ''}</span>
+          </button>;
+        })}
+      </div>}
+    </SkinModal>}
 
     <div className="wardrobeEnchantCard">
       <div className="skinEnchantBox">
@@ -654,11 +631,11 @@ function SkinModal({ title, closeLabel, onClose, children }: {
   const ref = useRef<HTMLDialogElement>(null);
   const animation = useRef<Animation | null>(null);
   const titleId = useId();
-  useModal(ref, true);
+  useModal(ref, true, true);
   useLayoutEffect(() => {
     const dialog = ref.current;
-    if (!dialog || sheetReduceMotion()) return;
-    animation.current = dialog.animate([{ translate: '0 100%' }, { translate: '0 0' }],
+    if (!dialog || typeof dialog.animate !== 'function' || sheetReduceMotion()) return;
+    animation.current = dialog.animate([{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }],
       { duration: 460, easing: sheetDrawerEasing });
     return () => animation.current?.cancel();
   }, []);
@@ -666,11 +643,11 @@ function SkinModal({ title, closeLabel, onClose, children }: {
   function close() {
     const dialog = ref.current;
     if (!dialog || dialog.dataset.closing) return;
-    const from = getComputedStyle(dialog).translate;
+    const from = getComputedStyle(dialog).transform;
     animation.current?.cancel();
-    if (sheetReduceMotion()) { onClose(); return; }
+    if (typeof dialog.animate !== 'function' || sheetReduceMotion()) { onClose(); return; }
     dialog.dataset.closing = 'true';
-    animation.current = dialog.animate([{ translate: from }, { translate: '0 100%' }],
+    animation.current = dialog.animate([{ transform: from }, { transform: 'translateY(100%)' }],
       { duration: 360, easing: sheetDrawerEasing, fill: 'forwards' });
     animation.current.finished.then(onClose, () => {});
   }
