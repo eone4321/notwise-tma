@@ -98,7 +98,7 @@ async function prependSale(slug: string, sale: MarketSale) {
       else if (parsed && Array.isArray(parsed.sales)) list = parsed.sales;
     } catch { /* ignore */ }
   }
-  if (list.some(s => s.address === sale.address && Math.abs(s.at - sale.at) < 2000)) return;
+  if (list.some(s => s.address.toLowerCase() === sale.address.toLowerCase() && Math.abs(s.at - sale.at) < 2000)) return;
   list.unshift(sale);
   list.sort((a, b) => b.at - a.at);
   await redis(['SET', key, JSON.stringify({ updatedAt: Date.now(), sales: list.slice(0, 24) }), 'EX', 30 * 86400]).catch(() => null);

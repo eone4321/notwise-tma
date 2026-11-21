@@ -103,7 +103,7 @@ function mergeSales(incoming: MarketSale[], existing: MarketSale[], minAtMs: num
   const out: MarketSale[] = [];
   for (const s of [...incoming, ...existing]) {
     if (!s || s.at < minAtMs) continue;
-    const key = `${s.address}:${Math.round(s.at / 1000)}`;
+    const key = `${s.address.toLowerCase()}:${Math.round(s.at / 1000)}`;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(s);
@@ -111,53 +111,45 @@ function mergeSales(incoming: MarketSale[], existing: MarketSale[], minAtMs: num
   return out.sort((a, b) => b.at - a.at).slice(0, 24);
 }
 
+async function fetchJsonWithRetry(url: string, headers: HeadersInit): Promise<any> {
+  let res = await fetch(url, { headers, signal: AbortSignal.timeout(5500) });
+  if (res.status === 429) {
+    await new Promise(resolve => setTimeout(resolve, 350));
+    res = await fetch(url, { headers, signal: AbortSignal.timeout(5500) });
+  }
+  return res.ok ? await res.json() : null;
+}
+
 async function fetchOnChainSales(
   collectionAddress: string,
   slug: string,
   filterBySlug: boolean,
-  maxPagesOverride?: number,
+  sinceMsOverride?: number,
 ): Promise<MarketSale[]> {
   const toncenterToken = process.env.TONCENTER_API_KEY || process.env.TONCENTER_TOKEN;
   const headers: HeadersInit = toncenterToken ? { 'X-API-Key': toncenterToken } : {};
-  const sinceSec = Math.floor(Date.now() / 1000) - 30 * 86400;
+  const thirtyDaysAgoSec = Math.floor(Date.now() / 1000) - 30 * 86400;
+  const isDelta = typeof sinceMsOverride === 'number';
+  const sinceSec = isDelta
+    ? Math.max(thirtyDaysAgoSec, Math.floor(sinceMsOverride / 1000) - 300)
+    : thirtyDaysAgoSec;
+  const transferLimit = isDelta ? 400 : filterBySlug ? 1000 : 400;
+  const maxTraces = isDelta ? 240 : filterBySlug ? 360 : 180;
 
+  const trData = await fetchJsonWithRetry(
+    `https://toncenter.com/api/v3/nft/transfers?collection_address=${encodeURIComponent(collectionAddress)}&start_utime=${sinceSec}&limit=${transferLimit}&sort=desc`,
+    headers,
+  ).catch(() => null);
+  const transfers = Array.isArray(trData?.nft_transfers) ? trData.nft_transfers : [];
   const seenTraces = new Set<string>();
   const traceIds: string[] = [];
-  const maxPages = maxPagesOverride ?? (filterBySlug ? 10 : 4);
-  const maxTraces = maxPages === 1 ? 60 : filterBySlug ? 360 : 180;
-
-  for (let page = 0; page < maxPages; page += 2) {
-    if (page > 0) await new Promise(resolve => setTimeout(resolve, 220));
-    const batchPages = maxPages > 1 ? [page, page + 1].filter(p => p < maxPages) : [0];
-    const results = await Promise.all(
-      batchPages.map(async p => {
-        try {
-          const trRes = await fetch(
-            `https://toncenter.com/api/v3/nft/transfers?collection_address=${encodeURIComponent(collectionAddress)}&start_utime=${sinceSec}&limit=100&offset=${p * 100}&sort=desc`,
-            { headers, signal: AbortSignal.timeout(5000) },
-          );
-          if (!trRes.ok) return [];
-          const trData = await trRes.json();
-          return Array.isArray(trData?.nft_transfers) ? trData.nft_transfers : [];
-        } catch {
-          return [];
-        }
-      }),
-    );
-    let done = false;
-    for (const transfers of results) {
-      for (const t of transfers) {
-        if (!t?.old_owner) continue;
-        if (typeof t?.trace_id === 'string' && !seenTraces.has(t.trace_id)) {
-          seenTraces.add(t.trace_id);
-          traceIds.push(t.trace_id);
-          if (traceIds.length >= maxTraces) { done = true; break; }
-        }
-      }
-      if (transfers.length < 100) done = true;
-      if (done) break;
+  for (const t of transfers) {
+    if (!t?.old_owner) continue;
+    if (typeof t?.trace_id === 'string' && !seenTraces.has(t.trace_id)) {
+      seenTraces.add(t.trace_id);
+      traceIds.push(t.trace_id);
+      if (traceIds.length >= maxTraces) break;
     }
-    if (done) break;
   }
   if (traceIds.length === 0) return [];
 
@@ -165,10 +157,10 @@ async function fetchOnChainSales(
   const bySlug = new Map<string, MarketSale[]>();
   const seenSaleKeys = new Set<string>();
 
-  // Query TON Center v3 actions in chunks of 20 traces, 2 chunks at a time (<= 9 req/sec)
+  // Query TON Center v3 actions in chunks of 12 traces (avoids limit=100 truncation on batch traces)
   const chunks: string[][] = [];
-  for (let i = 0; i < traceIds.length; i += 20) {
-    chunks.push(traceIds.slice(i, i + 20));
+  for (let i = 0; i < traceIds.length; i += 12) {
+    chunks.push(traceIds.slice(i, i + 12));
   }
 
   for (let i = 0; i < chunks.length; i += 2) {
@@ -180,11 +172,7 @@ async function fetchOnChainSales(
         for (const tid of chunk) params.append('trace_id', tid);
         params.set('limit', '100');
         try {
-          const actRes = await fetch(`https://toncenter.com/api/v3/actions?${params.toString()}`, {
-            headers,
-            signal: AbortSignal.timeout(5000),
-          });
-          return actRes.ok ? await actRes.json() : null;
+          return await fetchJsonWithRetry(`https://toncenter.com/api/v3/actions?${params.toString()}`, headers);
         } catch {
           return null;
         }
@@ -235,7 +223,7 @@ async function fetchOnChainSales(
   }
 
   // Warm Redis cache for sibling items discovered in the same collection scan
-  if (filterBySlug && bySlug.size > 0 && !maxPagesOverride) {
+  if (filterBySlug && bySlug.size > 0 && !isDelta) {
     const now = Date.now();
     const writes: Promise<unknown>[] = [];
     for (const [siblingSlug, list] of bySlug.entries()) {
@@ -262,13 +250,15 @@ export default async function handler(request: Request) {
   const nowMs = Date.now();
   const minAtMs = nowMs - 30 * 86400_000;
   let existingCached: MarketSale[] | null = null;
+  let cachedUpdatedAt = 0;
   const cached = await redis<string | null>(['GET', cacheKey]).catch(() => null);
   if (cached) {
     try {
       const parsed = JSON.parse(cached) as Partial<CachedSales>;
       if (parsed && Array.isArray(parsed.sales)) {
         existingCached = parsed.sales.filter(s => s.at >= minAtMs);
-        if (typeof parsed.updatedAt === 'number' && nowMs - parsed.updatedAt < SALES_FRESH_MS) {
+        cachedUpdatedAt = typeof parsed.updatedAt === 'number' ? parsed.updatedAt : 0;
+        if (cachedUpdatedAt > 0 && nowMs - cachedUpdatedAt < SALES_FRESH_MS) {
           return Response.json({ slug, sales: existingCached }, { headers: { 'Cache-Control': 'public, max-age=0, s-maxage=60' } });
         }
       }
@@ -280,9 +270,9 @@ export default async function handler(request: Request) {
     return Response.json({ slug, sales: [] }, { headers: { 'Cache-Control': 'public, max-age=0, s-maxage=60' } });
   }
 
-  // If we already have cached history, do a fast 1-page incremental delta scan (~0.4s)
-  if (existingCached !== null) {
-    const delta = await fetchOnChainSales(target.address, slug, target.filterBySlug, 1).catch(() => []);
+  // Adaptive incremental delta scan from (cachedUpdatedAt - 5m) so overnight bursts are never missed
+  if (existingCached !== null && cachedUpdatedAt > 0) {
+    const delta = await fetchOnChainSales(target.address, slug, target.filterBySlug, cachedUpdatedAt).catch(() => []);
     const merged = mergeSales(delta, existingCached, minAtMs);
     const payload: CachedSales = { updatedAt: nowMs, sales: merged };
     await redis(['SET', cacheKey, JSON.stringify(payload), 'EX', SALES_RETENTION_SEC]).catch(() => null);
