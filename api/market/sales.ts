@@ -93,15 +93,38 @@ function inferImage(slug: string, name: string, rawImage: unknown): string | und
   return undefined;
 }
 
-async function fetchOnChainSales(collectionAddress: string, slug: string, filterBySlug: boolean): Promise<MarketSale[]> {
+const SALES_FRESH_MS = 120_000;
+const SALES_RETENTION_SEC = 30 * 86400;
+
+type CachedSales = { updatedAt: number; sales: MarketSale[] };
+
+function mergeSales(incoming: MarketSale[], existing: MarketSale[], minAtMs: number): MarketSale[] {
+  const seen = new Set<string>();
+  const out: MarketSale[] = [];
+  for (const s of [...incoming, ...existing]) {
+    if (!s || s.at < minAtMs) continue;
+    const key = `${s.address}:${Math.round(s.at / 1000)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(s);
+  }
+  return out.sort((a, b) => b.at - a.at).slice(0, 24);
+}
+
+async function fetchOnChainSales(
+  collectionAddress: string,
+  slug: string,
+  filterBySlug: boolean,
+  maxPagesOverride?: number,
+): Promise<MarketSale[]> {
   const toncenterToken = process.env.TONCENTER_API_KEY || process.env.TONCENTER_TOKEN;
   const headers: HeadersInit = toncenterToken ? { 'X-API-Key': toncenterToken } : {};
   const sinceSec = Math.floor(Date.now() / 1000) - 30 * 86400;
 
   const seenTraces = new Set<string>();
   const traceIds: string[] = [];
-  const maxPages = filterBySlug ? 10 : 1;
-  const maxTraces = filterBySlug ? 360 : 60;
+  const maxPages = maxPagesOverride ?? (filterBySlug ? 10 : 1);
+  const maxTraces = maxPages === 1 ? 60 : 360;
 
   for (let page = 0; page < maxPages; page += 2) {
     if (page > 0) await new Promise(resolve => setTimeout(resolve, 220));
@@ -212,12 +235,14 @@ async function fetchOnChainSales(collectionAddress: string, slug: string, filter
   }
 
   // Warm Redis cache for sibling items discovered in the same collection scan
-  if (filterBySlug && bySlug.size > 0) {
+  if (filterBySlug && bySlug.size > 0 && !maxPagesOverride) {
+    const now = Date.now();
     const writes: Promise<unknown>[] = [];
     for (const [siblingSlug, list] of bySlug.entries()) {
       if (siblingSlug === slug || list.length === 0) continue;
       const sorted = list.sort((a, b) => b.at - a.at).slice(0, 24);
-      writes.push(redis(['SET', `notwise:market:sales:v5:${siblingSlug}`, JSON.stringify(sorted), 'EX', 7 * 86400]).catch(() => null));
+      const payload: CachedSales = { updatedAt: now, sales: sorted };
+      writes.push(redis(['SET', `notwise:market:sales:v6:${siblingSlug}`, JSON.stringify(payload), 'EX', SALES_RETENTION_SEC]).catch(() => null));
     }
     await Promise.all(writes);
   }
@@ -233,15 +258,19 @@ export default async function handler(request: Request) {
     return Response.json({ error: 'Invalid slug' }, { status: 400 });
   }
 
-  const cacheKey = `notwise:market:sales:v5:${slug}`;
-  const minAtMs = Date.now() - 30 * 86400_000;
+  const cacheKey = `notwise:market:sales:v6:${slug}`;
+  const nowMs = Date.now();
+  const minAtMs = nowMs - 30 * 86400_000;
+  let existingCached: MarketSale[] | null = null;
   const cached = await redis<string | null>(['GET', cacheKey]).catch(() => null);
   if (cached) {
     try {
-      const rawParsed = JSON.parse(cached);
-      if (Array.isArray(rawParsed)) {
-        const parsed = (rawParsed as MarketSale[]).filter(s => s.at >= minAtMs);
-        return Response.json({ slug, sales: parsed }, { headers: { 'Cache-Control': 'public, max-age=0, s-maxage=60' } });
+      const parsed = JSON.parse(cached) as Partial<CachedSales>;
+      if (parsed && Array.isArray(parsed.sales)) {
+        existingCached = parsed.sales.filter(s => s.at >= minAtMs);
+        if (typeof parsed.updatedAt === 'number' && nowMs - parsed.updatedAt < SALES_FRESH_MS) {
+          return Response.json({ slug, sales: existingCached }, { headers: { 'Cache-Control': 'public, max-age=0, s-maxage=60' } });
+        }
       }
     } catch { /* ignore */ }
   }
@@ -249,6 +278,18 @@ export default async function handler(request: Request) {
   const target = resolveCollection(slug);
   if (!target) {
     return Response.json({ slug, sales: [] }, { headers: { 'Cache-Control': 'public, max-age=0, s-maxage=60' } });
+  }
+
+  // If we already have cached history, do a fast 1-page incremental delta scan (~0.4s)
+  if (existingCached !== null) {
+    const delta = await fetchOnChainSales(target.address, slug, target.filterBySlug, 1).catch(() => []);
+    const merged = mergeSales(delta, existingCached, minAtMs);
+    const payload: CachedSales = { updatedAt: nowMs, sales: merged };
+    await redis(['SET', cacheKey, JSON.stringify(payload), 'EX', SALES_RETENTION_SEC]).catch(() => null);
+    return Response.json(
+      { slug, sales: merged },
+      { headers: { 'Cache-Control': merged.length > 0 ? 'public, max-age=0, s-maxage=60' : 'no-store' } },
+    );
   }
 
   const token = process.env.GETGEMS_READ_TOKEN;
@@ -313,8 +354,8 @@ export default async function handler(request: Request) {
 
   sales.sort((a, b) => b.at - a.at);
   const finalSales = sales.filter(s => s.at >= minAtMs).slice(0, 24);
-  const ttlSec = finalSales.length > 0 ? 7 * 86400 : 86400;
-  await redis(['SET', cacheKey, JSON.stringify(finalSales), 'EX', ttlSec]).catch(() => null);
+  const payload: CachedSales = { updatedAt: Date.now(), sales: finalSales };
+  await redis(['SET', cacheKey, JSON.stringify(payload), 'EX', SALES_RETENTION_SEC]).catch(() => null);
   return Response.json(
     { slug, sales: finalSales },
     { headers: { 'Cache-Control': finalSales.length > 0 ? 'public, max-age=0, s-maxage=60' : 'no-store' } },

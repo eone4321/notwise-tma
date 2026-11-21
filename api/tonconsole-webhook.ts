@@ -88,19 +88,20 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 async function prependSale(slug: string, sale: MarketSale) {
-  const key = `notwise:market:sales:v5:${slug}`;
+  const key = `notwise:market:sales:v6:${slug}`;
   const raw = await redis<string | null>(['GET', key]).catch(() => null);
   let list: MarketSale[] = [];
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) list = parsed;
+      else if (parsed && Array.isArray(parsed.sales)) list = parsed.sales;
     } catch { /* ignore */ }
   }
   if (list.some(s => s.address === sale.address && Math.abs(s.at - sale.at) < 2000)) return;
   list.unshift(sale);
   list.sort((a, b) => b.at - a.at);
-  await redis(['SET', key, JSON.stringify(list.slice(0, 24)), 'EX', 86400]).catch(() => null);
+  await redis(['SET', key, JSON.stringify({ updatedAt: Date.now(), sales: list.slice(0, 24) }), 'EX', 30 * 86400]).catch(() => null);
 }
 
 export default async function handler(request: Request) {
