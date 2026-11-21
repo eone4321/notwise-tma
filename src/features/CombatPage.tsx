@@ -171,8 +171,8 @@ export function CombatPage({ referralCode }: { referralCode?: string }) {
               ? (en ? `Passive · ${skillMana(item.tier, true, item.id === 10)} mana` : `Пассивный · ${skillMana(item.tier, true, item.id === 10)} маны`)
               : (en ? `Active · ${skillMana(item.tier, false)} mana · ${skillCooldown(item.tier)} s cooldown` : `Активный · ${skillMana(item.tier, false)} маны · откат ${skillCooldown(item.tier)}с`);
             return <button type="button" onClick={() => openSkill(item.id)} className="mediaRow skillRow" key={item.id}>
-              <span className="skillTile"><GameArt path={skillArt(item.id)} size={38}/><b aria-hidden="true">{item.tier}</b></span>
-              <span><strong>{item.name}</strong><small>{cost}</small><small>{unlockCondition(item, en)}</small></span>
+              <span className="skillTile"><GameArt path={skillArt(item.id)} size={34}/><b aria-hidden="true">{item.tier}</b></span>
+              <span><strong>{item.name}</strong><small className="skillRowMeta">{cost}</small><small className="skillRowUnlock">{unlockCondition(item, en)}</small></span>
               <span className="rowChevron" aria-hidden="true"/>
             </button>;
           })}
@@ -196,38 +196,67 @@ export function CombatPage({ referralCode }: { referralCode?: string }) {
               ? (en ? `Passive · ${skillMana(item.tier, true, item.id === 10)} mana` : `Пассивный · ${skillMana(item.tier, true, item.id === 10)} маны`)
               : (en ? `Active · ${skillMana(item.tier, false)} mana · ${skillCooldown(item.tier)} s cooldown` : `Активный · ${skillMana(item.tier, false)} маны · откат ${skillCooldown(item.tier)}с`);
             return <button type="button" onClick={() => openSkill(item.id)} className="mediaRow skillRow" key={item.id}>
-              <span className="skillTile"><GameArt path={skillArt(item.id)} size={38}/><b aria-hidden="true">{item.tier}</b></span>
-              <span><strong>{item.name}</strong><small>{cost}</small><small>{unlockCondition(item, en)}</small></span>
+              <span className="skillTile"><GameArt path={skillArt(item.id)} size={34}/><b aria-hidden="true">{item.tier}</b></span>
+              <span><strong>{item.name}</strong><small className="skillRowMeta">{cost}</small><small className="skillRowUnlock">{unlockCondition(item, en)}</small></span>
               <span className="rowChevron" aria-hidden="true"/>
             </button>;
           })}
         </section>
-        <section className="card">
-          <h2>{en ? 'What to know before battle' : 'Что важно знать перед боем'}</h2>
-          <ul className="compactList combatTipsList">
-            <li><strong>{en ? 'Mana is finite for the whole fight' : 'Мана конечна на весь бой'}</strong><span>{en
-              ? 'Mana does not regenerate during combat. At 0 mana, both active skills and passives (Power Punch, Nutshell Aegis, Iron Will, Spirit Guidance) stop triggering.'
-              : 'В бою она не восстанавливается. При 0 маны отключаются не только активные, но и пассивные навыки (Power Punch, Nutshell Aegis, Iron Will, Spirit Guidance).'}</span></li>
-            <li><strong>{en ? '3-hit streak combo' : 'Серия из 3 попаданий подряд'}</strong><span>{en
-              ? 'Three consecutive landed basic hits without block or dodge trigger a 4-hit flurry combo and stun the target for 1.5 s. A miss resets the counter.'
-              : 'Три удара без блока и уклонения вызывают комбо из 4 доп. атак и оглушают цель на 1,5с. Промах сбрасывает счётчик.'}</span></li>
-            <li><strong>{en ? '35% max HP cap per hit' : 'Максимум 35% HP за один удар'}</strong><span>{en
-              ? 'Even a ×2 crit or ×5 Double Down cannot remove more than 35% of the target’s max health with a single basic hit.'
-              : 'Даже крит ×2 или «Double Down» ×5 не снимут обычным ударом больше 35% максимального здоровья цели.'}</span></li>
-            <li><strong>{en ? 'Stun does not lock blocking' : 'Оглушение не мешает блоку'}</strong><span>{en
-              ? 'A stunned owl cannot attack, but can still switch guard zones. Only Crippling Chains lock the guard zone.'
-              : 'Оглушённая сова не бьёт, но всё ещё меняет зону блока. Зафиксировать блок могут только «Crippling Chains».'}</span></li>
-            <li><strong>{en ? 'What pierces defense' : 'Что бьёт сквозь защиту'}</strong><span>{en
-              ? 'All 5 direct attack spells (Lightning, Asteroid, Fireball, Snowball, Desperate Throw) pierce both block and dodge (Evada Kedabra and Agility dodge); only Phase Shift blocks them and Nutshell Aegis reduces their damage. A hit into your block does not spend Evada Kedabra charges.'
-              : 'Все 5 ударных заклинаний (Lightning, Asteroid, Fireball, Snowball, Desperate Throw) бьют и сквозь блок, и сквозь уклонение (Evada Kedabra и шанс от ловкости); полностью блокирует их только Phase Shift, а «Nutshell Aegis» снижает урон. Удар в твой блок не тратит заряды «Уклонения».'}</span></li>
-            <li><strong>{en ? 'A brief pause after powerful spells' : 'Пауза после мощных заклинаний'}</strong><span>{en
-              ? 'Snowball, Fireball, and Asteroid pause your attacks and guard switches for a few seconds. Check the opponent’s Phase Shift before casting.'
-              : 'После применения Snowball, Fireball и Asteroid атаки и смена блока ненадолго приостанавливаются. Перед применением проверь, не действует ли Phase Shift у соперника.'}</span></li>
-            <li><strong>{en ? '70% cap for crit and dodge' : 'Потолок 70% для крита и уклонения'}</strong><span>{en
-              ? 'Both caps are reached at 100 stat points. Agility above 100 adds nothing, while Wisdom continues adding +20 mana per point.'
-              : 'Оба предела достигаются при 100 стата. Ловкость сверх 100 ничего не даёт, а Мудрость продолжает добавлять +20 маны за очко.'}</span></li>
-          </ul>
-        </section>
+        <MemoCard
+          id="combat-rules"
+          icon={<GameArt path="/game/ui/fight-vs.png" size={28}/>}
+          title={en ? 'What to know before battle' : 'Что важно знать перед боем'}
+          meta={<p>{en ? '7 rules: mana, 3-hit streak, 35% cap & guard' : '7 правил: мана, супер-серия, 35% HP и блок'}</p>}
+          links={[
+            { to: '/lifehacks', label: en ? 'Combat lifehacks' : 'Боевые лайфхаки' },
+            { to: '/combat/builds', label: en ? 'Build calculator' : 'Калькулятор билдов' },
+          ]}
+        >
+          <div className="memoRows">
+            <div className="memoRow"><div>
+              <strong>{en ? 'Mana is finite for the whole fight' : 'Мана конечна на весь бой'}</strong>
+              <p>{en
+                ? 'Mana does not regenerate during combat. At 0 mana, both active skills and passives (Power Punch, Nutshell Aegis, Iron Will, Spirit Guidance) stop triggering.'
+                : 'В бою она не восстанавливается. При 0 маны отключаются не только активные, но и пассивные навыки (Power Punch, Nutshell Aegis, Iron Will, Spirit Guidance).'}</p>
+            </div></div>
+            <div className="memoRow"><div>
+              <strong>{en ? '3-hit streak combo' : 'Серия из 3 попаданий подряд'}</strong>
+              <p>{en
+                ? 'Three consecutive landed basic hits without block or dodge trigger a 4-hit flurry combo and stun the target for 1.5 s. A miss resets the counter.'
+                : 'Три удара без блока и уклонения вызывают комбо из 4 доп. атак и оглушают цель на 1,5с. Промах сбрасывает счётчик.'}</p>
+            </div></div>
+            <div className="memoRow"><div>
+              <strong>{en ? '35% max HP cap per hit' : 'Максимум 35% HP за один удар'}</strong>
+              <p>{en
+                ? 'Even a ×2 crit or ×5 Double Down cannot remove more than 35% of the target’s max health with a single basic hit.'
+                : 'Даже крит ×2 или «Double Down» ×5 не снимут обычным ударом больше 35% максимального здоровья цели.'}</p>
+            </div></div>
+            <div className="memoRow"><div>
+              <strong>{en ? 'Stun does not lock blocking' : 'Оглушение не мешает блоку'}</strong>
+              <p>{en
+                ? 'A stunned owl cannot attack, but can still switch guard zones. Only Crippling Chains lock the guard zone.'
+                : 'Оглушённая сова не бьёт, но всё ещё меняет зону блока. Зафиксировать блок могут только «Crippling Chains».'}</p>
+            </div></div>
+            <div className="memoRow"><div>
+              <strong>{en ? 'What pierces defense' : 'Что бьёт сквозь защиту'}</strong>
+              <p>{en
+                ? 'All 5 direct attack spells (Lightning, Asteroid, Fireball, Snowball, Desperate Throw) pierce both block and dodge (Evada Kedabra and Agility dodge); only Phase Shift blocks them and Nutshell Aegis reduces their damage. A hit into your block does not spend Evada Kedabra charges.'
+                : 'Все 5 ударных заклинаний (Lightning, Asteroid, Fireball, Snowball, Desperate Throw) бьют и сквозь блок, и сквозь уклонение (Evada Kedabra и шанс от ловкости); полностью блокирует их только Phase Shift, а «Nutshell Aegis» снижает урон. Удар в твой блок не тратит заряды «Уклонения».'}</p>
+            </div></div>
+            <div className="memoRow"><div>
+              <strong>{en ? 'A brief pause after powerful spells' : 'Пауза после мощных заклинаний'}</strong>
+              <p>{en
+                ? 'Snowball, Fireball, and Asteroid pause your attacks and guard switches for a few seconds. Check the opponent’s Phase Shift before casting.'
+                : 'После применения Snowball, Fireball и Asteroid атаки и смена блока ненадолго приостанавливаются. Перед применением проверь, не действует ли Phase Shift у соперника.'}</p>
+            </div></div>
+            <div className="memoRow"><div>
+              <strong>{en ? '70% cap for crit and dodge' : 'Потолок 70% для крита и уклонения'}</strong>
+              <p>{en
+                ? 'Both caps are reached at 100 stat points. Agility above 100 adds nothing, while Wisdom continues adding +20 mana per point.'
+                : 'Оба предела достигаются при 100 стата. Ловкость сверх 100 ничего не даёт, а Мудрость продолжает добавлять +20 маны за очко.'}</p>
+            </div></div>
+          </div>
+        </MemoCard>
       </>}
   </>;
 }
@@ -340,23 +369,26 @@ function SkillDetail({ skill }: { skill: Skill }) {
   const type = levelData.type;
   const scalesWithLevel = hpEffects.has(type);
   const multiplier = skillHpMultiplier(owlLevel);
-  return <section className="card">
+  const roleLabel = skill.type === 'passive' ? (en ? 'Passive' : 'Пассивный') : (en ? 'Active' : 'Активный');
+  return <section className="card skillDetailCard">
     <div className="mediaHeading"><GameArt path={skillArt(skill.id)} size={64}/><div>
-      <h2>{title}</h2><p>{en ? `tier ${skill.tier}` : `ступень ${skill.tier}`}</p>
+      <h2>{title}</h2><p>{en ? `Tier ${skill.tier} · ${roleLabel}` : `Ступень ${skill.tier} · ${roleLabel}`}</p>
     </div></div>
     {skill.id === 14 && <p className="caption">«{en ? skill.description : 'Дежавю, но больно'}»</p>}
     <p>{description}</p>
-    <div className="skillUnlock"><strong>{en ? 'Unlock condition' : 'Условие открытия'}</strong><p>{unlockCondition(skill, en)}.</p></div>
-    <label className="field">{en ? 'Skill level' : 'Уровень навыка'}
-      <select value={level} onChange={event => setLevel(Number(event.target.value))}>
-        {Array.from({ length: 21 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
-      </select>
-    </label>
-    {scalesWithLevel && <label className="field">{en ? 'Owl level' : 'Уровень совы'}
-      <select value={owlLevel} onChange={event => setOwlLevel(Number(event.target.value))}>
-        {progression.current.slice(1).map((_, index) => <option key={index} value={index + 1}>{index + 1}</option>)}
-      </select>
-    </label>}
+    <div className="memoNote skillUnlock"><strong>{en ? 'Unlock condition' : 'Условие открытия'}</strong><p>{unlockCondition(skill, en)}.</p></div>
+    <div className={scalesWithLevel ? 'calculatorGrid skillLevelGrid' : 'skillLevelGridSingle'}>
+      <label className="field">{en ? 'Skill level' : 'Уровень навыка'}
+        <select value={level} onChange={event => setLevel(Number(event.target.value))}>
+          {Array.from({ length: 21 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
+        </select>
+      </label>
+      {scalesWithLevel && <label className="field">{en ? 'Owl level' : 'Уровень совы'}
+        <select value={owlLevel} onChange={event => setOwlLevel(Number(event.target.value))}>
+          {progression.current.slice(1).map((_, index) => <option key={index} value={index + 1}>{index + 1}</option>)}
+        </select>
+      </label>}
+    </div>
     <ul className="compactList">
       {skillEffect(skill.id, level, owlLevel, en ? 1 : 0).map(([label, value]) => <li className="mediaRow" key={label}><span>{label}</span><strong>{value}</strong></li>)}
       <li className="mediaRow"><span>{skill.type === 'active' ? (en ? 'Mana per cast' : 'Мана за применение') : (en ? 'Mana per trigger' : 'Мана за срабатывание')}</span>
@@ -396,41 +428,46 @@ function CombatStats() {
   const [owlLevel, setOwlLevel] = useState(2);
   const curve = progression.current;
   return <>
-    <section className="card"><h2>{en ? 'Effect of one attribute point' : 'Эффект одного очка атрибута'}</h2>
+    <section className="card combatStatsCard"><h2>{en ? 'Effect of one attribute point' : 'Эффект одного очка атрибута'}</h2>
       {attributes.map(([icon, name, effect, detail]) => <div className="mediaRow combatAttributeRow" key={icon}>
-        <GameAttribute name={icon}/>
-        <div><strong>{name}</strong><p>{effect}</p><p>{detail}</p></div>
+        <span className="memoUnifiedIcon" aria-hidden="true"><GameAttribute name={icon}/></span>
+        <div><strong>{name}</strong><p className="combatAttrEffect">{effect}</p><p>{detail}</p></div>
       </div>)}
     </section>
-    <section className="card"><h2>{en ? 'Owl upgrades' : 'Улучшения совы'}</h2>
+    <section className="card combatUpgradesCard"><h2>{en ? 'Owl upgrades' : 'Улучшения совы'}</h2>
       <p>{en
         ? <>Owl upgrades are permanent bonuses purchased with <SpBadge/> (skill points). Each upgrade has its own level.</>
         : <>Улучшения совы — постоянные бонусы за <SpBadge/> (очки навыков). У каждого улучшения свой уровень.</>}</p>
       <ul className="compactList owlUpgrades">
-        <li><GameSymbol name="bolt" size={24}/><span>{en ? 'Max energy' : 'Запас энергии'}</span><b>+100 <GameSymbol name="bolt" size={13}/> {en ? 'per lvl' : 'за ур.'}</b></li>
-        <li><GameSymbol name="rocket" size={24}/><span>{en ? 'Energy regeneration' : 'Восстановление энергии'}</span><b>{en ? '+3% per level' : '+3% за уровень'}</b></li>
-        <li><GameSymbol name="heart" size={24}/><span>{en ? 'Health regeneration' : 'Восстановление здоровья'}</span><b>{en ? '+3% per level' : '+3% за уровень'}</b></li>
+        <li><GameSymbol name="bolt" size={22}/><span>{en ? 'Max energy' : 'Запас энергии'}</span><b>+100 <GameSymbol name="bolt" size={13}/> {en ? 'per lvl' : 'за ур.'}</b></li>
+        <li><GameSymbol name="rocket" size={22}/><span>{en ? 'Energy regeneration' : 'Восстановление энергии'}</span><b>{en ? '+3% per level' : '+3% за уровень'}</b></li>
+        <li><GameSymbol name="heart" size={22}/><span>{en ? 'Health regeneration' : 'Восстановление здоровья'}</span><b>{en ? '+3% per level' : '+3% за уровень'}</b></li>
       </ul>
-      <details><summary>{en ? 'Upgrade cost' : 'Цена улучшений'}</summary>
-        <p className="caption">{en
-          ? <>Each upgrade can be leveled up to 21. The first step costs 10 <SpBadge/>, and each next step costs twice as much.</>
-          : <>Каждое улучшение можно прокачать до 21-го уровня. Первый шаг стоит 10 <SpBadge/>, каждый следующий вдвое дороже.</>}</p>
-        <label className="field">{en ? 'Current upgrade level' : 'Текущий уровень улучшения'}
-          <select value={level} onChange={event => setLevel(Number(event.target.value))}>
-            {Array.from({ length: 21 }, (_, i) => <option key={i} value={i}>{i} → {i + 1} {en ? 'lvl' : 'ур.'}</option>)}
-          </select>
-        </label>
-        <p>{en ? 'Upgrade cost:' : 'Стоимость улучшения:'} <strong><SpBadge value={format.format(10 * 2 ** level)}/></strong></p>
+      <details className="mediaDetails combatSubDisclosure"><summary><strong>{en ? 'Upgrade cost' : 'Цена улучшений'}</strong></summary>
+        <div className="combatSubBody">
+          <p className="caption">{en
+            ? <>Each upgrade can be leveled up to 21. The first step costs 10 <SpBadge/>, and each next step costs twice as much.</>
+            : <>Каждое улучшение можно прокачать до 21-го уровня. Первый шаг стоит 10 <SpBadge/>, каждый следующий вдвое дороже.</>}</p>
+          <label className="field">{en ? 'Current upgrade level' : 'Текущий уровень улучшения'}
+            <select value={level} onChange={event => setLevel(Number(event.target.value))}>
+              {Array.from({ length: 21 }, (_, i) => <option key={i} value={i}>{i} → {i + 1} {en ? 'lvl' : 'ур.'}</option>)}
+            </select>
+          </label>
+          <div className="bonusBreakdown"><span>{en ? 'Upgrade cost' : 'Стоимость улучшения'}</span><strong><SpBadge value={format.format(10 * 2 ** level)}/></strong></div>
+        </div>
       </details>
-      <details id="xp" open={hash === '#xp' || undefined}><summary>{en ? 'XP for owl level' : 'Опыт для уровня совы'}</summary>
-        <label className="field">{en ? 'Target owl level' : 'Целевой уровень совы'}
-          <select value={owlLevel} onChange={event => setOwlLevel(Number(event.target.value))}>
-            {curve.slice(1).map((_, index) => <option key={index} value={index + 1}>{index + 1}</option>)}
-          </select>
-        </label>
-        <p>{en
-          ? <>Total: <strong>{format.format(curve[owlLevel])} XP</strong> ({format.format(curve[owlLevel] - curve[owlLevel - 1])} XP from the previous level).</>
-          : <>Всего: <strong>{format.format(curve[owlLevel])} XP</strong> (из них {format.format(curve[owlLevel] - curve[owlLevel - 1])} XP с предыдущего уровня).</>}</p>
+      <details className="mediaDetails combatSubDisclosure" id="xp" open={hash === '#xp' || undefined}><summary><strong>{en ? 'XP for owl level' : 'Опыт для уровня совы'}</strong></summary>
+        <div className="combatSubBody">
+          <label className="field">{en ? 'Target owl level' : 'Целевой уровень совы'}
+            <select value={owlLevel} onChange={event => setOwlLevel(Number(event.target.value))}>
+              {curve.slice(1).map((_, index) => <option key={index} value={index + 1}>{index + 1}</option>)}
+            </select>
+          </label>
+          <div className="bonusBreakdown">
+            <span>{en ? `From Lv. ${owlLevel - 1}: +${format.format(curve[owlLevel] - curve[owlLevel - 1])} XP` : `С ${owlLevel - 1}-го ур.: +${format.format(curve[owlLevel] - curve[owlLevel - 1])} XP`}</span>
+            <strong>{format.format(curve[owlLevel])} XP</strong>
+          </div>
+        </div>
       </details>
     </section>
   </>;

@@ -261,10 +261,10 @@ function Home({ profile, profileFailed, retryProfile, onChatVisit, onSquadVisit,
  }, []);
  const fromInvite = authData() && /^g_[a-f0-9]{32}$/.test(telegramPopup()?.initDataUnsafe?.start_param ?? '');
  const homeTiles = [
-  { path: '/secrets', icon: '/game/stickers/9.webp', art: '/game/stickers/42.webp',
-    ru: ['Секреты', 'Скрытые квесты и достижения'], en: ['Secrets', 'Hidden quests and achievements'] },
   { path: '/care', icon: '/game/items/chiller-open.webp', art: '/game/ui/fight-vs.png',
     ru: ['Памятка и лайфхаки', 'Таймеры, фарм SP, режимы и советы'], en: ['Memo & lifehacks', 'Timers, SP farm, modes and tips'] },
+  { path: '/secrets', icon: '/game/stickers/9.webp', art: '/game/stickers/42.webp',
+    ru: ['Секреты', 'Скрытые квесты и достижения'], en: ['Secrets', 'Hidden quests and achievements'] },
   { path: '/squads', icon: '/game/items/lighter.webp', art: '/game/war/siege-header.webp',
     ru: ['Сквады и войны', 'Ритуалы, карта осад и магазин'], en: ['Squads and wars', 'Rituals, sieges and shop'] },
   { path: '/combat', icon: '/game/skills/1.png', art: '/game/skills/16.png',

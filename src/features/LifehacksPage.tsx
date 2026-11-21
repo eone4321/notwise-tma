@@ -48,7 +48,88 @@ const categories: { id: HackCategory; label: [ru: string, en: string] }[] = [
 ];
 
 const lifehacks: Lifehack[] = [
-  // === Combat & PvP Lifehacks (R5a, verified against main-DRt0h3uX.js) ===
+  // === 1. Farm & $NOT ===
+  {
+    id: 'farm-stack',
+    category: 'farm',
+    tag: ['Фарм и $NOT', 'Farm & $NOT'],
+    icon: '/game/items/wise-coin.webp',
+    title: [
+      'Стек бонусов фарма монет (бои и полёт)',
+      'Coin farm bonus stack (battles & flights)',
+    ],
+    summary: [
+      'Складывай 4 источника: экипированный скин, заточки, Монтмориллонит и Лига MMR.',
+      'Stack 4 sources: equipped skin, enchantments, Montmorillonite, and MMR League.',
+    ],
+    lines: [
+      [
+        'Надетый скин (до +40%) + его заточка (+5% за каждый +1, до +100%).',
+        'Заточка 3 колец (+5% за каждый +1 на каждом кольце) + Монтмориллонит (+10%) + Лига MMR (+1%…+13%).',
+        'Бонус увеличивает добычу монет в боях и полётах (на фиксированные монеты из капсул он не влияет).',
+      ],
+      [
+        'Equipped skin (up to +40%) + skin enchant (+5% per +1, up to +100%).',
+        '3 enchanted rings (+5% per +1 on each ring) + Montmorillonite (+10%) + MMR League (+1%…+13%).',
+        'Applies to gold coins earned in PvP battles and flights (guaranteed capsule coins use a separate level formula).',
+      ],
+    ],
+    link: { to: '/owl/skins', label: ['Калькулятор скинов', 'Skin calculator'] },
+  },
+  {
+    id: 'gold-capsules-not',
+    category: 'farm',
+    tag: ['Фарм и $NOT', 'Farm & $NOT'],
+    icon: '/game/capsules/gold.webp',
+    title: [
+      'Охота за $NOT — Золотые капсулы',
+      'Hunting for $NOT — Golden Capsules',
+    ],
+    summary: [
+      'Базовый шанс дропа $NOT в Золотой капсуле в 5× выше Обсидиановой.',
+      'Base $NOT drop odds in Golden Capsules are 5× higher than Obsidian.',
+    ],
+    lines: [
+      [
+        'Обсидиановая капсула (4ч) удобна для быстрого оборота опыта и ежедневных квестов.',
+        'Если цель — выбить крупные пулы $NOT, открывай Золотые капсулы (множитель ×5) и качай уровень капсул.',
+      ],
+      [
+        'Obsidian capsules (4h) are great for fast turnover and daily quests.',
+        'When targeting $NOT drops, prioritize Golden capsules (5× base multiplier) and upgrade your capsule level.',
+      ],
+    ],
+    link: { to: '/capsules', label: ['Шансы капсул', 'Capsule odds'] },
+  },
+  {
+    id: 'sushi-and-rockets',
+    category: 'farm',
+    tag: ['Полёты', 'Flights'],
+    icon: '/game/stickers/42.webp',
+    title: [
+      'Правило 3-й суши и 3 ракет в полёте',
+      'The 3rd Sushi rule & 3 Rockets in a single flight',
+    ],
+    summary: [
+      '3-я суши прибавляет +20% монет и открывает Sushi Master; 3 ракеты → Phoenix.',
+      'The 3rd sushi adds +20% coins & unlocks Sushi Master; 3 rockets unlock Phoenix.',
+    ],
+    lines: [
+      [
+        '1-я и 2-я суши отнимают по 20% текущего счёта забега (остаётся 64%).',
+        '3-я суши прибавляет +20% к остатку (до 76,8%) и навсегда открывает стикер №42 Sushi Master.',
+        'Использование 3 ракет возрождения за один полёт открывает секретный стикер №88 Phoenix.',
+      ],
+      [
+        'The 1st and 2nd sushi each subtract 20% of your current run coins (leaving 64%).',
+        'Picking up a 3rd sushi adds +20% back (to 76.8%) and unlocks secret sticker #42 Sushi Master.',
+        'Using all 3 revive rockets in a single flight unlocks secret sticker #88 Phoenix.',
+      ],
+    ],
+    link: { to: '/secrets', label: ['Все секреты', 'All secrets'] },
+  },
+
+  // === 2. Combat & PvP Lifehacks (verified against main-DRt0h3uX.js) ===
   {
     id: 'all-5-spells-pierce',
     category: 'combat',
@@ -272,7 +353,7 @@ const lifehacks: Lifehack[] = [
     ],
   },
 
-  // === Existing Core Lifehacks (Updated with R7 RU/EN & R8 exact numbers) ===
+  // === 3. SP & Leveling ===
   {
     id: 'chiller-threshold',
     category: 'sp',
@@ -299,112 +380,6 @@ const lifehacks: Lifehack[] = [
       ],
     ],
     link: { to: '/care', label: ['Таблица стоимости по уровням', 'Level energy cost table'] },
-  },
-  {
-    id: 'farm-stack',
-    category: 'farm',
-    tag: ['Фарм и $NOT', 'Farm & $NOT'],
-    icon: '/game/items/wise-coin.webp',
-    title: [
-      'Стек бонусов фарма монет (бои и полёт)',
-      'Coin farm bonus stack (battles & flights)',
-    ],
-    summary: [
-      'Складывай 4 источника: экипированный скин, заточки, Монтмориллонит и Лига MMR.',
-      'Stack 4 sources: equipped skin, enchantments, Montmorillonite, and MMR League.',
-    ],
-    lines: [
-      [
-        'Надетый скин (до +40%) + его заточка (+5% за каждый +1, до +100%).',
-        'Заточка 3 колец (+5% за каждый +1 на каждом кольце) + Монтмориллонит (+10%) + Лига MMR (+1%…+13%).',
-        'Бонус увеличивает добычу монет в боях и полётах (на фиксированные монеты из капсул он не влияет).',
-      ],
-      [
-        'Equipped skin (up to +40%) + skin enchant (+5% per +1, up to +100%).',
-        '3 enchanted rings (+5% per +1 on each ring) + Montmorillonite (+10%) + MMR League (+1%…+13%).',
-        'Applies to gold coins earned in PvP battles and flights (guaranteed capsule coins use a separate level formula).',
-      ],
-    ],
-    link: { to: '/owl/skins', label: ['Калькулятор скинов', 'Skin calculator'] },
-  },
-  {
-    id: 'gold-capsules-not',
-    category: 'farm',
-    tag: ['Фарм и $NOT', 'Farm & $NOT'],
-    icon: '/game/capsules/gold.webp',
-    title: [
-      'Охота за $NOT — Золотые капсулы',
-      'Hunting for $NOT — Golden Capsules',
-    ],
-    summary: [
-      'Базовый шанс дропа $NOT в Золотой капсуле в 5× выше Обсидиановой.',
-      'Base $NOT drop odds in Golden Capsules are 5× higher than Obsidian.',
-    ],
-    lines: [
-      [
-        'Обсидиановая капсула (4ч) удобна для быстрого оборота опыта и ежедневных квестов.',
-        'Если цель — выбить крупные пулы $NOT, открывай Золотые капсулы (множитель ×5) и качай уровень капсул.',
-      ],
-      [
-        'Obsidian capsules (4h) are great for fast turnover and daily quests.',
-        'When targeting $NOT drops, prioritize Golden capsules (5× base multiplier) and upgrade your capsule level.',
-      ],
-    ],
-    link: { to: '/capsules', label: ['Шансы капсул', 'Capsule odds'] },
-  },
-  {
-    id: 'squad-shop-economy',
-    category: 'market',
-    tag: ['Экономия', 'Economy'],
-    icon: '/game/items/morpher.webp',
-    title: [
-      'Лавка сквада в разы выгоднее обычной',
-      'Squad Shop is vastly cheaper than the regular shop',
-    ],
-    summary: [
-      'Покупай Морфер, Чиллер, Зажигалку и заточки за серебро сквада.',
-      'Buy Morpher, Chiller, Lighter, and Enchanters with squad silver.',
-    ],
-    lines: [
-      [
-        'Заточка кольца за 500 серебра даёт +1 к стату и +5% к фарму (в 10× выгоднее Заточки скина за 5 000 серебра!).',
-        'Чиллер стоит 25 000 серебра вместо 100 000 монет, а Морфер — 5 000 серебра вместо 250 Stars.',
-        'Зажигалка на 10 дней ритуалов обходится в 2 500 серебра вместо 5 000 золотых монет.',
-      ],
-      [
-        'Ring Enchanter at 500 silver gives +1 stat AND +5% farm (10× more silver-efficient than Skin Enchanter at 5,000 silver!).',
-        'Chiller costs 25,000 silver instead of 100,000 gold coins; Morpher costs 5,000 silver instead of 250 Stars.',
-        'A 10-charge Lighter costs 2,500 silver instead of 5,000 gold coins.',
-      ],
-    ],
-    link: { to: '/squads/shop', label: ['Лавка сквада', 'Squad shop'] },
-  },
-  {
-    id: 'enchant-buy-vs-craft',
-    category: 'market',
-    tag: ['Маркет', 'Market'],
-    icon: '/game/items/scroll-enchant-ring.webp',
-    title: [
-      'Безопасная заточка до +3 и расчёт на GetGems',
-      '100% safe enchanting up to +3 & GetGems buy-vs-enchant math',
-    ],
-    summary: [
-      'До +3 шанс успеха 100% (3 кольца +3 = +9 статов и +45% фарма без риска!).',
-      'Up to +3 success is 100% (three +3 rings = +9 stats & +45% farm with zero burn risk!).',
-    ],
-    lines: [
-      [
-        'С +4 появляется риск рассыпать предмет в осколки скорлупы: на +4 успех 95% (риск 5%), на +5 — 90%, на +6 — 85% (шаг −5%).',
-        'Сначала заточи все 3 рабочих кольца до +3 (всего 4 500 серебра сквада за +45% к фарму).',
-        'Для уровней +6 и выше сравнивай себестоимость заточки с готовыми лотами в разделе «Маркет и графики».',
-      ],
-      [
-        'Starting at +4, failed attempts crumble the item into Eggshell Shards: +4 is 95% success (5% burn), +5 is 90%, +6 is 85% (−5% per step).',
-        'Always enchant all 3 equipped rings to +3 first (only 4,500 squad silver for +45% coin farm and +9 stats).',
-        'For +6 and above, compare self-enchant expected cost against live GetGems listings in Market & Charts.',
-      ],
-    ],
-    link: { to: '/collections/charts', label: ['Маркет и графики', 'Market & charts'] },
   },
   {
     id: 'book-wisdom-buff',
@@ -460,33 +435,6 @@ const lifehacks: Lifehack[] = [
     link: { to: '/combat/builds', label: ['Калькулятор билдов', 'Build calculator'] },
   },
   {
-    id: 'sushi-and-rockets',
-    category: 'farm',
-    tag: ['Полёты', 'Flights'],
-    icon: '/game/stickers/42.webp',
-    title: [
-      'Правило 3-й суши и 3 ракет в полёте',
-      'The 3rd Sushi rule & 3 Rockets in a single flight',
-    ],
-    summary: [
-      '3-я суши прибавляет +20% монет и открывает Sushi Master; 3 ракеты → Phoenix.',
-      'The 3rd sushi adds +20% coins & unlocks Sushi Master; 3 rockets unlock Phoenix.',
-    ],
-    lines: [
-      [
-        '1-я и 2-я суши отнимают по 20% текущего счёта забега (остаётся 64%).',
-        '3-я суши прибавляет +20% к остатку (до 76,8%) и навсегда открывает стикер №42 Sushi Master.',
-        'Использование 3 ракет возрождения за один полёт открывает секретный стикер №88 Phoenix.',
-      ],
-      [
-        'The 1st and 2nd sushi each subtract 20% of your current run coins (leaving 64%).',
-        'Picking up a 3rd sushi adds +20% back (to 76.8%) and unlocks secret sticker #42 Sushi Master.',
-        'Using all 3 revive rockets in a single flight unlocks secret sticker #88 Phoenix.',
-      ],
-    ],
-    link: { to: '/secrets', label: ['Все секреты', 'All secrets'] },
-  },
-  {
     id: 'siege-power-and-rounds',
     category: 'sp',
     tag: ['Осады', 'Sieges'],
@@ -510,6 +458,62 @@ const lifehacks: Lifehack[] = [
       ],
     ],
     link: { to: '/squads', label: ['Карта осад', 'Siege map'] },
+  },
+
+  // === 4. Market & Economy ===
+  {
+    id: 'squad-shop-economy',
+    category: 'market',
+    tag: ['Экономия', 'Economy'],
+    icon: '/game/items/morpher.webp',
+    title: [
+      'Лавка сквада в разы выгоднее обычной',
+      'Squad Shop is vastly cheaper than the regular shop',
+    ],
+    summary: [
+      'Покупай Морфер, Чиллер, Зажигалку и заточки за серебро сквада.',
+      'Buy Morpher, Chiller, Lighter, and Enchanters with squad silver.',
+    ],
+    lines: [
+      [
+        'Заточка кольца за 500 серебра даёт +1 к стату и +5% к фарму (в 10× выгоднее Заточки скина за 5 000 серебра!).',
+        'Чиллер стоит 25 000 серебра вместо 100 000 монет, а Морфер — 5 000 серебра вместо 250 Stars.',
+        'Зажигалка на 10 дней ритуалов обходится в 2 500 серебра вместо 5 000 золотых монет.',
+      ],
+      [
+        'Ring Enchanter at 500 silver gives +1 stat AND +5% farm (10× more silver-efficient than Skin Enchanter at 5,000 silver!).',
+        'Chiller costs 25,000 silver instead of 100,000 gold coins; Morpher costs 5,000 silver instead of 250 Stars.',
+        'A 10-charge Lighter costs 2,500 silver instead of 5,000 gold coins.',
+      ],
+    ],
+    link: { to: '/squads/shop', label: ['Лавка сквада', 'Squad shop'] },
+  },
+  {
+    id: 'enchant-buy-vs-craft',
+    category: 'market',
+    tag: ['Маркет', 'Market'],
+    icon: '/game/items/scroll-enchant-ring.webp',
+    title: [
+      'Безопасная заточка до +3 и расчёт на GetGems',
+      '100% safe enchanting up to +3 & GetGems buy-vs-enchant math',
+    ],
+    summary: [
+      'До +3 шанс успеха 100% (3 кольца +3 = +9 статов и +45% фарма без риска!).',
+      'Up to +3 success is 100% (three +3 rings = +9 stats & +45% farm with zero burn risk!).',
+    ],
+    lines: [
+      [
+        'С +4 появляется риск рассыпать предмет в осколки скорлупы: на +4 успех 95% (риск 5%), на +5 — 90%, на +6 — 85% (шаг −5%).',
+        'Сначала заточи все 3 рабочих кольца до +3 (всего 4 500 серебра сквада за +45% к фарму).',
+        'Для уровней +6 и выше сравнивай себестоимость заточки с готовыми лотами в разделе «Маркет и графики».',
+      ],
+      [
+        'Starting at +4, failed attempts crumble the item into Eggshell Shards: +4 is 95% success (5% burn), +5 is 90%, +6 is 85% (−5% per step).',
+        'Always enchant all 3 equipped rings to +3 first (only 4,500 squad silver for +45% coin farm and +9 stats).',
+        'For +6 and above, compare self-enchant expected cost against live GetGems listings in Market & Charts.',
+      ],
+    ],
+    link: { to: '/collections/charts', label: ['Маркет и графики', 'Market & charts'] },
   },
   {
     id: 'seba-cola-bank',
@@ -535,6 +539,8 @@ const lifehacks: Lifehack[] = [
       ],
     ],
   },
+
+  // === 5. Rare & Valuable ===
   {
     id: 'rare-montmorillonite',
     category: 'rare',

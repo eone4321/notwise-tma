@@ -7,7 +7,7 @@ import { Link, useLocation } from 'react-router';
 import { GameGlyph } from '../ui/GameGlyph';
 import { GameSymbol } from '../ui/GameSymbol';
 import { GameArt } from '../ui/GameArt';
-import { MemoCard } from '../ui/MemoCard';
+import { MemoCard, MemoChipLinks } from '../ui/MemoCard';
 import { chanceLabel, chancePerOpening } from '../domain/mechanics';
 import { dropsFor, eggDrawCounts, itemNames, itemNamesEn } from './inventory';
 import marketCollections from './market-collections';
@@ -669,10 +669,12 @@ function SkinCatalog() {
         <SkinCollectionRow/>
       </ul>
       <details className="mediaDetails skinRuleDisclosure" id="skin-farm-rules">
-        <summary><GameArt path="/game/items/scroll-enchant-skin.webp" size={27}/><strong>{en ? 'How to Increase Coin Farm Bonus' : 'Как увеличить бонус к монетам'}</strong></summary>
-        <p>{en ? 'Each standard trait adds +5%, golden plumage +15%, and NOT Chain +10%. Every enchant level adds another +5%.' : 'Обычная деталь даёт +5%, золотое оперение +15%, цепь NOT +10%. Каждый уровень заточки добавляет ещё +5%.'}</p>
-        <p>{en ? 'Golden plumage, NOT Chain, eyes, glasses, and hat together grant +40% even before enchanting.' : 'Золотое оперение, цепь NOT, глаза, очки и убор вместе дают +40% даже без заточки.'}</p>
-        <DetailLink to="/assets/gear" className="textLink">{en ? 'Enchant odds' : 'Шансы заточки'}</DetailLink>
+        <summary><GameArt path="/game/items/scroll-enchant-skin.webp" size={26}/><strong>{en ? 'How to Increase Coin Farm Bonus' : 'Как увеличить бонус к монетам'}</strong></summary>
+        <div className="skinRuleBody">
+          <p>{en ? 'Each standard trait adds +5%, golden plumage +15%, and NOT Chain +10%. Every enchant level adds another +5%.' : 'Обычная деталь даёт +5%, золотое оперение +15%, цепь NOT +10%. Каждый уровень заточки добавляет ещё +5%.'}</p>
+          <p>{en ? 'Golden plumage, NOT Chain, eyes, glasses, and hat together grant +40% even before enchanting.' : 'Золотое оперение, цепь NOT, глаза, очки и убор вместе дают +40% даже без заточки.'}</p>
+          <MemoChipLinks links={[{ to: '/assets/gear', label: en ? 'Enchant odds' : 'Шансы заточки' }]} />
+        </div>
       </details>
     </section>
   </>;
@@ -771,22 +773,44 @@ export function InventoryPage() {
   const orderedCategories = categoryOrder.map(id => [id, categories[id]] as const);
 
   return <>
-    {(category ? [[slug, category] as const] : orderedCategories).map(([id, entry]) =>
-        <details className="card mediaDetails inventoryPanel inventorySection" key={id} id={'inventory-' + id}
-          data-category={id} open={category !== undefined || undefined}>
-          <summary><GameArt path={itemPath(entry.icon)} size={34}/><span><strong>{en ? entry.titleEn : entry.title}</strong><small>{en ? entry.summaryEn : entry.summary}</small></span></summary>
-          <ul className="compactList">{entry.items.map(item => item === skinNft
-            ? <SkinCollectionRow key={item.file}/> : <InventoryRow item={item} key={item.file}/>)}</ul>
-          {id === 'gear' && !category && <DetailLink className="textLink" to="/assets/gear">{en ? 'Enchant odds & NFTs' : 'Шансы заточки и NFT'}</DetailLink>}
-          {id === 'skins' && <DetailLink className="textLink" to="/owl/skins">{en ? 'Skins & bonus calculator' : 'Облики и калькулятор бонуса'}</DetailLink>}
-        </details>)}
+    <div className="memoStack">
+      {(category ? [[slug, category] as const] : orderedCategories).map(([id, entry]) => {
+        const categoryLinks = [
+          ...(id === 'gear' && !category ? [{ to: '/assets/gear', label: en ? 'Enchant odds & NFTs' : 'Шансы заточки и NFT' }] : []),
+          ...(id === 'skins' ? [{ to: '/owl/skins', label: en ? 'Skins & bonus calculator' : 'Облики и калькулятор бонуса' }] : []),
+        ];
+        return (
+          <MemoCard
+            key={id}
+            id={'inventory-' + id}
+            className="inventoryPanel"
+            dataCategory={id}
+            defaultOpen={category !== undefined}
+            icon={<GameArt path={itemPath(entry.icon)} size={30}/>}
+            title={en ? entry.titleEn : entry.title}
+            meta={<p>{en ? entry.summaryEn : entry.summary}</p>}
+            links={categoryLinks}
+          >
+            <ul className="compactList">{entry.items.map(item => item === skinNft
+              ? <SkinCollectionRow key={item.file}/> : <InventoryRow item={item} key={item.file}/>)}</ul>
+          </MemoCard>
+        );
+      })}
+    </div>
     {slug === 'gear' && <>
       <EnchantGuide en={en}/>
       <OwlPrices only="items"/>
-      <details className="card plainDisclosure"><summary>{en ? 'How an Item Becomes an NFT' : 'Как предмет становится NFT'}</summary>
-        <p>{en ? 'Minting transfers an item from your inventory to your TON wallet. You can sell the NFT or return it to the game.' : 'Минт переносит предмет из инвентаря в кошелёк. NFT можно продать или вернуть в игру.'}</p>
-        <p>{en ? 'After purchasing with Telegram Stars, minting may be locked for 21 days.' : 'После покупки за Stars минт может быть закрыт на 21 день.'}</p>
-      </details>
+      <MemoCard
+        id="nft-mint-info"
+        icon={<GameArt path={itemPath('morpher.webp')} size={28}/>}
+        title={en ? 'How an Item Becomes an NFT' : 'Как предмет становится NFT'}
+        meta={<p>{en ? 'Minting to TON wallet & 21-day Stars lock' : 'Минт в TON-кошелёк и холд 21 день за Stars'}</p>}
+      >
+        <div className="memoLines">
+          <p>{en ? 'Minting transfers an item from your inventory to your TON wallet. You can sell the NFT or return it to the game.' : 'Минт переносит предмет из инвентаря в кошелёк. NFT можно продать или вернуть в игру.'}</p>
+          <p>{en ? 'After purchasing with Telegram Stars, minting may be locked for 21 days.' : 'После покупки за Stars минт может быть закрыт на 21 день.'}</p>
+        </div>
+      </MemoCard>
     </>}
   </>;
 }
@@ -794,7 +818,7 @@ export function InventoryPage() {
 function EnchantGuide({ en }: { en?: boolean }) {
   return <section className="card enchantGuideCard">
     <div className="mediaHeading">
-      <GameArt path={itemPath('scroll-enchant-skin.webp')} size={44}/>
+      <span className="memoUnifiedIcon" aria-hidden="true"><GameArt path={itemPath('scroll-enchant-skin.webp')} size={28}/></span>
       <div>
         <h2>{en ? 'Enchant Odds & Burn Risk' : 'Шансы и риск заточки'}</h2>
         <p>{en ? 'For skins & rings · enchanters from Squad Shop' : 'Для скинов и колец · заточки из Лавки сквада'}</p>

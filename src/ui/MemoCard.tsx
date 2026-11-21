@@ -28,6 +28,7 @@ export function MemoCard({
   defaultOpen,
   links,
   className,
+  dataCategory,
   children,
 }: {
   id?: string;
@@ -37,12 +38,14 @@ export function MemoCard({
   defaultOpen?: boolean;
   links?: readonly MemoLink[];
   className?: string;
+  dataCategory?: string;
   children: ReactNode;
 }) {
   return (
     <details
       className={className ? `card mediaDetails memoCollapsible ${className}` : 'card mediaDetails memoCollapsible'}
       id={id}
+      data-category={dataCategory || undefined}
       open={defaultOpen || undefined}
     >
       <summary className="memoCollapsibleSummary">

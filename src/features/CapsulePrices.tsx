@@ -7,11 +7,38 @@ import { useGuideLocale } from './guideLocale';
 
 const decimalRu = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
 const decimalEn = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
+const wholeRu = new Intl.NumberFormat('ru-RU');
+const wholeEn = new Intl.NumberFormat('en-US');
+
+const timerPresets: Record<Tier, readonly { h: number; m: number; ru: string; en: string }[]> = {
+  dark: [
+    { h: 4, m: 0, ru: '4ч', en: '4h' },
+    { h: 2, m: 0, ru: '2ч', en: '2h' },
+    { h: 1, m: 0, ru: '1ч', en: '1h' },
+    { h: 0, m: 30, ru: '30м', en: '30m' },
+    { h: 0, m: 15, ru: '15м', en: '15m' },
+  ],
+  silver: [
+    { h: 8, m: 0, ru: '8ч', en: '8h' },
+    { h: 4, m: 0, ru: '4ч', en: '4h' },
+    { h: 2, m: 0, ru: '2ч', en: '2h' },
+    { h: 1, m: 0, ru: '1ч', en: '1h' },
+    { h: 0, m: 15, ru: '15м', en: '15m' },
+  ],
+  gold: [
+    { h: 24, m: 0, ru: '24ч', en: '24h' },
+    { h: 12, m: 0, ru: '12ч', en: '12h' },
+    { h: 6, m: 0, ru: '6ч', en: '6h' },
+    { h: 1, m: 0, ru: '1ч', en: '1h' },
+    { h: 0, m: 15, ru: '15м', en: '15m' },
+  ],
+};
 
 export function CapsulePrices({ tier }: { tier: Tier }) {
   const { locale } = useGuideLocale();
   const en = locale === 'en';
   const decimal = en ? decimalEn : decimalRu;
+  const whole = en ? wholeEn : wholeRu;
   const totalMinutes = duration[tier] / 60_000;
   const hours = totalMinutes / 60;
   const [inputHours, setInputHours] = useState(String(hours));
@@ -24,11 +51,33 @@ export function CapsulePrices({ tier }: { tier: Tier }) {
   const stars = starsAt(remaining);
   const step = Math.min(remaining, 15);
   const saving = (stars - starsAt(remaining - step)) / starPrice[tier] * 100;
+  const presets = timerPresets[tier];
 
   return <details className="card mediaDetails guideDisclosure calculator timeCalculator">
     <summary><GameArt path="/brand/tokens/gram.png" size={36}/>
-      <span><strong>{en ? 'Opening price' : 'Цена открытия'}</strong><small>{en ? 'Stars and GRAM by remaining timer' : 'Stars и GRAM по остатку таймера'}</small></span>
+      <span>
+        <strong>{en ? 'Opening price' : 'Цена открытия'}</strong>
+        <small>{en ? `Up to ${whole.format(starPrice[tier])} ⭐ · by remaining timer` : `До ${whole.format(starPrice[tier])} ⭐ · по остатку таймера`}</small>
+      </span>
     </summary>
+    <div className="capsulePresets" role="group" aria-label={en ? 'Quick timer presets' : 'Быстрый выбор остатка таймера'}>
+      {presets.map(preset => {
+        const active = !blank && valid && remaining === preset.h * 60 + preset.m;
+        return (
+          <button
+            key={`${preset.h}:${preset.m}`}
+            type="button"
+            aria-pressed={active}
+            onClick={() => {
+              setInputHours(preset.h > 0 ? String(preset.h) : '');
+              setInputMinutes(preset.m > 0 ? String(preset.m) : '');
+            }}
+          >
+            {en ? preset.en : preset.ru}
+          </button>
+        );
+      })}
+    </div>
     <div className="calculatorGrid capsuleTimeInputs">
       <label className="field">{en ? 'Hours' : 'Часы'}<input inputMode="numeric" value={inputHours} maxLength={2} placeholder="0"
         onChange={event => setInputHours(event.target.value.replace(/\D/g, ''))}/></label>

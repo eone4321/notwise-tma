@@ -302,46 +302,107 @@
 .choiceBar.combatTabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .combatTabs > a:nth-child(2) { padding-inline: 8px; }
 .combatBranchTabs {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
-  max-width: 100%;
-  overflow-x: auto;
-  padding: 3px 2px 7px;
-  margin-block: 10px 6px;
-  scrollbar-width: none;
-  overscroll-behavior-inline: contain;
-  -webkit-overflow-scrolling: touch;
+  padding: 4px;
+  margin-block: 10px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-sheen), var(--glass-fill);
+  box-shadow: var(--glass-edge);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
-.combatBranchTabs::-webkit-scrollbar { display: none; }
+[data-theme="graphite"] .combatBranchTabs {
+  border-color: var(--game-panel-line);
+  background: var(--game-panel);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+@media (min-width: 480px) {
+  .combatBranchTabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
 .combatBranchTabs > button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 1 0 auto;
+  min-width: 0;
   gap: 6px;
-  min-block-size: 42px;
-  padding: 6px 10px;
-  border: 1px solid var(--game-panel-line);
-  border-radius: 9px;
-  background: var(--game-panel);
-  color: var(--text);
-  font-size: 12px;
+  min-block-size: 40px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--game-tab-quiet);
+  font-size: 12.5px;
+  font-weight: 700;
   white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 100ms ease;
+}
+.combatBranchTabs > button:active { transform: scale(0.98); }
+.combatBranchTabs > button:not([aria-pressed="true"]):active {
+  background: color-mix(in srgb, var(--gold) 8%, var(--game-tile));
+  color: var(--text);
+}
+.combatBranchTabs > button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
 }
 .combatBranchTabs > button[aria-pressed="true"] {
-  border-color: color-mix(in srgb, var(--gold) 43%, var(--game-panel-line));
+  border-color: color-mix(in srgb, var(--gold) 36%, var(--game-panel-line));
   background: color-mix(in srgb, var(--game-tile), var(--gold) 12%);
   color: var(--gold);
 }
 .combatBranchTabs .gameAttribute { font-size: 18px; }
-.combatBranchHeading { display: flex; align-items: center; justify-content: flex-start; gap: 10px; padding-block-end: 8px; border-block-end: 1px solid var(--game-panel-line); }
-.combatBranchHeading > .gameAttribute { font-size: 31px; }
+.combatBranchHeading { display: flex; align-items: center; justify-content: flex-start; gap: 10px; padding-block-end: 10px; border-block-end: 1px solid var(--game-panel-line); }
+.combatBranchHeading > .gameAttribute { font-size: 32px; }
 .combatBranchHeading > span { display: grid; gap: 2px; text-align: start; }
+.combatBranchHeading strong { font-size: 15px; line-height: 1.25; }
 .combatBranchHeading small { color: var(--muted); font-size: 12px; }
 .skillShelf > .caption { margin-block: 8px; }
-.skillRow { appearance: none; width: 100%; color: var(--text); font-family: inherit; font-size: inherit; text-align: start; cursor: pointer; }
-.skillRow:active { background: var(--game-tile); }
-.skillRow > span:not(.rowChevron) > strong { color: var(--text); }
+.skillRow {
+  position: relative;
+  appearance: none;
+  width: calc(100% + 12px);
+  gap: 11px;
+  padding: 10px 6px;
+  margin-inline: -6px;
+  border-radius: 12px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: inherit;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 140ms ease;
+}
+.skillRow + .skillRow { border-top: 0; }
+.skillRow + .skillRow::before {
+  content: '';
+  position: absolute;
+  inset: 0 6px auto;
+  border-top: 1px solid var(--game-panel-line);
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+.skillRow:is(:active, :focus-visible)::before,
+.skillRow:is(:active, :focus-visible) + .skillRow::before {
+  opacity: 0;
+}
+.skillRow:active { background: color-mix(in srgb, var(--gold) 8%, var(--game-tile)); }
+.skillRow:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.skillRow > span:not(.rowChevron):not(.skillTile) { display: grid; gap: 2px; min-width: 0; }
+.skillRow > span:not(.rowChevron) > strong { color: var(--text); font-size: 14px; line-height: 1.25; }
+.skillRowMeta { display: block; font-size: 12px; font-weight: 650; color: var(--gold); line-height: 1.3; }
+.skillRowUnlock { display: block; font-size: 11.5px; color: var(--muted); line-height: 1.35; }
 .choiceBar.capsuleTabs { display: grid; grid-template-columns: minmax(0, 1.26fr) minmax(0, 1.12fr) minmax(0, 0.92fr); }
 .choiceBar.capsuleTabs > a { padding-inline: 8px; white-space: nowrap; }
 @media (max-width: 365px) {
@@ -359,10 +420,10 @@
   background-size: 500% 400%;
   background-repeat: no-repeat;
 }
-.stickerShelf.card, .marketCollections.card, .combatBranches.card, .skillShelf.card, .awardCollection.card {
-  border-radius: 12px;
+.stickerShelf.card, .marketCollections.card, .combatBranches.card, .skillShelf.card, .awardCollection.card, .combatStatsCard.card, .combatUpgradesCard.card, .skillDetailCard.card {
+  border-radius: 16px;
 }
-[data-theme="graphite"] :is(.stickerShelf.card, .marketCollections.card, .combatBranches.card, .skillShelf.card, .awardCollection.card) {
+[data-theme="graphite"] :is(.stickerShelf.card, .marketCollections.card, .combatBranches.card, .skillShelf.card, .awardCollection.card, .combatStatsCard.card, .combatUpgradesCard.card, .skillDetailCard.card) {
   background: var(--game-panel);
   border-color: var(--game-panel-line);
   box-shadow: none;
@@ -402,15 +463,28 @@
 .combatBranches .mediaRow > span:nth-child(2) { min-width: 0; }
 .combatBranches .mediaRow > span:nth-child(2) small { display: block; }
 .combatBranches .rowChevron { margin-inline-start: auto; }
-.skillShelf .skillTile { position: relative; width: 40px; }
+.skillShelf .skillTile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  overflow: hidden;
+}
+.skillShelf .skillTile .gameArt { border-radius: 0; }
 .skillTile b {
   position: absolute;
-  inset: auto 0 0 auto;
+  inset: auto 2px 2px auto;
   padding: 1px 4px;
   border-radius: 5px;
   color: #f6f1ff;
   background: #6949a2;
-  font-size: 10px;
+  font-size: 9.5px;
+  font-weight: 800;
   line-height: 1.15;
 }
 .gameActionTile, .awardTile {
@@ -433,7 +507,7 @@
 
 
 .capsuleList .capsuleChoice { gap: 9px; }
-.capsuleList .capsuleChoice small { margin-top: 3px; }
+.capsuleList .capsuleChoice small { margin-top: 3px; line-height: 1.35; }
 .inventoryPanel[data-category="consumables"] { --item-tone: #e8978e; }
 .inventoryPanel[data-category="squad"] { --item-tone: #8acbdc; }
 .inventoryPanel[data-category="gear"] { --item-tone: #edc479; }
@@ -443,35 +517,38 @@
 .inventoryPanel[data-category="skins"] { --item-tone: #e3b675; }
 .inventoryPanel.card {
   --item-accent: var(--item-tone, var(--gold));
-  border-radius: 12px;
 }
 [data-theme="graphite"] .inventoryPanel.card {
   background: var(--game-panel);
   border-color: var(--game-panel-line);
   box-shadow: none;
 }
-.inventoryPanel > summary {
-  min-height: 58px;
-  padding-block: 7px;
-  gap: 10px;
-  cursor: pointer;
-}
-.inventoryPanel > summary strong, .inventoryCategoryLabel {
-  color: var(--item-accent);
-}
-.inventoryPanel > summary > .gameArt, .inventoryIcon {
+.inventoryPanel[data-category] > summary.memoCollapsibleSummary .memoUnifiedIcon,
+.inventoryIcon {
   display: grid;
   place-items: center;
   flex: none;
-  width: 38px;
-  height: 38px;
-  border: 1px solid color-mix(in srgb, var(--item-accent) 24%, var(--game-panel-line));
-  border-radius: 8px;
+  border-color: color-mix(in srgb, var(--item-accent) 26%, var(--game-panel-line));
   background: color-mix(in srgb, var(--item-accent) 10%, var(--game-tile));
 }
-.inventoryPanel > summary > .gameArt { box-sizing: content-box; padding: 1px; }
-.inventoryPanel > summary > span:nth-child(2) { min-width: 0; }
-.inventoryCategoryLabel { font-size: 13px; margin-block-end: 3px; }
+.inventoryIcon {
+  width: 40px;
+  height: 40px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 11px;
+}
+.inventoryPanel .memoCollapsibleBody .compactList .inventoryRow:first-child {
+  border-top: 0;
+  padding-top: 2px;
+}
+.inventoryPanel .memoCollapsibleBody .compactList .inventoryRow:last-child {
+  padding-bottom: 2px;
+}
+[data-theme="graphite"] .inventoryPanel .inventoryRow {
+  border-top-color: var(--game-panel-line);
+}
+.inventoryCategoryLabel { color: var(--item-accent); font-size: 13px; margin-block-end: 3px; }
 
 .settingsContent .themeChoices > button { flex: 1 1 0; min-width: 0; padding-inline: 5px; }
 @media (max-width: 365px) {
@@ -2852,43 +2929,31 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .wardrobeCard { display: grid; gap: 10px; }
 .wardrobeCard .buildLoadoutTop {
   flex-wrap: nowrap;
-  gap: 6px;
+  gap: 4px;
 }
 .wardrobeCard .buildLoadoutControls {
+  flex: 1 1 auto;
   min-width: 0;
-  gap: 6px;
+  gap: 4px;
 }
 .wardrobeCard .skinRarityPill,
 .wardrobeCard .buildPresetChip {
   min-height: 32px;
-  padding: 0 9px;
-  font-size: 11.5px;
+  padding: 0 7px;
+  font-size: 10.5px;
   white-space: nowrap;
 }
+.wardrobeCard .skinRarityPill { flex: none; }
 .wardrobeCard .buildPresetChip {
-  gap: 5px;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: none;
+  gap: 4px;
 }
 .wardrobeCard .buildLoadoutRight {
   flex: none;
-  gap: 5px;
+  gap: 4px;
   margin-inline-start: auto;
-}
-.wardrobeCard .buildLoadoutTop {
-  flex-wrap: nowrap;
-  gap: 4px;
-}
-.wardrobeCard .buildLoadoutControls,
-.wardrobeCard .buildLoadoutRight {
-  gap: 4px;
-}
-.wardrobeCard .skinRarityPill {
-  padding-inline: 7px;
-  font-size: 10.5px;
-}
-.wardrobeCard .buildPresetChip {
-  padding-inline: 7px;
-  font-size: 10.5px;
-  min-width: 0;
 }
 .wardrobeCard .buildPresetChip > span:nth-child(2) {
   overflow: hidden;
@@ -2899,6 +2964,37 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .wardrobeCard .wardrobeActionIcon {
   width: 30px;
   height: 30px;
+}
+@media (max-width: 440px) {
+  :is(.buildLoadoutCard, .wardrobeCard) .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+  }
+  :is(.buildLoadoutCard, .wardrobeCard) .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) > span:last-child {
+    display: none;
+  }
+  .buildLoadoutCard .buildPresetChip {
+    max-width: none;
+  }
+}
+@media (max-width: 390px) {
+  .wardrobeCard .buildLoadoutTop,
+  .wardrobeCard .buildLoadoutControls,
+  .wardrobeCard .buildLoadoutRight {
+    gap: 4px;
+  }
+  .wardrobeCard .skinRarityPill,
+  .wardrobeCard .buildPresetChip {
+    padding-inline: 7px;
+    font-size: 10.5px;
+  }
+  .wardrobeCard .wardrobeActionIcon:not(.calcInfoBtn),
+  .wardrobeCard .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) {
+    width: 28px;
+    height: 28px;
+    font-size: 13.5px;
+  }
 }
 .wardrobeActionIcon {
   display: grid;
@@ -6009,7 +6105,6 @@ details.card.memoCollapsible > .memoCollapsibleBody {
   grid-template-columns: minmax(0, 1fr);
   min-width: 0;
 }
-.wardrobeCard .buildLoadoutTop { flex-wrap: wrap; }
 .wardrobeCard .wardrobeTabLabel {
   white-space: normal;
   overflow-wrap: anywhere;
@@ -6025,3 +6120,357 @@ details.card.memoCollapsible > .memoCollapsibleBody {
   border-radius: 8px;
   background: var(--game-panel);
 }
+
+/* Combat polish & standalone MemoCard spacing */
+.card + details.card.memoCollapsible,
+.owlMarket + details.card.memoCollapsible {
+  margin-top: 12px;
+}
+.memoRow > div { min-width: 0; flex: 1; }
+.combatAttributeRow {
+  align-items: flex-start;
+  gap: 11px;
+  padding-block: 10px;
+}
+.combatAttributeRow .memoUnifiedIcon .gameAttribute { font-size: 24px; }
+.combatAttributeRow > div { display: grid; gap: 2px; min-width: 0; }
+.combatAttributeRow .combatAttrEffect {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1.3;
+}
+.combatAttributeRow p:not(.combatAttrEffect) {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+.combatSubDisclosure {
+  margin-top: 8px;
+  padding: 0 11px;
+  border-radius: 12px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  overflow: hidden;
+}
+.combatSubDisclosure[open] {
+  border-color: color-mix(in srgb, var(--gold) 32%, var(--game-panel-line));
+  padding-bottom: 11px;
+}
+.combatSubDisclosure > summary {
+  min-height: 46px;
+  margin: 0 -11px;
+  padding: 8px 11px;
+  border-radius: 0;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.combatSubDisclosure > summary:active {
+  margin: 0 -11px;
+  border-radius: 0;
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+  color: inherit;
+}
+.combatSubDisclosure:has(> summary:focus-visible),
+#enchant-chances:has(> summary:focus-visible),
+.skinRuleDisclosure:has(> summary:focus-visible),
+details.card.timeCalculator:has(> summary:focus-visible) {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.combatSubDisclosure > summary:focus-visible,
+#enchant-chances > summary:focus-visible,
+.skinRuleDisclosure > summary:focus-visible,
+details.card.timeCalculator > summary:focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--gold) 7%, transparent);
+}
+.combatUpgradesCard .owlUpgrades li:last-child { border-bottom: 0; }
+.combatSubDisclosure[open] > summary strong { color: var(--gold); }
+.combatSubDisclosure[open] > summary::after { border-color: var(--gold); }
+.combatSubBody {
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--game-panel-line);
+}
+.combatSubBody .field { margin: 0; }
+.combatSubBody .bonusBreakdown { margin: 0; }
+.skillDetailCard { display: grid; gap: 10px; }
+.skillDetailCard > * { margin: 0; }
+.skillDetailCard .skillUnlock {
+  border-left: 0;
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 11px;
+}
+.skillDetailCard .skillUnlock strong {
+  display: block;
+  font-size: 12.5px;
+  color: var(--gold);
+  margin-bottom: 2px;
+}
+.skillDetailCard .skillUnlock p { margin: 0; color: var(--text); font-size: 13px; }
+.skillLevelGrid { gap: 8px; }
+.skillLevelGrid .field, .skillLevelGridSingle .field { margin: 0; }
+
+/* Capsules UX & unified rewards card */
+.capsuleRewardsCard {
+  display: grid;
+  gap: 10px;
+}
+.capsuleRewardsCard > * { margin: 0; }
+.capsuleLevelBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.capsuleLevelLabel {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.capsuleLevelLabel strong { font-size: 14px; color: var(--text); line-height: 1.2; }
+.capsuleLevelLabel small { font-size: 11.5px; color: var(--muted); line-height: 1.3; }
+.capsuleLevelStepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+.capsuleLevelStepper button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.capsuleLevelStepper button:disabled { opacity: 0.35; cursor: default; }
+.capsuleLevelStepper button:active:not(:disabled) { border-color: var(--gold); }
+.capsuleLevelStepper input {
+  width: 46px;
+  min-height: 34px;
+  height: 34px;
+  margin: 0;
+  padding: 0 4px;
+  border-radius: 999px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--gold);
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.capsuleLevelStepper input:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.capsuleQuickLevels {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+}
+.capsuleQuickLevels button {
+  margin: 0;
+  min-height: 32px;
+  padding: 4px 4px;
+  border-radius: 9px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+.capsuleQuickLevels button[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--gold) 45%, var(--game-panel-line));
+  background: color-mix(in srgb, var(--gold) 14%, var(--game-panel));
+  color: var(--gold);
+}
+.capsuleQuickLevels button:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.capsuleRewardGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.capsuleRewardCell {
+  display: grid;
+  gap: 4px;
+  padding: 9px 10px;
+  border-radius: 11px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+.capsuleRewardCell.isLink:active {
+  background: color-mix(in srgb, var(--gold) 8%, var(--game-tile));
+  border-color: color-mix(in srgb, var(--gold) 35%, var(--game-panel-line));
+}
+.capsuleRewardCell.isLink:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.capsuleRewardLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.2;
+}
+.capsuleRewardCell strong {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: clamp(12px, 3.6vw, 14px);
+  font-weight: 800;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.capsuleDropCard p + p { margin-top: 7px; }
+details.card.timeCalculator {
+  padding: 0;
+  overflow: hidden;
+  transition: border-color 140ms ease;
+}
+details.card.timeCalculator[open] {
+  border-color: color-mix(in srgb, var(--gold) 32%, var(--game-panel-line));
+  padding-bottom: 13px;
+}
+details.card.timeCalculator > summary {
+  margin: 0;
+  padding: 10px 13px;
+  border-radius: 0;
+  min-height: 60px;
+}
+details.card.timeCalculator > summary:active {
+  margin: 0;
+  border-radius: 0;
+  color: inherit;
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+}
+details.card.timeCalculator[open] > summary {
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--game-panel-line);
+}
+details.card.timeCalculator[open] > summary strong { color: var(--gold); }
+details.card.timeCalculator[open] > summary::after { border-color: var(--gold); }
+details.card.timeCalculator > :not(summary) {
+  margin-inline: 13px;
+}
+details.card.timeCalculator > .capsulePresets {
+  margin-top: 11px;
+}
+details.card.timeCalculator > .calculatorNote {
+  margin-bottom: 0;
+}
+.capsuleRewardCell.isLink .rowChevron { width: 6px; height: 6px; flex: none; }
+.capsuleChillerNote { margin: 0; line-height: 1.35; }
+.capsuleCapTag {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.3;
+}
+@media (max-width: 375px) {
+  .wardrobeCard .wardrobeTabLabel {
+    font-size: 9px;
+    overflow-wrap: normal;
+  }
+}
+.capsulePresets {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+  margin: 2px 0 9px;
+}
+.capsulePresets button,
+[data-theme="graphite"] .capsulePresets button {
+  margin: 0;
+  min-height: 34px;
+  padding: 4px 4px;
+  border-radius: 9px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.capsulePresets button[aria-pressed="true"],
+[data-theme="graphite"] .capsulePresets button[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--gold) 45%, var(--game-panel-line));
+  background: color-mix(in srgb, var(--gold) 14%, var(--game-panel));
+  color: var(--gold);
+}
+#enchant-chances {
+  margin-top: 8px;
+  padding: 0 11px;
+  border-radius: 12px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  overflow: hidden;
+  transition: border-color 140ms ease;
+}
+#enchant-chances[open] {
+  border-color: color-mix(in srgb, var(--gold) 32%, var(--game-panel-line));
+  padding-bottom: 10px;
+}
+#enchant-chances > summary {
+  min-height: 46px;
+  margin: 0 -11px;
+  padding: 8px 11px;
+  border-radius: 0;
+}
+#enchant-chances > summary:active {
+  margin: 0 -11px;
+  border-radius: 0;
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+  color: inherit;
+}
+#enchant-chances[open] > summary strong { color: var(--gold); }
+#enchant-chances[open] > summary::after { border-color: var(--gold); }
+.skinJettons .skinRuleDisclosure {
+  margin-top: 10px;
+  padding: 0 11px;
+  border-top: 1px solid var(--game-panel-line);
+  border-radius: 12px;
+  border: 1px solid var(--game-panel-line);
+  background: var(--game-tile);
+  overflow: hidden;
+  transition: border-color 140ms ease;
+}
+.skinJettons .skinRuleDisclosure[open] {
+  border-color: color-mix(in srgb, var(--gold) 32%, var(--game-panel-line));
+  padding-bottom: 11px;
+}
+.skinJettons .skinRuleDisclosure > summary {
+  min-height: 46px;
+  margin: 0 -11px;
+  padding: 8px 11px;
+  border-radius: 0;
+}
+.skinJettons .skinRuleDisclosure > summary:active {
+  margin: 0 -11px;
+  border-radius: 0;
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+  color: inherit;
+}
+.skinJettons .skinRuleDisclosure[open] > summary strong { color: var(--gold); }
+.skinJettons .skinRuleDisclosure[open] > summary::after { border-color: var(--gold); }
+.skinJettons .skinRuleBody {
+  display: grid;
+  gap: 8px;
+  padding-top: 9px;
+  border-top: 1px solid var(--game-panel-line);
+}
+.skinJettons .skinRuleBody p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.skinJettons .skinRuleBody .itemValueLinks { margin-top: 2px; }
