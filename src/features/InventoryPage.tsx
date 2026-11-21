@@ -204,7 +204,7 @@ function ResourcesPage({ en }: { en: boolean }) {
       title: ['XP · Опыт', 'XP · Experience'],
       factors: ['От чего зависит награда XP', 'What changes XP rewards'],
       summary: ['Повышает уровень совы. На 2-м открываются навыки и Додзё, на 3-м — сквады, на 4-м — осады, на 5-м — полёт и задания. Уровень также повышает базовое здоровье и урон. Запись в дискету требует вдвое больше XP, чем она вмещает, и сбрасывает опыт, SP и навыки, возвращая сову в яйцо.', 'Raises your owl’s level. Skills and the Dojo unlock at level 2, squads at 3, sieges at 4, and flights and tasks at 5. Level also raises base health and damage. Filling a floppy requires twice the XP it holds and resets XP, SP, and skills, returning the owl to an egg.'],
-      icon: <GameSymbol name="xp" size={28}/>,
+      icon: <GameSymbol name="xp" size={24}/>,
       sources: ['Капсулы, полёты и верные ответы в Книге загадок. Опыт также можно получить из заполненной дискеты XP.', 'Capsules, flights, and correct answers in the Book of Riddles. You can also gain XP by using a filled XP Floppy.'],
       tip: ['В капсулах опыт зависит от уровня и типа капсулы. В Книге загадок серия верных ответов увеличивает XP до ×3. Голод режет получаемый опыт вдвое. Открытый Чиллер убирает XP из капсул, сохраняя монеты и предметы.', 'Capsule XP depends on the capsule’s level and type. A correct-answer streak in the Book of Riddles multiplies XP by up to ×3. Hunger halves earned XP. An open Chiller removes capsule XP while preserving coins and items.'],
       links: [['/combat/stats#xp', 'Опыт для уровней', 'XP by level'], ['/capsules', 'Награды капсул', 'Capsule rewards']],
@@ -214,7 +214,7 @@ function ResourcesPage({ en }: { en: boolean }) {
       factors: ['Сколько SP даёт удар', 'SP per hit'],
       siege: ['Личная мощь в осадах растёт с заработанными SP. Мощь вкладывают в атаку или защиту территории. Учитываются заработанные очки, а не текущий остаток SP.', 'Personal siege power grows with earned SP. Commit that power to attack or defend a territory. Total SP earned matters, regardless of your unspent SP balance.'],
       summary: ['Трать SP на уровни уже открытых навыков, запас энергии и восстановление энергии и здоровья. Свободные SP можно записать в колбу для переноса. Для заполнения нужно вдвое больше SP, чем вмещает колба, и списывается весь свободный остаток.', 'Spend SP on unlocked skill levels, energy capacity, and energy and health regeneration. A flask lets you transfer SP. Filling it requires twice its capacity and spends your entire unallocated balance.'],
-      icon: <GameSymbol name="sp" size={28}/>,
+      icon: <GameSymbol name="sp" size={24}/>,
       sources: ['Додзё открывается со 2-го уровня. Удар по манекену стоит 2⚡ и даёт SP по уровню совы. На 10-м уровне это 10 SP за обычный удар. SP также дают за бои. Заполненная колба позволяет перенести ранее накопленные очки.', 'The Dojo opens at level 2. A hit costs 2⚡ and gives SP equal to your owl’s level. At level 10, that is 10 SP per normal hit. Battles also award SP. A filled flask lets you transfer previously stored points.'],
       tip: ['Чем выше уровень совы, тем больше SP за удар. Удар Bang удваивает награду. Новый навык открывается за очки атрибутов в его ветке, а SP идут на его улучшение.', 'Higher owl levels give more SP per hit. A Bang hit doubles the reward. Attribute points unlock skills in their branches, and SP upgrade them.'],
       links: [['/combat', 'Открытие и прокачка навыков', 'Unlocking and upgrading skills'], ['/squads/war', 'Мощь в осадах', 'Siege power']],
@@ -223,7 +223,7 @@ function ResourcesPage({ en }: { en: boolean }) {
       title: ['Монеты', 'Coins'],
       factors: ['Бонусы и штрафы к монетам', 'Coin bonuses and penalties'],
       summary: ['Ими платят в игровой лавке за еду, лекарства и экипировку.', 'Spend them in the in-game shop on food, medicine, and gear.'],
-      icon: <GameArt path={itemPath('wise-coin.webp')} size={28}/>,
+      icon: <GameArt path={itemPath('wise-coin.webp')} size={30}/>,
       sources: ['Капсулы, полёты, нападения, Книга загадок, удержание территорий в осадах и награды за приглашения. Победитель нападения забирает 3% монет проигравшего.', 'Capsules, flights, raids, the Book of Riddles, holding territories in sieges, and referral rewards. The winner of a raid takes 3% of the loser’s coins.'],
       tip: ['Скин, заточка, боевая лига и Монтмориллонит повышают доход от боёв и полётов. Серия ответов в Книге даёт до ×3 монет, а голод режет доход вдвое. Бонусы экипировки не увеличивают фиксированную награду капсул.', 'Skins, enchants, battle league, and Montmorillonite boost coins from battles and flights. Riddle streaks multiply coins by up to ×3, and hunger halves income. Equipment bonuses do not boost fixed capsule rewards.'],
       links: [['/owl/skins', 'Калькулятор бонуса к монетам', 'Coin bonus calculator'], ['/modes#leagues', 'Бонусы лиг', 'League bonuses'], ['/assets', 'Цены в лавке', 'Shop prices']],
@@ -233,7 +233,7 @@ function ResourcesPage({ en }: { en: boolean }) {
     {resources.map(resource => <details className="card memoCard mediaDetails memoCollapsible" key={resource.title[0]}>
       <summary className="memoCollapsibleSummary">
         <div className="memoCardHead">
-          {resource.icon}
+          <span className="memoUnifiedIcon">{resource.icon}</span>
           <div>
             <h2>{resource.title[lang]}</h2>
             <p>{resource.factors[lang]}</p>
@@ -298,7 +298,7 @@ export function CarePage() {
       <details className="card memoCard mediaDetails memoCollapsible">
         <summary className="memoCollapsibleSummary">
           <div className="memoCardHead">
-            <GameArt path={itemPath('book.webp')} size={40}/>
+            <span className="memoUnifiedIcon"><GameArt path={itemPath('book.webp')} size={30}/></span>
             <div>
               <h2>{en ? 'Daily Cycle & Owl Care' : 'Ежедневный цикл и уход'}</h2>
               <p>{en ? 'Key timers, resets, and base vitals' : 'Ключевые таймеры, сбросы и базовые параметры'}</p>
@@ -359,7 +359,7 @@ export function CarePage() {
       <details className="card memoCard energyGradCard mediaDetails memoCollapsible">
         <summary className="memoCollapsibleSummary">
           <div className="memoCardHead">
-            <GameArt path={itemPath('chiller-open.webp')} size={40}/>
+            <span className="memoUnifiedIcon"><GameArt path={itemPath('chiller-open.webp')} size={30}/></span>
             <div>
               <h2>{en ? 'Battle, Flight & SP Farm Costs' : 'Стоимость боя, полёта и фарма SP'}</h2>
               <p>{en ? 'Battles add +10 ⚡ every 5 levels; flights add +50 ⚡' : 'Бой растёт на +10 ⚡ каждые 5 уровней, полёт — на +50 ⚡'}</p>
@@ -407,7 +407,7 @@ export function CarePage() {
       <details className="card memoCard mediaDetails memoCollapsible">
         <summary className="memoCollapsibleSummary">
           <div className="memoCardHead">
-            <GameArt path={itemPath('ring-wit-3.webp')} size={40}/>
+            <span className="memoUnifiedIcon"><GameArt path={itemPath('ring-wit-3.webp')} size={30}/></span>
             <div>
               <h2>{en ? 'Combat, Sieges & Defense' : 'Бой, осада и защита'}</h2>
               <p>{en ? 'Stat caps, raid shields, and progression tools' : 'Ограничения статов, нападения и предметы прогресса'}</p>

@@ -238,54 +238,87 @@ export function ModesPage() {
   const format = en ? formatEn : formatRu;
   const lang = en ? 1 : 0;
   const { hash } = useLocation();
-  return <section className="card modesCard">
-        {modes.map(({ icon, title, subtitle, ...content }) => <details className="mediaDetails" key={icon}
+  return <div className="memoStack">
+        {modes.map(({ icon, title, subtitle, ...content }) => <details className="card mediaDetails memoCollapsible" key={icon}
           id={icon === 'rocket' ? 'flight' : undefined} open={icon === 'rocket' && hash === '#flight' || undefined}>
-          <summary>{icon === 'swords' ? <GameArt path="/game/ui/fight-vs.png" size={36}/> : <GameSymbol name={icon}/>}
-            <span><strong>{title[lang]}</strong><small>{subtitle[lang]}
-              {icon === 'rocket' && <span className="energyBadge"> · {en ? 'from 250' : 'от 250'} <GameSymbol name="bolt" size={13}/></span>}
-            </small></span>
-          </summary>
-          {icon === 'rocket' ? <FlightDetails/> : 'guide' in content && <div className="flightDetails">
-            <p>{content.guide[lang]}</p>
-            {icon === 'target' && <>
-              <h4>{en ? 'Energy per raid' : 'Энергия за нападение'}</h4>
-              <div className="flightEnergyGrid">
-                {[[en ? 'Levels 1–4' : 'Уровни 1–4', 10], [en ? 'Levels 5–9' : 'Уровни 5–9', 20],
-                  [en ? 'Levels 10–14' : 'Уровни 10–14', 30], [en ? 'Every +5 levels' : 'Каждые +5 ур.', '+10']].map(([label, cost]) =>
-                  <div key={label}><span>{label}</span><strong>{cost} <GameSymbol name="bolt" size={15}/></strong></div>)}
+          <summary className="memoCollapsibleSummary">
+            <div className="memoCardHead">
+              <span className="memoUnifiedIcon">
+                {icon === 'swords' ? <GameArt path="/game/ui/fight-vs.png" size={30}/> : <GameSymbol name={icon} size={24}/>}
+              </span>
+              <div>
+                <h2>{title[lang]}</h2>
+                <p>
+                  {subtitle[lang]}
+                  {icon === 'rocket' && <span className="energyBadge"> · {en ? 'from 250' : 'от 250'} <GameSymbol name="bolt" size={13}/></span>}
+                </p>
               </div>
-            </>}
-            <ul className="compactList flightRules modeRules">
-              {content.rules.map(row => <li key={row[0]}><span>{row[lang]}</span><strong>{row[lang + 2]}</strong></li>)}
-            </ul>
-            {icon === 'shield' && <DetailLink className="textLink" to="/squads">{en ? 'Siege map and rewards' : 'Карта и награды осад'}</DetailLink>}
-            {icon === 'swords' && <DetailLink className="textLink" to="/combat">{en ? 'Combat skills' : 'Боевые навыки'}</DetailLink>}
-          </div>}
+            </div>
+          </summary>
+          <div className="memoCollapsibleBody">
+            {icon === 'rocket' ? <FlightDetails/> : 'guide' in content && <div className="flightDetails">
+              <p>{content.guide[lang]}</p>
+              {icon === 'target' && <>
+                <h4>{en ? 'Energy per raid' : 'Энергия за нападение'}</h4>
+                <div className="flightEnergyGrid">
+                  {[[en ? 'Levels 1–4' : 'Уровни 1–4', 10], [en ? 'Levels 5–9' : 'Уровни 5–9', 20],
+                    [en ? 'Levels 10–14' : 'Уровни 10–14', 30], [en ? 'Every +5 levels' : 'Каждые +5 ур.', '+10']].map(([label, cost]) =>
+                    <div key={label}><span>{label}</span><strong>{cost} <GameSymbol name="bolt" size={15}/></strong></div>)}
+                </div>
+              </>}
+              <ul className="compactList flightRules modeRules">
+                {content.rules.map(row => <li key={row[0]}><span>{row[lang]}</span><strong>{row[lang + 2]}</strong></li>)}
+              </ul>
+              {icon === 'shield' && <DetailLink className="textLink" to="/squads">{en ? 'Siege map and rewards' : 'Карта и награды осад'}</DetailLink>}
+              {icon === 'swords' && <DetailLink className="textLink" to="/combat">{en ? 'Combat skills' : 'Боевые навыки'}</DetailLink>}
+            </div>}
+          </div>
         </details>)}
-        <details className="mediaDetails"><summary><GameSymbol name="trophy"/><span><strong>{en ? 'Season prizes' : 'Призы сезона'}</strong><small>{en ? 'Top 100 places' : 'Первые 100 мест'}</small></span></summary>
-        <ul className="compactList flightRules modeRules">
-          <li><span>{en ? 'Places 1–10' : 'Места 1–10'}</span><strong>{en ? 'Golden Mystery Egg' : 'Золотое загадочное яйцо'}</strong></li>
-          <li><span>{en ? 'Places 11–100' : 'Места 11–100'}</span><strong>{en ? 'Mystery Egg · sell for 100 Stars' : 'Загадочное яйцо · продажа за 100 Stars'}</strong></li>
-        </ul>
-        <h4>{en ? 'Example: prize pool of 1M $NOT' : 'Пример для фонда в 1 млн $NOT'}</h4>
-        <table className="priceTable">
-          <thead><tr><th scope="col">{en ? 'Place' : 'Место'}</th><th scope="col">{en ? 'Prize' : 'Приз'}</th></tr></thead>
-          <tbody>{[400000, 350000, 250000].map((amount, index) =>
-            <tr key={amount}><th scope="row">{index + 1}</th><td>{format.format(amount)} $NOT</td></tr>)}</tbody>
-        </table>
-        <p>{en ? 'Prizes are delivered automatically. The prize pool can vary by season.' : 'Призы начисляются автоматически. Размер фонда зависит от сезона.'}</p>
-        <DetailLink className="textLink" to="/owl/season">{en ? 'What drops from the mystery egg' : 'Что выпадает из загадочного яйца'}</DetailLink>
-      </details>
-      <details className="mediaDetails" id="leagues" open={hash === "#leagues" || undefined}><summary><GameSymbol name="shield"/><span><strong>{en ? 'Battle leagues' : 'Боевые лиги'}</strong><small>{en ? 'Rating thresholds and farming bonus' : 'Пороги рейтинга и бонус к фарму'}</small></span></summary>
-        <table className="priceTable">
-          <thead><tr><th scope="col">{en ? 'League' : 'Лига'}</th><th scope="col">{en ? 'Min MMR' : 'От MMR'}</th><th scope="col">{en ? 'Farm' : 'Фарм'}</th></tr></thead>
-          <tbody>{battleLeagues.map(([name, rating], index) => <tr key={name}>
-            <th scope="row">{name}</th><td>{format.format(rating)}</td><td>+{index + 1}%</td>
-          </tr>)}</tbody>
-        </table>
-      </details>
-    </section>;
+        <details className="card mediaDetails memoCollapsible">
+          <summary className="memoCollapsibleSummary">
+            <div className="memoCardHead">
+              <span className="memoUnifiedIcon"><GameSymbol name="trophy" size={24}/></span>
+              <div>
+                <h2>{en ? 'Season prizes' : 'Призы сезона'}</h2>
+                <p>{en ? 'Top 100 places' : 'Первые 100 мест'}</p>
+              </div>
+            </div>
+          </summary>
+          <div className="memoCollapsibleBody">
+            <ul className="compactList flightRules modeRules">
+              <li><span>{en ? 'Places 1–10' : 'Места 1–10'}</span><strong>{en ? 'Golden Mystery Egg' : 'Золотое загадочное яйцо'}</strong></li>
+              <li><span>{en ? 'Places 11–100' : 'Места 11–100'}</span><strong>{en ? 'Mystery Egg · sell for 100 Stars' : 'Загадочное яйцо · продажа за 100 Stars'}</strong></li>
+            </ul>
+            <h4>{en ? 'Example: prize pool of 1M $NOT' : 'Пример для фонда в 1 млн $NOT'}</h4>
+            <table className="priceTable">
+              <thead><tr><th scope="col">{en ? 'Place' : 'Место'}</th><th scope="col">{en ? 'Prize' : 'Приз'}</th></tr></thead>
+              <tbody>{[400000, 350000, 250000].map((amount, index) =>
+                <tr key={amount}><th scope="row">{index + 1}</th><td>{format.format(amount)} $NOT</td></tr>)}</tbody>
+            </table>
+            <p>{en ? 'Prizes are delivered automatically. The prize pool can vary by season.' : 'Призы начисляются автоматически. Размер фонда зависит от сезона.'}</p>
+            <DetailLink className="textLink" to="/owl/season">{en ? 'What drops from the mystery egg' : 'Что выпадает из загадочного яйца'}</DetailLink>
+          </div>
+        </details>
+        <details className="card mediaDetails memoCollapsible" id="leagues" open={hash === "#leagues" || undefined}>
+          <summary className="memoCollapsibleSummary">
+            <div className="memoCardHead">
+              <span className="memoUnifiedIcon"><GameSymbol name="shield" size={24}/></span>
+              <div>
+                <h2>{en ? 'Battle leagues' : 'Боевые лиги'}</h2>
+                <p>{en ? 'Rating thresholds and farming bonus' : 'Пороги рейтинга и бонус к фарму'}</p>
+              </div>
+            </div>
+          </summary>
+          <div className="memoCollapsibleBody">
+            <table className="priceTable">
+              <thead><tr><th scope="col">{en ? 'League' : 'Лига'}</th><th scope="col">{en ? 'Min MMR' : 'От MMR'}</th><th scope="col">{en ? 'Farm' : 'Фарм'}</th></tr></thead>
+              <tbody>{battleLeagues.map(([name, rating], index) => <tr key={name}>
+                <th scope="row">{name}</th><td>{format.format(rating)}</td><td>+{index + 1}%</td>
+              </tr>)}</tbody>
+            </table>
+          </div>
+        </details>
+      </div>;
 }
 
 function SkillDetail({ skill }: { skill: Skill }) {

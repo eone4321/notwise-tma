@@ -605,8 +605,8 @@ export function LifehacksPage() {
             <details className="card lifehackCard mediaDetails memoCollapsible" key={hack.id}>
               <summary className="memoCollapsibleSummary">
                 <div className="lifehackHead">
-                  <span className="lifehackIcon">
-                    <GameArt path={hack.icon} size={36} />
+                  <span className="memoUnifiedIcon">
+                    <GameArt path={hack.icon} size={30} />
                   </span>
                   <div className="lifehackTitleWrap">
                     <span className="lifehackTag">{en ? hack.tag[1] : hack.tag[0]}</span>
@@ -981,8 +981,8 @@ export function ItemValueRankingPage() {
             <details className="card itemValueCard mediaDetails memoCollapsible" key={item.id}>
               <summary className="memoCollapsibleSummary">
                 <div className="itemValueHead">
-                  <span className="lifehackIcon">
-                    <GameArt path={item.icon} size={36} />
+                  <span className="memoUnifiedIcon">
+                    <GameArt path={item.icon} size={30} />
                   </span>
                   <div className="lifehackTitleWrap" style={{ flex: 1 }}>
                     <h2>{en ? item.title[1] : item.title[0]}</h2>

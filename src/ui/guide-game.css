@@ -5191,25 +5191,53 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 
 .memoStack {
   display: grid;
-  gap: 10px;
+  gap: 8px;
+}
+.memoStack > .card,
+.lifehackList > .card {
+  margin: 0;
 }
 .memoCard {
   display: grid;
-  gap: 12px;
-  padding: 14px;
+  gap: 10px;
+  padding: 13px 14px;
 }
 details.card.memoCollapsible {
   display: block;
+  margin: 0;
   padding: 0;
   gap: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color 140ms ease;
+}
+details.card.memoCollapsible[open] {
+  border-color: color-mix(in srgb, var(--gold) 32%, var(--game-panel-line));
 }
 details.card.memoCollapsible > summary.memoCollapsibleSummary {
   display: flex;
   align-items: center;
   gap: 11px;
   min-height: 60px;
-  padding: 12px 14px;
+  margin: 0;
+  padding: 10px 13px;
+  border-radius: 0;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 140ms ease;
+}
+details.card.memoCollapsible > summary.memoCollapsibleSummary:active {
+  margin: 0;
+  border-radius: 0;
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+}
+details.card.memoCollapsible > summary.memoCollapsibleSummary:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+  border-radius: 16px;
+}
+details.card.memoCollapsible > summary.memoCollapsibleSummary::after {
+  margin-inline: auto 4px;
 }
 details.card.memoCollapsible > summary.memoCollapsibleSummary .memoCardHead,
 details.card.memoCollapsible > summary.memoCollapsibleSummary .lifehackHead,
@@ -5217,18 +5245,32 @@ details.card.memoCollapsible > summary.memoCollapsibleSummary .itemValueHead {
   flex: 1;
   min-width: 0;
 }
-details.card.memoCollapsible > summary.memoCollapsibleSummary .memoCardHead h2,
-details.card.memoCollapsible > summary.memoCollapsibleSummary .lifehackTitleWrap h2,
-details.card.memoCollapsible > summary.memoCollapsibleSummary .itemValueHead h2 {
+details.card.memoCollapsible > summary.memoCollapsibleSummary h2 {
   margin: 0 0 2px;
-  font-size: 15.5px;
+  font-size: 15px;
+  font-weight: 800;
   line-height: 1.24;
+  transition: color 140ms ease;
+}
+details.card.memoCollapsible[open] > summary.memoCollapsibleSummary h2 {
+  color: var(--gold);
 }
 details.card.memoCollapsible > .memoCollapsibleBody {
   display: grid;
   gap: 10px;
-  padding: 12px 14px 14px;
+  padding: 11px 13px 13px;
   border-top: 1px solid var(--game-panel-line);
+}
+.memoUnifiedIcon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: var(--game-tile);
+  border: 1px solid var(--game-panel-line);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
 }
 .memoCardHead {
   display: flex;
@@ -5330,7 +5372,7 @@ details.card.memoCollapsible > .memoCollapsibleBody {
 }
 .lifehackList {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 .lifehackCard {
   display: grid;
