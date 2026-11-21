@@ -172,7 +172,7 @@ async function fetchOnChainSales(collectionAddress: string, slug: string, filter
             address: addr,
             name,
             price,
-            currency: 'TON',
+            currency: 'GRAM',
             at: utime * 1000,
             image: inferImage(slug, name, tokenInfo?.image),
             href: getgemsNftUrl(addr) || `https://getgems.io/collection/${collectionAddress}`,
@@ -234,7 +234,7 @@ export default async function handler(request: Request) {
     return Response.json({ error: 'Invalid slug' }, { status: 400 });
   }
 
-  const cacheKey = `notwise:market:sales:v1:${slug}`;
+  const cacheKey = `notwise:market:sales:v2:${slug}`;
   const cached = await redis<string | null>(['GET', cacheKey]).catch(() => null);
   if (cached) {
     try {

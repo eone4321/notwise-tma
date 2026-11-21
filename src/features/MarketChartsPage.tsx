@@ -68,6 +68,44 @@ function fetchHistoryCached(slug: string, enc: string, range: HistoryRange): Pro
   return req;
 }
 
+const marketSalesCache = new Map<string, MarketSale[]>();
+const marketSalesInflight = new Map<string, Promise<MarketSale[]>>();
+
+function fetchSalesCached(slug: string): Promise<MarketSale[]> {
+  const cached = marketSalesCache.get(slug);
+  if (cached) return Promise.resolve(cached);
+  const inflight = marketSalesInflight.get(slug);
+  if (inflight) return inflight;
+  const req = fetch(`/api/market/sales?slug=${encodeURIComponent(slug)}`)
+    .then(res => (res.ok ? res.json() : null))
+    .then(data => {
+      const list: MarketSale[] = Array.isArray(data?.sales) ? data.sales : [];
+      marketSalesCache.set(slug, list);
+      return list;
+    })
+    .catch(() => [] as MarketSale[])
+    .finally(() => { marketSalesInflight.delete(slug); });
+  marketSalesInflight.set(slug, req);
+  return req;
+}
+
+function convertSaleToGram(
+  sale: MarketSale,
+  tokenItems: { symbol: string; priceUsd: string | number | null }[] | undefined,
+  gramUsd: number | null,
+): number | null {
+  const cur = (sale.currency || '').trim().toUpperCase();
+  if (cur === 'GRAM' || cur === 'TON') return sale.price;
+  if (!gramUsd || gramUsd <= 0) return null;
+  if (cur === 'USD' || cur === 'USDT' || cur === 'USDC') return sale.price / gramUsd;
+  const tok = tokenItems?.find(t => t.symbol.toUpperCase() === cur);
+  const tokUsd = tok?.priceUsd != null ? Number(tok.priceUsd) : 0;
+  if (Number.isFinite(tokUsd) && tokUsd > 0) {
+    return (sale.price * tokUsd) / gramUsd;
+  }
+  return null;
+}
+
 const fmtNumRu = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
 const fmtNumEn = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
 const fmtIntRu = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
@@ -179,8 +217,11 @@ export function MarketChartsPage() {
   const [feedTab, setFeedTab] = useState<'lots' | 'sales'>('lots');
   const [fallbackLots, setFallbackLots] = useState<(ExplorerLot & { enchant: number })[]>([]);
   const [fallbackLotsLoading, setFallbackLotsLoading] = useState(false);
-  const [salesList, setSalesList] = useState<MarketSale[]>([]);
-  const [salesLoading, setSalesLoading] = useState(false);
+  const [salesState, setSalesState] = useState<{ slug: string; list: MarketSale[] }>(() => ({
+    slug: asset.slug,
+    list: marketSalesCache.get(asset.slug) ?? [],
+  }));
+  const [salesLoading, setSalesLoading] = useState(() => !marketSalesCache.has(asset.slug));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const railRef = useRef<HTMLDivElement>(null);
@@ -256,25 +297,26 @@ export function MarketChartsPage() {
   }
 
   useEffect(() => {
-    if (feedTab !== 'sales') return;
-    const controller = new AbortController();
+    let cancelled = false;
+    const cached = marketSalesCache.get(asset.slug);
+    if (cached) {
+      setSalesState({ slug: asset.slug, list: cached });
+      setSalesLoading(false);
+      return;
+    }
     setSalesLoading(true);
-    fetch(`/api/market/sales?slug=${encodeURIComponent(asset.slug)}`, { signal: controller.signal })
-      .then(res => (res.ok ? res.json() : null))
-      .then(data => {
-        if (!controller.signal.aborted) {
-          setSalesList(Array.isArray(data?.sales) ? data.sales : []);
-          setSalesLoading(false);
-        }
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) {
-          setSalesList([]);
-          setSalesLoading(false);
-        }
-      });
-    return () => controller.abort();
-  }, [asset.slug, feedTab]);
+    void fetchSalesCached(asset.slug).then(list => {
+      if (!cancelled) {
+        setSalesState({ slug: asset.slug, list });
+        setSalesLoading(false);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [asset.slug]);
+
+  const cachedSales = marketSalesCache.get(asset.slug);
+  const salesList = cachedSales ?? (salesState.slug === asset.slug ? salesState.list : []);
+  const effectiveSalesLoading = cachedSales === undefined && salesLoading;
 
   useEffect(() => {
     explorerMarket.refresh();
@@ -399,6 +441,9 @@ export function MarketChartsPage() {
       ['owl-skin', 'all', '7d'],
       ['scroll-enchant-ring', '0', '7d'],
       ['col:genesis', '0', '7d'],
+      ['floppy-100k', '0', '7d'],
+      ['voucher-100k', '0', '7d'],
+      ['col:album-1', '0', '7d'],
       [asset.historySlug, enc, '24h'],
       [asset.historySlug, enc, '7d'],
       [asset.historySlug, enc, '30d'],
@@ -414,6 +459,9 @@ export function MarketChartsPage() {
     }
     for (const [s, e, r] of defaults) {
       void fetchHistoryCached(s, e, r);
+    }
+    for (const s of ['ring-str-1', 'owl-skin', 'scroll-enchant-ring', 'col:genesis']) {
+      void fetchSalesCached(s);
     }
   }, [asset.historySlug, asset.enchantable, enc]);
 
@@ -431,7 +479,7 @@ export function MarketChartsPage() {
       return;
     }
 
-    if (isInitial) setHistoryLoading(true);
+    if (isInitial || !cached) setHistoryLoading(true);
 
     const finishLoading = (pts: HistoryPoint[]) => {
       const remaining = isInitial ? Math.max(0, minLoaderMs - (performance.now() - startedAt)) : 0;
@@ -453,8 +501,10 @@ export function MarketChartsPage() {
     };
   }, [activeHistoryKey, asset.historySlug, enc, range]);
 
-  const historyReady = historyState.key === activeHistoryKey;
-  const historyPoints = historyReady ? historyState.points : [];
+  const cachedHistory = marketHistoryCache.get(activeHistoryKey);
+  const historyReady = cachedHistory !== undefined || historyState.key === activeHistoryKey;
+  const historyPoints = cachedHistory ?? (historyState.key === activeHistoryKey ? historyState.points : []);
+  const effectiveHistoryLoading = cachedHistory === undefined && (historyLoading || !historyReady);
 
   // Combine history points with live point if latest snapshot is fresher (only when points belong to active key)
   const seriesPoints = useMemo(() => {
@@ -742,7 +792,7 @@ export function MarketChartsPage() {
 
           <div className="radarPriceRow">
             <AnimatePresence mode="wait" initial={false}>
-              {historyLoading ? (
+              {!initialLoadDoneRef.current && effectiveHistoryLoading ? (
                 <motion.div
                   key="price-skeleton"
                   className="radarPriceRowInner"
@@ -852,7 +902,7 @@ export function MarketChartsPage() {
           <InteractiveFloorChart
             points={seriesPoints}
             range={range}
-            loading={historyLoading}
+            loading={effectiveHistoryLoading}
             maxActiveEnchant={maxActiveEnchant}
             canSwitchToCurve={Boolean(asset.enchantable && curvePoints.length >= 2)}
             onSwitchToCurve={() => { lightHaptic(); setChartMode('curve'); }}
@@ -871,7 +921,7 @@ export function MarketChartsPage() {
         <div className="radarStatsRow">
           <div>
             <small>{chartMode === 'curve' ? (en ? 'Min (+0)' : 'Мин. (+0)') : `${en ? 'Min' : 'Мин.'} (${activeRangeLabel})`}</small>
-            {historyLoading ? (
+            {effectiveHistoryLoading ? (
               <span className="radarShimmerPill isStat" aria-hidden="true" />
             ) : (
               <strong className="radarStatValueFade">
@@ -883,7 +933,7 @@ export function MarketChartsPage() {
           </div>
           <div>
             <small>{chartMode === 'curve' ? (en ? 'Max enchant' : 'Макс. заточка') : `${en ? 'Max' : 'Макс.'} (${activeRangeLabel})`}</small>
-            {historyLoading ? (
+            {effectiveHistoryLoading ? (
               <span className="radarShimmerPill isStat" aria-hidden="true" />
             ) : (
               <strong className="radarStatValueFade">
@@ -895,7 +945,7 @@ export function MarketChartsPage() {
           </div>
           <div>
             <small>{asset.slug.startsWith('col:') ? (en ? 'Minted' : 'Выпущено') : (en ? 'Listed' : 'В продаже')}</small>
-            {historyLoading ? (
+            {effectiveHistoryLoading ? (
               <span className="radarShimmerPill isStat" aria-hidden="true" />
             ) : (
               <strong className="radarStatValueFade">
@@ -1054,38 +1104,43 @@ export function MarketChartsPage() {
               )}
             </div>
           )
-        ) : salesLoading ? (
+        ) : effectiveSalesLoading ? (
           <div className="radarEmptyLots">
             <p>{en ? 'Loading recent sales from Getgems…' : 'Загружаем последние продажи с Getgems…'}</p>
           </div>
         ) : salesList.length > 0 ? (
           <div className="radarLotsList">
-            {salesList.map((sale, idx) => (
-              <a
-                key={`${sale.address}-${sale.at}-${idx}`}
-                className="radarLotRow"
-                href={sale.href}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <span className="radarLotIcon">
-                  <LotThumb src={sale.image} fallback={asset.icon} albumId={asset.albumId} />
-                </span>
-                <span className="radarLotInfo">
-                  <strong>{sale.name}</strong>
-                  <small>{formatShortTime(sale.at, '30d', en)}</small>
-                </span>
-                <span className="radarLotPrice">
-                  {sale.currency === 'GRAM' ? (
-                    <Price value={sale.price} currency="gram" />
-                  ) : (
-                    <strong>{fmtNum.format(sale.price)} {sale.currency}</strong>
-                  )}
-                  {sale.currency === 'GRAM' && gramUsd && <small>≈ {fmtUsd.format(sale.price * gramUsd)}</small>}
-                </span>
-                <span className="rowChevron" aria-hidden="true" />
-              </a>
-            ))}
+            {salesList.map((sale, idx) => {
+              const gramPrice = convertSaleToGram(sale, tokens?.items, gramUsd);
+              const displayPrice = gramPrice ?? sale.price;
+              const isGram = gramPrice !== null;
+              return (
+                <a
+                  key={`${sale.address}-${sale.at}-${idx}`}
+                  className="radarLotRow"
+                  href={sale.href}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span className="radarLotIcon">
+                    <LotThumb src={sale.image} fallback={asset.icon} albumId={asset.albumId} />
+                  </span>
+                  <span className="radarLotInfo">
+                    <strong>{sale.name}</strong>
+                    <small>{formatShortTime(sale.at, '30d', en)}</small>
+                  </span>
+                  <span className="radarLotPrice">
+                    {isGram ? (
+                      <Price value={displayPrice} currency="gram" />
+                    ) : (
+                      <strong>{fmtNum.format(sale.price)} {sale.currency}</strong>
+                    )}
+                    {isGram && gramUsd && <small>≈ {fmtUsd.format(displayPrice * gramUsd)}</small>}
+                  </span>
+                  <span className="rowChevron" aria-hidden="true" />
+                </a>
+              );
+            })}
           </div>
         ) : (
           <div className="radarEmptyLots">
@@ -1209,17 +1264,19 @@ export function MarketChartsPage() {
 }
 
 function LotThumb({ src, fallback, albumId }: { src?: string; fallback: string; albumId?: number }) {
-  const [failed, setFailed] = useState(false);
-  if (src && !failed) {
+  const [failedSrc, setFailedSrc] = useState<string>();
+  if (src && failedSrc !== src) {
     return (
       <img
+        key={src}
         className="radarLotImg"
         src={src}
         alt=""
         width={34}
         height={34}
-        loading="lazy"
-        onError={() => setFailed(true)}
+        loading="eager"
+        decoding="async"
+        onError={() => setFailedSrc(src)}
       />
     );
   }
@@ -1291,49 +1348,34 @@ function InteractiveFloorChart({
     setHoverIdx(best);
   };
 
+  if (loading) {
+    return (
+      <div
+        className="radarChartSkeleton"
+        role="status"
+        aria-label={en ? 'Loading chart' : 'Загружаем график'}
+      >
+        <div className="radarSkeletonBars" aria-hidden="true">
+          <span /><span /><span /><span /><span />
+        </div>
+        <p>{en ? 'Loading chart…' : 'Загружаем график…'}</p>
+      </div>
+    );
+  }
+  if (points.length === 0) {
+    return (
+      <div className="radarChartEmpty">
+        <p>{en ? 'No data for this enchant level in the selected range.' : 'Нет данных по этому уровню заточки за выбранный период.'}</p>
+        {canSwitchToCurve && (
+          <button type="button" className="radarInlineAction" onClick={onSwitchToCurve}>
+            {en ? `View prices by enchant level (+0…+${maxActiveEnchant})` : `Смотреть цены по уровням заточки (+0…+${maxActiveEnchant})`}
+          </button>
+        )}
+      </div>
+    );
+  }
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      {loading ? (
-        <motion.div
-          key="chart-skeleton"
-          className="radarChartSkeleton"
-          role="status"
-          aria-label={en ? 'Loading chart' : 'Загружаем график'}
-          initial={{ opacity: 0.45 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="radarSkeletonBars" aria-hidden="true">
-            <span /><span /><span /><span /><span />
-          </div>
-          <p>{en ? 'Loading chart…' : 'Загружаем график…'}</p>
-        </motion.div>
-      ) : points.length === 0 ? (
-        <motion.div
-          key="chart-empty"
-          className="radarChartEmpty"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <p>{en ? 'No data for this enchant level in the selected range.' : 'Нет данных по этому уровню заточки за выбранный период.'}</p>
-          {canSwitchToCurve && (
-            <button type="button" className="radarInlineAction" onClick={onSwitchToCurve}>
-              {en ? `View prices by enchant level (+0…+${maxActiveEnchant})` : `Смотреть цены по уровням заточки (+0…+${maxActiveEnchant})`}
-            </button>
-          )}
-        </motion.div>
-      ) : (
-        <motion.div
-          key="chart-live"
-          className="radarChartBox"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-        >
+    <div className="radarChartBox">
           {active && (
         <div className="radarScrubTooltip">
           <strong>{fmtNum.format(active.pt.floor)} GRAM</strong>
@@ -1420,9 +1462,7 @@ function InteractiveFloorChart({
               )}
             </div>
           )}
-        </motion.div>
-      )}
-    </AnimatePresence>
+    </div>
   );
 }
 
