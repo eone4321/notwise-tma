@@ -274,7 +274,7 @@ export function SkinFarmCalculator({
         <button type="button" className="buildPresetChip" aria-haspopup="dialog"
           onClick={() => { lightHaptic(); setSkinIdError(''); setPresetModalOpen(true); }}>
           <GameGlyph name="skin"/>
-          <span>{presetId ? `#${presetId}` : copy('Примеры / №', 'Presets / ID')}</span>
+          <span>{presetId ? `#${presetId}` : copy('Примеры', 'Presets')}</span>
           <span className="buildChipCaret" aria-hidden="true">▾</span>
         </button>
       </div>

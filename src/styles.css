@@ -56,8 +56,8 @@ main { font-size: var(--body); line-height: 1.55; }
 .shell {
   margin: auto;
   max-width: 560px;
-  min-height: 100dvh;
-  padding: var(--top-inset) var(--space-4) calc(var(--dock-height) + 20px);
+  min-height: calc(100dvh + 72px);
+  padding: var(--top-inset) var(--space-4) calc(var(--dock-height) + 88px);
 }
 header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .brand { display: inline-flex; align-items: center; min-height: 44px; }

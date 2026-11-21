@@ -1637,8 +1637,49 @@ dialog.modal.buildPickerModal::backdrop { background: #0006; }
   border-radius: inherit;
   background: linear-gradient(90deg, #ff983f, var(--gold));
 }
-.buildPracticeCard .actionPair { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.buildPracticeCard .actionPair .buildRunPractice { flex: 1; }
+.buildPracticeCard .actionPair {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 10px;
+}
+.buildPracticeCard .actionPair > * {
+  min-height: 42px;
+  min-block-size: 42px;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.buildPracticeCard .actionPair .buildRunPractice {
+  flex: 1 1 auto;
+  width: auto;
+}
+.buildPracticeCard .actionPair .buildRunPractice[data-saved] {
+  opacity: 1;
+  color: var(--gold);
+  border-color: color-mix(in srgb, var(--gold) 42%, var(--game-panel-line));
+  background: color-mix(in srgb, var(--gold) 12%, var(--game-tile));
+}
+.buildPracticeCard .actionPair .buildBaselineClear {
+  flex: 0 0 auto;
+  width: auto;
+  padding-inline: 14px;
+}
+.buildRingEnchantCard .buildCollapseSummary {
+  gap: 8px;
+}
+.buildRingEnchantCard .buildCollapseSummary h2 {
+  font-size: 15px;
+}
+.buildRingEnchantCard .skinEnchantBonusTag {
+  flex: none;
+}
+.buildPracticeCard .buildCollapseSummary .buildWipBadge {
+  flex: none;
+}
 .combatTipsList { display: grid; gap: 10px; margin-top: 6px; }
 .combatTipsList li { display: grid; gap: 2px; padding-top: 9px; border-top: 1px solid var(--game-panel-line); }
 .combatTipsList li:first-child { padding-top: 0; border-top: 0; }
@@ -2968,13 +3009,18 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   height: 30px;
 }
 @media (max-width: 440px) {
-  :is(.buildLoadoutCard, .wardrobeCard) .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) {
+  .buildLoadoutCard .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) {
     width: 30px;
     height: 30px;
     padding: 0;
   }
-  :is(.buildLoadoutCard, .wardrobeCard) .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) > span:last-child {
+  .buildLoadoutCard .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) > span:last-child {
     display: none;
+  }
+  .wardrobeCard .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) {
+    width: auto;
+    height: 30px;
+    padding-inline: 7px;
   }
   .buildLoadoutCard .buildPresetChip {
     max-width: none;
@@ -2984,18 +3030,28 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   .wardrobeCard .buildLoadoutTop,
   .wardrobeCard .buildLoadoutControls,
   .wardrobeCard .buildLoadoutRight {
-    gap: 4px;
+    gap: 3px;
   }
   .wardrobeCard .skinRarityPill,
   .wardrobeCard .buildPresetChip {
-    padding-inline: 7px;
+    padding-inline: 6px;
+    gap: 3px;
     font-size: 10.5px;
   }
-  .wardrobeCard .wardrobeActionIcon:not(.calcInfoBtn),
+  .wardrobeCard .buildPresetChip {
+    flex: 0 0 auto;
+    max-width: none;
+  }
+  .wardrobeCard .wardrobeActionIcon:not(.calcInfoBtn) {
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
+  }
   .wardrobeCard .buildLoadoutRight :is(.buildIconReset, .calcInfoBtn) {
-    width: 28px;
-    height: 28px;
-    font-size: 13.5px;
+    height: 26px;
+    padding-inline: 5px;
+    gap: 2px;
+    font-size: 10px;
   }
 }
 .wardrobeActionIcon {
@@ -5328,7 +5384,7 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 
 .memoStack {
   display: grid;
-  gap: 8px;
+  gap: 5px;
 }
 .memoStack > .card,
 .lifehackList > .card {
@@ -5339,7 +5395,7 @@ details.card.memoCollapsible {
   margin: 0;
   padding: 0;
   gap: 0;
-  border-radius: 16px;
+  border-radius: 14px;
   overflow: hidden;
   scroll-margin-top: calc(var(--top-inset) + 12px);
   transition: border-color 140ms ease;
@@ -5354,10 +5410,10 @@ details.card.memoCollapsible:has(> summary.memoCollapsibleSummary:focus-visible)
 details.card.memoCollapsible > summary.memoCollapsibleSummary {
   display: flex;
   align-items: center;
-  gap: 11px;
-  min-height: 60px;
+  gap: 10px;
+  min-height: 52px;
   margin: 0;
-  padding: 10px 13px;
+  padding: 8px 12px;
   border-radius: 0;
   cursor: pointer;
   user-select: none;

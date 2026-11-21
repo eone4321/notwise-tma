@@ -439,19 +439,17 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
       <BuildAnalysis state={state} lang={lang}/>
     </section>
 
-      <section className="card buildPanel wardrobeEnchantCard buildRingEnchantCard">
+      <details className="card buildPanel wardrobeEnchantCard buildRingEnchantCard buildCollapsePanel">
+        <summary className="buildCollapseSummary">
+          <GameArt path="/game/items/scroll-enchant-ring.webp" size={24}/>
+          <h2>{copy('Заточка колец (пример)', 'Ring enchant (example)')}</h2>
+          <b className="skinEnchantBonusTag" data-mixed={hasMixedRingEnchants || undefined}>
+            {hasMixedRingEnchants
+              ? copy(`+${minRingEnchant}..+${maxRingEnchant} · разные`, `+${minRingEnchant}–+${maxRingEnchant} · mixed`)
+              : mainEnchantLevel > 0 ? `+${mainEnchantLevel} · +${mainEnchantLevel * 5}%` : '+0%'}
+          </b>
+        </summary>
         <div className="skinEnchantBox">
-          <div className="skinEnchantHead">
-            <div className="skinEnchantMeta">
-              <GameArt path="/game/items/scroll-enchant-ring.webp" size={28}/>
-              <strong>{copy('Заточка колец (пример)', 'Ring enchant (example)')}</strong>
-            </div>
-            <b className="skinEnchantBonusTag" data-mixed={hasMixedRingEnchants || undefined}>
-              {hasMixedRingEnchants
-                ? copy(`+${minRingEnchant}..+${maxRingEnchant} · разные`, `+${minRingEnchant}–+${maxRingEnchant} · mixed`)
-                : mainEnchantLevel > 0 ? `+${mainEnchantLevel} · +${mainEnchantLevel * 5}%` : '+0%'}
-            </b>
-          </div>
           <div className="ringEnchantBonuses" aria-live="polite">
             <div>
               <GameAttribute name="wisdom"/>
@@ -546,13 +544,13 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
             <span>{copy('+4..+20 предмет может сгореть 🔥', '+4..+20 item can burn 🔥')}</span>
           </div>
         </div>
-      </section>
+      </details>
 
-    <section className="card buildPanel buildPracticeCard" aria-labelledby="build-practice-title">
-      <div className="buildPracticeHead">
+    <details className="card buildPanel buildPracticeCard buildCollapsePanel" aria-labelledby="build-practice-title">
+      <summary className="buildCollapseSummary">
         <h2 id="build-practice-title">{copy('Проверка в тренировочных боях', 'Practice duel check')}</h2>
         <span className="buildWipBadge">{copy('В разработке', 'In development')}</span>
-      </div>
+      </summary>
       <p className="caption">{copy('320 авто-боёв против 4 архетипов твоего уровня (Натиск, Маг, Бастион и Яд/Уклонение). В реальном бою ещё решает выбор зон блока.', '320 auto-duels against 4 archetypes at your level. Real ranked fights also depend on zone timing.')}</p>
       {totalAttributes(state.buffs) > 0 && <p className="caption">{copy('Твои временные усиления учтены. У соперников усилений нет.', 'Your temporary buffs apply; opponents have none.')}</p>}
       <button className="primary buildAnalyze" type="button" onClick={startPractice} disabled={practice === 'waiting'}>
@@ -571,7 +569,7 @@ export function BuildConstructor({ referralCode }: { referralCode?: string }) {
           save={() => { lightHaptic(); trackGuide('build:analyze'); setComparison(practice); }}
           clear={() => setComparison(null)}/>}
       </div>
-    </section>
+    </details>
 
     <section className="card buildPanel buildGuide" aria-labelledby="build-guide-title">
       <div className="buildHeading">
@@ -1044,10 +1042,16 @@ function BuildPractice({ result, comparison, lang, save, clear, state }: {
       {experiments[weakest.id]}
     </p>}
     <div className="actionPair">
-      <button className="secondary buildRunPractice" type="button" onClick={save} disabled={comparison === result}>
-        {comparison === result ? copy('✓ Запомнено как эталон', '✓ Saved as baseline') : copy('Запомнить для сравнения', 'Save for comparison')}
+      <button
+        className="secondary buildRunPractice"
+        data-saved={comparison === result || undefined}
+        type="button"
+        onClick={save}
+        disabled={comparison === result}
+      >
+        {comparison === result ? copy('✓ Эталон сохранён', '✓ Baseline saved') : copy('Запомнить эталон', 'Save baseline')}
       </button>
-      {comparison && <button className="buildPillButton" type="button" onClick={clear}>{copy('Сбросить', 'Clear')}</button>}
+      {comparison && <button className="secondary buildBaselineClear" type="button" onClick={clear}>{copy('Сбросить', 'Clear')}</button>}
     </div>
   </div>;
 }
