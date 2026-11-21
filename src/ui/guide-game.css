@@ -3594,10 +3594,10 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .radarSubGateBackdrop {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 19;
   display: grid;
   place-items: center;
-  padding: 24px 18px calc(24px + env(safe-area-inset-bottom, 0px));
+  padding: 24px 18px calc(var(--dock-height, 64px) + 24px);
   background: rgba(4, 6, 12, 0.78);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -4504,7 +4504,7 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
 .radarSheetBackdrop {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 19;
   background: rgba(8, 8, 10, 0.68);
   backdrop-filter: blur(4px);
   display: flex;
@@ -4522,7 +4522,7 @@ details.buildCollapsePanel[open] > .buildCollapseSummary { margin-block-end: 8px
   background: var(--game-panel);
   border-top: 1px solid var(--game-panel-line);
   border-radius: 20px 20px 0 0;
-  padding: 10px 14px calc(16px + env(safe-area-inset-bottom, 0px));
+  padding: 10px 14px calc(var(--dock-height, 64px) + 16px);
   display: flex;
   flex-direction: column;
   gap: 10px;
