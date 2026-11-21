@@ -763,17 +763,22 @@ export function MarketChartsPage() {
     if (displayedSales.length === 0) return [];
     const now = Date.now();
     const rangeMs = range === '24h' ? 86_400_000 : range === '7d' ? 7 * 86_400_000 : 30 * 86_400_000;
-    const tMin = range === 'all' ? 0 : now - rangeMs;
+    const tMin = seriesPoints.length >= 2
+      ? seriesPoints[0].ts
+      : (range === 'all' ? 0 : now - rangeMs);
+    const tMax = seriesPoints.length >= 2
+      ? seriesPoints[seriesPoints.length - 1].ts
+      : now + 60_000;
     const out: ChartSalePoint[] = [];
     for (const s of displayedSales) {
-      if (s.at < tMin || s.at > now + 60_000) continue;
+      if (s.at < tMin || s.at > tMax) continue;
       const gp = convertSaleToGram(s, tokens?.items, gramUsd);
       if (gp !== null && Number.isFinite(gp) && gp > 0) {
         out.push({ ts: s.at, price: gp, name: s.name });
       }
     }
     return out.sort((a, b) => a.ts - b.ts);
-  }, [displayedSales, range, tokens?.items, gramUsd]);
+  }, [displayedSales, seriesPoints, range, tokens?.items, gramUsd]);
 
   const statVals = seriesPoints.length ? seriesPoints.map(p => p.floor) : chartSales.map(s => s.price);
   const statMin = statVals.length ? Math.min(...statVals) : null;
@@ -1484,8 +1489,11 @@ function InteractiveFloorChart({
   const width = 320;
   const height = 156;
   const padLeft = 14;
+  const padRight = 48;
   const padTop = 18;
   const padBottom = 24;
+  const innerW = width - padLeft - padRight;
+  const innerH = height - padTop - padBottom;
 
   const visibleSales = showSales ? sales : [];
   const floors = points.map(p => p.floor);
@@ -1498,22 +1506,14 @@ function InteractiveFloorChart({
   const yMax = maxVal + span * 0.14;
   const ySpan = Math.max(yMax - yMin, 1e-6);
 
-  const maxYLabelLen = Math.max(
-    ...[0, 0.5, 1].map(ratio => formatGramCompact(yMax - ratio * ySpan, en).length),
-    1,
-  );
-  const padRight = Math.max(46, Math.ceil(maxYLabelLen * 5.8 + 12));
-  const innerW = width - padLeft - padRight;
-  const innerH = height - padTop - padBottom;
-
-  const allTs = [
-    ...points.map(p => p.ts),
-    ...visibleSales.map(s => s.ts),
-  ];
-  const tMin = allTs.length ? Math.min(...allTs) : 0;
-  const tMax = allTs.length ? Math.max(...allTs) : 0;
+  const hasFloorSeries = points.length >= 2;
+  const timelineTs = hasFloorSeries
+    ? points.map(p => p.ts)
+    : [...points.map(p => p.ts), ...visibleSales.map(s => s.ts)];
+  const tMin = timelineTs.length ? Math.min(...timelineTs) : 0;
+  const tMax = timelineTs.length ? Math.max(...timelineTs) : 0;
   const tSpan = Math.max(tMax - tMin, 1);
-  const hasTimeline = allTs.length >= 2 && tMax > tMin;
+  const hasTimeline = timelineTs.length >= 2 && tMax > tMin;
 
   const coords = points.map(pt => {
     const x = !hasTimeline ? padLeft + innerW / 2 : padLeft + ((pt.ts - tMin) / tSpan) * innerW;
