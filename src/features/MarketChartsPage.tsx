@@ -39,6 +39,7 @@ const marketSubscribeUrl = 'https://t.me/+Q2SrPBHP8vRmMmNi';
 type HistoryRange = '24h' | '7d' | '30d' | 'all';
 type ChartMode = 'history' | 'curve';
 type HistoryPoint = { ts: number; floor: number; count: number };
+type ChartSalePoint = { ts: number; price: number; name: string };
 type MarketSale = { address: string; name: string; price: number; currency: string; at: number; image?: string; href: string };
 
 const marketHistoryCache = new Map<string, HistoryPoint[]>();
@@ -644,6 +645,21 @@ export function MarketChartsPage() {
       ? `${asset.nameEn} · ${en ? 'all enchants' : 'все заточки'}`
       : asset.nameEn;
 
+  const chartSales = useMemo<ChartSalePoint[]>(() => {
+    if (seriesPoints.length < 2 || salesList.length === 0) return [];
+    const tMin = seriesPoints[0].ts;
+    const tMax = seriesPoints[seriesPoints.length - 1].ts;
+    const out: ChartSalePoint[] = [];
+    for (const s of salesList) {
+      if (s.at < tMin || s.at > tMax) continue;
+      const gp = convertSaleToGram(s, tokens?.items, gramUsd);
+      if (gp !== null && Number.isFinite(gp) && gp > 0) {
+        out.push({ ts: s.at, price: gp, name: s.name });
+      }
+    }
+    return out;
+  }, [seriesPoints, salesList, tokens?.items, gramUsd]);
+
   const statMin = seriesPoints.length ? Math.min(...seriesPoints.map(p => p.floor)) : null;
   const statMax = seriesPoints.length ? Math.max(...seriesPoints.map(p => p.floor)) : null;
   const activeRangeObj = ranges.find(r => r.id === range);
@@ -903,6 +919,7 @@ export function MarketChartsPage() {
         {chartMode === 'history' ? (
           <InteractiveFloorChart
             points={seriesPoints}
+            sales={chartSales}
             range={range}
             loading={effectiveHistoryLoading}
             maxActiveEnchant={maxActiveEnchant}
@@ -1290,6 +1307,7 @@ function LotThumb({ src, fallback, albumId }: { src?: string; fallback: string; 
 
 function InteractiveFloorChart({
   points,
+  sales = [],
   range,
   loading,
   maxActiveEnchant,
@@ -1298,6 +1316,7 @@ function InteractiveFloorChart({
   en,
 }: {
   points: HistoryPoint[];
+  sales?: ChartSalePoint[];
   range: HistoryRange;
   loading: boolean;
   maxActiveEnchant: number;
@@ -1330,12 +1349,32 @@ function InteractiveFloorChart({
     return { x, y, pt };
   });
 
+  const tMin = points.length >= 2 ? points[0].ts : 0;
+  const tSpan = points.length >= 2 ? Math.max(points[points.length - 1].ts - tMin, 1) : 1;
+  const saleCoords = points.length >= 2
+    ? sales.map(s => {
+        const x = padX + Math.max(0, Math.min(1, (s.ts - tMin) / tSpan)) * innerW;
+        const rawY = padTop + (1 - (s.price - yMin) / (yMax - yMin)) * innerH;
+        const y = Math.max(padTop + 2, Math.min(height - padBottom - 2, rawY));
+        return { x, y, s };
+      })
+    : [];
+
   const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
   const areaPath = coords.length > 1
     ? `${linePath} L${coords[coords.length - 1].x.toFixed(1)},${(height - padBottom).toFixed(1)} L${coords[0].x.toFixed(1)},${(height - padBottom).toFixed(1)} Z`
     : '';
 
   const active = hoverIdx !== null ? coords[hoverIdx] : null;
+  const nearestSale = active && saleCoords.length > 0
+    ? saleCoords.reduce<{ dist: number; item: typeof saleCoords[number] | null }>(
+        (best, cur) => {
+          const dist = Math.abs(cur.x - active.x);
+          return dist < best.dist ? { dist, item: cur } : best;
+        },
+        { dist: 16, item: null },
+      ).item
+    : null;
 
   const handlePointer = (clientX: number) => {
     if (!svgRef.current || coords.length < 2) return;
@@ -1381,12 +1420,27 @@ function InteractiveFloorChart({
   }
   return (
     <div className="radarChartBox">
-          {active && (
+      {active ? (
         <div className="radarScrubTooltip">
           <strong>{fmtNum.format(active.pt.floor)} GRAM</strong>
-          <span>{formatShortTime(active.pt.ts, range, en)}{active.pt.count > 0 ? ` · ${pluralLots(active.pt.count, en)}` : ''}</span>
+          <span>
+            {formatShortTime(active.pt.ts, range, en)}
+            {active.pt.count > 0 ? ` · ${pluralLots(active.pt.count, en)}` : ''}
+            {nearestSale ? ` · ${en ? 'Sale' : 'Продажа'}: ${fmtNum.format(nearestSale.s.price)} GRAM` : ''}
+          </span>
         </div>
-      )}
+      ) : saleCoords.length > 0 ? (
+        <div className="radarScrubTooltip" style={{ pointerEvents: 'none', opacity: 0.85, gap: 10 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <i style={{ width: 7, height: 7, borderRadius: 99, background: '#ffcc77', display: 'inline-block' }} />
+            {en ? 'Floor' : 'Флор'}
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <i style={{ width: 7, height: 7, borderRadius: 99, background: '#4ade80', display: 'inline-block' }} />
+            {en ? `Sales (${saleCoords.length})` : `Продажи (${saleCoords.length})`}
+          </span>
+        </div>
+      ) : null}
       <svg
         ref={svgRef}
         className="radarSvg"
@@ -1420,6 +1474,20 @@ function InteractiveFloorChart({
 
         {areaPath && <path d={areaPath} fill="url(#radarGoldGrad)" />}
         {coords.length > 1 && <path d={linePath} className="radarLinePath" />}
+
+        {/* Real completed sales overlay dots */}
+        {saleCoords.map((sc, idx) => (
+          <circle
+            key={`${sc.s.ts}-${idx}`}
+            cx={sc.x}
+            cy={sc.y}
+            r={nearestSale === sc ? '4.5' : '3.1'}
+            fill="#4ade80"
+            stroke="#111112"
+            strokeWidth="1.5"
+            opacity="0.95"
+          />
+        ))}
 
         {/* Single-point or endpoint dot */}
         {coords.length === 1 ? (
