@@ -217,7 +217,7 @@ async function fetchOnChainSales(collectionAddress: string, slug: string, filter
     for (const [siblingSlug, list] of bySlug.entries()) {
       if (siblingSlug === slug || list.length === 0) continue;
       const sorted = list.sort((a, b) => b.at - a.at).slice(0, 24);
-      writes.push(redis(['SET', `notwise:market:sales:v5:${siblingSlug}`, JSON.stringify(sorted), 'EX', 300]).catch(() => null));
+      writes.push(redis(['SET', `notwise:market:sales:v5:${siblingSlug}`, JSON.stringify(sorted), 'EX', 7 * 86400]).catch(() => null));
     }
     await Promise.all(writes);
   }
@@ -238,8 +238,9 @@ export default async function handler(request: Request) {
   const cached = await redis<string | null>(['GET', cacheKey]).catch(() => null);
   if (cached) {
     try {
-      const parsed = (JSON.parse(cached) as MarketSale[]).filter(s => s.at >= minAtMs);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      const rawParsed = JSON.parse(cached);
+      if (Array.isArray(rawParsed)) {
+        const parsed = (rawParsed as MarketSale[]).filter(s => s.at >= minAtMs);
         return Response.json({ slug, sales: parsed }, { headers: { 'Cache-Control': 'public, max-age=0, s-maxage=60' } });
       }
     } catch { /* ignore */ }
@@ -312,9 +313,8 @@ export default async function handler(request: Request) {
 
   sales.sort((a, b) => b.at - a.at);
   const finalSales = sales.filter(s => s.at >= minAtMs).slice(0, 24);
-  if (finalSales.length > 0) {
-    await redis(['SET', cacheKey, JSON.stringify(finalSales), 'EX', 300]).catch(() => null);
-  }
+  const ttlSec = finalSales.length > 0 ? 7 * 86400 : 86400;
+  await redis(['SET', cacheKey, JSON.stringify(finalSales), 'EX', ttlSec]).catch(() => null);
   return Response.json(
     { slug, sales: finalSales },
     { headers: { 'Cache-Control': finalSales.length > 0 ? 'public, max-age=0, s-maxage=60' : 'no-store' } },

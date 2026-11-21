@@ -1034,7 +1034,10 @@ export function MarketChartsPage() {
                 {en ? 'Sales' : 'Продажи'}
               </button>
             </div>
-            <small>{getgemsDisplayName}</small>
+            <small>
+              {getgemsDisplayName}
+              {feedTab === 'sales' ? (en ? ' · last 30 days' : ' · за последние 30 дней') : ''}
+            </small>
           </div>
           {feedTab === 'lots' && sortedLots.length > 1 && (
             <button
